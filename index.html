@@ -7,41 +7,46 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="CÉREBRO"/>
-<link rel="manifest" href='data:application/json,{"name":"CÉREBRO IGOR","short_name":"CÉREBRO","start_url":"./index.html","display":"standalone","background_color":"%230f1420","theme_color":"%230f1420","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect width=%27192%27 height=%27192%27 rx=%2742%27 fill=%27%230f1420%27/%3E%3Ctext x=%2796%27 y=%27126%27 font-size=%2792%27 text-anchor=%27middle%27 fill=%27%234c8dff%27 font-family=%27system-ui%27%3E%E2%97%89%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'/>
+<link rel="manifest" href='data:application/json,{"name":"CÉREBRO IGOR","short_name":"CÉREBRO","start_url":"./","display":"standalone","background_color":"%230f1420","theme_color":"%230f1420","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect width=%27192%27 height=%27192%27 rx=%2742%27 fill=%27%230f1420%27/%3E%3Ctext x=%2796%27 y=%27128%27 font-size=%2796%27 text-anchor=%27middle%27 fill=%27%234c8dff%27 font-family=%27system-ui%27%3E%E2%97%89%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'/>
 <title>CÉREBRO IGOR</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#0f1420;--card:#171e2c;--card2:#1e2637;--ink:#e8edf6;--mut:#8a97ad;--red:#e5484d;--yel:#f5a623;--grn:#30a46c;--acc:#4c8dff;--line:#26304a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px}
-body{padding-bottom:env(safe-area-inset-bottom)}
-header{position:sticky;top:0;z-index:9;background:rgba(15,20,32,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-top)) 16px;display:flex;align-items:center;gap:10px}
-header h1{font-size:13px;letter-spacing:2.5px;margin:0;flex:1;color:var(--mut)}
-main{max-width:720px;margin:0 auto;padding:14px 12px 90px}
-.inbox{display:flex;gap:8px;margin-bottom:16px}
+header{position:sticky;top:0;z-index:9;background:rgba(15,20,32,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px}
+header h1{font-size:12px;letter-spacing:2.5px;margin:0;flex:1;color:var(--mut)}
+main{max-width:720px;margin:0 auto;padding:12px 12px 60px}
+.lbl{font-size:11px;letter-spacing:1.5px;color:var(--mut);margin:0 2px 6px}
+.inbox{display:flex;gap:8px;margin-bottom:20px}
 .inbox input{flex:1;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px}
-.inbox input::placeholder{color:var(--mut)}
+.inbox input::placeholder{color:#61708a}
 .item{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border-left:3px solid var(--line)}
 .item.q1{border-left-color:var(--red)}.item.q2{border-left-color:var(--yel)}.item.q3{border-left-color:var(--acc)}
-.tit{font-size:15px;line-height:1.35;margin-bottom:6px}
-.meta{font-size:12px;color:var(--mut);display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.tag{background:var(--card2);padding:2px 8px;border-radius:20px;font-size:11px}
+.tit{font-size:15px;line-height:1.35;margin-bottom:8px;font-weight:500}
+.meta{font-size:12px;color:var(--mut);display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.tag{background:var(--card2);padding:3px 9px;border-radius:20px;font-size:11px}
 .tag.money{color:var(--grn);font-weight:600}
-.acts{display:flex;gap:8px;flex-wrap:wrap}
-button{font:inherit;font-size:14px;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--acc);color:#fff;min-height:42px}
+.tag.parado{background:#3a1d1f;color:#ff8a8f}
+.rec{background:var(--card2);border-radius:10px;padding:11px 12px;font-size:14px;line-height:1.5;margin-bottom:11px;border-left:2px solid var(--acc)}
+.rec .fonte{display:block;margin-top:7px;font-size:10.5px;color:var(--mut);letter-spacing:.5px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-size:14px;border:0;border-radius:10px;padding:10px 15px;cursor:pointer;background:var(--acc);color:#fff;min-height:44px}
 button.ghost{background:var(--card2);color:var(--ink)}
-button.link{background:none;color:var(--mut);padding:6px;min-height:0;font-size:13px}
-button:disabled{opacity:.45}
-input[type=date],input[type=text].inl{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:15px}
-#login{max-width:380px;margin:14vh auto;padding:26px}
+button.link{background:none;color:var(--mut);padding:6px 8px;min-height:0;font-size:13px}
+button.ask{background:none;color:var(--mut);border:1px solid var(--line);min-height:44px;padding:10px 13px}
+button:disabled{opacity:.4}
+input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:15px}
+#login{max-width:380px;margin:13vh auto;padding:26px}
 #login h1{font-size:15px;letter-spacing:3px;margin:0 0 6px}
-.muted{color:var(--mut);font-size:13px;line-height:1.5}
-#login input{width:100%;padding:14px;margin:14px 0 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px}
+.muted{color:var(--mut);font-size:13px;line-height:1.55}
+#login input{width:100%;padding:14px;margin:16px 0 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px}
 #login button{width:100%}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--card2);border:1px solid var(--line);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;max-width:92vw;z-index:99}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--card2);border:1px solid var(--line);padding:13px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;max-width:92vw;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #toast.on{opacity:1}
-.empty{text-align:center;color:var(--mut);padding:40px 10px;line-height:1.6}
-.count{font-size:11px;background:var(--card2);color:var(--mut);padding:3px 9px;border-radius:20px}
+.empty{text-align:center;color:var(--mut);padding:48px 10px;line-height:1.7}
+.count{font-size:11px;background:var(--card2);color:var(--mut);padding:4px 10px;border-radius:20px}
+.mais{text-align:center;padding:6px 0 20px}
 </style>
 </head>
 <body>
@@ -58,16 +63,18 @@ input[type=date],input[type=text].inl{padding:10px;border-radius:10px;border:1px
   <header>
     <h1>CÉREBRO</h1>
     <span class="count" id="cnt"></span>
-    <button class="link" onclick="carregar()">↻</button>
+    <button class="link" id="btnRec" onclick="carregar(true)">↻</button>
     <button class="link" onclick="sair()">sair</button>
   </header>
   <main>
+    <p class="lbl">ANOTAR UM FATO OU PEDIR ALGO</p>
     <div class="inbox">
-      <input id="cmd" placeholder="anotar um fato ou uma ordem…" enterkeyhint="send"/>
+      <input id="cmd" placeholder="ex: recebi 6.484 da Brafor hoje" enterkeyhint="send"/>
       <button onclick="anotar()">→</button>
     </div>
+    <p class="lbl" id="lblFila">PRECISA DE VOCÊ AGORA</p>
     <div id="fila"></div>
-    <div style="text-align:center"><button class="link" id="vermais" hidden onclick="TODOS=true;render()">ver a fila inteira</button></div>
+    <div class="mais"><button class="link" id="vermais" hidden onclick="TODOS=true;render()"></button></div>
   </main>
 </div>
 
@@ -75,7 +82,7 @@ input[type=date],input[type=text].inl{padding:10px;border-radius:10px;border:1px
 
 <script>
 const URL_ = "https://kssvzrnjiqfgtvoifboj.supabase.co";
-const KEY_ = "sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5"; // publicavel; a defesa e o RLS, nao esta chave
+const KEY_ = "sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5"; // publicavel; a defesa e o RLS
 const sb = supabase.createClient(URL_, KEY_);
 let DADOS = [], TODOS = false, ocupado = false;
 
@@ -84,15 +91,13 @@ async function enviarLink(){
   const email = document.getElementById('email').value.trim();
   if(!email) return msg('Escreva o e-mail.');
   msg('Enviando…');
-  const {error} = await sb.auth.signInWithOtp({
-    email, options:{ shouldCreateUser:false, emailRedirectTo: location.href.split('#')[0] }
-  });
+  const {error} = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false, emailRedirectTo: location.href.split('#')[0] } });
   msg(error ? 'Erro: '+error.message : 'Link enviado. Abra o e-mail neste mesmo aparelho.');
 }
 function msg(t){ document.getElementById('loginmsg').textContent = t; }
 async function sair(){ await sb.auth.signOut(); location.reload(); }
 
-sb.auth.onAuthStateChange((_e, sess)=>{ if(sess) abrir(); });
+sb.auth.onAuthStateChange((_e, s)=>{ if(s) abrir(); });
 sb.auth.getSession().then(({data})=>{ if(data.session) abrir(); });
 
 function abrir(){
@@ -103,33 +108,46 @@ function abrir(){
 }
 
 /* ---------- fila ---------- */
-async function carregar(){
+async function carregar(avisar){
+  const b = document.getElementById('btnRec'); b.textContent = '…';
   const {data, error} = await sb.from('v_fila_do_igor').select('*').order('peso',{ascending:false});
-  if(error){ return toast('Erro ao ler: '+error.message); }
+  b.textContent = '↻';
+  if(error) return toast('Erro ao ler: '+error.message);
   DADOS = data || [];
   render();
+  if(avisar) toast('Atualizado — ' + DADOS.length + ' na fila');
 }
 
 function render(){
-  const alvo = TODOS ? DADOS : DADOS.slice(0,12);
-  document.getElementById('cnt').textContent = DADOS.length + ' na fila';
-  document.getElementById('vermais').hidden = TODOS || DADOS.length <= 12;
+  const n1 = DADOS.filter(function(i){ return i.nivel === 1; });
+  const alvo = TODOS ? DADOS : n1;
+  const resto = DADOS.length - n1.length;
+  document.getElementById('cnt').textContent = n1.length + ' agora';
+  document.getElementById('lblFila').textContent = TODOS ? 'A FILA INTEIRA' : 'PRECISA DE VOCÊ AGORA';
+  const vm = document.getElementById('vermais');
+  vm.hidden = TODOS || resto <= 0;
+  vm.textContent = 'ver os outros ' + resto;
+
   const el = document.getElementById('fila');
-  if(!DADOS.length){ el.innerHTML = '<div class="empty">Fila vazia.<br>Nada depende de você agora.</div>'; return; }
+  if(!alvo.length){ el.innerHTML = '<div class="empty">Fila vazia.<br>Nada depende de você agora.</div>'; return; }
   el.innerHTML = alvo.map(function(i){
-    const q = i.peso >= 110 ? 'q1' : i.peso >= 85 ? 'q2' : 'q3';
+    const q = i.nivel === 1 ? 'q1' : i.nivel === 2 ? 'q2' : 'q3';
     const id = i.origem + '|' + i.ref;
     const tags = [ '<span class="tag">'+i.origem+'</span>',
                    i.frente ? '<span class="tag">'+i.frente+'</span>' : '',
-                   i.valor_txt ? '<span class="tag money">'+i.valor_txt+'</span>' : '' ].join('');
+                   i.valor_txt ? '<span class="tag money">'+i.valor_txt+'</span>' : '',
+                   i.forcar_decisao ? '<span class="tag parado">parado '+i.dias_parado+'d</span>' : '' ].join('');
+    const rec = i.recomendacao
+      ? '<div class="rec">'+esc(i.recomendacao)+'<span class="fonte">'+esc(i.recomendacao_fonte||'')+'</span></div>' : '';
     const acts = (i.acoes||[]).map(function(a){
-      const cls = a.verbo==='repactuar' ? 'ghost' : '';
+      const cls = a.verbo === 'repactuar' ? 'ghost' : '';
       return '<button class="'+cls+'" onclick="pedir(\''+id+'\',\''+a.verbo+'\',\''+(a.campo||'')+'\',this)">'+a.label+'</button>';
     }).join('');
     return '<div class="item '+q+'" id="c_'+cssid(id)+'">'
          +   '<div class="tit">'+esc(i.titulo)+'</div>'
          +   '<div class="meta">'+tags+'<span>'+esc(i.porque_agora||'')+'</span></div>'
-         +   '<div class="acts">'+acts+'</div>'
+         +   rec
+         +   '<div class="acts">'+acts+'<button class="ask" onclick="analisar(\''+id+'\',this)">me explica</button></div>'
          + '</div>';
   }).join('');
 }
@@ -159,9 +177,18 @@ async function executar(id, verbo, valor, btn){
   if(String(data).startsWith('OK')){
     const c = document.getElementById('c_'+cssid(id));
     if(c){ c.style.transition='.2s'; c.style.opacity='0'; setTimeout(function(){ c.remove(); }, 200); }
-    DADOS = DADOS.filter(function(x){ return x.origem+'|'+x.ref !== id; });
-    document.getElementById('cnt').textContent = DADOS.length + ' na fila';
+    setTimeout(carregar, 400);
   } else { carregar(); }
+}
+
+async function analisar(id, btn){
+  const p = id.split('|');
+  const q = prompt('O que você quer saber sobre isso?\n(deixe em branco para "o que eu faço com isso?")');
+  if(q === null) return;
+  btn.disabled = true;
+  const {data, error} = await sb.rpc('pedir_analise',{p_origem:p[0], p_ref:p[1], p_pergunta:q || null});
+  btn.disabled = false;
+  toast(error ? 'Erro: '+error.message : data);
 }
 
 /* ---------- inbox ---------- */
@@ -172,11 +199,11 @@ async function anotar(){
   const {data, error} = await sb.rpc('inbox',{p_texto:t});
   toast(error ? 'Erro: '+error.message : data);
 }
-document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key==='Enter') anotar(); });
+document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key === 'Enter') anotar(); });
 
 /* ---------- utils ---------- */
 let tt;
-function toast(t){ const e=document.getElementById('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ e.classList.remove('on'); }, 3200); }
+function toast(t){ const e=document.getElementById('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ e.classList.remove('on'); }, 3600); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function cssid(s){ return s.replace(/[^a-zA-Z0-9_-]/g,'_'); }
 </script>
