@@ -4,6 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#0f1420"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="CÉREBRO"/>
@@ -69,12 +71,14 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 
 <div id="app" hidden>
   <header>
-    <h1>CÉREBRO</h1>
+    <h1>CÉREBRO <span style="font-size:10px;letter-spacing:1px;opacity:.55">v6</span></h1>
     <span class="count" id="cnt"></span>
+    <button class="link" id="btnPlacar" onclick="verPlacar()">placar</button>
     <button class="link" id="btnRec" onclick="carregar(true)">↻</button>
     <button class="link" onclick="sair()">sair</button>
   </header>
   <main>
+    <div id="placar" hidden></div>
     <p class="lbl">ANOTAR UM FATO OU PEDIR ALGO</p>
     <div class="inbox">
       <input id="cmd" placeholder="ex: recebi 6.484 da Brafor hoje" enterkeyhint="send"/>
@@ -245,6 +249,28 @@ async function anotar(){
   toast(error ? 'Erro: '+error.message : data);
 }
 document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key === 'Enter') anotar(); });
+
+/* ---------- placar: a simbiose medindo a si mesma ---------- */
+let placarAberto = false;
+async function verPlacar(){
+  const el = document.getElementById('placar');
+  if(placarAberto){ el.hidden = true; placarAberto = false; return; }
+  const {data, error} = await sb.from('v_placar').select('*');
+  if(error) return toast('Erro: '+error.message);
+  el.innerHTML = '<p class="lbl">PLACAR — COMO A SIMBIOSE ESTÁ INDO</p>'
+    + '<div class="item q3" style="border-left-color:var(--grn)">'
+    + (data||[]).map(function(m){
+        return '<div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)">'
+             + '<div><div style="font-size:14px">'+esc(m.metrica)+'</div>'
+             + '<div style="font-size:12px;color:var(--mut);margin-top:3px">'+esc(m.leitura)+'</div></div>'
+             + '<div style="font-size:19px;font-weight:600;white-space:nowrap">'+esc(m.valor)+'</div></div>';
+      }).join('')
+    + '<div style="font-size:12px;color:var(--mut);padding-top:11px;line-height:1.6">'
+    + 'A linha que importa é a primeira: <b>ratificação</b>. Se ela sobe com o tempo, a recomendação está aprendendo com você. Se cai, está piorando — e isso vira achado na auditoria de sexta.</div>'
+    + '</div>';
+  el.hidden = false; placarAberto = true;
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 /* ---------- utils ---------- */
 let tt;
