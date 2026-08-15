@@ -151,15 +151,16 @@ function render(){
                    i.frente ? '<span class="tag">'+i.frente+'</span>' : '',
                    i.valor_txt ? '<span class="tag money">'+i.valor_txt+'</span>' : '',
                    i.forcar_decisao ? '<span class="tag parado">parado '+i.dias_parado+'d</span>' : '',
-                   esperando ? '<span class="tag espera">respondo em até 1h</span>' : '' ].join('');
+                   esperando ? '<span class="tag espera">respondo em até 30 min</span>' : '' ].join('');
     const rec = i.recomendacao
       ? '<div class="rec">'+esc(i.recomendacao)+'<span class="fonte">'+esc(i.recomendacao_fonte||'')+'</span></div>' : '';
     let dlg = '';
     if(i.ultima_pergunta){
-      dlg = '<div class="dlg"><div class="q">você perguntou '+esc(i.perguntado_em||'')+': <b>'+esc(i.ultima_pergunta)+'</b></div>'
+      const ehDel = i.tipo_ultimo === 'deliberacao';
+      dlg = '<div class="dlg"><div class="q">'+(ehDel ? 'você deliberou ' : 'você perguntou ')+esc(i.perguntado_em||'')+': <b>'+esc(i.ultima_pergunta)+'</b></div>'
           + (i.ultima_resposta
               ? '<div class="a">'+esc(i.ultima_resposta)+'<span class="fonte" style="display:block;margin-top:7px;font-size:10.5px;color:var(--mut)">respondido '+esc(i.respondido_em||'')+'</span></div>'
-              : '<div class="esp">aguardando — a resposta aparece aqui sozinha, sem você recarregar.</div>')
+              : '<div class="esp">'+(ehDel ? 'sua posição já vale. O atendente executa o que ela implica em até 30 min e conta aqui o que fez.' : 'aguardando — a resposta aparece aqui sozinha, sem você recarregar.')+'</div>')
           + '</div>';
     }
     const acts = (i.acoes||[]).map(function(a){
@@ -212,7 +213,8 @@ function pedir(id, verbo, campo, btn){
   if(box.querySelector('.inl,[type=date]')) return;
   const inp = document.createElement('input');
   if(campo === 'date'){ inp.type='date'; inp.value = new Date(Date.now()+864e5).toISOString().slice(0,10); }
-  else { inp.type='text'; inp.className='inl'; inp.placeholder='o que ficou decidido'; }
+  else { inp.type='text'; inp.className='inl';
+         inp.placeholder = verbo === 'deliberar' ? 'sua posição: o que fica valendo, e até quando' : 'o que ficou decidido'; }
   const ok = document.createElement('button');
   ok.textContent = 'confirmar';
   ok.onclick = function(){ if(!inp.value) return; executar(id, verbo, inp.value, ok); };
