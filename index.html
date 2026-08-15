@@ -14,7 +14,7 @@
 :root{--bg:#0f1420;--card:#171e2c;--card2:#1e2637;--ink:#e8edf6;--mut:#8a97ad;--red:#e5484d;--yel:#f5a623;--grn:#30a46c;--acc:#4c8dff;--line:#26304a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px}
-header{position:sticky;top:0;z-index:9;background:rgba(15,20,32,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px}
+header{position:sticky;top:0;z-index:9;background:rgba(15,20,32,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:8px}
 header h1{font-size:12px;letter-spacing:2.5px;margin:0;flex:1;color:var(--mut)}
 main{max-width:720px;margin:0 auto;padding:12px 12px 60px}
 .lbl{font-size:11px;letter-spacing:1.5px;color:var(--mut);margin:0 2px 6px}
@@ -28,8 +28,14 @@ main{max-width:720px;margin:0 auto;padding:12px 12px 60px}
 .tag{background:var(--card2);padding:3px 9px;border-radius:20px;font-size:11px}
 .tag.money{color:var(--grn);font-weight:600}
 .tag.parado{background:#3a1d1f;color:#ff8a8f}
-.rec{background:var(--card2);border-radius:10px;padding:11px 12px;font-size:14px;line-height:1.5;margin-bottom:11px;border-left:2px solid var(--acc)}
+.tag.espera{background:#3a3320;color:#f5c26b}
+.rec{background:var(--card2);border-radius:10px;padding:11px 12px;font-size:14px;line-height:1.5;margin-bottom:10px;border-left:2px solid var(--acc)}
 .rec .fonte{display:block;margin-top:7px;font-size:10.5px;color:var(--mut);letter-spacing:.5px}
+.dlg{border-radius:10px;padding:11px 12px;font-size:14px;line-height:1.5;margin-bottom:10px;background:#141b28;border:1px solid var(--line)}
+.dlg .q{color:var(--mut);font-size:13px;margin-bottom:6px}
+.dlg .q b{color:var(--ink);font-weight:500}
+.dlg .a{white-space:pre-wrap}
+.dlg .esp{color:#f5c26b;font-size:13px}
 .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button{font:inherit;font-size:14px;border:0;border-radius:10px;padding:10px 15px;cursor:pointer;background:var(--acc);color:#fff;min-height:44px}
 button.ghost{background:var(--card2);color:var(--ink)}
@@ -37,6 +43,8 @@ button.link{background:none;color:var(--mut);padding:6px 8px;min-height:0;font-s
 button.ask{background:none;color:var(--mut);border:1px solid var(--line);min-height:44px;padding:10px 13px}
 button:disabled{opacity:.4}
 input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:15px}
+.perg{display:flex;gap:8px;margin-top:10px;width:100%}
+.perg input{flex:1;padding:12px;border-radius:10px;border:1px solid var(--acc);background:var(--card2);color:var(--ink);font-size:15px}
 #login{max-width:380px;margin:13vh auto;padding:26px}
 #login h1{font-size:15px;letter-spacing:3px;margin:0 0 6px}
 .muted{color:var(--mut);font-size:13px;line-height:1.55}
@@ -84,14 +92,14 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 const URL_ = "https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_ = "sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5"; // publicavel; a defesa e o RLS
 const sb = supabase.createClient(URL_, KEY_);
-let DADOS = [], TODOS = false, ocupado = false;
+let DADOS = [], TODOS = false, ocupado = false, timer = null;
 
 /* ---------- acesso ---------- */
 async function enviarLink(){
   const email = document.getElementById('email').value.trim();
   if(!email) return msg('Escreva o e-mail.');
   msg('Enviando…');
-  const {error} = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false, emailRedirectTo: location.href.split('#')[0] } });
+  const {error} = await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false, emailRedirectTo: location.href.split('#')[0].split('?')[0] } });
   msg(error ? 'Erro: '+error.message : 'Link enviado. Abra o e-mail neste mesmo aparelho.');
 }
 function msg(t){ document.getElementById('loginmsg').textContent = t; }
@@ -116,6 +124,10 @@ async function carregar(avisar){
   DADOS = data || [];
   render();
   if(avisar) toast('Atualizado — ' + DADOS.length + ' na fila');
+  // se ha pergunta esperando resposta, o painel se atualiza sozinho a cada 60s
+  const esperando = DADOS.some(function(i){ return i.ultima_pergunta && !i.ultima_resposta; });
+  clearInterval(timer);
+  if(esperando) timer = setInterval(function(){ carregar(); }, 60000);
 }
 
 function render(){
@@ -133,23 +145,64 @@ function render(){
   el.innerHTML = alvo.map(function(i){
     const q = i.nivel === 1 ? 'q1' : i.nivel === 2 ? 'q2' : 'q3';
     const id = i.origem + '|' + i.ref;
+    const cid = cssid(id);
+    const esperando = i.ultima_pergunta && !i.ultima_resposta;
     const tags = [ '<span class="tag">'+i.origem+'</span>',
                    i.frente ? '<span class="tag">'+i.frente+'</span>' : '',
                    i.valor_txt ? '<span class="tag money">'+i.valor_txt+'</span>' : '',
-                   i.forcar_decisao ? '<span class="tag parado">parado '+i.dias_parado+'d</span>' : '' ].join('');
+                   i.forcar_decisao ? '<span class="tag parado">parado '+i.dias_parado+'d</span>' : '',
+                   esperando ? '<span class="tag espera">respondo em até 1h</span>' : '' ].join('');
     const rec = i.recomendacao
       ? '<div class="rec">'+esc(i.recomendacao)+'<span class="fonte">'+esc(i.recomendacao_fonte||'')+'</span></div>' : '';
+    let dlg = '';
+    if(i.ultima_pergunta){
+      dlg = '<div class="dlg"><div class="q">você perguntou '+esc(i.perguntado_em||'')+': <b>'+esc(i.ultima_pergunta)+'</b></div>'
+          + (i.ultima_resposta
+              ? '<div class="a">'+esc(i.ultima_resposta)+'<span class="fonte" style="display:block;margin-top:7px;font-size:10.5px;color:var(--mut)">respondido '+esc(i.respondido_em||'')+'</span></div>'
+              : '<div class="esp">aguardando — a resposta aparece aqui sozinha, sem você recarregar.</div>')
+          + '</div>';
+    }
     const acts = (i.acoes||[]).map(function(a){
       const cls = a.verbo === 'repactuar' ? 'ghost' : '';
       return '<button class="'+cls+'" onclick="pedir(\''+id+'\',\''+a.verbo+'\',\''+(a.campo||'')+'\',this)">'+a.label+'</button>';
     }).join('');
-    return '<div class="item '+q+'" id="c_'+cssid(id)+'">'
+    return '<div class="item '+q+'" id="c_'+cid+'">'
          +   '<div class="tit">'+esc(i.titulo)+'</div>'
          +   '<div class="meta">'+tags+'<span>'+esc(i.porque_agora||'')+'</span></div>'
-         +   rec
-         +   '<div class="acts">'+acts+'<button class="ask" onclick="analisar(\''+id+'\',this)">me explica</button></div>'
+         +   rec + dlg
+         +   '<div class="acts" id="a_'+cid+'">'+acts
+         +     '<button class="ask" onclick="abrirPergunta(\''+id+'\',this)">perguntar</button>'
+         +   '</div>'
          + '</div>';
   }).join('');
+}
+
+/* ---------- perguntar: campo inline, sem janela do navegador ---------- */
+function abrirPergunta(id, btn){
+  const box = btn.parentElement;
+  if(box.parentElement.querySelector('.perg')) return;
+  btn.disabled = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'perg';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = 'o que você quer saber sobre isso?';
+  const ok = document.createElement('button');
+  ok.textContent = 'enviar';
+  const enviar = async function(){
+    const t = inp.value.trim(); if(!t) return;
+    ok.disabled = true; inp.disabled = true;
+    const p = id.split('|');
+    const {data, error} = await sb.rpc('perguntar',{p_origem:p[0], p_ref:p[1], p_texto:t});
+    if(error){ toast('Erro: '+error.message); ok.disabled=false; inp.disabled=false; return; }
+    toast(data && data.msg ? data.msg : 'Anotado.');
+    carregar();
+  };
+  ok.onclick = enviar;
+  inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') enviar(); });
+  wrap.append(inp, ok);
+  box.parentElement.append(wrap);
+  inp.focus();
 }
 
 /* ---------- agir ---------- */
@@ -177,18 +230,8 @@ async function executar(id, verbo, valor, btn){
   if(String(data).startsWith('OK')){
     const c = document.getElementById('c_'+cssid(id));
     if(c){ c.style.transition='.2s'; c.style.opacity='0'; setTimeout(function(){ c.remove(); }, 200); }
-    setTimeout(carregar, 400);
+    setTimeout(carregar, 500);
   } else { carregar(); }
-}
-
-async function analisar(id, btn){
-  const p = id.split('|');
-  const q = prompt('O que você quer saber sobre isso?\n(deixe em branco para "o que eu faço com isso?")');
-  if(q === null) return;
-  btn.disabled = true;
-  const {data, error} = await sb.rpc('pedir_analise',{p_origem:p[0], p_ref:p[1], p_pergunta:q || null});
-  btn.disabled = false;
-  toast(error ? 'Erro: '+error.message : data);
 }
 
 /* ---------- inbox ---------- */
@@ -203,7 +246,7 @@ document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key
 
 /* ---------- utils ---------- */
 let tt;
-function toast(t){ const e=document.getElementById('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ e.classList.remove('on'); }, 3600); }
+function toast(t){ const e=document.getElementById('toast'); e.textContent=t; e.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){ e.classList.remove('on'); }, 4200); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function cssid(s){ return s.replace(/[^a-zA-Z0-9_-]/g,'_'); }
 </script>
