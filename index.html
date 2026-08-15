@@ -71,7 +71,7 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 
 <div id="app" hidden>
   <header>
-    <h1>CÉREBRO <span style="font-size:10px;letter-spacing:1px;opacity:.55">v7</span></h1>
+    <h1>CÉREBRO <span style="font-size:10px;letter-spacing:1px;opacity:.55">v8</span></h1>
     <span class="count" id="cnt"></span>
     <button class="link" id="btnPlacar" onclick="verPlacar()">placar</button>
     <button class="link" id="btnRec" onclick="carregar(true)">↻</button>
@@ -79,6 +79,7 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
   </header>
   <main>
     <div id="placar" hidden></div>
+    <div id="correcoes"></div>
     <p class="lbl">ANOTAR UM FATO OU PEDIR ALGO</p>
     <div class="inbox">
       <input id="cmd" placeholder="ex: recebi 6.484 da Brafor hoje" enterkeyhint="send"/>
@@ -127,6 +128,7 @@ async function carregar(avisar){
   if(error) return toast('Erro ao ler: '+error.message);
   DADOS = data || [];
   render();
+  renderCorrecoes();
   if(avisar) toast('Atualizado — ' + DADOS.length + ' na fila');
   // se ha pergunta esperando resposta, o painel se atualiza sozinho a cada 60s
   const esperando = DADOS.some(function(i){ return i.ultima_pergunta && !i.ultima_resposta; });
@@ -258,6 +260,24 @@ async function anotar(){
 }
 document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key === 'Enter') anotar(); });
 
+/* ---------- correções: vivem fora da fila, senão somem com o item ---------- */
+async function renderCorrecoes(){
+  const el = document.getElementById('correcoes');
+  const {data, error} = await sb.from('v_correcoes_abertas').select('*');
+  if(error || !data || !data.length){ el.innerHTML = ''; return; }
+  el.innerHTML = '<p class="lbl" style="color:var(--yel)">O MOTOR DISCORDOU DE VOCÊ — ' + data.length + ' AGUARDANDO RESPOSTA</p>'
+    + data.map(function(c){
+        return '<div class="item" style="border-left-color:var(--yel)">'
+             + '<div class="meta"><span class="tag">'+esc(c.origem)+'#'+esc(c.ref)+'</span><span>'+esc(c.quando)+'</span></div>'
+             + '<div class="dlg"><div class="q">sua posição: <b>'+esc(c.sua_posicao)+'</b></div>'
+             + '<div class="a">'+esc(c.o_que_o_motor_disse)+'</div></div>'
+             + '<div class="acts">'
+             + '<button onclick="corrigir('+c.dialogo_id+',true,this)">aceito</button>'
+             + '<button class="ghost" onclick="corrigir('+c.dialogo_id+',false,this)">mantenho minha posição</button>'
+             + '</div></div>';
+      }).join('');
+}
+
 /* ---------- correcao: quem julga o confronto e você, não eu ---------- */
 async function corrigir(id, aceito, btn){
   btn.disabled = true;
@@ -266,6 +286,7 @@ async function corrigir(id, aceito, btn){
   if(error) return toast('Erro: '+error.message);
   toast(data && data.msg ? data.msg : 'Registrado.');
   carregar();
+  renderCorrecoes();
 }
 
 /* ---------- placar: a simbiose medindo a si mesma ---------- */
