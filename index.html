@@ -97,7 +97,7 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 const URL_ = "https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_ = "sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5"; // publicavel; a defesa e o RLS
 const sb = supabase.createClient(URL_, KEY_);
-const VERSAO = "v10";                     // reportada ao banco no primeiro carregamento
+const VERSAO = "v11";                     // reportada ao banco no primeiro carregamento
 let DADOS = [], TODOS = false, ocupado = false, timer = null;
 let CORRECOES = [], CORR_ACOES = {};      // as acoes vem DECLARADAS pela view; o HTML so transporta
 document.getElementById('ver').textContent = VERSAO;
@@ -189,8 +189,12 @@ function render(){
       const cls = a.verbo === 'repactuar' ? 'ghost' : '';
       return '<button class="'+cls+'" onclick="pedir(\''+id+'\',\''+a.verbo+'\',\''+(a.campo||'')+'\',this)">'+a.label+'</button>';
     }).join('');
+    // titulo tem teto de 160 na view; o inteiro abre com um toque, nada se perde
+    const tit = i.titulo_truncado
+      ? '<div class="tit" style="cursor:pointer" title="toque para ver o título inteiro" data-full="'+esc(i.titulo_completo||'')+'" onclick="this.textContent=this.dataset.full;this.style.cursor=\'default\'">'+esc(i.titulo)+'</div>'
+      : '<div class="tit">'+esc(i.titulo)+'</div>';
     return '<div class="item '+q+'" id="c_'+cid+'">'
-         +   '<div class="tit">'+esc(i.titulo)+'</div>'
+         +   tit
          +   '<div class="meta">'+tags+'<span>'+esc(i.porque_agora||'')+'</span></div>'
          +   rec + dlg
          +   '<div class="acts" id="a_'+cid+'">'+acts
