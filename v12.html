@@ -1,0 +1,363 @@
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CÉREBRO IGOR</title>
+<style>
+:root{--bg:#0d1117;--card:#161d2b;--card2:#1c2536;--ink:#e9eef7;--mut:#8b98ae;--dim:#5d6b82;
+--red:#e5484d;--yel:#f5a623;--grn:#30a46c;--acc:#4c8dff;--vio:#8b7cf6;--line:#242f45;
+--ok:#6ee7a8;--bad:#ff8a8f;--warn:#f5c26b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);
+font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+a{color:var(--acc)}
+.top{position:sticky;top:0;z-index:9;background:rgba(13,17,23,.94);backdrop-filter:blur(8px);
+border-bottom:1px solid var(--line)}
+.topin{max-width:1080px;margin:0 auto;padding:14px 18px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600}
+.ver{font-size:10px;letter-spacing:1.6px;color:var(--acc);border:1px solid var(--acc);
+padding:2px 8px;border-radius:20px;font-weight:600}
+.deg{font-size:11px;color:var(--mut);margin-left:auto;display:flex;gap:8px;align-items:center}
+.deg b{color:var(--ok);font-size:14px}
+.btn{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+padding:6px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--acc)}
+.tabs{max-width:1080px;margin:0 auto;padding:10px 18px 0;display:flex;gap:4px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);
+padding:9px 14px;font-size:12px;letter-spacing:1.6px;font-weight:600;cursor:pointer;
+white-space:nowrap;font-family:inherit}
+.tab.on{color:var(--ink);border-bottom-color:var(--acc)}
+.tab .n{color:var(--acc);margin-left:6px}
+main{max-width:1080px;margin:0 auto;padding:22px 18px 90px}
+.pane{display:none}.pane.on{display:block}
+h2{font-size:11px;letter-spacing:2.2px;color:var(--mut);margin:30px 0 12px;font-weight:600;
+border-bottom:1px solid var(--line);padding-bottom:8px}
+h2:first-child{margin-top:4px}
+.hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 62%);border-left:4px solid var(--grn);
+border-radius:14px;padding:18px 20px;margin-bottom:18px}
+.hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 62%);border-left-color:var(--red)}
+.hero .t{font-size:21px;font-weight:600;letter-spacing:-.2px}
+.hero .s{font-size:14px;color:#cdd6e4;margin-top:5px}
+.card{background:var(--card);border-radius:13px;padding:15px 17px;margin-bottom:10px;
+border-left:3px solid var(--line)}
+.card.n1{border-left-color:var(--red)}.card.n2{border-left-color:var(--yel)}
+.card.n3{border-left-color:var(--dim)}.card.cor{border-left-color:var(--vio)}
+.ttl{font-size:15px;font-weight:500;margin-bottom:3px}
+.meta{font-size:12px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.val{color:var(--ok);font-weight:600}
+.rec{font-size:13.4px;color:#c3ccdb;background:var(--card2);border-radius:9px;
+padding:9px 12px;margin:8px 0}
+.rec b{color:var(--warn)}
+.acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
+.prim{background:#12321f;border:1px solid var(--grn);color:var(--ok);border-radius:9px;
+padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.prim:hover{background:#174028}
+.mais{background:none;border:0;color:var(--mut);font-size:12.5px;cursor:pointer;
+text-decoration:underline;font-family:inherit}
+.extra{display:none;gap:7px;flex-wrap:wrap;margin-top:8px}.extra.on{display:flex}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:11px}
+.kpi{background:var(--card);border-radius:13px;padding:14px 15px;border:1px solid transparent}
+.kpi.dentro{border-color:rgba(48,163,108,.3)}.kpi.fora{border-color:rgba(229,72,77,.3)}
+.kpi .k{font-size:11px;color:var(--dim);font-family:ui-monospace,monospace;margin-bottom:2px}
+.kpi .r{font-size:13px;color:var(--mut);margin-bottom:8px;line-height:1.35}
+.kpi .n{font-size:27px;font-weight:650;line-height:1;letter-spacing:-.5px}
+.kpi.dentro .n{color:var(--ok)}.kpi.fora .n{color:var(--bad)}.kpi .n.nd{color:var(--dim);font-size:17px}
+.kpi .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;gap:10px}
+.kpi .m{font-size:11.5px;color:var(--mut)}
+.sp{display:block}
+.pill{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px}
+.p-ok{background:#12321f;color:var(--ok)}.p-bad{background:#3a1d1f;color:var(--bad)}
+.p-med{background:#3a3320;color:var(--warn)}.p-nd{background:var(--card2);color:var(--mut)}
+.esc{display:grid;gap:6px;margin-bottom:6px}
+.dim{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);
+font-size:13.5px;flex-wrap:wrap}
+.dim:last-child{border-bottom:0}
+.dim .nm{flex:1;min-width:150px;font-weight:500}
+.bar{display:flex;gap:3px}.bar s{width:22px;height:9px;border-radius:2px;background:var(--card2);
+text-decoration:none;display:block}
+.bar s.f{background:var(--grn)}.bar s.w{background:var(--red)}
+.ow{font-size:11.5px;color:var(--mut);min-width:200px;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:10px;letter-spacing:1.2px;color:var(--mut)}
+.mono{font-family:ui-monospace,monospace;font-size:12px;color:#a8c0e8;white-space:nowrap}
+.right{text-align:right}
+.log{position:fixed;left:0;right:0;bottom:0;background:var(--card2);border-top:1px solid var(--line);
+padding:11px 18px;font-size:13px;display:none;z-index:20}
+.log.on{display:block}
+.login{max-width:400px;margin:16vh auto;text-align:center;padding:0 20px}
+input{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:9px;
+padding:11px 13px;font-size:15px;width:100%;font-family:inherit}
+.empty{color:var(--mut);font-size:14px;padding:22px 0;text-align:center}
+.foot{margin-top:40px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:16px;line-height:1.7}
+code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;color:#a8c0e8}
+</style></head><body>
+<div id="login" class="login" style="display:none">
+  <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
+  <p style="color:var(--mut);font-size:14px;margin:22px 0 14px">Entre com seu e-mail para receber o link.</p>
+  <input id="em" type="email" placeholder="voce@email.com" autocomplete="email">
+  <button class="prim" style="margin-top:12px;width:100%" onclick="entrar()">Receber link de acesso</button>
+  <p id="lmsg" style="color:var(--mut);font-size:13px;margin-top:14px"></p>
+</div>
+
+<div id="app" style="display:none">
+<div class="top"><div class="topin">
+  <h1>CÉREBRO IGOR</h1><span class="ver" id="vtag">v12</span>
+  <span class="deg" id="degrau"></span>
+  <button class="btn" onclick="carregar()">↻</button>
+  <button class="btn" onclick="sair()">sair</button>
+</div>
+<div class="tabs">
+  <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
+  <button class="tab" data-p="eviden">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
+  <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
+  <button class="tab" data-p="acervo">ACERVO<span class="n" id="n-ac"></span></button>
+</div></div>
+
+<main>
+  <div class="pane on" id="p-agora">
+    <div id="hero"></div>
+    <div id="correcoes"></div>
+    <h2>PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
+    <h2>DEPOIS <span style="color:var(--dim)">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
+    <div style="text-align:center;margin-top:14px">
+      <button class="mais" onclick="verResto()" id="btresto"></button>
+    </div>
+    <div id="fila3" style="margin-top:10px;display:none"></div>
+  </div>
+
+  <div class="pane" id="p-eviden">
+    <h2>A ESCADA <span style="color:var(--dim)">— CMMI · o nível do sistema é o MENOR elo</span></h2>
+    <div class="esc" id="escada"></div>
+    <div class="card" id="dims"></div>
+    <div id="kpis"></div>
+    <div class="foot">
+      <b>Como ler:</b> a linha é a série do indicador nos últimos dias distintos de medição — um ponto por dia,
+      o último ponto é o valor de agora. A linha tracejada é a meta. <b>Indeterminado não é zero:</b>
+      indicador sem base mínima devolve vazio de propósito, porque número bonito sem lastro é pior que número nenhum.
+      Nada nesta tela é digitado: tudo sai de <code>kpi</code> + <code>medir_kpi()</code>.
+    </div>
+  </div>
+
+  <div class="pane" id="p-motor">
+    <h2>ROTINAS <span style="color:var(--dim)">— quem bate ponto sozinho</span></h2>
+    <div class="card"><table id="rotinas"></table></div>
+    <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
+    <div class="foot"><b>Ponto</b> é execução registrada, não resultado: rotina que roda, olha a fila e para
+      porque não havia trabalho <i>bateu ponto</i>. Silêncio de rotina é alarme; rotina manual (janela 0h) não se vigia por relógio.</div>
+  </div>
+
+  <div class="pane" id="p-acervo">
+    <h2>O ACERVO EM NÚMEROS</h2><div class="grid" id="acnum"></div>
+    <h2>AS QUE MAIS TRABALHAM <span style="color:var(--dim)">— por uso real</span></h2>
+    <div class="card"><table id="actop"></table></div>
+    <h2>OFERECIDAS E IGNORADAS <span style="color:var(--dim)">— chegaram na hora e não mudaram nada</span></h2>
+    <div class="card"><table id="acign"></table></div>
+  </div>
+</main></div>
+<div class="log" id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
+const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
+const VER="v12";
+const sb=supabase.createClient(URL_,KEY_);
+let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[]},mostrarResto=false;
+
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).toFixed(1)+"d":
+  u==="min"?(+v).toFixed(0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
+  (Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0));
+function msg(t,ms){const l=document.getElementById("log");l.textContent=t;l.classList.add("on");
+  clearTimeout(msg._t);msg._t=setTimeout(()=>l.classList.remove("on"),ms||4200);}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");document.getElementById("p-"+b.dataset.p).classList.add("on");
+  window.scrollTo({top:0,behavior:"smooth"});});
+
+async function entrar(){const e=document.getElementById("em").value.trim();
+  if(!e)return;const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href}});
+  document.getElementById("lmsg").textContent=error?("erro: "+error.message):"link enviado — confira o e-mail.";}
+async function sair(){await sb.auth.signOut();location.reload();}
+
+async function carregar(){
+  msg("carregando…",1600);
+  const q=(v,o)=>sb.from(v).select("*").then(r=>r.error?[]:(o?r.data:r.data));
+  const [fila,cor,ev,mo,ac,mat]=await Promise.all([
+    q("v_fila_do_igor"),q("v_correcoes_abertas"),q("v_painel_evolucao"),
+    q("v_painel_motor"),q("v_painel_acervo"),q("v_simbiose_maturidade")]);
+  D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[]};
+  render();
+  try{await sb.rpc("painel_ping",{p_versao:VER});}catch(e){}
+  msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),2200);
+}
+
+function render(){rAgora();rEvolucao();rMotor();rAcervo();}
+
+/* ---------- AGORA ---------- */
+function sparkKPI(){return "";}
+function cardFila(it){
+  const acts=(it.acoes||[]);
+  const sug=acts.find(a=>a.verbo===it.verbo_sugerido)||acts[0]||null;
+  const outros=acts.filter(a=>a!==sug);
+  const uid=(it.origem+"-"+it.ref).replace(/[^a-z0-9-]/gi,"");
+  return `<div class="card n${it.nivel}">
+   <div class="ttl">${esc(it.titulo_completo||it.titulo)}</div>
+   <div class="meta">
+     <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
+     ${it.frente?`<span>${esc(it.frente)}</span>`:""}
+     ${it.valor_txt?`<span class="val">${esc(it.valor_txt)}</span>`:""}
+     ${it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:""}
+     ${it.forcar_decisao?`<span class="pill p-bad">decida</span>`:""}
+   </div>
+   ${it.porque_agora?`<div style="font-size:13px;color:var(--mut)">${esc(it.porque_agora)}</div>`:""}
+   ${it.recomendacao?`<div class="rec"><b>recomendo:</b> ${esc(it.recomendacao)}</div>`:""}
+   ${it.ultima_pergunta?`<div class="rec" style="border-left:2px solid var(--vio)"><b>você disse:</b> ${esc(it.ultima_pergunta)}${it.ultima_resposta?`<br><b style="color:var(--ok)">resposta:</b> ${esc(it.ultima_resposta)}`:`<br><i style="color:var(--warn)">aguardando o executor</i>`}</div>`:""}
+   <div class="acts">
+     ${sug?`<button class="prim" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(sug.verbo)}','${esc(sug.campo||"")}')">✓ ${esc(sug.label)}</button>`:""}
+     ${outros.length?`<button class="mais" onclick="document.getElementById('x-${uid}').classList.toggle('on')">outra coisa</button>`:""}
+     <button class="mais" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
+   </div>
+   <div class="extra" id="x-${uid}">
+     ${outros.map(a=>`<button class="btn" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}')">${esc(a.label)}</button>`).join("")}
+   </div></div>`;
+}
+function rAgora(){
+  const n1=D.fila.filter(f=>f.nivel===1),n2=D.fila.filter(f=>f.nivel===2),n3=D.fila.filter(f=>f.nivel>2);
+  const alerta=n1.length>0||D.cor.length>0;
+  document.getElementById("hero").innerHTML=`<div class="hero ${alerta?"alert":""}">
+    <div class="t">${n1.length?n1.length+" precisa"+(n1.length>1?"m":"")+" de você hoje":"nada precisa de você hoje"}</div>
+    <div class="s">${D.cor.length?D.cor.length+" correção(ões) esperando sua palavra · ":""}${n2.length} em segundo plano · ${D.fila.length} no funil inteiro</div></div>`;
+  document.getElementById("correcoes").innerHTML=D.cor.length?
+    `<h2>SUA PALAVRA ESTÁ TRAVANDO</h2>`+D.cor.map(c=>`<div class="card cor">
+      <div class="ttl">${esc(c.sua_posicao)}</div>
+      <div class="meta"><span class="mono">${esc(c.origem)} ${esc(c.ref)}</span><span>há ${c.dias_esperando}d</span></div>
+      <div class="rec">${esc(c.o_que_o_motor_disse)}</div></div>`).join(""):"";
+  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join(""):`<div class="empty">fila limpa — silêncio aqui é informação, não falta de dado.</div>`;
+  document.getElementById("fila2").innerHTML=n2.length?n2.map(cardFila).join(""):`<div class="empty">nada em segundo plano.</div>`;
+  document.getElementById("n-agora").textContent=n1.length||"";
+  const bt=document.getElementById("btresto");
+  bt.textContent=n3.length?(mostrarResto?"esconder os outros "+n3.length:"ver os outros "+n3.length):"";
+  document.getElementById("fila3").style.display=mostrarResto?"block":"none";
+  document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");
+}
+function verResto(){mostrarResto=!mostrarResto;rAgora();}
+
+async function agir(origem,ref,verbo,campo){
+  let valor=null;
+  if(campo==="date"){valor=prompt("Nova data (AAAA-MM-DD):");if(!valor)return;}
+  else if(campo==="texto"){valor=prompt("Sua palavra:");if(!valor)return;}
+  const {data,error}=await sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:valor});
+  msg(error?("erro: "+error.message):(data||"feito"));carregar();
+}
+async function perguntar(origem,ref){
+  const t=prompt("O que você quer saber ou mandar fazer?");if(!t)return;
+  const {error}=await sb.rpc("perguntar",{p_origem:origem,p_ref:ref,p_texto:t});
+  msg(error?("erro: "+error.message):"registrado — o executor responde na próxima passada.");carregar();
+}
+
+/* ---------- EVOLUÇÃO ---------- */
+function spark(serie,meta,dir,w,h){
+  const s=(serie||[]).map(Number).filter(v=>!isNaN(v));
+  if(s.length<1)return `<svg class="sp" width="${w}" height="${h}"></svg>`;
+  const vals=meta!=null?s.concat([+meta]):s;
+  let mn=Math.min(...vals),mx=Math.max(...vals);
+  if(mx===mn){mx=mn+1;mn=mn-1;}
+  const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
+  const X=i=>s.length===1?w/2:4+i*(w-8)/(s.length-1);
+  const Y=v=>h-4-((v-mn)/(mx-mn))*(h-8);
+  const d=s.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+  const last=s[s.length-1];
+  const ok=meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
+  const col=ok===null?"#8b98ae":ok?"#30a46c":"#e5484d";
+  return `<svg class="sp" width="${w}" height="${h}" role="img" aria-label="série de ${s.length} ponto(s)">
+    ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" stroke="#5d6b82" stroke-width="1" stroke-dasharray="3 3"/>`:""}
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/>
+  </svg>`;
+}
+const DIMR={contrato:"Contrato e precedência",memoria:"Memória e handoff",acervo:"Acervo de aprendizado",
+motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",fluxo:"Fluxo",medicao:"Medição"};
+function rEvolucao(){
+  const min=D.mat.length?Math.min(...D.mat.map(m=>m.nivel)):null;
+  const elo=D.mat.slice().sort((a,b)=>a.nivel-b.nivel||a.ordem-b.ordem)[0];
+  document.getElementById("degrau").innerHTML=min?`degrau <b>${min}</b> · elo ${esc(elo?elo.dimensao:"—")}`:"";
+  const nomes=["Inicial","Gerenciado","Definido","Quantitativo","Otimizando"];
+  const desc=["Depende de alguém lembrar. Não há sensor.","Registro, dono e prazo — execução por disciplina.",
+  "Contrato executável: o desvio é RECUSADO, não avisado.","KPI canônico + série de 7 dias distintos + alarme ligado.",
+  "Todo defeito vira defesa permanente — trigger ou fixture, nunca recomendação."];
+  document.getElementById("escada").innerHTML=nomes.map((n,i)=>{
+    const on=min&&(i+1)<=min;
+    return `<div class="dim" style="background:var(--card);border-radius:11px;padding:11px 14px;border-left:3px solid ${on?"var(--grn)":"var(--line)"}">
+      <span style="font-size:19px;font-weight:700;color:${on?"var(--ok)":"var(--mut)"};width:22px">${i+1}</span>
+      <span class="nm">${n} ${i+1===min?'<span class="pill p-ok">o sistema está aqui</span>':""}</span>
+      <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:200px">${desc[i]}</span></div>`;}).join("");
+  document.getElementById("dims").innerHTML=D.mat.map(m=>{
+    const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
+    return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
+      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`;}).join("");
+  const porDim={};D.ev.forEach(k=>{(porDim[k.dimensao]=porDim[k.dimensao]||[]).push(k);});
+  document.getElementById("kpis").innerHTML=Object.keys(porDim).sort().map(d=>
+    `<h2>${esc((DIMR[d]||d).toUpperCase())} <span style="color:var(--dim)">— ${porDim[d].length} indicador(es)</span></h2>
+     <div class="grid">${porDim[d].map(k=>{
+      const cls=k.situacao==="dentro"?"dentro":k.situacao==="fora"?"fora":"";
+      const pill=k.tendencia==="melhorou"?'<span class="pill p-ok">melhorou</span>':
+        k.tendencia==="piorou"?'<span class="pill p-bad">piorou</span>':
+        k.tendencia==="estavel"?'<span class="pill p-nd">estável</span>':'<span class="pill p-nd">sem série</span>';
+      const v=k.valor==null?`<div class="n nd">indeterminado</div>`:`<div class="n">${nfmt(k.valor,k.unidade)}</div>`;
+      return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
+        <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
+        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${pill}</span>
+        ${spark(k.serie,k.meta_num,k.direcao,104,34)}</div></div>`;}).join("")}</div>`).join("");
+  document.getElementById("n-ev").textContent=D.ev.filter(k=>k.situacao==="fora").length||"";
+}
+
+/* ---------- MOTOR ---------- */
+function rMotor(){
+  const ord={"atrasada":0,"nunca":1,"no ponto":2,"manual":3};
+  document.getElementById("rotinas").innerHTML=
+   `<tr><th>rotina</th><th>estado</th><th>janela</th><th class="right">pontos 7d</th><th class="right">último</th></tr>`+
+   D.mo.slice().sort((a,b)=>(ord[a.estado]??9)-(ord[b.estado]??9)).map(r=>{
+    const p=r.estado==="no ponto"?"p-ok":r.estado==="manual"?"p-nd":"p-bad";
+    const u=r.ultimo_ponto?new Date(r.ultimo_ponto).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"—";
+    return `<tr><td class="mono">${esc(r.nome)}</td><td><span class="pill ${p}">${esc(r.estado)}</span></td>
+      <td style="color:var(--mut)">${r.janela_horas?r.janela_horas+"h":"manual"}${r.hora_inicio!=null?" · "+r.hora_inicio+"h-"+r.hora_fim+"h":""}</td>
+      <td class="right">${r.pontos_7d}</td><td class="right" style="color:var(--mut)">${u}</td></tr>`;}).join("");
+  const ruins=D.mo.filter(r=>r.estado==="atrasada"||r.estado==="nunca");
+  document.getElementById("n-mo").textContent=ruins.length||"";
+  document.getElementById("achados").innerHTML=ruins.length?ruins.map(r=>
+    `<div class="card n1"><div class="ttl">${esc(r.nome)} — ${esc(r.estado)}</div>
+     <div class="meta">janela ${r.janela_horas}h · vigente desde ${esc((r.vigente_desde||"").slice(0,10))}</div>
+     <div class="rec">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
+    :`<div class="empty">nenhuma rotina atrasada. As que aparecem como "manual" não se vigiam por relógio, por desenho.</div>`;
+}
+
+/* ---------- ACERVO ---------- */
+function rAcervo(){
+  const t=D.ac.length,us=D.ac.filter(a=>a.usos>0).length,of=D.ac.filter(a=>a.exposicoes>0).length;
+  const ign=D.ac.filter(a=>a.exposicoes>=3&&a.usos===0);
+  const nunca=D.ac.filter(a=>a.exposicoes===0);
+  const tile=(n,r,cls)=>`<div class="kpi ${cls||""}"><div class="n">${n}</div><div class="r" style="margin:8px 0 0">${r}</div></div>`;
+  document.getElementById("acnum").innerHTML=
+    tile(t,"lições vivas")+
+    tile(us+" <span style='font-size:14px;color:var(--mut)'>("+Math.round(100*us/t)+"%)</span>","já aplicadas ao menos uma vez","dentro")+
+    tile(of,"já oferecidas pelo buscador")+
+    tile(nunca.length+" <span style='font-size:14px;color:var(--mut)'>("+Math.round(100*nunca.length/t)+"%)</span>","nunca chegaram a ser oferecidas",nunca.length>t/2?"fora":"");
+  const linha=a=>`<tr><td class="mono">${a.id}</td><td>${esc(a.tema)}</td>
+    <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,64))}</td>
+    <td class="right">${a.exposicoes}</td><td class="right">${a.usos}</td></tr>`;
+  document.getElementById("actop").innerHTML=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`+
+    D.ac.slice().sort((a,b)=>b.usos-a.usos||b.exposicoes-a.exposicoes).slice(0,12).map(linha).join("");
+  document.getElementById("acign").innerHTML=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`+
+    (ign.length?ign.sort((a,b)=>b.exposicoes-a.exposicoes).slice(0,10).map(linha).join("")
+     :`<tr><td colspan="5" class="empty">nenhuma lição foi oferecida 3+ vezes sem ser usada.</td></tr>`);
+  document.getElementById("n-ac").textContent=ign.length||"";
+}
+
+sb.auth.getSession().then(({data})=>{
+  if(data.session){document.getElementById("app").style.display="block";carregar();}
+  else{document.getElementById("login").style.display="block";}
+});
+sb.auth.onAuthStateChange((_e,s)=>{if(s){document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";carregar();}});
+</script></body></html>
