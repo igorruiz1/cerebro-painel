@@ -71,7 +71,7 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 
 <div id="app" hidden>
   <header>
-    <h1>CÉREBRO <span style="font-size:10px;letter-spacing:1px;opacity:.55">v8</span></h1>
+    <h1>CÉREBRO <span style="font-size:10px;letter-spacing:1px;opacity:.55" id="ver"></span></h1>
     <span class="count" id="cnt"></span>
     <button class="link" id="btnPlacar" onclick="verPlacar()">placar</button>
     <button class="link" id="btnRec" onclick="carregar(true)">↻</button>
@@ -97,7 +97,10 @@ input[type=date],input.inl{padding:11px;border-radius:10px;border:1px solid var(
 const URL_ = "https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_ = "sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5"; // publicavel; a defesa e o RLS
 const sb = supabase.createClient(URL_, KEY_);
+const VERSAO = "v10";                     // reportada ao banco no primeiro carregamento
 let DADOS = [], TODOS = false, ocupado = false, timer = null;
+let CORRECOES = [], CORR_ACOES = {};      // as acoes vem DECLARADAS pela view; o HTML so transporta
+document.getElementById('ver').textContent = VERSAO;
 
 /* ---------- acesso ---------- */
 async function enviarLink(){
@@ -117,16 +120,24 @@ function abrir(){
   document.getElementById('login').hidden = true;
   document.getElementById('app').hidden = false;
   if(location.hash) history.replaceState(null,'',location.pathname);
+  // sem ping, "esta no ar" e crenca: a superficie publicada declara a propria versao
+  sb.rpc('painel_ping',{p_versao:VERSAO, p_origem:location.host}).then(function(r){ if(r.error) console.warn('ping:', r.error.message); });
   carregar();
 }
 
 /* ---------- fila ---------- */
 async function carregar(avisar){
   const b = document.getElementById('btnRec'); b.textContent = '…';
-  const {data, error} = await sb.from('v_fila_do_igor').select('*').order('peso',{ascending:false});
+  const [fila, corr] = await Promise.all([
+    sb.from('v_fila_do_igor').select('*').order('peso',{ascending:false}),
+    sb.from('v_correcoes_abertas').select('*')
+  ]);
   b.textContent = '↻';
-  if(error) return toast('Erro ao ler: '+error.message);
-  DADOS = data || [];
+  if(fila.error) return toast('Erro ao ler: '+fila.error.message);
+  DADOS = fila.data || [];
+  CORRECOES = corr.error ? [] : (corr.data || []);
+  CORR_ACOES = {};
+  CORRECOES.forEach(function(c){ CORR_ACOES[c.dialogo_id] = c.acoes || []; });
   render();
   renderCorrecoes();
   if(avisar) toast('Atualizado — ' + DADOS.length + ' na fila');
@@ -170,10 +181,7 @@ function render(){
           + (i.correcao_aberta
               ? '<div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--line)">'
                 + '<div style="font-size:12.5px;color:var(--yel);margin-bottom:9px">↑ isto foi uma CORREÇÃO: o motor discordou de você. Ela só conta se você responder.</div>'
-                + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
-                + '<button onclick="corrigir('+i.dialogo_id+',true,this)">aceito</button>'
-                + '<button class="ghost" onclick="corrigir('+i.dialogo_id+',false,this)">mantenho minha posição</button>'
-                + '</div></div>'
+                + '<div class="acts" style="gap:8px">' + btnsCorrecao(i.dialogo_id) + '</div></div>'
               : '')
           + '</div>';
     }
@@ -261,32 +269,59 @@ async function anotar(){
 document.getElementById('cmd').addEventListener('keydown', function(e){ if(e.key === 'Enter') anotar(); });
 
 /* ---------- correções: vivem fora da fila, senão somem com o item ---------- */
-async function renderCorrecoes(){
+function renderCorrecoes(){
   const el = document.getElementById('correcoes');
-  const {data, error} = await sb.from('v_correcoes_abertas').select('*');
-  if(error || !data || !data.length){ el.innerHTML = ''; return; }
-  el.innerHTML = '<p class="lbl" style="color:var(--yel)">O MOTOR DISCORDOU DE VOCÊ — ' + data.length + ' AGUARDANDO RESPOSTA</p>'
-    + data.map(function(c){
+  if(!CORRECOES.length){ el.innerHTML = ''; return; }
+  el.innerHTML = '<p class="lbl" style="color:var(--yel)">O MOTOR DISCORDOU DE VOCÊ — ' + CORRECOES.length + ' AGUARDANDO RESPOSTA</p>'
+    + CORRECOES.map(function(c){
         return '<div class="item" style="border-left-color:var(--yel)">'
              + '<div class="meta"><span class="tag">'+esc(c.origem)+'#'+esc(c.ref)+'</span><span>'+esc(c.quando)+'</span></div>'
              + '<div class="dlg"><div class="q">sua posição: <b>'+esc(c.sua_posicao)+'</b></div>'
              + '<div class="a">'+esc(c.o_que_o_motor_disse)+'</div></div>'
-             + '<div class="acts">'
-             + '<button onclick="corrigir('+c.dialogo_id+',true,this)">aceito</button>'
-             + '<button class="ghost" onclick="corrigir('+c.dialogo_id+',false,this)">mantenho minha posição</button>'
-             + '</div></div>';
+             + '<div class="acts">' + btnsCorrecao(c.dialogo_id) + '</div></div>';
       }).join('');
 }
 
-/* ---------- correcao: quem julga o confronto e você, não eu ---------- */
-async function corrigir(id, aceito, btn){
+/* ---------- correcao: o HTML NAO conhece verbo — a view declara rpc, param e rotulo ---------- */
+function btnsCorrecao(dialogoId){
+  const acoes = CORR_ACOES[dialogoId] || [];
+  if(!acoes.length) return '<span class="muted">recarregue — nenhuma ação disponível</span>';
+  return acoes.map(function(a, ix){
+    return '<button class="'+(ix === 0 ? '' : 'ghost')+'" onclick="acaoCorr('+dialogoId+','+ix+',this)">'+esc(a.label || a.verbo)+'</button>';
+  }).join('');
+}
+
+function acaoCorr(dialogoId, ix, btn){
+  const a = (CORR_ACOES[dialogoId] || [])[ix];
+  if(!a) return toast('Recarregue — esta ação não existe mais.');
+  if(a.campo){                                   // acao que exige texto: campo inline, sem janela
+    const box = btn.parentElement;
+    if(box.querySelector('.inl')) return;
+    btn.disabled = true;
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 'inl';
+    inp.placeholder = a.placeholder || 'escreva sua posição';
+    const ok = document.createElement('button');
+    ok.textContent = 'confirmar';
+    const enviar = function(){ if(!inp.value.trim()) return; chamarCorr(a, dialogoId, inp.value.trim(), ok); };
+    ok.onclick = enviar;
+    inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') enviar(); });
+    box.append(inp, ok); inp.focus();
+    return;
+  }
+  chamarCorr(a, dialogoId, a.arg, btn);
+}
+
+async function chamarCorr(a, dialogoId, valor, btn){
   btn.disabled = true;
-  const {data, error} = await sb.rpc('responder_correcao',{p_id:id, p_aceito:aceito, p_motivo:null});
+  const args = {p_id: dialogoId};
+  args[a.param || 'p_aceito'] = valor;
+  if(a.extra) Object.keys(a.extra).forEach(function(k){ args[k] = a.extra[k]; });
+  const {data, error} = await sb.rpc(a.rpc, args);
   btn.disabled = false;
   if(error) return toast('Erro: '+error.message);
-  toast(data && data.msg ? data.msg : 'Registrado.');
+  toast(data && data.msg ? data.msg : (typeof data === 'string' ? data : 'Registrado.'));
   carregar();
-  renderCorrecoes();
 }
 
 /* ---------- placar: a simbiose medindo a si mesma ---------- */
