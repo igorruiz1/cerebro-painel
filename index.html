@@ -7,43 +7,42 @@
 --ok:#6ee7a8;--bad:#ff8a8f;--warn:#f5c26b}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);
 font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
-a{color:var(--acc)}
-.top{position:sticky;top:0;z-index:9;background:rgba(13,17,23,.94);backdrop-filter:blur(8px);
+.top{position:sticky;top:0;z-index:9;background:rgba(13,17,23,.95);backdrop-filter:blur(8px);
 border-bottom:1px solid var(--line)}
-.topin{max-width:1080px;margin:0 auto;padding:14px 18px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topin{max-width:1120px;margin:0 auto;padding:13px 18px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
 h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600}
 .ver{font-size:10px;letter-spacing:1.6px;color:var(--acc);border:1px solid var(--acc);
 padding:2px 8px;border-radius:20px;font-weight:600}
-.deg{font-size:11px;color:var(--mut);margin-left:auto;display:flex;gap:8px;align-items:center}
+.deg{font-size:11px;color:var(--mut);margin-left:auto;display:flex;gap:7px;align-items:center}
 .deg b{color:var(--ok);font-size:14px}
 .btn{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
 padding:6px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
 .btn:hover{border-color:var(--acc)}
-.tabs{max-width:1080px;margin:0 auto;padding:10px 18px 0;display:flex;gap:4px;overflow-x:auto}
+.tabs{max-width:1120px;margin:0 auto;padding:9px 18px 0;display:flex;gap:2px;overflow-x:auto}
 .tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);
-padding:9px 14px;font-size:12px;letter-spacing:1.6px;font-weight:600;cursor:pointer;
+padding:9px 13px;font-size:11.5px;letter-spacing:1.5px;font-weight:600;cursor:pointer;
 white-space:nowrap;font-family:inherit}
 .tab.on{color:var(--ink);border-bottom-color:var(--acc)}
-.tab .n{color:var(--acc);margin-left:6px}
-main{max-width:1080px;margin:0 auto;padding:22px 18px 90px}
+.tab .n{color:var(--acc);margin-left:5px}.tab .n.bad{color:var(--bad)}
+main{max-width:1120px;margin:0 auto;padding:22px 18px 90px}
 .pane{display:none}.pane.on{display:block}
-h2{font-size:11px;letter-spacing:2.2px;color:var(--mut);margin:30px 0 12px;font-weight:600;
+h2{font-size:11px;letter-spacing:2.2px;color:var(--mut);margin:32px 0 12px;font-weight:600;
 border-bottom:1px solid var(--line);padding-bottom:8px}
-h2:first-child{margin-top:4px}
+h2:first-child{margin-top:2px}h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px}
 .hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 62%);border-left:4px solid var(--grn);
-border-radius:14px;padding:18px 20px;margin-bottom:18px}
+border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 62%);border-left-color:var(--red)}
 .hero .t{font-size:21px;font-weight:600;letter-spacing:-.2px}
 .hero .s{font-size:14px;color:#cdd6e4;margin-top:5px}
-.card{background:var(--card);border-radius:13px;padding:15px 17px;margin-bottom:10px;
-border-left:3px solid var(--line)}
+.card{background:var(--card);border-radius:13px;padding:15px 17px;margin-bottom:9px;border-left:3px solid var(--line)}
 .card.n1{border-left-color:var(--red)}.card.n2{border-left-color:var(--yel)}
 .card.n3{border-left-color:var(--dim)}.card.cor{border-left-color:var(--vio)}
+.card.critico{border-left-color:var(--red)}.card.alto{border-left-color:var(--yel)}
+.card.medio{border-left-color:var(--acc)}
 .ttl{font-size:15px;font-weight:500;margin-bottom:3px}
-.meta{font-size:12px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.meta{font-size:12px;color:var(--mut);display:flex;gap:9px;flex-wrap:wrap;margin-bottom:7px;align-items:center}
 .val{color:var(--ok);font-weight:600}
-.rec{font-size:13.4px;color:#c3ccdb;background:var(--card2);border-radius:9px;
-padding:9px 12px;margin:8px 0}
+.rec{font-size:13.4px;color:#c3ccdb;background:var(--card2);border-radius:9px;padding:9px 12px;margin:7px 0}
 .rec b{color:var(--warn)}
 .acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
 .prim{background:#12321f;border:1px solid var(--grn);color:var(--ok);border-radius:9px;
@@ -52,42 +51,52 @@ padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inh
 .mais{background:none;border:0;color:var(--mut);font-size:12.5px;cursor:pointer;
 text-decoration:underline;font-family:inherit}
 .extra{display:none;gap:7px;flex-wrap:wrap;margin-top:8px}.extra.on{display:flex}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:11px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .kpi{background:var(--card);border-radius:13px;padding:14px 15px;border:1px solid transparent}
 .kpi.dentro{border-color:rgba(48,163,108,.3)}.kpi.fora{border-color:rgba(229,72,77,.3)}
-.kpi .k{font-size:11px;color:var(--dim);font-family:ui-monospace,monospace;margin-bottom:2px}
-.kpi .r{font-size:13px;color:var(--mut);margin-bottom:8px;line-height:1.35}
-.kpi .n{font-size:27px;font-weight:650;line-height:1;letter-spacing:-.5px}
-.kpi.dentro .n{color:var(--ok)}.kpi.fora .n{color:var(--bad)}.kpi .n.nd{color:var(--dim);font-size:17px}
-.kpi .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;gap:10px}
-.kpi .m{font-size:11.5px;color:var(--mut)}
-.sp{display:block}
+.kpi .k{font-size:10.5px;color:var(--dim);font-family:ui-monospace,monospace;margin-bottom:2px}
+.kpi .r{font-size:12.8px;color:var(--mut);margin-bottom:8px;line-height:1.35}
+.kpi .n{font-size:26px;font-weight:650;line-height:1;letter-spacing:-.5px}
+.kpi.dentro .n{color:var(--ok)}.kpi.fora .n{color:var(--bad)}.kpi .n.nd{color:var(--dim);font-size:16px}
+.kpi .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;gap:8px}
+.kpi .m{font-size:11px;color:var(--mut)}
 .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px}
 .p-ok{background:#12321f;color:var(--ok)}.p-bad{background:#3a1d1f;color:var(--bad)}
 .p-med{background:#3a3320;color:var(--warn)}.p-nd{background:var(--card2);color:var(--mut)}
-.esc{display:grid;gap:6px;margin-bottom:6px}
+.p-vio{background:#241f45;color:#b3a6ff}
 .dim{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);
 font-size:13.5px;flex-wrap:wrap}
-.dim:last-child{border-bottom:0}
-.dim .nm{flex:1;min-width:150px;font-weight:500}
-.bar{display:flex;gap:3px}.bar s{width:22px;height:9px;border-radius:2px;background:var(--card2);
+.dim:last-child{border-bottom:0}.dim .nm{flex:1;min-width:145px;font-weight:500}
+.bar{display:flex;gap:3px}.bar s{width:21px;height:9px;border-radius:2px;background:var(--card2);
 text-decoration:none;display:block}
 .bar s.f{background:var(--grn)}.bar s.w{background:var(--yel)}
-.ow{font-size:11.5px;color:var(--mut);min-width:200px;text-align:right}
+.ow{font-size:11.5px;color:var(--mut);min-width:190px;text-align:right}
 table{width:100%;border-collapse:collapse;font-size:13px}
 td,th{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
 th{font-size:10px;letter-spacing:1.2px;color:var(--mut)}
+tr:last-child td{border-bottom:0}
 .mono{font-family:ui-monospace,monospace;font-size:12px;color:#a8c0e8;white-space:nowrap}
-.right{text-align:right}
+.right{text-align:right}.rs{font-variant-numeric:tabular-nums;white-space:nowrap}
 .log{position:fixed;left:0;right:0;bottom:0;background:var(--card2);border-top:1px solid var(--line);
 padding:11px 18px;font-size:13px;display:none;z-index:20}
 .log.on{display:block}
 .login{max-width:400px;margin:16vh auto;text-align:center;padding:0 20px}
 input{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:9px;
 padding:11px 13px;font-size:15px;width:100%;font-family:inherit}
-.empty{color:var(--mut);font-size:14px;padding:22px 0;text-align:center}
-.foot{margin-top:40px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:16px;line-height:1.7}
+.empty{color:var(--mut);font-size:14px;padding:20px 0;text-align:center}
+.foot{margin-top:38px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);
+padding-top:16px;line-height:1.7}
 code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;color:#a8c0e8}
+.loop{background:linear-gradient(135deg,#241f45 0%,var(--card) 60%);border-left:4px solid var(--vio);
+border-radius:15px;padding:20px 22px;margin-bottom:14px}
+.loop .t{font-size:19px;font-weight:600;color:#c8bcff;letter-spacing:-.2px}
+.loop .s{font-size:13.5px;color:var(--mut);margin:4px 0 12px}
+.loop .lx{font-size:14px;color:#cdd6e4}
+.ach{font-size:13.3px;color:#c3ccdb;background:rgba(0,0,0,.22);border-radius:9px;
+padding:9px 12px;margin-top:7px}
+select{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:8px;
+padding:5px 9px;font-size:12.5px;font-family:inherit}
 </style></head><body>
 <div id="login" class="login" style="display:none">
   <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
@@ -99,14 +108,15 @@ code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;co
 
 <div id="app" style="display:none">
 <div class="top"><div class="topin">
-  <h1>CÉREBRO IGOR</h1><span class="ver" id="vtag">v12</span>
+  <h1>CÉREBRO IGOR</h1><span class="ver">v13</span>
   <span class="deg" id="degrau"></span>
   <button class="btn" onclick="carregar()">↻</button>
   <button class="btn" onclick="sair()">sair</button>
 </div>
 <div class="tabs">
   <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
-  <button class="tab" data-p="eviden">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
+  <button class="tab" data-p="comando">COMANDO<span class="n bad" id="n-cmd"></span></button>
+  <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
   <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
   <button class="tab" data-p="acervo">ACERVO<span class="n" id="n-ac"></span></button>
 </div></div>
@@ -116,39 +126,54 @@ code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;co
     <div id="hero"></div>
     <div id="correcoes"></div>
     <h2>PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
-    <h2>DEPOIS <span style="color:var(--dim)">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
-    <div style="text-align:center;margin-top:14px">
-      <button class="mais" onclick="verResto()" id="btresto"></button>
-    </div>
+    <h2>DEPOIS <span class="s">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
+    <div style="text-align:center;margin-top:12px"><button class="mais" onclick="verResto()" id="btresto"></button></div>
     <div id="fila3" style="margin-top:10px;display:none"></div>
   </div>
 
-  <div class="pane" id="p-eviden">
-    <h2>A ESCADA <span style="color:var(--dim)">— CMMI · o nível do sistema é o MENOR elo</span></h2>
-    <div class="esc" id="escada"></div>
+  <div class="pane" id="p-comando">
+    <h2>O DINHEIRO <span class="s">— o que o sistema não media até 16/08</span></h2>
+    <div class="g4" id="caixa"></div>
+    <h2>INSIGHTS DE GESTÃO <span class="s">— cada linha nasce de uma condição medida; some sozinha quando deixa de valer</span></h2>
+    <div id="insights"></div>
+    <h2>AS FRENTES, DE HELICÓPTERO <span class="s">— onde está o trabalho x onde está o dinheiro</span></h2>
+    <div class="card"><table id="frentes"></table></div>
+    <h2>DE QUEM É A FILA, DE VERDADE</h2>
+    <div class="g4" id="automacao"></div>
+    <div class="card" style="margin-top:10px"><table id="semi"></table></div>
+    <div class="foot"><b>A / S / M</b> — <b>A</b>utomável: o ato é meu ou do banco, já está na minha fila ·
+    <b>S</b>emi: eu entrego pronto e você só aprova ou envia · <b>M</b>: só você — credencial, assinatura,
+    presença, voz, relação ou decisão. Toda tarefa marcada M tem o VERBO nomeado; sem verbo, não é M.</div>
+  </div>
+
+  <div class="pane" id="p-evolucao">
+    <div id="loop"></div>
+    <h2>A ESCADA <span class="s">— CMMI · o nível do sistema é o MENOR elo</span></h2>
+    <div id="escada"></div>
     <div class="card" id="dims"></div>
     <div id="kpis"></div>
     <div class="foot">
-      <b>Como ler:</b> a linha é a série do indicador nos últimos dias distintos de medição — um ponto por dia,
-      o último ponto é o valor de agora. A linha tracejada é a meta. <b>Indeterminado não é zero:</b>
-      indicador sem base mínima devolve vazio de propósito, porque número bonito sem lastro é pior que número nenhum.
-      Nada nesta tela é digitado: tudo sai de <code>kpi</code> + <code>medir_kpi()</code>.
+      <b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta.
+      <b>Indeterminado não é zero</b> — indicador sem base mínima devolve vazio de propósito.
+      Nada aqui é digitado: sai de <code>kpi</code> + <code>medir_kpi()</code>.<br>
+      <b>Réguas:</b> CMMI (degraus, menor elo) · DORA (ritmo) · camada semântica dbt/LookML (dicionário) ·
+      ISO 15489 (aposentadoria) · SRE do Google (SLO com orçamento de falha).
     </div>
   </div>
 
   <div class="pane" id="p-motor">
-    <h2>ROTINAS <span style="color:var(--dim)">— quem bate ponto sozinho</span></h2>
+    <h2>ROTINAS <span class="s">— quem bate ponto sozinho</span></h2>
     <div class="card"><table id="rotinas"></table></div>
     <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
     <div class="foot"><b>Ponto</b> é execução registrada, não resultado: rotina que roda, olha a fila e para
-      porque não havia trabalho <i>bateu ponto</i>. Silêncio de rotina é alarme; rotina manual (janela 0h) não se vigia por relógio.</div>
+      porque não havia trabalho <i>bateu ponto</i>. Rotina manual (janela 0h) não se vigia por relógio.</div>
   </div>
 
   <div class="pane" id="p-acervo">
-    <h2>O ACERVO EM NÚMEROS</h2><div class="grid" id="acnum"></div>
-    <h2>AS QUE MAIS TRABALHAM <span style="color:var(--dim)">— por uso real</span></h2>
+    <h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div>
+    <h2>AS QUE MAIS TRABALHAM <span class="s">— por uso real</span></h2>
     <div class="card"><table id="actop"></table></div>
-    <h2>OFERECIDAS E IGNORADAS <span style="color:var(--dim)">— chegaram na hora e não mudaram nada</span></h2>
+    <h2>OFERECIDAS E IGNORADAS <span class="s">— chegaram na hora e não mudaram nada</span></h2>
     <div class="card"><table id="acign"></table></div>
   </div>
 </main></div>
@@ -158,44 +183,47 @@ code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;co
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v12";
+const VER="v13";
 const sb=supabase.createClient(URL_,KEY_);
-let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[]},mostrarResto=false;
+let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]},mostrarResto=false;
 
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
 const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).toFixed(1)+"d":
   u==="min"?(+v).toFixed(0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
-  (Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0));
+  (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0)));
 function msg(t,ms){const l=document.getElementById("log");l.textContent=t;l.classList.add("on");
   clearTimeout(msg._t);msg._t=setTimeout(()=>l.classList.remove("on"),ms||4200);}
-
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");document.getElementById("p-"+b.dataset.p).classList.add("on");
   window.scrollTo({top:0,behavior:"smooth"});});
-
-async function entrar(){const e=document.getElementById("em").value.trim();
-  if(!e)return;const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href}});
+async function entrar(){const e=document.getElementById("em").value.trim();if(!e)return;
+  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href}});
   document.getElementById("lmsg").textContent=error?("erro: "+error.message):"link enviado — confira o e-mail.";}
 async function sair(){await sb.auth.signOut();location.reload();}
 
 async function carregar(){
-  msg("carregando…",1600);
-  const q=(v,o)=>sb.from(v).select("*").then(r=>r.error?[]:(o?r.data:r.data));
-  const [fila,cor,ev,mo,ac,mat]=await Promise.all([
-    q("v_fila_do_igor"),q("v_correcoes_abertas"),q("v_painel_evolucao"),
-    q("v_painel_motor"),q("v_painel_acervo"),q("v_simbiose_maturidade")]);
-  D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[]};
+  msg("carregando…",1500);
+  const q=v=>sb.from(v).select("*").then(r=>r.error?[]:r.data);
+  const [fila,cor,ev,mo,ac,mat,ins,fr,au,loop]=await Promise.all([
+    q("v_fila_do_igor"),q("v_correcoes_abertas"),q("v_painel_evolucao"),q("v_painel_motor"),
+    q("v_painel_acervo"),q("v_simbiose_maturidade"),q("v_painel_insight"),q("v_painel_frente"),
+    q("v_automacao_fila"),q("v_painel_rodada")]);
+  const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automatibilidade,automat_motivo")
+    .eq("dono","igor").neq("status","feita").in("automatibilidade",["S"]).order("prazo")
+    .then(r=>r.error?[]:r.data);
+  D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
+     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[]};
   render();
   try{await sb.rpc("painel_ping",{p_versao:VER});}catch(e){}
-  msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),2200);
+  msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),2000);
 }
-
-function render(){rAgora();rEvolucao();rMotor();rAcervo();}
+function render(){rAgora();rComando();rEvolucao();rMotor();rAcervo();}
+const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- AGORA ---------- */
-function sparkKPI(){return "";}
 function cardFila(it){
   const acts=(it.acoes||[]);
   const sug=acts.find(a=>a.verbo===it.verbo_sugerido)||acts[0]||null;
@@ -203,37 +231,34 @@ function cardFila(it){
   const uid=(it.origem+"-"+it.ref).replace(/[^a-z0-9-]/gi,"");
   return `<div class="card n${it.nivel}">
    <div class="ttl">${esc(it.titulo_completo||it.titulo)}</div>
-   <div class="meta">
-     <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
+   <div class="meta"><span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
      ${it.frente?`<span>${esc(it.frente)}</span>`:""}
      ${it.valor_txt?`<span class="val">${esc(it.valor_txt)}</span>`:""}
      ${it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:""}
-     ${it.forcar_decisao?`<span class="pill p-bad">decida</span>`:""}
-   </div>
+     ${it.forcar_decisao?`<span class="pill p-bad">decida</span>`:""}</div>
    ${it.porque_agora?`<div style="font-size:13px;color:var(--mut)">${esc(it.porque_agora)}</div>`:""}
    ${it.recomendacao?`<div class="rec"><b>recomendo:</b> ${esc(it.recomendacao)}</div>`:""}
    ${it.ultima_pergunta?`<div class="rec" style="border-left:2px solid var(--vio)"><b>você disse:</b> ${esc(it.ultima_pergunta)}${it.ultima_resposta?`<br><b style="color:var(--ok)">resposta:</b> ${esc(it.ultima_resposta)}`:`<br><i style="color:var(--warn)">aguardando o executor</i>`}</div>`:""}
    <div class="acts">
      ${sug?`<button class="prim" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(sug.verbo)}','${esc(sug.campo||"")}')">✓ ${esc(sug.label)}</button>`:""}
      ${outros.length?`<button class="mais" onclick="document.getElementById('x-${uid}').classList.toggle('on')">outra coisa</button>`:""}
-     <button class="mais" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
-   </div>
+     <button class="mais" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button></div>
    <div class="extra" id="x-${uid}">
      ${outros.map(a=>`<button class="btn" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}')">${esc(a.label)}</button>`).join("")}
    </div></div>`;
 }
 function rAgora(){
   const n1=D.fila.filter(f=>f.nivel===1),n2=D.fila.filter(f=>f.nivel===2),n3=D.fila.filter(f=>f.nivel>2);
-  const alerta=n1.length>0||D.cor.length>0;
-  document.getElementById("hero").innerHTML=`<div class="hero ${alerta?"alert":""}">
+  const saldo=kv("caixa.saldo_30d"),parado=kv("caixa.decisao_parada_rs");
+  document.getElementById("hero").innerHTML=`<div class="hero ${n1.length||D.cor.length?"alert":""}">
     <div class="t">${n1.length?n1.length+" precisa"+(n1.length>1?"m":"")+" de você hoje":"nada precisa de você hoje"}</div>
-    <div class="s">${D.cor.length?D.cor.length+" correção(ões) esperando sua palavra · ":""}${n2.length} em segundo plano · ${D.fila.length} no funil inteiro</div></div>`;
+    <div class="s">${D.cor.length?D.cor.length+" correção(ões) esperando sua palavra · ":""}${n2.length} em segundo plano · ${D.fila.length} no funil${saldo!=null?` · <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">saldo 30d ${rs(saldo)}</b>`:""}${parado?` · <b style="color:var(--warn)">${rs(parado)} parados</b>`:""}</div></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length?
     `<h2>SUA PALAVRA ESTÁ TRAVANDO</h2>`+D.cor.map(c=>`<div class="card cor">
       <div class="ttl">${esc(c.sua_posicao)}</div>
       <div class="meta"><span class="mono">${esc(c.origem)} ${esc(c.ref)}</span><span>há ${c.dias_esperando}d</span></div>
       <div class="rec">${esc(c.o_que_o_motor_disse)}</div></div>`).join(""):"";
-  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join(""):`<div class="empty">fila limpa — silêncio aqui é informação, não falta de dado.</div>`;
+  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join(""):`<div class="empty">fila limpa — silêncio aqui é informação.</div>`;
   document.getElementById("fila2").innerHTML=n2.length?n2.map(cardFila).join(""):`<div class="empty">nada em segundo plano.</div>`;
   document.getElementById("n-agora").textContent=n1.length||"";
   const bt=document.getElementById("btresto");
@@ -242,7 +267,6 @@ function rAgora(){
   document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");
 }
 function verResto(){mostrarResto=!mostrarResto;rAgora();}
-
 async function agir(origem,ref,verbo,campo){
   let valor=null;
   if(campo==="date"){valor=prompt("Nova data (AAAA-MM-DD):");if(!valor)return;}
@@ -256,10 +280,60 @@ async function perguntar(origem,ref){
   msg(error?("erro: "+error.message):"registrado — o executor responde na próxima passada.");carregar();
 }
 
+/* ---------- COMANDO ---------- */
+function rComando(){
+  const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
+    <div class="r" style="margin:8px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
+  const s30=kv("caixa.saldo_30d"),par=kv("caixa.decisao_parada_rs"),rec=kv("caixa.recebivel_aberto_rs"),
+        semd=kv("caixa.recebivel_sem_data"),pas=kv("caixa.passivo_total_rs"),ent=kv("caixa.entrada_realizada_30d");
+  document.getElementById("caixa").innerHTML=
+    tile(rs(s30),"<b>Saldo projetado 30 dias</b>",s30<0?"fora":"dentro","só o que tem data entra aqui")+
+    tile(rs(par),"<b>Parados esperando sua palavra</b>",par>0?"fora":"dentro","incertos há mais de 14 dias")+
+    tile(rs(rec),"<b>A receber em aberto</b>","",semd+" sem data de vencimento")+
+    tile(rs(ent),"<b>Entrou de verdade em 30 dias</b>","","o único que não aceita promessa")+
+    tile(rs(pas),"<b>Passivo total</b>","","dívida + a pagar · mede tendência");
+  document.getElementById("insights").innerHTML=D.ins.length?D.ins.map(i=>`
+    <div class="card ${esc(i.nivel)}">
+      <div class="meta"><span class="pill ${i.nivel==="critico"?"p-bad":i.nivel==="alto"?"p-med":"p-nd"}">${esc(i.nivel)}</span>
+        <span class="mono">${esc(i.area)}</span>
+        <span class="pill ${i.dono==="igor"?"p-vio":"p-nd"}">${i.dono==="igor"?"seu":"meu"}</span></div>
+      <div class="ttl">${esc(i.insight)}</div>
+      <div class="rec">${esc(i.acao)}</div></div>`).join(""):
+    `<div class="empty">nenhuma condição de alerta ativa. Isso é raro — reconfira o ↻.</div>`;
+  document.getElementById("n-cmd").textContent=D.ins.filter(i=>i.nivel==="critico").length||"";
+  const fr=D.fr.slice().sort((a,b)=>(b.tarefas+b.demandas)-(a.tarefas+a.demandas));
+  document.getElementById("frentes").innerHTML=
+   `<tr><th>frente</th><th>sit.</th><th class="right">itens</th><th class="right">na sua mão</th>
+    <th class="right">vencidas</th><th class="right">a receber</th><th class="right">a pagar</th><th class="right">parada</th></tr>`+
+   fr.map(f=>{const tot=f.tarefas+f.demandas;
+    const cor=f.status==="vermelho"?"p-bad":f.status==="amarelo"?"p-med":f.status==="azul"?"p-vio":"p-ok";
+    return `<tr><td class="mono">${esc(f.slug)}</td><td><span class="pill ${cor}">${esc(f.status)}</span></td>
+     <td class="right"${tot>=20?' style="color:var(--bad);font-weight:600"':""}>${tot}</td>
+     <td class="right">${f.tarefas_igor||""}</td>
+     <td class="right"${f.vencidas?' style="color:var(--bad)"':""}>${f.vencidas||""}</td>
+     <td class="right rs" style="color:${f.a_receber>0?"var(--ok)":"var(--dim)"}">${f.a_receber>0?rs(f.a_receber):"—"}</td>
+     <td class="right rs" style="color:${f.a_pagar>0?"var(--bad)":"var(--dim)"}">${f.a_pagar>0?rs(f.a_pagar):"—"}</td>
+     <td class="right" style="color:var(--mut)">${f.dias_sem_tocar}d</td></tr>`;}).join("");
+  const A=D.au.find(x=>x.classe==="A")||{n:0},S=D.au.find(x=>x.classe==="S")||{n:0},M=D.au.find(x=>x.classe==="M")||{n:0};
+  const totIgor=(S.na_mao_do_igor||0)+(M.na_mao_do_igor||0);
+  document.getElementById("automacao").innerHTML=
+    tile(M.na_mao_do_igor||0,"<b>Só você</b>","", "credencial, assinatura, presença, voz")+
+    tile(S.na_mao_do_igor||0,"<b>Eu preparo, você aprova</b>","fora","estão cruas na sua mesa agora")+
+    tile(A.n||0,"<b>Já são minhas</b>","dentro","o ato é meu ou do banco")+
+    tile((totIgor?Math.round(100*(M.na_mao_do_igor||0)/totIgor):100)+"%","<b>Da sua fila é mesmo sua</b>",
+      totIgor&&(M.na_mao_do_igor/totIgor)<0.8?"fora":"dentro","meta 80% — o resto é dívida minha");
+  document.getElementById("semi").innerHTML=D.semi.length?
+   `<tr><th>tarefa</th><th>o que eu entrego pronto</th><th class="right">prazo</th></tr>`+
+   D.semi.map(t=>`<tr><td class="mono">t${t.id}</td><td>${esc(t.automat_motivo||"")}
+     <div style="color:var(--dim);font-size:11.5px;margin-top:2px">${esc((t.descricao||"").replace(/\s+/g," ").slice(0,86))}…</div></td>
+     <td class="right" style="color:${new Date(t.prazo)<new Date()?"var(--bad)":"var(--mut)"}">${t.prazo?t.prazo.slice(8,10)+"/"+t.prazo.slice(5,7):"—"}</td></tr>`).join("")
+   :`<tr><td class="empty">nenhuma tarefa SEMI aberta.</td></tr>`;
+}
+
 /* ---------- EVOLUÇÃO ---------- */
 function spark(serie,meta,dir,w,h){
   const s=(serie||[]).map(Number).filter(v=>!isNaN(v));
-  if(s.length<1)return `<svg class="sp" width="${w}" height="${h}"></svg>`;
+  if(s.length<1)return `<svg width="${w}" height="${h}"></svg>`;
   const vals=meta!=null?s.concat([+meta]):s;
   let mn=Math.min(...vals),mx=Math.max(...vals);
   if(mx===mn){mx=mn+1;mn=mn-1;}
@@ -270,15 +344,24 @@ function spark(serie,meta,dir,w,h){
   const last=s[s.length-1];
   const ok=meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
   const col=ok===null?"#8b98ae":ok?"#30a46c":"#e5484d";
-  return `<svg class="sp" width="${w}" height="${h}" role="img" aria-label="série de ${s.length} ponto(s)">
+  return `<svg width="${w}" height="${h}" role="img" aria-label="série de ${s.length} ponto(s)">
     ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" stroke="#5d6b82" stroke-width="1" stroke-dasharray="3 3"/>`:""}
     <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/>
-  </svg>`;
+    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/></svg>`;
 }
 const DIMR={contrato:"Contrato e precedência",memoria:"Memória e handoff",acervo:"Acervo de aprendizado",
-motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",fluxo:"Fluxo",medicao:"Medição"};
+motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",
+fluxo:"Fluxo e ritmo",medicao:"Metanálise — o sistema olhando para si",caixa:"Caixa e negócio"};
 function rEvolucao(){
+  const L=D.loop.find(l=>l.recencia===1);
+  document.getElementById("loop").innerHTML=L?`<div class="loop">
+    <div class="t">${esc(L.titulo)}</div><div class="s">${esc(L.subtitulo||"")} · ${esc(L.rodada)} · ${esc(L.data)}</div>
+    <div class="lx">${esc(L.leitura)}</div>
+    ${(L.achados||[]).map(a=>`<div class="ach">${esc(a)}</div>`).join("")}
+    ${L.proxima?`<div class="ach" style="border-left:2px solid var(--vio)"><b style="color:#b3a6ff">próxima:</b> ${esc(L.proxima)}</div>`:""}
+    ${D.loop.length>1?`<div style="margin-top:11px"><select onchange="verLoop(this.value)">
+      ${D.loop.map(l=>`<option value="${esc(l.rodada)}">${esc(l.data)} · ${esc(l.rodada)}</option>`).join("")}</select></div>`:""}
+  </div>`:"";
   const min=D.mat.length?Math.min(...D.mat.map(m=>m.nivel)):null;
   const elo=D.mat.slice().sort((a,b)=>a.nivel-b.nivel||a.ordem-b.ordem)[0];
   document.getElementById("degrau").innerHTML=min?`degrau <b>${min}</b> · elo ${esc(elo?elo.dimensao:"—")}`:"";
@@ -286,19 +369,20 @@ function rEvolucao(){
   const desc=["Depende de alguém lembrar. Não há sensor.","Registro, dono e prazo — execução por disciplina.",
   "Contrato executável: o desvio é RECUSADO, não avisado.","KPI canônico + série de 7 dias distintos + alarme ligado.",
   "Todo defeito vira defesa permanente — trigger ou fixture, nunca recomendação."];
-  document.getElementById("escada").innerHTML=nomes.map((n,i)=>{
-    const on=min&&(i+1)<=min;
-    return `<div class="dim" style="background:var(--card);border-radius:11px;padding:11px 14px;border-left:3px solid ${on?"var(--grn)":"var(--line)"}">
+  document.getElementById("escada").innerHTML=nomes.map((n,i)=>{const on=min&&(i+1)<=min;
+    return `<div class="dim" style="background:var(--card);border-radius:11px;padding:11px 14px;margin-bottom:6px;border-left:3px solid ${on?"var(--grn)":"var(--line)"}">
       <span style="font-size:19px;font-weight:700;color:${on?"var(--ok)":"var(--mut)"};width:22px">${i+1}</span>
       <span class="nm">${n} ${i+1===min?'<span class="pill p-ok">o sistema está aqui</span>':""}</span>
-      <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:200px">${desc[i]}</span></div>`;}).join("");
+      <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:190px">${desc[i]}</span></div>`;}).join("");
   document.getElementById("dims").innerHTML=D.mat.map(m=>{
     const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
     return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
       <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`;}).join("");
   const porDim={};D.ev.forEach(k=>{(porDim[k.dimensao]=porDim[k.dimensao]||[]).push(k);});
-  document.getElementById("kpis").innerHTML=Object.keys(porDim).sort().map(d=>
-    `<h2>${esc((DIMR[d]||d).toUpperCase())} <span style="color:var(--dim)">— ${porDim[d].length} indicador(es)</span></h2>
+  const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
+  document.getElementById("kpis").innerHTML=Object.keys(porDim)
+    .sort((a,b)=>(ordem.indexOf(a)+99)%99-(ordem.indexOf(b)+99)%99).map(d=>
+    `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${porDim[d].length} indicador(es)</span></h2>
      <div class="grid">${porDim[d].map(k=>{
       const cls=k.situacao==="dentro"?"dentro":k.situacao==="fora"?"fora":"";
       const pill=k.tendencia==="melhorou"?'<span class="pill p-ok">melhorou</span>':
@@ -308,9 +392,12 @@ function rEvolucao(){
       return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
         <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${pill}</span>
-        ${spark(k.serie,k.meta_num,k.direcao,104,34)}</div></div>`;}).join("")}</div>`).join("");
+        ${spark(k.serie,k.meta_num,k.direcao,100,34)}</div></div>`;}).join("")}</div>`).join("");
   document.getElementById("n-ev").textContent=D.ev.filter(k=>k.situacao==="fora").length||"";
 }
+function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
+  const tmp=D.loop.slice();D.loop=[Object.assign({},L,{recencia:1})].concat(tmp.filter(l=>l.rodada!==r));
+  rEvolucao();D.loop=tmp;}
 
 /* ---------- MOTOR ---------- */
 function rMotor(){
@@ -329,22 +416,22 @@ function rMotor(){
     `<div class="card n1"><div class="ttl">${esc(r.nome)} — ${esc(r.estado)}</div>
      <div class="meta">janela ${r.janela_horas}h · vigente desde ${esc((r.vigente_desde||"").slice(0,10))}</div>
      <div class="rec">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
-    :`<div class="empty">nenhuma rotina atrasada. As que aparecem como "manual" não se vigiam por relógio, por desenho.</div>`;
+    :`<div class="empty">nenhuma rotina atrasada.</div>`;
 }
 
 /* ---------- ACERVO ---------- */
 function rAcervo(){
-  const t=D.ac.length,us=D.ac.filter(a=>a.usos>0).length,of=D.ac.filter(a=>a.exposicoes>0).length;
-  const ign=D.ac.filter(a=>a.exposicoes>=3&&a.usos===0);
-  const nunca=D.ac.filter(a=>a.exposicoes===0);
+  const t=D.ac.length,us=D.ac.filter(a=>a.usos>0).length;
+  const ign=D.ac.filter(a=>a.exposicoes>=3&&a.usos===0),nunca=D.ac.filter(a=>a.exposicoes===0);
   const tile=(n,r,cls)=>`<div class="kpi ${cls||""}"><div class="n">${n}</div><div class="r" style="margin:8px 0 0">${r}</div></div>`;
   document.getElementById("acnum").innerHTML=
     tile(t,"lições vivas")+
-    tile(us+" <span style='font-size:14px;color:var(--mut)'>("+Math.round(100*us/t)+"%)</span>","já aplicadas ao menos uma vez","dentro")+
-    tile(of,"já oferecidas pelo buscador")+
-    tile(nunca.length+" <span style='font-size:14px;color:var(--mut)'>("+Math.round(100*nunca.length/t)+"%)</span>","nunca chegaram a ser oferecidas",nunca.length>t/2?"fora":"");
+    tile(us+` <span style="font-size:14px;color:var(--mut)">(${Math.round(100*us/t)}%)</span>`,"já aplicadas ao menos uma vez","dentro")+
+    tile(D.ac.filter(a=>a.exposicoes>0).length,"já oferecidas pelo buscador")+
+    tile(nunca.length+` <span style="font-size:14px;color:var(--mut)">(${Math.round(100*nunca.length/t)}%)</span>`,
+      "nunca chegaram a ser oferecidas",nunca.length>t/2?"fora":"");
   const linha=a=>`<tr><td class="mono">${a.id}</td><td>${esc(a.tema)}</td>
-    <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,64))}</td>
+    <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,60))}</td>
     <td class="right">${a.exposicoes}</td><td class="right">${a.usos}</td></tr>`;
   document.getElementById("actop").innerHTML=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`+
     D.ac.slice().sort((a,b)=>b.usos-a.usos||b.exposicoes-a.exposicoes).slice(0,12).map(linha).join("");
@@ -356,8 +443,7 @@ function rAcervo(){
 
 sb.auth.getSession().then(({data})=>{
   if(data.session){document.getElementById("app").style.display="block";carregar();}
-  else{document.getElementById("login").style.display="block";}
-});
+  else{document.getElementById("login").style.display="block";}});
 sb.auth.onAuthStateChange((_e,s)=>{if(s){document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="block";carregar();}});
 </script></body></html>
