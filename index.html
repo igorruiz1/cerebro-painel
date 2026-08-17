@@ -1,6 +1,11 @@
 <!doctype html><html lang="pt-BR"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CÉREBRO IGOR</title>
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CÉREBRO">
+<link rel="manifest" href="manifest.json">
 <style>
 :root{--bg:#0d1117;--card:#161d2b;--card2:#1c2536;--ink:#e9eef7;--mut:#8b98ae;--dim:#5d6b82;
 --red:#e5484d;--yel:#f5a623;--grn:#30a46c;--acc:#4c8dff;--vio:#8b7cf6;--line:#242f45;
@@ -100,15 +105,40 @@ padding:5px 9px;font-size:12.5px;font-family:inherit}
 </style></head><body>
 <div id="login" class="login" style="display:none">
   <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
-  <p style="color:var(--mut);font-size:14px;margin:22px 0 14px">Entre com seu e-mail para receber o link.</p>
-  <input id="em" type="email" placeholder="voce@email.com" autocomplete="email">
-  <button class="prim" style="margin-top:12px;width:100%" onclick="entrar()">Receber link de acesso</button>
-  <p id="lmsg" style="color:var(--mut);font-size:13px;margin-top:14px"></p>
+
+  <div style="background:var(--card);border-radius:13px;padding:16px;margin:20px 0 12px;text-align:left">
+    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">1 · PEDIR O LINK</div>
+    <input id="em" type="email" placeholder="voce@email.com" autocomplete="email" inputmode="email">
+    <button class="prim" style="margin-top:10px;width:100%" onclick="entrar()" id="btlink">Receber link por e-mail</button>
+    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+      O provedor de e-mail grátis limita a poucos envios por hora. Se der limite, use o passo 2 com um link que já chegou.</p>
+  </div>
+
+  <div style="background:var(--card);border-radius:13px;padding:16px;margin-bottom:12px;text-align:left">
+    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">2 · JÁ TENHO O LINK NO E-MAIL</div>
+    <input id="colado" type="text" placeholder="cole aqui o link inteiro do e-mail" autocomplete="off"
+      autocapitalize="off" spellcheck="false">
+    <button class="prim" style="margin-top:10px;width:100%" onclick="colar()">Entrar com este link</button>
+    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+      No e-mail, segure o botão e escolha <b>copiar endereço do link</b>. Funciona dentro do atalho da tela de início —
+      é para isso que este campo existe. O link é de uso único: se você já clicou nele, peça outro.</p>
+  </div>
+
+  <div style="background:var(--card);border-radius:13px;padding:16px;text-align:left">
+    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">3 · CÓDIGO DE 6 DÍGITOS</div>
+    <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
+      style="letter-spacing:6px;text-align:center;font-size:20px">
+    <button class="prim" style="margin-top:10px;width:100%" onclick="codigo()">Entrar com o código</button>
+    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+      Só funciona depois de configurar um SMTP próprio no Supabase — o plano grátis não deixa o e-mail trazer o código.</p>
+  </div>
+
+  <p id="lmsg" style="font-size:13.5px;margin-top:16px;min-height:20px"></p>
 </div>
 
 <div id="app" style="display:none">
 <div class="top"><div class="topin">
-  <h1>CÉREBRO IGOR</h1><span class="ver">v13</span>
+  <h1>CÉREBRO IGOR</h1><span class="ver">v14</span>
   <span class="deg" id="degrau"></span>
   <button class="btn" onclick="carregar()">↻</button>
   <button class="btn" onclick="sair()">sair</button>
@@ -183,7 +213,7 @@ padding:5px 9px;font-size:12.5px;font-family:inherit}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v13";
+const VER="v14";
 const sb=supabase.createClient(URL_,KEY_);
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]},mostrarResto=false;
 
@@ -199,9 +229,50 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");document.getElementById("p-"+b.dataset.p).classList.add("on");
   window.scrollTo({top:0,behavior:"smooth"});});
-async function entrar(){const e=document.getElementById("em").value.trim();if(!e)return;
-  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.href}});
-  document.getElementById("lmsg").textContent=error?("erro: "+error.message):"link enviado — confira o e-mail.";}
+function lm(txt,cor){const p=document.getElementById("lmsg");p.innerHTML=txt;
+  p.style.color=cor==="bad"?"var(--bad)":cor==="ok"?"var(--ok)":"var(--mut)";}
+async function entrar(){
+  const e=document.getElementById("em").value.trim();
+  if(!e){lm("Digite o e-mail primeiro.","bad");return;}
+  lm("enviando…");
+  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(!error){lm("Link enviado. Abra o e-mail e <b>copie o endereço do link</b> para colar no passo 2.","ok");return;}
+  if(error.status===429){
+    lm("<b>Limite de e-mails atingido (429).</b> O provedor grátis do Supabase manda poucos por hora e bloqueia o resto — "+
+       "por isso os links pararam de chegar. Espere cerca de 1 hora, <b>ou</b> use no passo 2 um link de um e-mail que já chegou.","bad");
+  } else {
+    lm("Erro "+(error.status||"")+": "+error.message,"bad");
+  }
+}
+/* Passo 2 — o que faz o atalho da tela de início funcionar.
+   Aceita as duas formas: o link /auth/v1/verify?token=...&type=... (ainda não usado)
+   e a URL de retorno com #access_token=... (quando você já abriu o link no navegador). */
+async function colar(){
+  const raw=(document.getElementById("colado").value||"").trim();
+  if(!raw){lm("Cole o link do e-mail no campo.","bad");return;}
+  lm("verificando o link…");
+  let u; try{u=new URL(raw);}catch(_){lm("Isso não parece um link. Copie o endereço inteiro, começando com https://","bad");return;}
+  const h=new URLSearchParams((u.hash||"").replace(/^#/,""));
+  if(h.get("access_token")&&h.get("refresh_token")){
+    const {error}=await sb.auth.setSession({access_token:h.get("access_token"),refresh_token:h.get("refresh_token")});
+    lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");return;
+  }
+  const th=u.searchParams.get("token")||u.searchParams.get("token_hash")||h.get("token_hash");
+  const tp=u.searchParams.get("type")||h.get("type")||"magiclink";
+  if(!th){lm("Não achei o código dentro desse link. Copie o <b>endereço do link</b> do e-mail (segure o botão → copiar endereço), não o texto.","bad");return;}
+  const {error}=await sb.auth.verifyOtp({token_hash:th,type:tp});
+  if(!error){lm("Entrando…","ok");return;}
+  lm(/expired|invalid/i.test(error.message)
+    ? "<b>Esse link já foi usado ou expirou.</b> Magic link vale uma vez só. Peça outro no passo 1 e, no e-mail novo, <b>não clique</b> — copie o endereço e cole aqui."
+    : ("Erro: "+error.message),"bad");
+}
+async function codigo(){
+  const e=document.getElementById("em").value.trim(), c=(document.getElementById("cod").value||"").trim();
+  if(!e){lm("Preencha o e-mail no passo 1 — o código é conferido junto com ele.","bad");return;}
+  if(c.length<6){lm("O código tem 6 dígitos.","bad");return;}
+  const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
+  lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");
+}
 async function sair(){await sb.auth.signOut();location.reload();}
 
 async function carregar(){
