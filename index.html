@@ -106,41 +106,68 @@ padding:5px 9px;font-size:12.5px;font-family:inherit}
 <div id="login" class="login" style="display:none">
   <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
 
-  <div style="background:var(--card);border-radius:13px;padding:16px;margin:20px 0 12px;text-align:left">
-    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">1 · PEDIR O LINK</div>
-    <input id="em" type="email" placeholder="voce@email.com" autocomplete="email" inputmode="email">
-    <button class="prim" style="margin-top:10px;width:100%" onclick="entrar()" id="btlink">Receber link por e-mail</button>
-    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-      O provedor de e-mail grátis limita a poucos envios por hora. Se der limite, use o passo 2 com um link que já chegou.</p>
+  <div style="background:var(--card);border-radius:13px;padding:18px;margin:20px 0 10px;text-align:left">
+    <input id="em" type="email" placeholder="e-mail" autocomplete="username" inputmode="email">
+    <input id="pw" type="password" placeholder="senha" autocomplete="current-password" style="margin-top:9px"
+      onkeydown="if(event.key==='Enter')comSenha()">
+    <button class="prim" style="margin-top:11px;width:100%" onclick="comSenha()">Entrar</button>
+    <p style="color:var(--dim);font-size:11.5px;margin:10px 0 0;line-height:1.5">
+      Este caminho não usa e-mail nenhum — funciona no atalho da tela de início, sempre.
+      <b>Ainda não tem senha?</b> Abra o painel no computador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
   </div>
 
-  <div style="background:var(--card);border-radius:13px;padding:16px;margin-bottom:12px;text-align:left">
-    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">2 · JÁ TENHO O LINK NO E-MAIL</div>
-    <input id="colado" type="text" placeholder="cole aqui o link inteiro do e-mail" autocomplete="off"
-      autocapitalize="off" spellcheck="false">
-    <button class="prim" style="margin-top:10px;width:100%" onclick="colar()">Entrar com este link</button>
-    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-      No e-mail, segure o botão e escolha <b>copiar endereço do link</b>. Funciona dentro do atalho da tela de início —
-      é para isso que este campo existe. O link é de uso único: se você já clicou nele, peça outro.</p>
-  </div>
+  <button class="mais" onclick="document.getElementById('alt').classList.toggle('on')"
+    style="margin:2px 0 10px">outras formas de entrar</button>
 
-  <div style="background:var(--card);border-radius:13px;padding:16px;text-align:left">
-    <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">3 · CÓDIGO DE 6 DÍGITOS</div>
-    <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
-      style="letter-spacing:6px;text-align:center;font-size:20px">
-    <button class="prim" style="margin-top:10px;width:100%" onclick="codigo()">Entrar com o código</button>
-    <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-      Só funciona depois de configurar um SMTP próprio no Supabase — o plano grátis não deixa o e-mail trazer o código.</p>
+  <div id="alt" class="extra" style="display:none;flex-direction:column;gap:10px;text-align:left">
+    <div style="background:var(--card);border-radius:13px;padding:16px">
+      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">LINK POR E-MAIL</div>
+      <button class="btn" style="width:100%" onclick="entrar()">Receber link</button>
+      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+        O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio. Preencha o e-mail acima antes.</p>
+    </div>
+    <div style="background:var(--card);border-radius:13px;padding:16px">
+      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">COLAR O LINK RECEBIDO</div>
+      <input id="colado" type="text" placeholder="cole o link inteiro do e-mail" autocomplete="off"
+        autocapitalize="off" spellcheck="false">
+      <button class="btn" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button>
+      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+        No e-mail, segure o link e escolha <b>copiar endereço</b> — não clique, o link é de uso único.</p>
+    </div>
+    <div style="background:var(--card);border-radius:13px;padding:16px">
+      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">CÓDIGO DE 6 DÍGITOS</div>
+      <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
+        style="letter-spacing:6px;text-align:center;font-size:20px">
+      <button class="btn" style="width:100%;margin-top:9px" onclick="codigo()">Entrar com o código</button>
+      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
+        Disponível depois de configurar SMTP próprio (tarefa t228).</p>
+    </div>
   </div>
 
   <p id="lmsg" style="font-size:13.5px;margin-top:16px;min-height:20px"></p>
 </div>
 
+<div id="senha" class="login" style="display:none">
+  <h1 style="letter-spacing:4px;font-size:14px">SENHA DE ACESSO</h1>
+  <p style="color:var(--mut);font-size:13.5px;margin:18px 0 14px;line-height:1.55">
+    Defina aqui a senha que você vai usar no celular. Ela é gravada direto no seu Supabase —
+    eu não vejo, não guardo e não trafego essa senha em lugar nenhum.</p>
+  <div style="background:var(--card);border-radius:13px;padding:18px;text-align:left">
+    <input id="np1" type="password" placeholder="nova senha (mínimo 8)" autocomplete="new-password">
+    <input id="np2" type="password" placeholder="repita a senha" autocomplete="new-password" style="margin-top:9px"
+      onkeydown="if(event.key==='Enter')salvarSenha()">
+    <button class="prim" style="margin-top:11px;width:100%" onclick="salvarSenha()">Salvar senha</button>
+  </div>
+  <p id="smsg" style="font-size:13.5px;margin-top:14px;min-height:20px"></p>
+  <button class="mais" onclick="fecharSenha()" style="margin-top:6px">voltar ao painel</button>
+</div>
+
 <div id="app" style="display:none">
 <div class="top"><div class="topin">
-  <h1>CÉREBRO IGOR</h1><span class="ver">v14</span>
+  <h1>CÉREBRO IGOR</h1><span class="ver">v15</span>
   <span class="deg" id="degrau"></span>
   <button class="btn" onclick="carregar()">↻</button>
+  <button class="btn" onclick="abrirSenha()" title="definir a senha usada no celular">senha</button>
   <button class="btn" onclick="sair()">sair</button>
 </div>
 <div class="tabs">
@@ -213,7 +240,7 @@ padding:5px 9px;font-size:12.5px;font-family:inherit}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v14";
+const VER="v15";
 const sb=supabase.createClient(URL_,KEY_);
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]},mostrarResto=false;
 
@@ -231,6 +258,34 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   window.scrollTo({top:0,behavior:"smooth"});});
 function lm(txt,cor){const p=document.getElementById("lmsg");p.innerHTML=txt;
   p.style.color=cor==="bad"?"var(--bad)":cor==="ok"?"var(--ok)":"var(--mut)";}
+/* CAMINHO PRINCIPAL — nao passa por e-mail, logo nao sofre rate limit nem depende de link.
+   E o unico que funciona igual no atalho da tela de inicio, no navegador e no PC. */
+async function comSenha(){
+  const e=document.getElementById("em").value.trim(), p=document.getElementById("pw").value;
+  if(!e||!p){lm("Preencha e-mail e senha.","bad");return;}
+  lm("entrando…");
+  const {error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(!error){lm("Entrando…","ok");return;}
+  lm(/Invalid login/i.test(error.message)
+    ? "<b>E-mail ou senha não conferem.</b> Se você ainda não criou uma senha, abra o painel no computador (onde já está logado) e clique em <b>senha</b> no topo — leva 10 segundos."
+    : ("Erro "+(error.status||"")+": "+error.message),"bad");
+}
+function abrirSenha(){document.getElementById("app").style.display="none";
+  document.getElementById("senha").style.display="block";window.scrollTo(0,0);}
+function fecharSenha(){document.getElementById("senha").style.display="none";
+  document.getElementById("app").style.display="block";}
+async function salvarSenha(){
+  const a=document.getElementById("np1").value, b=document.getElementById("np2").value;
+  const m=document.getElementById("smsg");
+  const put=(t,c)=>{m.innerHTML=t;m.style.color=c==="bad"?"var(--bad)":c==="ok"?"var(--ok)":"var(--mut)";};
+  if(a.length<8){put("A senha precisa de pelo menos 8 caracteres.","bad");return;}
+  if(a!==b){put("As duas senhas não são iguais.","bad");return;}
+  put("salvando…");
+  const {error}=await sb.auth.updateUser({password:a});
+  if(error){put("Erro: "+error.message,"bad");return;}
+  document.getElementById("np1").value="";document.getElementById("np2").value="";
+  put("<b>Senha salva.</b> Agora abra o atalho no celular, digite seu e-mail e esta senha, e entre. Não precisa de link nem de e-mail.","ok");
+}
 async function entrar(){
   const e=document.getElementById("em").value.trim();
   if(!e){lm("Digite o e-mail primeiro.","bad");return;}
