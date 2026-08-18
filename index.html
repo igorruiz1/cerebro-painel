@@ -7,276 +7,433 @@
 <meta name="apple-mobile-web-app-title" content="CÉREBRO">
 <link rel="manifest" href="manifest.json">
 <style>
-:root{--bg:#0d1117;--card:#161d2b;--card2:#1c2536;--ink:#e9eef7;--mut:#8b98ae;--dim:#5d6b82;
---red:#e5484d;--yel:#f5a623;--grn:#30a46c;--acc:#4c8dff;--vio:#8b7cf6;--line:#242f45;
---ok:#6ee7a8;--bad:#ff8a8f;--warn:#f5c26b}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);
-font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
-.top{position:sticky;top:0;z-index:9;background:rgba(13,17,23,.95);backdrop-filter:blur(8px);
-border-bottom:1px solid var(--line)}
-.topin{max-width:1120px;margin:0 auto;padding:13px 18px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
-h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600}
-.ver{font-size:10px;letter-spacing:1.6px;color:var(--acc);border:1px solid var(--acc);
-padding:2px 8px;border-radius:20px;font-weight:600}
-.deg{font-size:11px;color:var(--mut);margin-left:auto;display:flex;gap:7px;align-items:center}
+:root{
+ --bg:#0d1117; --surface:#141b26; --card:#161d2b; --card2:#1c2536; --raise:#212b3d;
+ --ink:#e9eef7; --ink2:#c3ccdb; --mut:#8b98ae; --dim:#5d6b82; --line:#242f45; --line2:#31405c;
+ --red:#e5484d; --yel:#f5a623; --grn:#30a46c; --acc:#4c8dff; --vio:#8b7cf6;
+ --ok:#6ee7a8; --bad:#ff8a8f; --warn:#f5c26b; --lil:#b3a6ff;
+ --r:12px; --r2:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;
+ -webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit}
+::selection{background:rgba(76,141,255,.3)}
+
+/* ---------- CABEÇALHO ---------- */
+.top{position:sticky;top:0;z-index:30;background:rgba(13,17,23,.96);backdrop-filter:blur(10px);
+ border-bottom:1px solid var(--line)}
+.topin{max-width:1180px;margin:0 auto;padding:12px 18px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600;white-space:nowrap}
+.ver{font-size:10px;letter-spacing:1.5px;color:var(--acc);border:1px solid var(--acc);
+ padding:2px 8px;border-radius:20px;font-weight:600}
+.spacer{flex:1}
+.deg{font-size:11.5px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .deg b{color:var(--ok);font-size:14px}
-.btn{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
-padding:6px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
-.btn:hover{border-color:var(--acc)}
-.tabs{max-width:1120px;margin:0 auto;padding:9px 18px 0;display:flex;gap:2px;overflow-x:auto}
+.btn{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
+ padding:7px 12px;font-size:12.5px;cursor:pointer;transition:border-color .12s,background .12s;
+ min-height:34px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--acc);background:var(--raise)}
+.btn:active{transform:translateY(1px)}
+.btn.on{border-color:var(--acc);color:#fff;background:#1b2a49}
+.tabs{max-width:1180px;margin:0 auto;padding:10px 18px 0;display:flex;gap:2px;overflow-x:auto;
+ scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
 .tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);
-padding:9px 13px;font-size:11.5px;letter-spacing:1.5px;font-weight:600;cursor:pointer;
-white-space:nowrap;font-family:inherit}
+ padding:10px 14px;font-size:11.5px;letter-spacing:1.4px;font-weight:600;cursor:pointer;
+ white-space:nowrap;transition:color .12s}
+.tab:hover{color:var(--ink2)}
 .tab.on{color:var(--ink);border-bottom-color:var(--acc)}
-.tab .n{color:var(--acc);margin-left:5px}.tab .n.bad{color:var(--bad)}
-main{max-width:1120px;margin:0 auto;padding:22px 18px 90px}
+.tab .n{margin-left:6px;font-size:10.5px;padding:1px 6px;border-radius:10px;background:var(--card2);color:var(--mut)}
+.tab .n.hot{background:#3a1d1f;color:var(--bad)}
+.tab .n.warn{background:#3a3320;color:var(--warn)}
+
+/* ---------- FILTROS ---------- */
+.filtros{max-width:1180px;margin:0 auto;padding:10px 18px 12px;display:none;gap:8px;
+ flex-wrap:wrap;align-items:center;border-top:1px solid var(--line)}
+.filtros.on{display:flex}
+.busca{position:relative;flex:1;min-width:190px}
+.busca input{width:100%;background:var(--card);border:1px solid var(--line2);color:var(--ink);
+ border-radius:9px;padding:8px 30px 8px 32px;font-size:13.5px;min-height:36px}
+.busca input:focus{outline:none;border-color:var(--acc)}
+.busca .lupa{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:13px}
+.busca .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;
+ color:var(--dim);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:20px;
+ padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .12s;min-height:30px;
+ display:inline-flex;align-items:center;gap:5px}
+.chip:hover{border-color:var(--line2);color:var(--ink2)}
+.chip.on{background:#1b2a49;border-color:var(--acc);color:#fff}
+.chip .c{font-size:10.5px;opacity:.75;font-variant-numeric:tabular-nums}
+.fsep{width:1px;height:22px;background:var(--line);margin:0 2px}
+.flabel{font-size:10px;letter-spacing:1.4px;color:var(--dim);font-weight:600;margin-right:2px}
+
+main{max-width:1180px;margin:0 auto;padding:20px 18px 100px}
 .pane{display:none}.pane.on{display:block}
-h2{font-size:11px;letter-spacing:2.2px;color:var(--mut);margin:32px 0 12px;font-weight:600;
-border-bottom:1px solid var(--line);padding-bottom:8px}
-h2:first-child{margin-top:2px}h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px}
-.hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 62%);border-left:4px solid var(--grn);
-border-radius:14px;padding:18px 20px;margin-bottom:16px}
-.hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 62%);border-left-color:var(--red)}
-.hero .t{font-size:21px;font-weight:600;letter-spacing:-.2px}
-.hero .s{font-size:14px;color:#cdd6e4;margin-top:5px}
-.card{background:var(--card);border-radius:13px;padding:15px 17px;margin-bottom:9px;border-left:3px solid var(--line)}
+h2{font-size:11px;letter-spacing:2.2px;color:var(--mut);margin:30px 0 12px;font-weight:600;
+ border-bottom:1px solid var(--line);padding-bottom:8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2:first-child{margin-top:0}
+h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px;font-weight:400;text-transform:none}
+
+/* ---------- HERO ---------- */
+.hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 60%);border-left:4px solid var(--grn);
+ border-radius:var(--r2);padding:18px 20px;margin-bottom:16px}
+.hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 60%);border-left-color:var(--red)}
+.hero .t{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.hero .s{font-size:13.5px;color:var(--ink2);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hero .s b{color:var(--warn)}
+
+/* ---------- CARD ---------- */
+.card{background:var(--card);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;
+ border-left:3px solid var(--line);transition:border-color .12s}
+.card:hover{border-left-color:var(--line2)}
 .card.n1{border-left-color:var(--red)}.card.n2{border-left-color:var(--yel)}
 .card.n3{border-left-color:var(--dim)}.card.cor{border-left-color:var(--vio)}
 .card.critico{border-left-color:var(--red)}.card.alto{border-left-color:var(--yel)}
 .card.medio{border-left-color:var(--acc)}
-.ttl{font-size:15px;font-weight:500;margin-bottom:3px}
-.meta{font-size:12px;color:var(--mut);display:flex;gap:9px;flex-wrap:wrap;margin-bottom:7px;align-items:center}
-.val{color:var(--ok);font-weight:600}
-.rec{font-size:13.4px;color:#c3ccdb;background:var(--card2);border-radius:9px;padding:9px 12px;margin:7px 0}
-.rec b{color:var(--warn)}
-.acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:9px}
+.ttl{font-size:15px;font-weight:500;line-height:1.4;margin-bottom:6px;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card.aberto .ttl{-webkit-line-clamp:unset;overflow:visible}
+.meta{font-size:11.5px;color:var(--mut);display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;padding:2px 8px;
+ border-radius:20px;background:var(--card2);color:var(--mut);white-space:nowrap}
+.tag.f{background:#1a2438;color:#9db6e8}
+.tag.ok{background:#12321f;color:var(--ok)}
+.tag.bad{background:#3a1d1f;color:var(--bad)}
+.tag.med{background:#3a3320;color:var(--warn)}
+.tag.vio{background:#241f45;color:var(--lil)}
+.rs{color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums}
+.txt{font-size:13.4px;color:var(--ink2);background:var(--card2);border-radius:10px;
+ padding:10px 12px;margin:8px 0;position:relative}
+.txt .lbl{font-size:10px;letter-spacing:1.3px;color:var(--warn);font-weight:600;display:block;margin-bottom:4px}
+.txt .corpo{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.txt.aberto .corpo{-webkit-line-clamp:unset;overflow:visible}
+.txt .ver{background:none;border:0;color:var(--acc);font-size:12px;cursor:pointer;padding:4px 0 0;
+ text-decoration:none;font-weight:500}
+.txt .ver:hover{text-decoration:underline}
+.txt.vio{border-left:2px solid var(--vio)}
+.txt.vio .lbl{color:var(--lil)}
+.acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .prim{background:#12321f;border:1px solid var(--grn);color:var(--ok);border-radius:9px;
-padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+ padding:9px 15px;font-size:13.5px;font-weight:600;cursor:pointer;min-height:38px;transition:background .12s}
 .prim:hover{background:#174028}
-.mais{background:none;border:0;color:var(--mut);font-size:12.5px;cursor:pointer;
-text-decoration:underline;font-family:inherit}
-.extra{display:none;gap:7px;flex-wrap:wrap;margin-top:8px}.extra.on{display:flex}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:10px}
-.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.kpi{background:var(--card);border-radius:13px;padding:14px 15px;border:1px solid transparent}
-.kpi.dentro{border-color:rgba(48,163,108,.3)}.kpi.fora{border-color:rgba(229,72,77,.3)}
-.kpi .k{font-size:10.5px;color:var(--dim);font-family:ui-monospace,monospace;margin-bottom:2px}
+.prim.vio{background:#241f45;border-color:var(--vio);color:var(--lil)}
+.prim.vio:hover{background:#2e2757}
+.sec{background:var(--card2);border:1px solid var(--line2);color:var(--ink2);border-radius:9px;
+ padding:9px 13px;font-size:12.5px;cursor:pointer;min-height:38px}
+.sec:hover{border-color:var(--acc)}
+.link{background:none;border:0;color:var(--mut);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:6px 2px}
+.link:hover{color:var(--ink2)}
+
+/* ---------- GRIDS E KPI ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px}
+.kpi{background:var(--card);border-radius:var(--r);padding:14px 15px;border:1px solid transparent}
+.kpi.dentro{border-color:rgba(48,163,108,.28)}.kpi.fora{border-color:rgba(229,72,77,.28)}
+.kpi .k{font-size:10.5px;color:var(--dim);font-family:ui-monospace,monospace;margin-bottom:3px}
 .kpi .r{font-size:12.8px;color:var(--mut);margin-bottom:8px;line-height:1.35}
-.kpi .n{font-size:26px;font-weight:650;line-height:1;letter-spacing:-.5px}
-.kpi.dentro .n{color:var(--ok)}.kpi.fora .n{color:var(--bad)}.kpi .n.nd{color:var(--dim);font-size:16px}
-.kpi .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;gap:8px}
+.kpi .n{font-size:26px;font-weight:650;line-height:1;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.kpi.dentro .n{color:var(--ok)}.kpi.fora .n{color:var(--bad)}
+.kpi .n.nd{color:var(--dim);font-size:15px;font-weight:500}
+.kpi .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;gap:8px}
 .kpi .m{font-size:11px;color:var(--mut)}
-.pill{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px}
-.p-ok{background:#12321f;color:var(--ok)}.p-bad{background:#3a1d1f;color:var(--bad)}
-.p-med{background:#3a3320;color:var(--warn)}.p-nd{background:var(--card2);color:var(--mut)}
-.p-vio{background:#241f45;color:#b3a6ff}
 .dim{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);
-font-size:13.5px;flex-wrap:wrap}
+ font-size:13.5px;flex-wrap:wrap}
 .dim:last-child{border-bottom:0}.dim .nm{flex:1;min-width:145px;font-weight:500}
 .bar{display:flex;gap:3px}.bar s{width:21px;height:9px;border-radius:2px;background:var(--card2);
-text-decoration:none;display:block}
+ text-decoration:none;display:block}
 .bar s.f{background:var(--grn)}.bar s.w{background:var(--yel)}
-.ow{font-size:11.5px;color:var(--mut);min-width:190px;text-align:right}
+.ow{font-size:11.5px;color:var(--mut);min-width:180px;text-align:right}
 table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
-th{font-size:10px;letter-spacing:1.2px;color:var(--mut)}
+td,th{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:10px;letter-spacing:1.2px;color:var(--mut);font-weight:600}
 tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(255,255,255,.02)}
 .mono{font-family:ui-monospace,monospace;font-size:12px;color:#a8c0e8;white-space:nowrap}
-.right{text-align:right}.rs{font-variant-numeric:tabular-nums;white-space:nowrap}
-.log{position:fixed;left:0;right:0;bottom:0;background:var(--card2);border-top:1px solid var(--line);
-padding:11px 18px;font-size:13px;display:none;z-index:20}
-.log.on{display:block}
-.login{max-width:400px;margin:16vh auto;text-align:center;padding:0 20px}
-input{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:9px;
-padding:11px 13px;font-size:15px;width:100%;font-family:inherit}
-.empty{color:var(--mut);font-size:14px;padding:20px 0;text-align:center}
-.foot{margin-top:38px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);
-padding-top:16px;line-height:1.7}
+.right{text-align:right;font-variant-numeric:tabular-nums}
+.empty{color:var(--mut);font-size:14px;padding:26px 16px;text-align:center;background:var(--card);
+ border-radius:var(--r);border:1px dashed var(--line2)}
+.foot{margin-top:34px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);
+ padding-top:16px;line-height:1.7}
 code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:12px;color:#a8c0e8}
-.loop{background:linear-gradient(135deg,#241f45 0%,var(--card) 60%);border-left:4px solid var(--vio);
-border-radius:15px;padding:20px 22px;margin-bottom:14px}
-.loop .t{font-size:19px;font-weight:600;color:#c8bcff;letter-spacing:-.2px}
-.loop .s{font-size:13.5px;color:var(--mut);margin:4px 0 12px}
-.loop .lx{font-size:14px;color:#cdd6e4}
-.ach{font-size:13.3px;color:#c3ccdb;background:rgba(0,0,0,.22);border-radius:9px;
-padding:9px 12px;margin-top:7px}
-select{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:8px;
-padding:5px 9px;font-size:12.5px;font-family:inherit}
-</style></head><body>
-<div id="login" class="login" style="display:none">
-  <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
+.loop{background:linear-gradient(135deg,#241f45 0%,var(--card) 58%);border-left:4px solid var(--vio);
+ border-radius:var(--r2);padding:20px 22px;margin-bottom:14px}
+.loop .t{font-size:19px;font-weight:600;color:#c8bcff;letter-spacing:-.3px}
+.loop .s{font-size:13px;color:var(--mut);margin:5px 0 12px}
+.loop .lx{font-size:14px;color:var(--ink2)}
+.ach{font-size:13.2px;color:var(--ink2);background:rgba(0,0,0,.22);border-radius:9px;padding:9px 12px;margin-top:7px}
+select{background:var(--card);border:1px solid var(--line2);color:var(--ink);border-radius:9px;
+ padding:6px 10px;font-size:12.5px;min-height:34px}
 
-  <div style="background:var(--card);border-radius:13px;padding:18px;margin:20px 0 10px;text-align:left">
+/* ---------- MODAL ---------- */
+.modal{position:fixed;inset:0;background:rgba(5,8,13,.72);backdrop-filter:blur(3px);z-index:60;
+ display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.mbox{background:var(--surface);border:1px solid var(--line2);border-radius:var(--r2);
+ max-width:520px;width:100%;padding:22px;max-height:86vh;overflow:auto}
+.mbox h3{margin:0 0 6px;font-size:16px;font-weight:600}
+.mbox .sub{font-size:13px;color:var(--mut);margin-bottom:14px;line-height:1.5}
+.mbox textarea,.mbox input[type=text],.mbox input[type=date]{width:100%;background:var(--card);
+ border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:14.5px}
+.mbox textarea{min-height:104px;resize:vertical;line-height:1.5}
+.mbox .mact{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
+
+/* ---------- TOAST ---------- */
+.log{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--raise);
+ border:1px solid var(--line2);border-radius:11px;padding:12px 18px;font-size:13.5px;display:none;
+ z-index:70;box-shadow:0 10px 34px rgba(0,0,0,.5);max-width:calc(100% - 36px)}
+.log.on{display:block}
+.log.bad{border-color:var(--red);color:var(--bad)}
+.log.ok{border-color:var(--grn);color:var(--ok)}
+
+/* ---------- LOGIN ---------- */
+.login{max-width:400px;margin:14vh auto;text-align:center;padding:0 20px}
+.login input{background:var(--card);border:1px solid var(--line2);color:var(--ink);border-radius:10px;
+ padding:12px 14px;font-size:15px;width:100%}
+.login input:focus{outline:none;border-color:var(--acc)}
+.box{background:var(--card);border-radius:var(--r2);padding:18px;text-align:left}
+.box .h{font-size:10.5px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:10px}
+.box p{color:var(--dim);font-size:11.5px;margin:10px 0 0;line-height:1.55}
+.hidden{display:none!important}
+@media(max-width:640px){
+ main{padding:16px 13px 100px}
+ .topin,.tabs,.filtros{padding-left:13px;padding-right:13px}
+ .hero .t{font-size:19px}
+ .ow{min-width:0;text-align:left}
+}
+</style></head><body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login" class="login hidden">
+  <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
+  <div class="box" style="margin:20px 0 10px">
     <input id="em" type="email" placeholder="e-mail" autocomplete="username" inputmode="email">
     <input id="pw" type="password" placeholder="senha" autocomplete="current-password" style="margin-top:9px"
       onkeydown="if(event.key==='Enter')comSenha()">
-    <button class="prim" style="margin-top:11px;width:100%" onclick="comSenha()">Entrar</button>
-    <p style="color:var(--dim);font-size:11.5px;margin:10px 0 0;line-height:1.5">
-      Este caminho não usa e-mail nenhum — funciona no atalho da tela de início, sempre.
-      <b>Ainda não tem senha?</b> Abra o painel no computador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
+    <button class="prim" style="margin-top:12px;width:100%" onclick="comSenha()">Entrar</button>
+    <p>Não usa e-mail — funciona no atalho da tela de início, sempre.
+       <b>Sem senha ainda?</b> Abra no computador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
   </div>
-
-  <button class="mais" onclick="document.getElementById('alt').classList.toggle('on')"
-    style="margin:2px 0 10px">outras formas de entrar</button>
-
-  <div id="alt" class="extra" style="display:none;flex-direction:column;gap:10px;text-align:left">
-    <div style="background:var(--card);border-radius:13px;padding:16px">
-      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">LINK POR E-MAIL</div>
-      <button class="btn" style="width:100%" onclick="entrar()">Receber link</button>
-      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-        O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio. Preencha o e-mail acima antes.</p>
-    </div>
-    <div style="background:var(--card);border-radius:13px;padding:16px">
-      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">COLAR O LINK RECEBIDO</div>
-      <input id="colado" type="text" placeholder="cole o link inteiro do e-mail" autocomplete="off"
-        autocapitalize="off" spellcheck="false">
-      <button class="btn" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button>
-      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-        No e-mail, segure o link e escolha <b>copiar endereço</b> — não clique, o link é de uso único.</p>
-    </div>
-    <div style="background:var(--card);border-radius:13px;padding:16px">
-      <div style="font-size:11px;letter-spacing:1.6px;color:var(--mut);font-weight:600;margin-bottom:9px">CÓDIGO DE 6 DÍGITOS</div>
+  <button class="link" onclick="document.getElementById('alt').classList.toggle('hidden')">outras formas de entrar</button>
+  <div id="alt" class="hidden" style="display:grid;gap:10px;margin-top:8px">
+    <div class="box"><div class="h">LINK POR E-MAIL</div>
+      <button class="sec" style="width:100%" onclick="entrar()">Receber link</button>
+      <p>O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio.</p></div>
+    <div class="box"><div class="h">COLAR O LINK RECEBIDO</div>
+      <input id="colado" type="text" placeholder="cole o link inteiro do e-mail" autocomplete="off" spellcheck="false">
+      <button class="sec" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button>
+      <p>Segure o link no e-mail e escolha <b>copiar endereço</b> — não clique, é de uso único.</p></div>
+    <div class="box"><div class="h">CÓDIGO DE 6 DÍGITOS</div>
       <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
         style="letter-spacing:6px;text-align:center;font-size:20px">
-      <button class="btn" style="width:100%;margin-top:9px" onclick="codigo()">Entrar com o código</button>
-      <p style="color:var(--dim);font-size:11.5px;margin:9px 0 0;line-height:1.5">
-        Disponível depois de configurar SMTP próprio (tarefa t228).</p>
-    </div>
+      <button class="sec" style="width:100%;margin-top:9px" onclick="codigo()">Entrar com o código</button>
+      <p>Disponível depois do SMTP próprio (t228).</p></div>
   </div>
-
   <p id="lmsg" style="font-size:13.5px;margin-top:16px;min-height:20px"></p>
 </div>
 
-<div id="senha" class="login" style="display:none">
+<!-- ===================== SENHA ===================== -->
+<div id="senha" class="login hidden">
   <h1 style="letter-spacing:4px;font-size:14px">SENHA DE ACESSO</h1>
-  <p style="color:var(--mut);font-size:13.5px;margin:18px 0 14px;line-height:1.55">
-    Defina aqui a senha que você vai usar no celular. Ela é gravada direto no seu Supabase —
-    eu não vejo, não guardo e não trafego essa senha em lugar nenhum.</p>
-  <div style="background:var(--card);border-radius:13px;padding:18px;text-align:left">
+  <p style="color:var(--mut);font-size:13.5px;margin:16px 0 14px;line-height:1.55">
+    Defina a senha que você usa no celular. Ela vai direto ao seu Supabase — eu não vejo, não guardo, não trafego.</p>
+  <div class="box">
     <input id="np1" type="password" placeholder="nova senha (mínimo 8)" autocomplete="new-password">
     <input id="np2" type="password" placeholder="repita a senha" autocomplete="new-password" style="margin-top:9px"
       onkeydown="if(event.key==='Enter')salvarSenha()">
-    <button class="prim" style="margin-top:11px;width:100%" onclick="salvarSenha()">Salvar senha</button>
+    <button class="prim" style="margin-top:12px;width:100%" onclick="salvarSenha()">Salvar senha</button>
   </div>
   <p id="smsg" style="font-size:13.5px;margin-top:14px;min-height:20px"></p>
-  <button class="mais" onclick="fecharSenha()" style="margin-top:6px">voltar ao painel</button>
+  <button class="link" onclick="fecharSenha()">voltar ao painel</button>
 </div>
 
-<div id="app" style="display:none">
-<div class="top"><div class="topin">
-  <h1>CÉREBRO IGOR</h1><span class="ver">v15</span>
-  <span class="deg" id="degrau"></span>
-  <button class="btn" onclick="carregar()">↻</button>
-  <button class="btn" onclick="abrirSenha()" title="definir a senha usada no celular">senha</button>
-  <button class="btn" onclick="sair()">sair</button>
+<!-- ===================== APP ===================== -->
+<div id="app" class="hidden">
+<div class="top">
+  <div class="topin">
+    <h1>CÉREBRO IGOR</h1><span class="ver">v16</span>
+    <span class="spacer"></span>
+    <span class="deg" id="degrau"></span>
+    <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
+    <button class="btn" onclick="abrirSenha()" title="definir senha do celular">senha</button>
+    <button class="btn" onclick="sair()">sair</button>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
+    <button class="tab" data-p="comando">COMANDO<span class="n" id="n-cmd"></span></button>
+    <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
+    <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
+    <button class="tab" data-p="acervo">ACERVO<span class="n" id="n-ac"></span></button>
+  </div>
+  <div class="filtros on" id="filtros">
+    <div class="busca">
+      <span class="lupa">⌕</span>
+      <input id="q" type="search" placeholder="buscar em título, recomendação, frente…" autocomplete="off"
+        oninput="onBusca(this.value)">
+      <button class="x" onclick="limpaBusca()" id="qx" style="display:none" aria-label="limpar">×</button>
+    </div>
+    <div class="fsep"></div>
+    <span class="flabel">FRENTE</span>
+    <div class="chips" id="chipsFrente"></div>
+    <div class="fsep"></div>
+    <span class="flabel">TIPO</span>
+    <div class="chips" id="chipsOrigem"></div>
+    <button class="btn" id="btLimpar" onclick="limparFiltros()" style="display:none">limpar filtros</button>
+  </div>
 </div>
-<div class="tabs">
-  <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
-  <button class="tab" data-p="comando">COMANDO<span class="n bad" id="n-cmd"></span></button>
-  <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
-  <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
-  <button class="tab" data-p="acervo">ACERVO<span class="n" id="n-ac"></span></button>
-</div></div>
 
 <main>
   <div class="pane on" id="p-agora">
     <div id="hero"></div>
     <div id="correcoes"></div>
-    <h2>PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
+    <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
     <h2>DEPOIS <span class="s">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
-    <div style="text-align:center;margin-top:12px"><button class="mais" onclick="verResto()" id="btresto"></button></div>
-    <div id="fila3" style="margin-top:10px;display:none"></div>
+    <div style="text-align:center;margin-top:12px"><button class="link" onclick="verResto()" id="btresto"></button></div>
+    <div id="fila3" style="margin-top:8px;display:none"></div>
   </div>
 
   <div class="pane" id="p-comando">
     <h2>O DINHEIRO <span class="s">— o que o sistema não media até 16/08</span></h2>
     <div class="g4" id="caixa"></div>
-    <h2>INSIGHTS DE GESTÃO <span class="s">— cada linha nasce de uma condição medida; some sozinha quando deixa de valer</span></h2>
+    <h2>INSIGHTS DE GESTÃO <span class="s">— cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2>
     <div id="insights"></div>
     <h2>AS FRENTES, DE HELICÓPTERO <span class="s">— onde está o trabalho x onde está o dinheiro</span></h2>
-    <div class="card"><table id="frentes"></table></div>
+    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="frentes"></table></div>
     <h2>DE QUEM É A FILA, DE VERDADE</h2>
     <div class="g4" id="automacao"></div>
-    <div class="card" style="margin-top:10px"><table id="semi"></table></div>
-    <div class="foot"><b>A / S / M</b> — <b>A</b>utomável: o ato é meu ou do banco, já está na minha fila ·
-    <b>S</b>emi: eu entrego pronto e você só aprova ou envia · <b>M</b>: só você — credencial, assinatura,
-    presença, voz, relação ou decisão. Toda tarefa marcada M tem o VERBO nomeado; sem verbo, não é M.</div>
+    <div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div>
+    <div class="foot"><b>A / S / M</b> — <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto,
+      você só aprova ou envia · <b>M</b>: só você — credencial, assinatura, presença, voz, relação ou decisão.
+      Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div>
   </div>
 
   <div class="pane" id="p-evolucao">
     <div id="loop"></div>
     <h2>A ESCADA <span class="s">— CMMI · o nível do sistema é o MENOR elo</span></h2>
     <div id="escada"></div>
-    <div class="card" id="dims"></div>
+    <div class="card" style="border-left-color:var(--line)" id="dims"></div>
     <div id="kpis"></div>
-    <div class="foot">
-      <b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta.
+    <div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta.
       <b>Indeterminado não é zero</b> — indicador sem base mínima devolve vazio de propósito.
       Nada aqui é digitado: sai de <code>kpi</code> + <code>medir_kpi()</code>.<br>
-      <b>Réguas:</b> CMMI (degraus, menor elo) · DORA (ritmo) · camada semântica dbt/LookML (dicionário) ·
-      ISO 15489 (aposentadoria) · SRE do Google (SLO com orçamento de falha).
-    </div>
+      <b>Réguas:</b> CMMI · DORA · camada semântica (dbt/LookML) · ISO 15489 · SRE do Google.</div>
   </div>
 
   <div class="pane" id="p-motor">
     <h2>ROTINAS <span class="s">— quem bate ponto sozinho</span></h2>
-    <div class="card"><table id="rotinas"></table></div>
+    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div>
     <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
-    <div class="foot"><b>Ponto</b> é execução registrada, não resultado: rotina que roda, olha a fila e para
-      porque não havia trabalho <i>bateu ponto</i>. Rotina manual (janela 0h) não se vigia por relógio.</div>
+    <div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>:
+      as horas em que a rotina não deve rodar não contam. Rotina manual (janela 0h) não se vigia por relógio.</div>
   </div>
 
   <div class="pane" id="p-acervo">
     <h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div>
     <h2>AS QUE MAIS TRABALHAM <span class="s">— por uso real</span></h2>
-    <div class="card"><table id="actop"></table></div>
+    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div>
     <h2>OFERECIDAS E IGNORADAS <span class="s">— chegaram na hora e não mudaram nada</span></h2>
-    <div class="card"><table id="acign"></table></div>
+    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div>
   </div>
 </main></div>
-<div class="log" id="log"></div>
 
+<!-- ===================== MODAL ===================== -->
+<div class="modal" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="mbox">
+    <h3 id="mtit"></h3>
+    <div class="sub" id="msub"></div>
+    <div id="mcampo"></div>
+    <div class="mact">
+      <button class="sec" onclick="fecharModal()">cancelar</button>
+      <button class="prim" id="mok" onclick="confirmarModal()">confirmar</button>
+    </div>
+  </div>
+</div>
+<div class="log" id="log"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v15";
+const VER="v16";
 const sb=supabase.createClient(URL_,KEY_);
-let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]},mostrarResto=false;
 
-const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
+let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
+let F={q:"",frente:null,origem:null};          // filtros
+let mostrarResto=false, pendente=null;          // estado de UI
+
+/* ---------- utilitários ---------- */
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{maximumFractionDigits:0});
 const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).toFixed(1)+"d":
   u==="min"?(+v).toFixed(0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
   (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0)));
-function msg(t,ms){const l=document.getElementById("log");l.textContent=t;l.classList.add("on");
-  clearTimeout(msg._t);msg._t=setTimeout(()=>l.classList.remove("on"),ms||4200);}
+const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
+function msg(t,tipo,ms){const l=document.getElementById("log");
+  l.textContent=t;l.className="log on"+(tipo?" "+tipo:"");
+  clearTimeout(msg._t);msg._t=setTimeout(()=>l.className="log",ms||4200);}
+function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
+  v===null?localStorage.removeItem("ci_"+k):localStorage.setItem("ci_"+k,v);}catch(e){return null}}
+
+/* ---------- navegação ---------- */
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");document.getElementById("p-"+b.dataset.p).classList.add("on");
+  document.getElementById("filtros").classList.toggle("on",b.dataset.p==="agora");
   window.scrollTo({top:0,behavior:"smooth"});});
-function lm(txt,cor){const p=document.getElementById("lmsg");p.innerHTML=txt;
-  p.style.color=cor==="bad"?"var(--bad)":cor==="ok"?"var(--ok)":"var(--mut)";}
-/* CAMINHO PRINCIPAL — nao passa por e-mail, logo nao sofre rate limit nem depende de link.
-   E o unico que funciona igual no atalho da tela de inicio, no navegador e no PC. */
+
+/* ---------- autenticação ---------- */
+function lm(t,c){const p=document.getElementById("lmsg");p.innerHTML=t;
+  p.style.color=c==="bad"?"var(--bad)":c==="ok"?"var(--ok)":"var(--mut)";}
 async function comSenha(){
-  const e=document.getElementById("em").value.trim(), p=document.getElementById("pw").value;
+  const e=document.getElementById("em").value.trim(),p=document.getElementById("pw").value;
   if(!e||!p){lm("Preencha e-mail e senha.","bad");return;}
   lm("entrando…");
   const {error}=await sb.auth.signInWithPassword({email:e,password:p});
   if(!error){lm("Entrando…","ok");return;}
   lm(/Invalid login/i.test(error.message)
-    ? "<b>E-mail ou senha não conferem.</b> Se você ainda não criou uma senha, abra o painel no computador (onde já está logado) e clique em <b>senha</b> no topo — leva 10 segundos."
-    : ("Erro "+(error.status||"")+": "+error.message),"bad");
-}
-function abrirSenha(){document.getElementById("app").style.display="none";
-  document.getElementById("senha").style.display="block";window.scrollTo(0,0);}
-function fecharSenha(){document.getElementById("senha").style.display="none";
-  document.getElementById("app").style.display="block";}
+    ? "<b>E-mail ou senha não conferem.</b> Se ainda não criou senha, abra no computador e clique em <b>senha</b> no topo."
+    : ("Erro "+(error.status||"")+": "+error.message),"bad");}
+async function entrar(){
+  const e=document.getElementById("em").value.trim();
+  if(!e){lm("Digite o e-mail primeiro.","bad");return;}
+  lm("enviando…");
+  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(!error){lm("Link enviado. Copie o <b>endereço</b> do link e cole no campo abaixo.","ok");return;}
+  lm(error.status===429
+    ? "<b>Limite de e-mails (429).</b> O provedor grátis bloqueia após poucos envios por hora. Use senha, ou espere ~1h."
+    : ("Erro "+(error.status||"")+": "+error.message),"bad");}
+async function colar(){
+  const raw=(document.getElementById("colado").value||"").trim();
+  if(!raw){lm("Cole o link do e-mail.","bad");return;}
+  let u;try{u=new URL(raw)}catch(_){lm("Isso não parece um link. Copie o endereço inteiro.","bad");return;}
+  const h=new URLSearchParams((u.hash||"").replace(/^#/,""));
+  if(h.get("access_token")&&h.get("refresh_token")){
+    const {error}=await sb.auth.setSession({access_token:h.get("access_token"),refresh_token:h.get("refresh_token")});
+    lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");return;}
+  const th=u.searchParams.get("token")||u.searchParams.get("token_hash")||h.get("token_hash");
+  const tp=u.searchParams.get("type")||h.get("type")||"magiclink";
+  if(!th){lm("Não achei o código nesse link. Copie o <b>endereço do link</b>, não o texto.","bad");return;}
+  const {error}=await sb.auth.verifyOtp({token_hash:th,type:tp});
+  if(!error){lm("Entrando…","ok");return;}
+  lm(/expired|invalid/i.test(error.message)
+    ?"<b>Link já usado ou expirado.</b> Peça outro e, no e-mail novo, copie o endereço sem clicar."
+    :("Erro: "+error.message),"bad");}
+async function codigo(){
+  const e=document.getElementById("em").value.trim(),c=(document.getElementById("cod").value||"").trim();
+  if(!e){lm("Preencha o e-mail primeiro.","bad");return;}
+  if(c.length<6){lm("O código tem 6 dígitos.","bad");return;}
+  const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
+  lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");}
+async function sair(){await sb.auth.signOut();location.reload();}
+function abrirSenha(){document.getElementById("app").classList.add("hidden");
+  document.getElementById("senha").classList.remove("hidden");window.scrollTo(0,0);}
+function fecharSenha(){document.getElementById("senha").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");}
 async function salvarSenha(){
-  const a=document.getElementById("np1").value, b=document.getElementById("np2").value;
-  const m=document.getElementById("smsg");
+  const a=document.getElementById("np1").value,b=document.getElementById("np2").value,m=document.getElementById("smsg");
   const put=(t,c)=>{m.innerHTML=t;m.style.color=c==="bad"?"var(--bad)":c==="ok"?"var(--ok)":"var(--mut)";};
   if(a.length<8){put("A senha precisa de pelo menos 8 caracteres.","bad");return;}
   if(a!==b){put("As duas senhas não são iguais.","bad");return;}
@@ -284,197 +441,233 @@ async function salvarSenha(){
   const {error}=await sb.auth.updateUser({password:a});
   if(error){put("Erro: "+error.message,"bad");return;}
   document.getElementById("np1").value="";document.getElementById("np2").value="";
-  put("<b>Senha salva.</b> Agora abra o atalho no celular, digite seu e-mail e esta senha, e entre. Não precisa de link nem de e-mail.","ok");
-}
-async function entrar(){
-  const e=document.getElementById("em").value.trim();
-  if(!e){lm("Digite o e-mail primeiro.","bad");return;}
-  lm("enviando…");
-  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});
-  if(!error){lm("Link enviado. Abra o e-mail e <b>copie o endereço do link</b> para colar no passo 2.","ok");return;}
-  if(error.status===429){
-    lm("<b>Limite de e-mails atingido (429).</b> O provedor grátis do Supabase manda poucos por hora e bloqueia o resto — "+
-       "por isso os links pararam de chegar. Espere cerca de 1 hora, <b>ou</b> use no passo 2 um link de um e-mail que já chegou.","bad");
-  } else {
-    lm("Erro "+(error.status||"")+": "+error.message,"bad");
-  }
-}
-/* Passo 2 — o que faz o atalho da tela de início funcionar.
-   Aceita as duas formas: o link /auth/v1/verify?token=...&type=... (ainda não usado)
-   e a URL de retorno com #access_token=... (quando você já abriu o link no navegador). */
-async function colar(){
-  const raw=(document.getElementById("colado").value||"").trim();
-  if(!raw){lm("Cole o link do e-mail no campo.","bad");return;}
-  lm("verificando o link…");
-  let u; try{u=new URL(raw);}catch(_){lm("Isso não parece um link. Copie o endereço inteiro, começando com https://","bad");return;}
-  const h=new URLSearchParams((u.hash||"").replace(/^#/,""));
-  if(h.get("access_token")&&h.get("refresh_token")){
-    const {error}=await sb.auth.setSession({access_token:h.get("access_token"),refresh_token:h.get("refresh_token")});
-    lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");return;
-  }
-  const th=u.searchParams.get("token")||u.searchParams.get("token_hash")||h.get("token_hash");
-  const tp=u.searchParams.get("type")||h.get("type")||"magiclink";
-  if(!th){lm("Não achei o código dentro desse link. Copie o <b>endereço do link</b> do e-mail (segure o botão → copiar endereço), não o texto.","bad");return;}
-  const {error}=await sb.auth.verifyOtp({token_hash:th,type:tp});
-  if(!error){lm("Entrando…","ok");return;}
-  lm(/expired|invalid/i.test(error.message)
-    ? "<b>Esse link já foi usado ou expirou.</b> Magic link vale uma vez só. Peça outro no passo 1 e, no e-mail novo, <b>não clique</b> — copie o endereço e cole aqui."
-    : ("Erro: "+error.message),"bad");
-}
-async function codigo(){
-  const e=document.getElementById("em").value.trim(), c=(document.getElementById("cod").value||"").trim();
-  if(!e){lm("Preencha o e-mail no passo 1 — o código é conferido junto com ele.","bad");return;}
-  if(c.length<6){lm("O código tem 6 dígitos.","bad");return;}
-  const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
-  lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");
-}
-async function sair(){await sb.auth.signOut();location.reload();}
+  put("<b>Senha salva.</b> Agora entre no celular com seu e-mail e esta senha.","ok");}
 
+/* ---------- carga ---------- */
 async function carregar(){
-  msg("carregando…",1500);
+  msg("carregando…",null,1500);
   const q=v=>sb.from(v).select("*").then(r=>r.error?[]:r.data);
   const [fila,cor,ev,mo,ac,mat,ins,fr,au,loop]=await Promise.all([
     q("v_fila_do_igor"),q("v_correcoes_abertas"),q("v_painel_evolucao"),q("v_painel_motor"),
     q("v_painel_acervo"),q("v_simbiose_maturidade"),q("v_painel_insight"),q("v_painel_frente"),
     q("v_automacao_fila"),q("v_painel_rodada")]);
-  const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automatibilidade,automat_motivo")
-    .eq("dono","igor").neq("status","feita").in("automatibilidade",["S"]).order("prazo")
+  const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
+    .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
      fr:fr||[],au:au||[],semi:semi||[],loop:loop||[]};
   render();
-  try{await sb.rpc("painel_ping",{p_versao:VER});}catch(e){}
-  msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),2000);
-}
-function render(){rAgora();rComando();rEvolucao();rMotor();rAcervo();}
+  try{await sb.rpc("painel_ping",{p_versao:VER})}catch(e){}
+  msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
+function render(){montaFiltros();rAgora();rComando();rEvolucao();rMotor();rAcervo();}
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
+/* ---------- FILTROS ---------- */
+function passa(it){
+  if(F.frente){const f=it.frente||"sem frente";if(f!==F.frente)return false;}
+  if(F.origem&&it.origem!==F.origem)return false;
+  if(F.q){const alvo=norm([it.titulo_completo,it.titulo,it.recomendacao,it.porque_agora,it.frente,it.ref,it.valor_txt].join(" "));
+    if(!norm(F.q).split(/\s+/).filter(Boolean).every(t=>alvo.includes(t)))return false;}
+  return true;}
+function montaFiltros(){
+  const cf={},co={};
+  D.fila.forEach(it=>{const f=it.frente||"sem frente";cf[f]=(cf[f]||0)+1;co[it.origem]=(co[it.origem]||0)+1;});
+  document.getElementById("chipsFrente").innerHTML=
+    Object.keys(cf).sort().map(f=>`<button class="chip ${F.frente===f?"on":""}" onclick="setFrente('${esc(f)}')">
+      ${esc(f.replace(/^\d+-/,""))}<span class="c">${cf[f]}</span></button>`).join("");
+  const rot={tarefa:"tarefas",demanda:"demandas",fluxo:"caixa",gargalo:"gargalos"};
+  document.getElementById("chipsOrigem").innerHTML=
+    Object.keys(co).sort().map(o=>`<button class="chip ${F.origem===o?"on":""}" onclick="setOrigem('${esc(o)}')">
+      ${esc(rot[o]||o)}<span class="c">${co[o]}</span></button>`).join("");
+  document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q)?"inline-flex":"none";}
+function setFrente(f){F.frente=F.frente===f?null:f;pref("frente",F.frente);montaFiltros();rAgora();}
+function setOrigem(o){F.origem=F.origem===o?null:o;pref("origem",F.origem);montaFiltros();rAgora();}
+function onBusca(v){F.q=v;document.getElementById("qx").style.display=v?"block":"none";
+  clearTimeout(onBusca._t);onBusca._t=setTimeout(()=>{montaFiltros();rAgora()},160);}
+function limpaBusca(){document.getElementById("q").value="";onBusca("");}
+function limparFiltros(){F={q:"",frente:null,origem:null};document.getElementById("q").value="";
+  document.getElementById("qx").style.display="none";pref("frente",null);pref("origem",null);
+  montaFiltros();rAgora();}
+
+/* ---------- MODAL ---------- */
+function abrirModal(tit,sub,campo,onOk,okLabel){
+  document.getElementById("mtit").textContent=tit;
+  document.getElementById("msub").innerHTML=sub||"";
+  document.getElementById("mcampo").innerHTML=
+    campo==="texto"?`<textarea id="mval" placeholder="${esc(pendente&&pendente.ph||"escreva a sua posição")}"></textarea>`:
+    campo==="date"?`<input type="date" id="mval" value="${new Date(Date.now()+864e5*7).toISOString().slice(0,10)}">`:"";
+  document.getElementById("mok").textContent=okLabel||"confirmar";
+  document.getElementById("modal").classList.add("on");
+  pendente=Object.assign(pendente||{},{fn:onOk,campo});
+  setTimeout(()=>{const el=document.getElementById("mval");if(el)el.focus()},60);}
+function fecharModal(){document.getElementById("modal").classList.remove("on");pendente=null;}
+async function confirmarModal(){
+  const el=document.getElementById("mval");
+  const v=el?el.value.trim():null;
+  if(pendente&&pendente.campo&&!v){msg("Preencha antes de confirmar.","bad");return;}
+  const fn=pendente&&pendente.fn;fecharModal();if(fn)await fn(v);}
+
 /* ---------- AGORA ---------- */
+function bloco(lbl,txt,cls,id){
+  if(!txt)return"";
+  const longo=String(txt).length>150;
+  return `<div class="txt ${cls||""}" id="${id}">
+    <span class="lbl">${lbl}</span><div class="corpo">${esc(txt)}</div>
+    ${longo?`<button class="ver" onclick="document.getElementById('${id}').classList.toggle('aberto');
+      this.textContent=this.textContent.trim()==='ver tudo'?'recolher':'ver tudo'">ver tudo</button>`:""}</div>`;}
 function cardFila(it){
-  const acts=(it.acoes||[]);
+  const acts=it.acoes||[];
   const sug=acts.find(a=>a.verbo===it.verbo_sugerido)||acts[0]||null;
   const outros=acts.filter(a=>a!==sug);
-  const uid=(it.origem+"-"+it.ref).replace(/[^a-z0-9-]/gi,"");
-  return `<div class="card n${it.nivel}">
-   <div class="ttl">${esc(it.titulo_completo||it.titulo)}</div>
-   <div class="meta"><span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
-     ${it.frente?`<span>${esc(it.frente)}</span>`:""}
-     ${it.valor_txt?`<span class="val">${esc(it.valor_txt)}</span>`:""}
+  const k=uid(it.origem+it.ref);
+  return `<div class="card n${it.nivel}" id="c-${k}">
+   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(it.titulo_completo||it.titulo)}</div>
+   <div class="meta">
+     <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
+     ${it.frente?`<span class="tag f">${esc(it.frente.replace(/^\d+-/,""))}</span>`:""}
+     ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
      ${it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:""}
-     ${it.forcar_decisao?`<span class="pill p-bad">decida</span>`:""}</div>
-   ${it.porque_agora?`<div style="font-size:13px;color:var(--mut)">${esc(it.porque_agora)}</div>`:""}
-   ${it.recomendacao?`<div class="rec"><b>recomendo:</b> ${esc(it.recomendacao)}</div>`:""}
-   ${it.ultima_pergunta?`<div class="rec" style="border-left:2px solid var(--vio)"><b>você disse:</b> ${esc(it.ultima_pergunta)}${it.ultima_resposta?`<br><b style="color:var(--ok)">resposta:</b> ${esc(it.ultima_resposta)}`:`<br><i style="color:var(--warn)">aguardando o executor</i>`}</div>`:""}
+     ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
+   </div>
+   ${bloco("RECOMENDO",it.recomendacao,"","r-"+k)}
+   ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor"),"vio","p-"+k):""}
    <div class="acts">
-     ${sug?`<button class="prim" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(sug.verbo)}','${esc(sug.campo||"")}')">✓ ${esc(sug.label)}</button>`:""}
-     ${outros.length?`<button class="mais" onclick="document.getElementById('x-${uid}').classList.toggle('on')">outra coisa</button>`:""}
-     <button class="mais" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button></div>
-   <div class="extra" id="x-${uid}">
-     ${outros.map(a=>`<button class="btn" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}')">${esc(a.label)}</button>`).join("")}
-   </div></div>`;
-}
+     ${sug?`<button class="prim" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(sug.verbo)}','${esc(sug.campo||"")}','${esc(sug.label)}')">✓ ${esc(sug.label)}</button>`:""}
+     ${outros.map(a=>`<button class="sec" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}','${esc(a.label)}')">${esc(a.label)}</button>`).join("")}
+     <button class="link" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
+   </div></div>`;}
+function cardCorrecao(c){
+  const k="cor"+c.dialogo_id;
+  return `<div class="card cor">
+   <div class="ttl">${esc(c.sua_posicao)}</div>
+   <div class="meta"><span class="mono">${esc(c.origem)} ${esc(c.ref)}</span>
+     <span class="tag vio">correção</span><span>há ${c.dias_esperando}d · ${esc(c.quando||"")}</span></div>
+   ${bloco("O QUE EU RESPONDI",c.o_que_o_motor_disse,"vio","m-"+k)}
+   <div class="acts">
+     ${(c.acoes||[]).map((a,i)=>{
+       const cls=i===0?"prim":(a.rpc==="deliberar_correcao"?"prim vio":"sec");
+       return `<button class="${cls}" onclick="corrigir(${c.dialogo_id},'${esc(a.rpc)}',${a.arg===undefined?"null":a.arg},'${esc(a.campo||"")}','${esc(a.label)}','${esc(a.placeholder||"")}')">${esc(a.label)}</button>`;
+     }).join("")}
+   </div></div>`;}
 function rAgora(){
-  const n1=D.fila.filter(f=>f.nivel===1),n2=D.fila.filter(f=>f.nivel===2),n3=D.fila.filter(f=>f.nivel>2);
+  const vis=D.fila.filter(passa);
+  const n1=vis.filter(f=>f.nivel===1),n2=vis.filter(f=>f.nivel===2),n3=vis.filter(f=>f.nivel>2);
   const saldo=kv("caixa.saldo_30d"),parado=kv("caixa.decisao_parada_rs");
+  const filtrando=F.frente||F.origem||F.q;
   document.getElementById("hero").innerHTML=`<div class="hero ${n1.length||D.cor.length?"alert":""}">
-    <div class="t">${n1.length?n1.length+" precisa"+(n1.length>1?"m":"")+" de você hoje":"nada precisa de você hoje"}</div>
-    <div class="s">${D.cor.length?D.cor.length+" correção(ões) esperando sua palavra · ":""}${n2.length} em segundo plano · ${D.fila.length} no funil${saldo!=null?` · <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">saldo 30d ${rs(saldo)}</b>`:""}${parado?` · <b style="color:var(--warn)">${rs(parado)} parados</b>`:""}</div></div>`;
-  document.getElementById("correcoes").innerHTML=D.cor.length?
-    `<h2>SUA PALAVRA ESTÁ TRAVANDO</h2>`+D.cor.map(c=>`<div class="card cor">
-      <div class="ttl">${esc(c.sua_posicao)}</div>
-      <div class="meta"><span class="mono">${esc(c.origem)} ${esc(c.ref)}</span><span>há ${c.dias_esperando}d</span></div>
-      <div class="rec">${esc(c.o_que_o_motor_disse)}</div></div>`).join(""):"";
-  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join(""):`<div class="empty">fila limpa — silêncio aqui é informação.</div>`;
-  document.getElementById("fila2").innerHTML=n2.length?n2.map(cardFila).join(""):`<div class="empty">nada em segundo plano.</div>`;
-  document.getElementById("n-agora").textContent=n1.length||"";
+    <div class="t">${n1.length?n1.length+" precisa"+(n1.length>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")}</div>
+    <div class="s">${D.cor.length?`<span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span>`:""}
+      <span>${n2.length} em segundo plano</span><span>·</span><span>${vis.length}${filtrando?" de "+D.fila.length:""} no funil</span>
+      ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
+      ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}</div></div>`;
+  document.getElementById("correcoes").innerHTML=D.cor.length
+    ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
+      +D.cor.map(cardCorrecao).join("") : "";
+  document.getElementById("h-fila1").innerHTML=`PRECISA DE VOCÊ HOJE${filtrando?' <span class="s">— filtrado</span>':""}`;
+  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join("")
+    :`<div class="empty">${filtrando?"nenhum item de hoje neste filtro.":"fila limpa — silêncio aqui é informação."}</div>`;
+  document.getElementById("fila2").innerHTML=n2.length?n2.map(cardFila).join("")
+    :`<div class="empty">nada em segundo plano.</div>`;
+  const nb=document.getElementById("n-agora");nb.textContent=n1.length||"";nb.className="n"+(n1.length?" hot":"");
   const bt=document.getElementById("btresto");
   bt.textContent=n3.length?(mostrarResto?"esconder os outros "+n3.length:"ver os outros "+n3.length):"";
   document.getElementById("fila3").style.display=mostrarResto?"block":"none";
-  document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");
-}
+  document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");}
 function verResto(){mostrarResto=!mostrarResto;rAgora();}
-async function agir(origem,ref,verbo,campo){
-  let valor=null;
-  if(campo==="date"){valor=prompt("Nova data (AAAA-MM-DD):");if(!valor)return;}
-  else if(campo==="texto"){valor=prompt("Sua palavra:");if(!valor)return;}
-  const {data,error}=await sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:valor});
-  msg(error?("erro: "+error.message):(data||"feito"));carregar();
-}
-async function perguntar(origem,ref){
-  const t=prompt("O que você quer saber ou mandar fazer?");if(!t)return;
-  const {error}=await sb.rpc("perguntar",{p_origem:origem,p_ref:ref,p_texto:t});
-  msg(error?("erro: "+error.message):"registrado — o executor responde na próxima passada.");carregar();
-}
+
+/* ---------- AÇÕES ---------- */
+async function exec(fn,okMsg){
+  const {data,error}=await fn();
+  if(error){msg("Erro: "+error.message,"bad",7000);return false;}
+  msg(okMsg||(typeof data==="string"?data:"feito"),"ok");
+  await carregar();return true;}
+function agir(origem,ref,verbo,campo,label){
+  const go=v=>exec(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:v}));
+  if(!campo)return go(null);
+  pendente={ph:campo==="texto"?"o que fica valendo":null};
+  abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>`,campo,go,label);}
+function perguntar(origem,ref){
+  pendente={ph:"o que você quer saber, ou o que quer que eu faça"};
+  abrirModal("Perguntar ao executor",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — a resposta chega na próxima passada.`,
+    "texto",v=>exec(()=>sb.rpc("perguntar",{p_origem:origem,p_ref:ref,p_texto:v}),"registrado — respondo na próxima passada."),"enviar");}
+function corrigir(id,rpc,arg,campo,label,ph){
+  if(rpc==="responder_correcao"&&!campo)
+    return exec(()=>sb.rpc("responder_correcao",{p_id:id,p_aceito:arg,p_motivo:null}),
+      arg?"aceito — vou executar por aqui.":"posição mantida — registrado.");
+  pendente={ph:ph||"sua posição: o que fica valendo, e até quando"};
+  abrirModal(label,"Nem aceitar nem manter — a sua posição vira o que fica valendo.","texto",
+    v=>exec(()=>sb.rpc("deliberar_correcao",{p_id:id,p_texto:v}),"deliberação registrada."),"registrar");}
 
 /* ---------- COMANDO ---------- */
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
-    <div class="r" style="margin:8px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
+    <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
   const s30=kv("caixa.saldo_30d"),par=kv("caixa.decisao_parada_rs"),rec=kv("caixa.recebivel_aberto_rs"),
         semd=kv("caixa.recebivel_sem_data"),pas=kv("caixa.passivo_total_rs"),ent=kv("caixa.entrada_realizada_30d");
   document.getElementById("caixa").innerHTML=
     tile(rs(s30),"<b>Saldo projetado 30 dias</b>",s30<0?"fora":"dentro","só o que tem data entra aqui")+
     tile(rs(par),"<b>Parados esperando sua palavra</b>",par>0?"fora":"dentro","incertos há mais de 14 dias")+
-    tile(rs(rec),"<b>A receber em aberto</b>","",semd+" sem data de vencimento")+
+    tile(rs(rec),"<b>A receber em aberto</b>","",(semd||0)+" sem data de vencimento")+
     tile(rs(ent),"<b>Entrou de verdade em 30 dias</b>","","o único que não aceita promessa")+
     tile(rs(pas),"<b>Passivo total</b>","","dívida + a pagar · mede tendência");
-  document.getElementById("insights").innerHTML=D.ins.length?D.ins.map(i=>`
+  document.getElementById("insights").innerHTML=D.ins.length?D.ins.map((i,n)=>`
     <div class="card ${esc(i.nivel)}">
-      <div class="meta"><span class="pill ${i.nivel==="critico"?"p-bad":i.nivel==="alto"?"p-med":"p-nd"}">${esc(i.nivel)}</span>
+      <div class="meta"><span class="tag ${i.nivel==="critico"?"bad":i.nivel==="alto"?"med":""}">${esc(i.nivel)}</span>
         <span class="mono">${esc(i.area)}</span>
-        <span class="pill ${i.dono==="igor"?"p-vio":"p-nd"}">${i.dono==="igor"?"seu":"meu"}</span></div>
+        <span class="tag ${i.dono==="igor"?"vio":""}">${i.dono==="igor"?"seu":"meu"}</span></div>
       <div class="ttl">${esc(i.insight)}</div>
-      <div class="rec">${esc(i.acao)}</div></div>`).join(""):
-    `<div class="empty">nenhuma condição de alerta ativa. Isso é raro — reconfira o ↻.</div>`;
-  document.getElementById("n-cmd").textContent=D.ins.filter(i=>i.nivel==="critico").length||"";
+      ${bloco("O QUE FAZER",i.acao,"","i-"+n)}</div>`).join("")
+    :`<div class="empty">nenhuma condição de alerta ativa.</div>`;
+  const nc=document.getElementById("n-cmd"),crit=D.ins.filter(i=>i.nivel==="critico").length;
+  nc.textContent=crit||"";nc.className="n"+(crit?" hot":"");
   const fr=D.fr.slice().sort((a,b)=>(b.tarefas+b.demandas)-(a.tarefas+a.demandas));
   document.getElementById("frentes").innerHTML=
-   `<tr><th>frente</th><th>sit.</th><th class="right">itens</th><th class="right">na sua mão</th>
+   `<tr><th>frente</th><th>sit.</th><th class="right">itens</th><th class="right">sua mão</th>
     <th class="right">vencidas</th><th class="right">a receber</th><th class="right">a pagar</th><th class="right">parada</th></tr>`+
    fr.map(f=>{const tot=f.tarefas+f.demandas;
-    const cor=f.status==="vermelho"?"p-bad":f.status==="amarelo"?"p-med":f.status==="azul"?"p-vio":"p-ok";
-    return `<tr><td class="mono">${esc(f.slug)}</td><td><span class="pill ${cor}">${esc(f.status)}</span></td>
+    const cor=f.status==="vermelho"?"bad":f.status==="amarelo"?"med":f.status==="azul"?"vio":"ok";
+    return `<tr style="cursor:pointer" onclick="irParaFrente('${esc(f.slug)}')">
+     <td class="mono">${esc(f.slug)}</td><td><span class="tag ${cor}">${esc(f.status)}</span></td>
      <td class="right"${tot>=20?' style="color:var(--bad);font-weight:600"':""}>${tot}</td>
      <td class="right">${f.tarefas_igor||""}</td>
      <td class="right"${f.vencidas?' style="color:var(--bad)"':""}>${f.vencidas||""}</td>
-     <td class="right rs" style="color:${f.a_receber>0?"var(--ok)":"var(--dim)"}">${f.a_receber>0?rs(f.a_receber):"—"}</td>
-     <td class="right rs" style="color:${f.a_pagar>0?"var(--bad)":"var(--dim)"}">${f.a_pagar>0?rs(f.a_pagar):"—"}</td>
+     <td class="right" style="color:${f.a_receber>0?"var(--ok)":"var(--dim)"}">${f.a_receber>0?rs(f.a_receber):"—"}</td>
+     <td class="right" style="color:${f.a_pagar>0?"var(--bad)":"var(--dim)"}">${f.a_pagar>0?rs(f.a_pagar):"—"}</td>
      <td class="right" style="color:var(--mut)">${f.dias_sem_tocar}d</td></tr>`;}).join("");
   const A=D.au.find(x=>x.classe==="A")||{n:0},S=D.au.find(x=>x.classe==="S")||{n:0},M=D.au.find(x=>x.classe==="M")||{n:0};
-  const totIgor=(S.na_mao_do_igor||0)+(M.na_mao_do_igor||0);
+  const tot=(S.na_mao_do_igor||0)+(M.na_mao_do_igor||0);
   document.getElementById("automacao").innerHTML=
-    tile(M.na_mao_do_igor||0,"<b>Só você</b>","", "credencial, assinatura, presença, voz")+
+    tile(M.na_mao_do_igor||0,"<b>Só você</b>","","credencial, assinatura, presença, voz")+
     tile(S.na_mao_do_igor||0,"<b>Eu preparo, você aprova</b>","fora","estão cruas na sua mesa agora")+
     tile(A.n||0,"<b>Já são minhas</b>","dentro","o ato é meu ou do banco")+
-    tile((totIgor?Math.round(100*(M.na_mao_do_igor||0)/totIgor):100)+"%","<b>Da sua fila é mesmo sua</b>",
-      totIgor&&(M.na_mao_do_igor/totIgor)<0.8?"fora":"dentro","meta 80% — o resto é dívida minha");
+    tile((tot?Math.round(100*(M.na_mao_do_igor||0)/tot):100)+"%","<b>Da sua fila é mesmo sua</b>",
+      tot&&(M.na_mao_do_igor/tot)<0.8?"fora":"dentro","meta 80% — o resto é dívida minha");
   document.getElementById("semi").innerHTML=D.semi.length?
    `<tr><th>tarefa</th><th>o que eu entrego pronto</th><th class="right">prazo</th></tr>`+
    D.semi.map(t=>`<tr><td class="mono">t${t.id}</td><td>${esc(t.automat_motivo||"")}
-     <div style="color:var(--dim);font-size:11.5px;margin-top:2px">${esc((t.descricao||"").replace(/\s+/g," ").slice(0,86))}…</div></td>
-     <td class="right" style="color:${new Date(t.prazo)<new Date()?"var(--bad)":"var(--mut)"}">${t.prazo?t.prazo.slice(8,10)+"/"+t.prazo.slice(5,7):"—"}</td></tr>`).join("")
-   :`<tr><td class="empty">nenhuma tarefa SEMI aberta.</td></tr>`;
-}
+     <div style="color:var(--dim);font-size:11.5px;margin-top:3px">${esc((t.descricao||"").replace(/\s+/g," ").slice(0,84))}…</div></td>
+     <td class="right" style="color:${t.prazo&&new Date(t.prazo)<new Date()?"var(--bad)":"var(--mut)"}">${t.prazo?t.prazo.slice(8,10)+"/"+t.prazo.slice(5,7):"—"}</td></tr>`).join("")
+   :`<tr><td class="empty">nenhuma tarefa SEMI aberta.</td></tr>`;}
+function irParaFrente(slug){F.frente=slug;F.origem=null;F.q="";
+  document.getElementById("q").value="";document.querySelector('.tab[data-p="agora"]').click();
+  montaFiltros();rAgora();msg("filtrado por "+slug,null,2200);}
 
 /* ---------- EVOLUÇÃO ---------- */
 function spark(serie,meta,dir,w,h){
   const s=(serie||[]).map(Number).filter(v=>!isNaN(v));
-  if(s.length<1)return `<svg width="${w}" height="${h}"></svg>`;
+  if(!s.length)return `<svg width="${w}" height="${h}"></svg>`;
   const vals=meta!=null?s.concat([+meta]):s;
   let mn=Math.min(...vals),mx=Math.max(...vals);
-  if(mx===mn){mx=mn+1;mn=mn-1;}
+  if(mx===mn){mx=mn+1;mn=mn-1}
   const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
-  const X=i=>s.length===1?w/2:4+i*(w-8)/(s.length-1);
-  const Y=v=>h-4-((v-mn)/(mx-mn))*(h-8);
+  const X=i=>s.length===1?w/2:4+i*(w-8)/(s.length-1), Y=v=>h-4-((v-mn)/(mx-mn))*(h-8);
   const d=s.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
-  const last=s[s.length-1];
-  const ok=meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
+  const last=s[s.length-1], ok=meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
   const col=ok===null?"#8b98ae":ok?"#30a46c":"#e5484d";
   return `<svg width="${w}" height="${h}" role="img" aria-label="série de ${s.length} ponto(s)">
     ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" stroke="#5d6b82" stroke-width="1" stroke-dasharray="3 3"/>`:""}
     <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/></svg>`;
-}
+    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/></svg>`;}
 const DIMR={contrato:"Contrato e precedência",memoria:"Memória e handoff",acervo:"Acervo de aprendizado",
 motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",
 fluxo:"Fluxo e ritmo",medicao:"Metanálise — o sistema olhando para si",caixa:"Caixa e negócio"};
@@ -484,8 +677,8 @@ function rEvolucao(){
     <div class="t">${esc(L.titulo)}</div><div class="s">${esc(L.subtitulo||"")} · ${esc(L.rodada)} · ${esc(L.data)}</div>
     <div class="lx">${esc(L.leitura)}</div>
     ${(L.achados||[]).map(a=>`<div class="ach">${esc(a)}</div>`).join("")}
-    ${L.proxima?`<div class="ach" style="border-left:2px solid var(--vio)"><b style="color:#b3a6ff">próxima:</b> ${esc(L.proxima)}</div>`:""}
-    ${D.loop.length>1?`<div style="margin-top:11px"><select onchange="verLoop(this.value)">
+    ${L.proxima?`<div class="ach" style="border-left:2px solid var(--vio)"><b style="color:var(--lil)">próxima:</b> ${esc(L.proxima)}</div>`:""}
+    ${D.loop.length>1?`<div style="margin-top:12px"><select onchange="verLoop(this.value)">
       ${D.loop.map(l=>`<option value="${esc(l.rodada)}">${esc(l.data)} · ${esc(l.rodada)}</option>`).join("")}</select></div>`:""}
   </div>`:"";
   const min=D.mat.length?Math.min(...D.mat.map(m=>m.nivel)):null;
@@ -498,78 +691,88 @@ function rEvolucao(){
   document.getElementById("escada").innerHTML=nomes.map((n,i)=>{const on=min&&(i+1)<=min;
     return `<div class="dim" style="background:var(--card);border-radius:11px;padding:11px 14px;margin-bottom:6px;border-left:3px solid ${on?"var(--grn)":"var(--line)"}">
       <span style="font-size:19px;font-weight:700;color:${on?"var(--ok)":"var(--mut)"};width:22px">${i+1}</span>
-      <span class="nm">${n} ${i+1===min?'<span class="pill p-ok">o sistema está aqui</span>':""}</span>
-      <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:190px">${desc[i]}</span></div>`;}).join("");
+      <span class="nm">${n} ${i+1===min?'<span class="tag ok">o sistema está aqui</span>':""}</span>
+      <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:180px">${desc[i]}</span></div>`}).join("");
   document.getElementById("dims").innerHTML=D.mat.map(m=>{
     const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
     return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
-      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`;}).join("");
-  const porDim={};D.ev.forEach(k=>{(porDim[k.dimensao]=porDim[k.dimensao]||[]).push(k);});
+      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`}).join("");
+  const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
-  document.getElementById("kpis").innerHTML=Object.keys(porDim)
-    .sort((a,b)=>(ordem.indexOf(a)+99)%99-(ordem.indexOf(b)+99)%99).map(d=>
-    `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${porDim[d].length} indicador(es)</span></h2>
-     <div class="grid">${porDim[d].map(k=>{
+  document.getElementById("kpis").innerHTML=Object.keys(por)
+    .sort((a,b)=>(ordem.indexOf(a)<0?99:ordem.indexOf(a))-(ordem.indexOf(b)<0?99:ordem.indexOf(b))).map(d=>
+    `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${por[d].length} indicador(es)</span></h2>
+     <div class="grid">${por[d].map(k=>{
       const cls=k.situacao==="dentro"?"dentro":k.situacao==="fora"?"fora":"";
-      const pill=k.tendencia==="melhorou"?'<span class="pill p-ok">melhorou</span>':
-        k.tendencia==="piorou"?'<span class="pill p-bad">piorou</span>':
-        k.tendencia==="estavel"?'<span class="pill p-nd">estável</span>':'<span class="pill p-nd">sem série</span>';
+      const t=k.tendencia==="melhorou"?'<span class="tag ok">melhorou</span>':
+        k.tendencia==="piorou"?'<span class="tag bad">piorou</span>':
+        k.tendencia==="estavel"?'<span class="tag">estável</span>':'<span class="tag">sem série</span>';
       const v=k.valor==null?`<div class="n nd">indeterminado</div>`:`<div class="n">${nfmt(k.valor,k.unidade)}</div>`;
       return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
-        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${pill}</span>
-        ${spark(k.serie,k.meta_num,k.direcao,100,34)}</div></div>`;}).join("")}</div>`).join("");
-  document.getElementById("n-ev").textContent=D.ev.filter(k=>k.situacao==="fora").length||"";
-}
+        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}</span>
+        ${spark(k.serie,k.meta_num,k.direcao,98,34)}</div></div>`}).join("")}</div>`).join("");
+  const nf=D.ev.filter(k=>k.situacao==="fora").length;
+  const nb=document.getElementById("n-ev");nb.textContent=nf||"";nb.className="n"+(nf?" warn":"");}
 function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
-  const tmp=D.loop.slice();D.loop=[Object.assign({},L,{recencia:1})].concat(tmp.filter(l=>l.rodada!==r));
-  rEvolucao();D.loop=tmp;}
+  const t=D.loop.slice();D.loop=[Object.assign({},L,{recencia:1})].concat(t.filter(l=>l.rodada!==r));
+  rEvolucao();D.loop=t;}
 
 /* ---------- MOTOR ---------- */
 function rMotor(){
-  const ord={"atrasada":0,"nunca":1,"no ponto":2,"manual":3};
+  const ord={atrasada:0,nunca:1,"no ponto":2,nova:3,manual:4};
   document.getElementById("rotinas").innerHTML=
-   `<tr><th>rotina</th><th>estado</th><th>janela</th><th class="right">pontos 7d</th><th class="right">último</th></tr>`+
+   `<tr><th>rotina</th><th>estado</th><th>janela</th><th class="right">h úteis s/ ponto</th><th class="right">pontos 7d</th><th class="right">último</th></tr>`+
    D.mo.slice().sort((a,b)=>(ord[a.estado]??9)-(ord[b.estado]??9)).map(r=>{
-    const p=r.estado==="no ponto"?"p-ok":r.estado==="manual"?"p-nd":"p-bad";
+    const p=r.estado==="no ponto"?"ok":(r.estado==="manual"||r.estado==="nova")?"":"bad";
     const u=r.ultimo_ponto?new Date(r.ultimo_ponto).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"—";
-    return `<tr><td class="mono">${esc(r.nome)}</td><td><span class="pill ${p}">${esc(r.estado)}</span></td>
+    return `<tr><td class="mono">${esc(r.nome)}</td><td><span class="tag ${p}">${esc(r.estado)}</span></td>
       <td style="color:var(--mut)">${r.janela_horas?r.janela_horas+"h":"manual"}${r.hora_inicio!=null?" · "+r.hora_inicio+"h-"+r.hora_fim+"h":""}</td>
-      <td class="right">${r.pontos_7d}</td><td class="right" style="color:var(--mut)">${u}</td></tr>`;}).join("");
+      <td class="right" style="color:var(--mut)">${r.horas_uteis_sem_ponto??"—"}</td>
+      <td class="right">${r.pontos_7d}</td><td class="right" style="color:var(--mut)">${u}</td></tr>`}).join("");
   const ruins=D.mo.filter(r=>r.estado==="atrasada"||r.estado==="nunca");
-  document.getElementById("n-mo").textContent=ruins.length||"";
+  const nb=document.getElementById("n-mo");nb.textContent=ruins.length||"";nb.className="n"+(ruins.length?" hot":"");
   document.getElementById("achados").innerHTML=ruins.length?ruins.map(r=>
     `<div class="card n1"><div class="ttl">${esc(r.nome)} — ${esc(r.estado)}</div>
-     <div class="meta">janela ${r.janela_horas}h · vigente desde ${esc((r.vigente_desde||"").slice(0,10))}</div>
-     <div class="rec">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
-    :`<div class="empty">nenhuma rotina atrasada.</div>`;
-}
+     <div class="meta">janela ${r.janela_horas}h · ${r.horas_uteis_sem_ponto??"—"}h úteis sem ponto</div>
+     <div class="txt">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
+    :`<div class="empty">nenhuma rotina atrasada. As marcadas <b>manual</b> ou <b>nova</b> não se vigiam por relógio, por desenho.</div>`;}
 
 /* ---------- ACERVO ---------- */
 function rAcervo(){
-  const t=D.ac.length,us=D.ac.filter(a=>a.usos>0).length;
+  const t=D.ac.length||1,us=D.ac.filter(a=>a.usos>0).length;
   const ign=D.ac.filter(a=>a.exposicoes>=3&&a.usos===0),nunca=D.ac.filter(a=>a.exposicoes===0);
-  const tile=(n,r,cls)=>`<div class="kpi ${cls||""}"><div class="n">${n}</div><div class="r" style="margin:8px 0 0">${r}</div></div>`;
+  const tile=(n,r,cls)=>`<div class="kpi ${cls||""}"><div class="n">${n}</div><div class="r" style="margin:9px 0 0">${r}</div></div>`;
   document.getElementById("acnum").innerHTML=
-    tile(t,"lições vivas")+
+    tile(D.ac.length,"lições vivas")+
     tile(us+` <span style="font-size:14px;color:var(--mut)">(${Math.round(100*us/t)}%)</span>`,"já aplicadas ao menos uma vez","dentro")+
     tile(D.ac.filter(a=>a.exposicoes>0).length,"já oferecidas pelo buscador")+
     tile(nunca.length+` <span style="font-size:14px;color:var(--mut)">(${Math.round(100*nunca.length/t)}%)</span>`,
       "nunca chegaram a ser oferecidas",nunca.length>t/2?"fora":"");
   const linha=a=>`<tr><td class="mono">${a.id}</td><td>${esc(a.tema)}</td>
-    <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,60))}</td>
+    <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,58))}</td>
     <td class="right">${a.exposicoes}</td><td class="right">${a.usos}</td></tr>`;
-  document.getElementById("actop").innerHTML=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`+
+  const cab=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`;
+  document.getElementById("actop").innerHTML=cab+
     D.ac.slice().sort((a,b)=>b.usos-a.usos||b.exposicoes-a.exposicoes).slice(0,12).map(linha).join("");
-  document.getElementById("acign").innerHTML=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`+
+  document.getElementById("acign").innerHTML=cab+
     (ign.length?ign.sort((a,b)=>b.exposicoes-a.exposicoes).slice(0,10).map(linha).join("")
-     :`<tr><td colspan="5" class="empty">nenhuma lição foi oferecida 3+ vezes sem ser usada.</td></tr>`);
-  document.getElementById("n-ac").textContent=ign.length||"";
-}
+     :`<tr><td colspan="5" class="empty">nenhuma lição oferecida 3+ vezes sem ser usada.</td></tr>`);
+  const nb=document.getElementById("n-ac");nb.textContent=ign.length||"";nb.className="n"+(ign.length?" warn":"");}
 
+/* ---------- atalhos ---------- */
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){fecharModal();return;}
+  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+  if(e.key==="/"){e.preventDefault();const q=document.getElementById("q");
+    if(q&&document.getElementById("filtros").classList.contains("on"))q.focus();}
+  if(e.key==="r"&&!e.metaKey&&!e.ctrlKey)carregar();});
+
+/* ---------- arranque ---------- */
+F.frente=pref("frente")||null;F.origem=pref("origem")||null;
 sb.auth.getSession().then(({data})=>{
-  if(data.session){document.getElementById("app").style.display="block";carregar();}
-  else{document.getElementById("login").style.display="block";}});
-sb.auth.onAuthStateChange((_e,s)=>{if(s){document.getElementById("login").style.display="none";
-  document.getElementById("app").style.display="block";carregar();}});
+  if(data.session){document.getElementById("app").classList.remove("hidden");carregar();}
+  else document.getElementById("login").classList.remove("hidden");});
+sb.auth.onAuthStateChange((_e,s)=>{if(s){document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");carregar();}});
 </script></body></html>
