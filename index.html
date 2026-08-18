@@ -146,6 +146,16 @@ h2:first-child{margin-top:0}
 h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px;font-weight:400;text-transform:none}
 
 /* ---------- HERO ---------- */
+.runway{background:linear-gradient(135deg,#1b2740 0%,var(--card) 65%);border:1px solid var(--line2);
+  border-left:4px solid var(--acc);border-radius:12px;padding:13px 15px;margin-bottom:12px}
+.runway.warn{border-left-color:var(--yel)} .runway.crit{border-left-color:var(--red);
+  background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 65%)}
+.runway .rt{font-size:20px;font-weight:600;letter-spacing:-.3px}
+.runway .rt b{font-variant-numeric:tabular-nums}
+.runway .rs{font-size:13px;color:var(--ink2);margin-top:5px}
+.runway .rl{font-size:12px;color:var(--warn);margin-top:7px;line-height:1.45}
+.runway .rbar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:10px;background:var(--card2)}
+.runway .rbar i{display:block;height:100%}
 .hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 60%);border-left:4px solid var(--grn);
  border-radius:var(--r2);padding:18px 20px;margin-bottom:16px}
 .hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 60%);border-left-color:var(--red)}
@@ -337,7 +347,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <div id="app" class="hidden">
 <div class="top">
   <div class="topin">
-    <h1>CÉREBRO IGOR</h1><span class="ver">v20</span>
+    <h1>CÉREBRO IGOR</h1><span class="ver">v21</span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
@@ -376,6 +386,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 
 <main>
   <div class="pane on" id="p-dash">
+    <div id="runway"></div>
     <div id="hero-dash"></div>
     <h2>O PLACAR <span class="s">— cada barra contra a própria meta, nunca contra a barra do lado</span></h2>
     <div id="placar"></div>
@@ -460,7 +471,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v20";
+const VER="v21";
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
@@ -557,11 +568,12 @@ async function carregar(){
     q("v_painel_acervo"),q("v_simbiose_maturidade"),q("v_painel_insight"),q("v_painel_frente"),
     q("v_automacao_fila"),q("v_painel_rodada")]);
   const m9=await q("v_painel_matriz");
+  const rw=await q("v_runway");
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
-     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[]};
+     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null};
   render();
   // PING (corrigido 18/08): havia DUAS painel_ping sobrecarregadas e o PostgREST nao escolhia —
   // a chamada morria no catch vazio e o banco ficou achando que o painel era v11 desde 16/08.
@@ -767,7 +779,7 @@ function corrigir(id,rpc,arg,campo,label,ph){
     v=>exec(()=>sb.rpc("deliberar_correcao",{p_id:id,p_texto:v}),"deliberação registrada."),"registrar");}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
+function rDash(){ rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -799,6 +811,30 @@ function rComando(){
 
 
 /* ---------- HERO: a frase que decide o dia, derivada por REGRA, nunca digitada ---------- */
+/* ---------- RUNWAY: o relogio do caixa (burn-rate, padrao Google SRE) ----------
+   O painel respondia "como estou"; nao respondia "quanto tempo eu tenho".
+   Numero PARCIAL enquanto o custo de vida PF nao existir — e a lacuna vai ESCRITA na tela. */
+function rRunway(){
+  const el=document.getElementById("runway"); if(!el) return;
+  const r=D.rw; if(!r){el.innerHTML="";return;}
+  const dP=r.dias_sobrevida_pior, dB=r.dias_sobrevida;
+  const parcial=r.lacuna&&r.lacuna!=="completo";
+  const cls = dP==null?"":dP<=30?"crit":dP<=90?"warn":"";
+  const colide = dP!=null ? new Date(Date.now()+dP*864e5).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : null;
+  const t = dP==null ? "Sobrevida indeterminada"
+    : `<b>${dP}</b> dias de sobrevida no cenário pior`;
+  const sub = dP==null ? "Falta base para calcular a queima."
+    : (dB==null
+        ? `No cenário base a queima é negativa — o caixa <b>cresce</b>. A distância entre os dois cenários é o compromisso incerto de ${rs(r.saida_incerta_30d)} em 30 dias.`
+        : `Cenário base: ${dB} dias.`)
+      + ` Colide em <b>${colide}</b> se nada mudar. Caixa confirmado ${rs(r.caixa_hoje)} · sai ${rs(r.saida_firme_30d)} firme + ${rs(r.saida_incerta_30d)} incerto · entra ${rs(r.entrada_provavel_30d)} provável, em 30 dias.`;
+  const largP = dP==null?0:Math.max(4,Math.min(100,dP/90*100));
+  el.innerHTML=`<div class="runway ${cls}">
+    <div class="rt">${t}</div>
+    <div class="rs">${sub}</div>
+    <div class="rbar"><i style="width:${largP}%;background:var(--${dP!=null&&dP<=30?"red":dP<=90?"yel":"grn"})"></i></div>
+    ${parcial?`<div class="rl">⚠ ${esc(r.lacuna)}</div>`:""}
+  </div>`;}
 function rHero(){
   const g=c=>{const k=D.ev.find(x=>x.chave===c);return k||{};};
   const n1   = (D.fila||[]).filter(i=>i.nivel===1).length;
