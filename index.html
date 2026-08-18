@@ -253,7 +253,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <div id="app" class="hidden">
 <div class="top">
   <div class="topin">
-    <h1>CÉREBRO IGOR</h1><span class="ver">v16</span>
+    <h1>CÉREBRO IGOR</h1><span class="ver">v17</span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
@@ -355,7 +355,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v16";
+const VER="v17";
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
@@ -508,6 +508,14 @@ async function confirmarModal(){
   const fn=pendente&&pendente.fn;fecharModal();if(fn)await fn(v);}
 
 /* ---------- AGORA ---------- */
+
+/* separa o carimbo "[...]" do começo do texto: vira etiqueta, não título */
+function partes(txt){
+  let t=(txt||"").toString().replace(/\s+/g," ").trim(), tags=[];
+  let m;
+  while((m=t.match(/^\[([^\]]{1,64})\]\s*/))){ tags.push(m[1]); t=t.slice(m[0].length); }
+  return {tags, texto:t||(txt||"")};
+}
 function bloco(lbl,txt,cls,id){
   if(!txt)return"";
   const longo=String(txt).length>150;
@@ -520,15 +528,17 @@ function cardFila(it){
   const sug=acts.find(a=>a.verbo===it.verbo_sugerido)||acts[0]||null;
   const outros=acts.filter(a=>a!==sug);
   const k=uid(it.origem+it.ref);
+  const p=partes(it.titulo_completo||it.titulo);
   return `<div class="card n${it.nivel}" id="c-${k}">
-   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(it.titulo_completo||it.titulo)}</div>
-   <div class="meta">
+   <div class="meta" style="margin-bottom:6px">
      <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
+     ${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}
      ${it.frente?`<span class="tag f">${esc(it.frente.replace(/^\d+-/,""))}</span>`:""}
      ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
      ${it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:""}
      ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
    </div>
+   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${bloco("RECOMENDO",it.recomendacao,"","r-"+k)}
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor"),"vio","p-"+k):""}
    <div class="acts">
@@ -538,11 +548,23 @@ function cardFila(it){
    </div></div>`;}
 function cardCorrecao(c){
   const k="cor"+c.dialogo_id;
+  const p=partes(c.objeto_resumo);
   return `<div class="card cor">
-   <div class="ttl">${esc(c.sua_posicao)}</div>
-   <div class="meta"><span class="mono">${esc(c.origem)} ${esc(c.ref)}</span>
-     <span class="tag vio">correção</span><span>há ${c.dias_esperando}d · ${esc(c.quando||"")}</span></div>
-   ${bloco("O QUE EU RESPONDI",c.o_que_o_motor_disse,"vio","m-"+k)}
+   <div class="meta" style="margin-bottom:7px">
+     <span class="tag vio">sua palavra trava isto</span>
+     <span class="mono">${esc(c.origem)} ${esc(c.ref)}</span>
+     ${c.frente?`<span class="tag f">${esc(c.frente.replace(/^\d+-/,""))}</span>`:""}
+     ${c.objeto_dono?`<span class="tag">${esc(c.objeto_dono)}</span>`:""}
+     ${c.objeto_prazo?`<span class="tag">prazo ${esc(c.objeto_prazo)}</span>`:""}
+     ${c.objeto_situacao?`<span class="tag ${c.objeto_situacao==="feita"?"ok":""}">${esc(c.objeto_situacao)}</span>`:""}
+     ${c.objeto_valor?`<span class="rs">${esc(c.objeto_valor)}</span>`:""}
+     <span>há ${c.dias_esperando}d</span>
+   </div>
+   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
+   ${c.objeto_pronto?`<div class="meta" style="margin:-2px 0 8px"><span class="tag">pronto quando</span>
+     <span style="color:var(--mut);font-size:12px">${esc(c.objeto_pronto)}</span></div>`:""}
+   ${bloco("VOCÊ DISSE — "+esc(c.quando||""),c.sua_posicao,"vio","v-"+k)}
+   ${bloco("EU DISCORDEI",c.o_que_o_motor_disse,"","m-"+k)}
    <div class="acts">
      ${(c.acoes||[]).map((a,i)=>{
        const cls=i===0?"prim":(a.rpc==="deliberar_correcao"?"prim vio":"sec");
