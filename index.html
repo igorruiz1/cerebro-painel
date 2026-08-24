@@ -360,7 +360,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <div id="app" class="hidden">
 <div class="top">
   <div class="topin">
-    <h1>CÉREBRO IGOR</h1><span class="ver">v21</span>
+    <h1>CÉREBRO IGOR</h1><span class="ver" id="selo-ver">—</span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
@@ -489,6 +489,9 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const VER="v22";
+/* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
+   o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
+(()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
@@ -982,7 +985,7 @@ function rDelta(){
   const desde=d[0].desde||"";
   el.innerHTML=`<div class="delta-fx">
     <span class="delta-lb">desde a sua última visita (${esc(desde)})</span>
-    ${d.map(x=>`<span class="delta-pc"><b>${x.n}</b> ${esc(x.tipo)}${+x.n>1?"s":""}</span>`).join("")}
+    ${d.map(x=>`<span class="delta-pc"><b>${x.n}</b> ${esc(x.tipo)}</span>`).join("")}
   </div>`;}
 
 /* ---------- v22: O PLACAR DA SIMBIOSE (v_placar) ----------
