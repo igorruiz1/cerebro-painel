@@ -82,6 +82,19 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
 /* ---------- COMANDO v19 · eixo diverging RdBu (validado: dE 26,4 protan / 33,1 normal).
    Vermelho x verde reprova em deuteranopia (dE 4,9): semaforo mantem a cor MAIS icone e rotulo. ---------- */
 .blt{background:var(--card);border-radius:var(--r);padding:14px 16px;margin-bottom:8px}
+/* ---------- v22: PLACAR POR CAMADA ---------- */
+.bl-grupo{margin-bottom:18px}
+.bl-tit{font-size:10.5px;letter-spacing:1.6px;font-weight:700;color:var(--mut);
+ margin:0 0 8px 2px;text-transform:uppercase}
+.bl-grupo .blt:first-of-type{border-left:2px solid var(--acc)}
+/* ---------- v22: FAIXA DE DELTA ---------- */
+.delta-fx{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;
+ background:var(--card2);border:1px solid var(--line2);border-radius:var(--r);
+ padding:10px 14px;margin-bottom:12px}
+.delta-lb{font-size:10.5px;letter-spacing:1.4px;font-weight:700;color:var(--mut);text-transform:uppercase}
+.delta-pc{font-size:13px;color:var(--ink2)}
+.delta-pc b{color:var(--acc);font-variant-numeric:tabular-nums}
+
 .blt .h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px}
 .blt .lab{font-size:12.5px;color:var(--ink2);line-height:1.35}
 .blt .val{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -386,6 +399,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 
 <main>
   <div class="pane on" id="p-dash">
+    <div id="delta"></div>
     <div id="runway"></div>
     <div id="hero-dash"></div>
     <h2>O PLACAR <span class="s">— cada barra contra a própria meta, nunca contra a barra do lado</span></h2>
@@ -427,6 +441,9 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 
   <div class="pane" id="p-evolucao">
     <div id="loop"></div>
+    <h2>O PLACAR DA SIMBIOSE <span class="s">— o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2>
+    <div id="placarsim"></div>
+
     <h2>A ESCADA <span class="s">— CMMI · o nível do sistema é o MENOR elo</span></h2>
     <div id="escada"></div>
     <div class="card" style="border-left-color:var(--line)" id="dims"></div>
@@ -471,7 +488,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v21";
+const VER="v22";
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
@@ -569,11 +586,13 @@ async function carregar(){
     q("v_automacao_fila"),q("v_painel_rodada")]);
   const m9=await q("v_painel_matriz");
   const rw=await q("v_runway");
+  const [dv,pls]=await Promise.all([q("v_painel_desde_ultima_visita"),q("v_placar")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
-     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null};
+     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null,
+     dv:dv||[],pls:pls||[]};
   render();
   // PING (corrigido 18/08): havia DUAS painel_ping sobrecarregadas e o PostgREST nao escolhia —
   // a chamada morria no catch vazio e o banco ficou achando que o painel era v11 desde 16/08.
@@ -779,7 +798,7 @@ function corrigir(id,rpc,arg,campo,label,ph){
     v=>exec(()=>sb.rpc("deliberar_correcao",{p_id:id,p_texto:v}),"deliberação registrada."),"registrar");}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
+function rDash(){ rDelta(); rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -879,7 +898,14 @@ function rInsTop(){
 /* ---------- PLACAR: bullet chart (Stephen Few) — barra contra a propria meta ----------
    Uma escala por linha, nunca duas escalas no mesmo eixo. Numero direto no rotulo. */
 function rPlacar(){
-  const B=(lab,val,meta,dir,fmt,cap,serie)=>{
+  /* v22 (24/08/2026, sessao 35) — O PLACAR DEIXOU DE SER LISTA E PASSOU A SER CAMADA.
+     Ate o v21 este bloco escolhia 5 KPIs A MAO (caixa.entrada..., carga.igor_n, ...) contra uma
+     view que ja entrega 15 com bloco, camada, ordem_tela, meta, situacao, tendencia e serie.
+     Consequencia medida: 10 KPIs vivos e medidos NUNCA apareciam — inclusive caixa.sobrevida_dias,
+     que era a jogada numero 1 do plano de 18/08. Aplica os aprendizados 601 (painel escrito a mao
+     nasce velho) e 654 (painel se governa por camada, nao por lista). KPI novo no banco entra
+     sozinho na tela a partir daqui; KPI sem bloco aparece como DEFEITO em vez de sumir. */
+  const B=(lab,val,meta,dir,fmt,cap,serie,extra)=>{
     const spk = (serie&&serie.filter(v=>v!=null).length>2)
       ? `<span style="opacity:.75">${spark(serie,meta,dir==="maior"?"maior_melhor":"menor_melhor",70,22)}</span>` : "";
     if(val==null) return `<div class="blt"><div class="h"><span class="lab">${lab}</span>
@@ -889,7 +915,7 @@ function rPlacar(){
     const teto = Math.max(v, alvo||0, 1)*1.15;
     const pct  = Math.min(100, 100*v/teto), mpc = alvo==null?null:Math.min(100,100*alvo/teto);
     const bom  = meta==null ? null : (dir==="maior"? val>=meta : val<=meta);
-    const cor  = bom===null?"var(--nt)":bom?"var(--bl)":"var(--rd)";  // sem meta nao pinta de bom
+    const cor  = bom===null?"var(--nt)":bom?"var(--bl)":"var(--rd)";
     return `<div class="blt">
       <div class="h"><span class="lab">${lab}</span>
         <span style="display:flex;align-items:center;gap:10px">${spk||""}
@@ -897,25 +923,80 @@ function rPlacar(){
       <div class="trk"><span class="fl" style="width:${pct.toFixed(1)}%;background:${cor}"></span>
         ${mpc==null?"":`<span class="mk" style="left:${mpc.toFixed(1)}%"></span>`}</div>
       <div class="cap"><span>${cap||""}</span>
-        <span>${meta==null?"<b>sem meta ainda</b>":`meta ${fmt(meta)} · <b>${bom?"dentro":"fora"}</b>`}</span></div></div>`;};
-  const g=c=>{const k=D.ev.find(x=>x.chave===c);return k||{};};
-  const ent=g("caixa.entrada_realizada_30d"), s30=g("caixa.saldo_30d"), par=g("caixa.decisao_parada_rs"),
-        cig=g("carga.igor_n"), aut=g("motor.autossuficiencia_pct");
-  document.getElementById("placar").innerHTML=
-    B("Entrou de verdade nos últimos 30 dias", ent.valor, ent.meta_num, "maior", rs,
-      "o único indicador que não aceita promessa", ent.serie)+
-    B("Saldo projetado dos próximos 30 dias", s30.valor, s30.meta_num, "maior", rs,
-      "só entra o que tem data", s30.serie)+
-    B("Parado esperando uma palavra sua", par.valor, par.meta_num, "menor", rs,
-      "incertos há mais de 14 dias", par.serie)+
-    B("Itens abertos na sua mão", cig.valor, cig.meta_num, "menor", v=>v+" itens",
-      "número absoluto: razão se manipula fechando o denominador", cig.serie)+
-    B("Do que anda sozinho, sem você", aut.valor, aut.meta_num, "maior", v=>(+v).toFixed(0)+"%",
-      "achados que o sistema fecha sem a sua mão", aut.serie)+
-    B("Passivo total", g("caixa.passivo_total_rs").valor, null, "menor", rs,
-      "dívida + a pagar · mede tendência, e por isso nasce sem meta")+
-    B("A receber em aberto", g("caixa.recebivel_aberto_rs").valor, null, "maior", rs,
-      (g("caixa.recebivel_sem_data").valor||0)+" deles sem data de vencimento");}
+        <span>${extra||""}${meta==null?"<b>sem meta ainda</b>":`meta ${fmt(meta)} · <b>${bom?"dentro":"fora"}</b>`}</span></div></div>`;};
+
+  const fmtDe=k=>{const c=k.chave||"", r=k.rotulo||"";
+    if(/_pct$/.test(c)||/%/.test(r))            return v=>(+v).toFixed(0)+"%";
+    if(/_dias$/.test(c))                        return v=>(+v)+" d";
+    if(/_min$/.test(c))                         return v=>(+v)+" min";
+    if(/_d$/.test(c))                           return v=>(+v).toFixed(1)+" d";
+    if(/^caixa\./.test(c)&&!/sem_data/.test(c)) return rs;
+    return v=>(+v).toLocaleString("pt-BR");};
+  const dirDe=k=>k.direcao==="maior_melhor"?"maior":"menor";
+  /* FRESCOR (v22): o numero nunca mais aparece sozinho. Serie curta e serie longa nao valem o
+     mesmo, e foi assim que "23/23" medido em 15/08 ficou 9 dias na tela parecendo de hoje. */
+  const selo=k=>{const d=+k.dias_de_serie||0, t=k.tendencia;
+    const st = t==="melhorou"?"▲":t==="piorou"?"▼":t==="estavel"?"=":"";
+    const cor= t==="melhorou"?"var(--ok)":t==="piorou"?"var(--bad)":"var(--dim)";
+    return `<span style="color:${cor}">${st}</span> <span style="color:var(--dim)">${d}d de série</span> · `;};
+
+  const ROT={caixa:"CAIXA — o dinheiro que se move",
+             autonomia:"AUTONOMIA — o quanto anda sem você",
+             excecao:"EXCEÇÃO — o que só aparece quando dói",
+             resumo:"RESUMO"};
+  const ORD=["caixa","autonomia","excecao","resumo"];
+  const CAM={mae:0,freio:1,apoio:2};
+  const vivos=D.ev.filter(k=>k.chave!=="apoio.silencioso");
+  const semBloco=vivos.filter(k=>!k.bloco);
+  const blocos={}; vivos.filter(k=>k.bloco).forEach(k=>{(blocos[k.bloco]=blocos[k.bloco]||[]).push(k);});
+  const nomes=Object.keys(blocos).sort((a,b)=>{const A=ORD.indexOf(a),Bb=ORD.indexOf(b);
+    return (A<0?99:A)-(Bb<0?99:Bb)||a.localeCompare(b);});
+
+  let html = nomes.map(nb=>{
+    const ks=blocos[nb].slice().sort((a,b)=>
+      (CAM[a.camada]??9)-(CAM[b.camada]??9) || (a.ordem_tela??99)-(b.ordem_tela??99));
+    return `<div class="bl-grupo"><div class="bl-tit">${esc(ROT[nb]||nb.toUpperCase())}</div>`+
+      ks.map(k=>B(esc(k.rotulo||k.chave), k.valor, k.meta_num, dirDe(k), fmtDe(k),
+                  esc((k.camada==="mae"?"★ mãe · ":k.camada==="freio"?"freio · ":"")+(k.alarme_elo||"")),
+                  k.serie, selo(k))).join("")+`</div>`;}).join("");
+
+  /* KPI sem bloco nao some: vira achado. Sumir em silencio foi o defeito que o v21 tinha. */
+  if(semBloco.length) html += `<div class="bl-grupo"><div class="bl-tit" style="color:var(--warn)">
+    ⚠ ${semBloco.length} INDICADOR(ES) SEM BLOCO DECLARADO — medidos e sem lugar na tela</div>`+
+    semBloco.map(k=>B(esc(k.rotulo||k.chave), k.valor, k.meta_num, dirDe(k), fmtDe(k),
+      esc("defeito de dicionário: kpi.bloco e kpi.ordem_tela estão nulos · "+(k.alarme_elo||"")),
+      k.serie, selo(k))).join("")+`</div>`;
+
+  const res=D.ev.find(k=>k.chave==="apoio.silencioso");
+  if(res) html += `<div class="cap" style="margin-top:10px;justify-content:flex-start">
+    <span style="color:var(--dim)">${esc(res.rotulo||"")}</span></div>`;
+  document.getElementById("placar").innerHTML=html;}
+
+/* ---------- v22: O QUE MUDOU DESDE A SUA ULTIMA VISITA ----------
+   painel_ping_log ja registrava toda visita desde sempre e nada lia o dado.
+   Referencia: digest de delta (Linear, Vercel, Datadog). Corte de sessao = 2h. */
+function rDelta(){
+  const el=document.getElementById("delta"); if(!el) return;
+  const d=(D.dv||[]).filter(x=>+x.n>0);
+  if(!d.length){el.innerHTML="";return;}
+  const desde=d[0].desde||"";
+  el.innerHTML=`<div class="delta-fx">
+    <span class="delta-lb">desde a sua última visita (${esc(desde)})</span>
+    ${d.map(x=>`<span class="delta-pc"><b>${x.n}</b> ${esc(x.tipo)}${+x.n>1?"s":""}</span>`).join("")}
+  </div>`;}
+
+/* ---------- v22: O PLACAR DA SIMBIOSE (v_placar) ----------
+   Existiam DOIS placares. Este, o do dicionario, e o que a auto-critica de domingo usa para
+   julgar o executor — e o Igor nunca o via na tela. Aprendizado 652: tela e dicionario sao o
+   mesmo indicador. Agora os dois estao visiveis e a divergencia deixa de ser invisivel. */
+function rPlacarSimbiose(){
+  const el=document.getElementById("placarsim"); if(!el) return;
+  const p=(D.pls||[]).slice().sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  el.innerHTML=p.length?`<table class="tb"><tr><th>indicador</th><th>valor</th><th>como ler</th></tr>`+
+    p.map(x=>`<tr><td>${esc(x.metrica||"")}</td>
+      <td class="mono"><b>${esc(String(x.valor??"—"))}</b></td>
+      <td style="color:var(--mut)">${esc(x.leitura||"")}</td></tr>`).join("")+`</table>`
+   :`<div class="empty">v_placar não retornou linhas.</div>`;}
 
 /* ---------- MATRIZ 9Q: scatter 3x3 com a geometria cravada em 18/08 ----------
    Y = esforco cresce para CIMA · X = resultado cresce para a DIREITA
@@ -1005,6 +1086,7 @@ const DIMR={contrato:"Contrato e precedência",memoria:"Memória e handoff",acer
 motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",
 fluxo:"Fluxo e ritmo",medicao:"Metanálise — o sistema olhando para si",caixa:"Caixa e negócio"};
 function rEvolucao(){
+  rPlacarSimbiose();
   const L=D.loop.find(l=>l.recencia===1);
   document.getElementById("loop").innerHTML=L?`<div class="loop">
     <div class="t">${esc(L.titulo)}</div><div class="s">${esc(L.subtitulo||"")} · ${esc(L.rodada)} · ${esc(L.data)}</div>
