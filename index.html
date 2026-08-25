@@ -18,6 +18,26 @@
  --rd:#e5484d; --bl:#4c8dff; --nt:#6b7a94;
 }
 *{box-sizing:border-box}
+/* v23 (25/08/2026) — SELO DE FRESCOR. Recomendacao 8 do benchmark de mercado:
+   num painel de decisao de caixa, dado velho com aparencia de novo e pior que tela vazia.
+   Estados de healthchecks.io: FRESCO (silencioso) · ATRASADO (ambar, sem alarme) · PARADO (vermelho).
+   Carbon: nunca cor sozinha — cada estado leva simbolo E texto, contraste >= 3:1. */
+.fresc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 13px;border-radius:var(--r);margin:0 0 10px;
+  font-size:12.5px;line-height:1.45;border:1px solid var(--line)}
+.fresc .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.fresc b{font-weight:650}
+.fresc.ok{background:var(--card);color:var(--mut)}
+.fresc.ok .dot{background:var(--grn)}
+.fresc.late{background:rgba(245,166,35,.10);border-color:rgba(245,166,35,.42);color:var(--warn)}
+.fresc.late .dot{background:var(--yel)}
+.fresc.dead{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.5);color:var(--bad)}
+.fresc.dead .dot{background:var(--red)}
+.fresc .sep{color:var(--dim)}
+/* Orcamento de alertas: a regua da aviacao — silencio e o estado normal.
+   Acima de 3 vermelhos no dia o problema passa a ser a REGUA, nao os itens. */
+.orcam{margin-left:auto;font-size:11.5px;color:var(--dim)}
+.orcam.estourado{color:var(--bad);font-weight:650}
 html,body{margin:0;background:var(--bg);color:var(--ink);
  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;
  -webkit-font-smoothing:antialiased}
@@ -399,6 +419,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 
 <main>
   <div class="pane on" id="p-dash">
+    <div id="frescor"></div>
     <div id="delta"></div>
     <div id="runway"></div>
     <div id="hero-dash"></div>
@@ -488,7 +509,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v22";
+const VER="v23";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -589,13 +610,13 @@ async function carregar(){
     q("v_automacao_fila"),q("v_painel_rodada")]);
   const m9=await q("v_painel_matriz");
   const rw=await q("v_runway");
-  const [dv,pls]=await Promise.all([q("v_painel_desde_ultima_visita"),q("v_placar")]);
+  const [dv,pls,fresc]=await Promise.all([q("v_painel_desde_ultima_visita"),q("v_placar"),q("v_frescor")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
      fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null,
-     dv:dv||[],pls:pls||[]};
+     dv:dv||[],pls:pls||[],fresc:(fresc&&fresc[0])||null};
   render();
   // PING (corrigido 18/08): havia DUAS painel_ping sobrecarregadas e o PostgREST nao escolhia —
   // a chamada morria no catch vazio e o banco ficou achando que o painel era v11 desde 16/08.
@@ -604,7 +625,7 @@ async function carregar(){
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
-function render(){montaFiltros();rAgora();rDash();rComando();rEvolucao();rMotor();rAcervo();}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rEvolucao();rMotor();rAcervo();}
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- FILTROS ---------- */
@@ -857,6 +878,32 @@ function rRunway(){
     <div class="rbar"><i style="width:${largP}%;background:var(--${dP!=null&&dP<=30?"red":dP<=90?"yel":"grn"})"></i></div>
     ${parcial?`<div class="rl">⚠ ${esc(r.lacuna)}</div>`:""}
   </div>`;}
+/* ---------- v23: FRESCOR DO DADO + ORCAMENTO DE ALERTAS ----------
+   Duas perguntas que o painel nunca respondia e que vem antes de todas as outras:
+   (1) os numeros desta tela sao de quando?  (2) quantos alarmes ela esta acendendo hoje?
+   A (1) nasce do motor parado por 4 dias em 21-23/08 exibindo numeros velhos como atuais.
+   A (2) nasce da regra do Google SRE — um humano so reage com urgencia algumas vezes por dia;
+   acima disso o alarme vira ruido e o operador aprende a ignorar TODOS. */
+function rFrescor(){
+  const el=document.getElementById("frescor"); if(!el) return;
+  const f=D.fresc;
+  if(!f){ el.innerHTML=`<div class="fresc late"><span class="dot"></span>
+    <span>não consegui ler o frescor dos dados — <b>trate esta tela como não conferida</b></span></div>`; return; }
+  const cls = f.estado==="FRESCO"?"ok":f.estado==="ATRASADO"?"late":"dead";
+  const sim = f.estado==="FRESCO"?"●":f.estado==="ATRASADO"?"▲":"■";
+  const h   = +f.horas_desde;
+  const quando = h<1 ? `há ${Math.round(h*60)} min` : h<24 ? `há ${h.toFixed(1)} h` : `há ${(h/24).toFixed(1)} dias`;
+  /* orcamento de alertas: conta os freios/maes FORA da meta que estao na tela */
+  const fora=(D.ev||[]).filter(k=>k.bloco!=="bastidor"&&k.bloco!=="resumo"&&k.situacao==="fora").length;
+  const estourado=fora>3;
+  el.innerHTML=`<div class="fresc ${cls}">
+    <span class="dot"></span>
+    <span aria-hidden="true">${sim}</span>
+    <span>números medidos <b>${quando}</b> · ${f.metricas_hoje} indicadores hoje
+      <span class="sep">·</span> rotinas no ponto <b>${f.no_ponto}/${f.rotinas_total}</b></span>
+    ${f.aviso?`<span style="flex:1 1 100%"><b>${esc(f.aviso)}</b></span>`:""}
+    <span class="orcam ${estourado?"estourado":""}" title="Acima de 3 alarmes por dia o problema é a régua, não os itens (Google SRE: um humano só reage com urgência algumas vezes ao dia).">${fora} fora da meta${estourado?" — régua frouxa, não crise":""}</span>
+  </div>`;}
 function rHero(){
   const g=c=>{const k=D.ev.find(x=>x.chave===c);return k||{};};
   const n1   = (D.fila||[]).filter(i=>i.nivel===1).length;
@@ -944,12 +991,18 @@ function rPlacar(){
     return `<span style="color:${cor}">${st}</span> <span style="color:var(--dim)">${d}d de série</span> · `;};
 
   const ROT={caixa:"CAIXA — o dinheiro que se move",
+             motor:"MOTOR — o robô está de pé?",
              autonomia:"AUTONOMIA — o quanto anda sem você",
              excecao:"EXCEÇÃO — o que só aparece quando dói",
              resumo:"RESUMO"};
-  const ORD=["caixa","autonomia","excecao","resumo"];
+  const ORD=["caixa","motor","autonomia","excecao","resumo"];
   const CAM={mae:0,freio:1,apoio:2};
-  const vivos=D.ev.filter(k=>k.chave!=="apoio.silencioso");
+  /* v23: 'bastidor' e o TERCEIRO estado do vocabulario de kpi.bloco, criado em 25/08 —
+     indicador medido DE PROPOSITO e fora da tela. Antes so existia "na tela" ou "sem bloco",
+     e 30 dos 41 KPIs ativos caiam no aviso amarelo. Trinta avisos permanentes treinam a
+     ignorar aviso (a aceitacao cai ~30% por repeticao — Atlassian). A view ja filtra por
+     camada; este filtro e defesa em profundidade. */
+  const vivos=D.ev.filter(k=>k.chave!=="apoio.silencioso" && k.bloco!=="bastidor");
   const semBloco=vivos.filter(k=>!k.bloco);
   const blocos={}; vivos.filter(k=>k.bloco).forEach(k=>{(blocos[k.bloco]=blocos[k.bloco]||[]).push(k);});
   const nomes=Object.keys(blocos).sort((a,b)=>{const A=ORD.indexOf(a),Bb=ORD.indexOf(b);
