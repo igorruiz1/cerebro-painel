@@ -388,8 +388,8 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <button class="btn" onclick="sair()">sair</button>
   </div>
   <div class="tabs" id="tabs">
-    <button class="tab on" data-p="dash">DASHBOARD</button>
-    <button class="tab" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
+    <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
+    <button class="tab" data-p="dash">DASHBOARD</button>
     <button class="tab" data-p="comando">COMANDO<span class="n" id="n-cmd"></span></button>
     <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
     <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
@@ -418,7 +418,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 </div>
 
 <main>
-  <div class="pane on" id="p-dash">
+  <div class="pane" id="p-dash">
     <div id="frescor"></div>
     <div id="delta"></div>
     <div id="runway"></div>
@@ -440,7 +440,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <div id="ins-top"></div>
   </div>
 
-  <div class="pane" id="p-agora">
+  <div class="pane on" id="p-agora">
     <div id="hero"></div>
     <div id="correcoes"></div>
     <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
@@ -462,6 +462,22 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 
   <div class="pane" id="p-evolucao">
     <div id="loop"></div>
+
+    <h2>O ESPELHO <span class="s">— o que você decidiu e o que aconteceu depois</span></h2>
+    <div id="espelho-placar"></div>
+    <div id="espelho"></div>
+    <div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou —
+      o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu.
+      Taxa alta demais é bajulação: o executor está propondo o que você já ia fazer.
+      Baixa demais é ruído: a recomendação não está servindo, e o defeito é dele.<br>
+      <b>Régua:</b> laço OODA (John Boyd) — observar, orientar, decidir, agir e <b>medir o resultado</b>.</div>
+
+    <h2>OS PARES <span class="s">— todo número de atividade com o número de resultado ao lado</span></h2>
+    <div id="pares"></div>
+    <div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser
+      burlado, e a defesa não é escolher um melhor — é emparelhar. Número de atividade sozinho ensina a
+      produzir atividade.</div>
+
     <h2>O PLACAR DA SIMBIOSE <span class="s">— o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2>
     <div id="placarsim"></div>
 
@@ -478,6 +494,10 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
   <div class="pane" id="p-motor">
     <h2>ROTINAS <span class="s">— quem bate ponto sozinho</span></h2>
     <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div>
+
+    <h2>A VARREDURA DO DRIVE <span class="s">— Dabli: arquivo novo vira item de fila</span></h2>
+    <div id="varredura"></div>
+
     <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
     <div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>:
       as horas em que a rotina não deve rodar não contam. Rotina manual (janela 0h) não se vigia por relógio.</div>
@@ -509,7 +529,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v23";
+const VER="v24";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -611,12 +631,16 @@ async function carregar(){
   const m9=await q("v_painel_matriz");
   const rw=await q("v_runway");
   const [dv,pls,fresc]=await Promise.all([q("v_painel_desde_ultima_visita"),q("v_placar"),q("v_frescor")]);
+  /* v24: as tres views novas da onda 1. Falha de qualquer uma NAO derruba o painel — cai em vazio. */
+  const [esp,espP,par,varr]=await Promise.all([
+    q("v_espelho"),q("v_espelho_placar"),q("v_pares"),q("v_varredura_dabli_saude")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
      fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null,
-     dv:dv||[],pls:pls||[],fresc:(fresc&&fresc[0])||null};
+     dv:dv||[],pls:pls||[],fresc:(fresc&&fresc[0])||null,
+     esp:esp||[],espP:(espP&&espP[0])||null,par:par||[],varr:(varr&&varr[0])||null};
   render();
   // PING (corrigido 18/08): havia DUAS painel_ping sobrecarregadas e o PostgREST nao escolhia —
   // a chamada morria no catch vazio e o banco ficou achando que o painel era v11 desde 16/08.
@@ -625,7 +649,7 @@ async function carregar(){
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rEvolucao();rMotor();rAcervo();}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rEvolucao();rEspelho();rPares();rMotor();rVarredura();rAcervo();}
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- FILTROS ---------- */
@@ -796,6 +820,75 @@ function rAgora(){
   bt.textContent=n3.length?(mostrarResto?"esconder os outros "+n3.length:"ver os outros "+n3.length):"";
   document.getElementById("fila3").style.display=mostrarResto?"block":"none";
   document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");}
+/* ---------- v24 · O ESPELHO (P2) ---------- */
+function rEspelho(){
+  const P=D.espP, box=document.getElementById("espelho-placar");
+  if(!box) return;
+  const cor = !P ? "" : /ALTA DEMAIS|BAIXA DEMAIS/.test(P.veredito) ? "bad"
+                      : /AMOSTRA/.test(P.veredito) ? "med" : "ok";
+  box.innerHTML = P ? `<div class="hero ${cor==="bad"?"alert":""}">
+      <div class="t">${P.taxa_ratificacao==null?"—":P.taxa_ratificacao+"%"} de ratificação</div>
+      <div class="s"><span>${P.ratificou} segui</span><span>·</span><span>${P.retificou} corrigi</span>
+        <span>·</span><span>${P.com_gabarito} de ${P.atos} atos com gabarito</span>
+        <span>·</span><span class="tag ${cor}">${esc(P.veredito.split(" — ")[0])}</span></div>
+      <div class="s" style="margin-top:6px">${esc((P.veredito.split(" — ")[1]||""))}</div></div>`
+    : `<div class="empty">v_espelho_placar não retornou linhas.</div>`;
+
+  /* mostra os 12 atos mais recentes, COM e SEM gabarito. Esconder os sem gabarito
+     esconderia 48 de 58 — e sao justamente eles que explicam a taxa baixa. */
+  const L=(D.esp||[]).slice(0,12);
+  const sel={ratificou:["ok","segui a sua recomendação"],retificou:["bad","corrigi a sua recomendação"]};
+  document.getElementById("espelho").innerHTML = L.length ? L.map(e=>{
+    const t=sel[e.veredito]||["","sem gabarito — a recomendação não tinha verbo escrito"];
+    return `<div class="card ${e.veredito==="retificou"?"n1":""}">
+      <div class="meta" style="margin-bottom:6px">
+        <span class="tag ${t[0]}">${esc(t[1])}</span>
+        <span class="mono">${esc(e.origem)} ${esc(e.ref)}</span>
+        <span>${esc(e.quando)}</span>
+        ${e.gerada_por?`<span class="tag">${esc(e.gerada_por)}</span>`:""}</div>
+      <div class="ttl">você <b>${esc(e.o_que_voce_fez)}</b>${
+        e.o_que_eu_recomendei && e.o_que_eu_recomendei!==e.o_que_voce_fez
+          ? ` · eu recomendei <b>${esc(e.o_que_eu_recomendei)}</b>` : ""}</div>
+      ${e.recomendacao?bloco("EU DIZIA",e.recomendacao,"","esp-"+e.id):""}
+    </div>`;}).join("")
+    : `<div class="empty">nenhum ato registrado ainda.</div>`;
+}
+
+/* ---------- v24 · OS PARES (P3) ---------- */
+function rPares(){
+  const P=D.par||[], box=document.getElementById("pares");
+  if(!box) return;
+  const ruim=/ACUMULA|PARADA|ESTOQUE MORTO|CORTAR HORARIO|DECLARACAO SEM COPIA|VAZIO|PARADO/;
+  box.innerHTML = P.length ? `<div class="card" style="border-left-color:var(--line);overflow-x:auto"><table>
+    <thead><tr><th>ONDE</th><th>ATIVIDADE</th><th class="c">·</th><th>RESULTADO</th><th class="c">·</th><th>VEREDITO</th></tr></thead>
+    <tbody>${P.map(r=>`<tr>
+      <td class="mono">${esc(r.bloco)}</td>
+      <td>${esc(r.atividade)}</td><td class="c"><b>${esc(r.v_atividade)}</b></td>
+      <td>${esc(r.resultado)}</td><td class="c"><b>${esc(r.v_resultado)}</b></td>
+      <td><span class="tag ${ruim.test(r.veredito)?"bad":"ok"}">${esc(r.veredito)}</span>
+          <div class="s" style="margin-top:4px">${esc(r.nota)}</div></td></tr>`).join("")}
+    </tbody></table></div>`
+    : `<div class="empty">v_pares não retornou linhas.</div>`;
+}
+
+/* ---------- v24 · SAUDE DA VARREDURA (P4) ---------- */
+function rVarredura(){
+  const V=D.varr, box=document.getElementById("varredura");
+  if(!box) return;
+  if(!V){ box.innerHTML=`<div class="empty">v_varredura_dabli_saude não retornou linhas.</div>`; return; }
+  const viva=V.veredito==="VIVA";
+  box.innerHTML=`<div class="card ${viva?"":"n1"}">
+    <div class="meta" style="margin-bottom:6px">
+      <span class="tag ${viva?"ok":"bad"}">${esc(V.veredito.split(" — ")[0])}</span>
+      <span>${V.fila_aguardando} na fila</span><span>·</span>
+      <span>${V.ja_viraram_tarefa} viraram tarefa</span>
+      ${V.falhas_48h?`<span>·</span><span class="tag bad">${V.falhas_48h} falha(s) em 48h</span>`:""}
+      ${V.ultimo_ok?`<span>·</span><span>última boa ${esc(String(V.ultimo_ok).slice(0,16).replace("T"," "))}</span>`:""}</div>
+    <div class="ttl">${esc(V.veredito.split(" — ")[1]||"a varredura está de pé")}</div>
+    ${V.fila_aguardando?`<div class="s" style="margin-top:6px">Triar por SQL: <code>select * from v_dabli_triagem;</code></div>`:""}
+  </div>`;
+}
+
 function verResto(){mostrarResto=!mostrarResto;rAgora();}
 
 /* ---------- AÇÕES ---------- */
