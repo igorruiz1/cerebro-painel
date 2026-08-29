@@ -1157,9 +1157,10 @@ function leBarra(){
    ? `<b>${LE.length}</b> peça(s) esperando sua ciência
       <span class="spacer" style="flex:1"></span>
       <button class="mais" onclick="leTodas()">${SEL.size===LE.length&&LE.length?"limpar seleção":"selecionar todas"}</button>
-      <button class="prim" style="width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px"
-        onclick="marcarLote()" ${SEL.size?"":"disabled style=\"width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px;opacity:.45\""}>
-        marcar ${SEL.size||""} como lida${SEL.size===1?"":"s"}</button>`
+      <button class="prim" ${SEL.size?"":"disabled"}
+        style="width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px;opacity:${SEL.size?1:.4};cursor:${SEL.size?"pointer":"not-allowed"}"
+        onclick="marcarLote()">
+        ${SEL.size?`marcar ${SEL.size} como lida${SEL.size===1?"":"s"}`:"marcar como lidas"}</button>`
    : `<b>zero</b> peças esperando sua ciência. Silêncio aqui é informação.`;}
 function rLeituras(){
   leBarra();
@@ -1592,8 +1593,11 @@ function rAutoMedicao(){
   el.innerHTML=am.map(k=>{
     const fora=k.status==="fora";
     const v=k.valor==null?"—":(+k.valor).toLocaleString("pt-BR");
+    const q=k.aferido_em?new Date(k.aferido_em):null;
+    const idade=q?Math.round((Date.now()-q.getTime())/3600000):null;
     return `<div><b class="${fora?"fora":""}">${esc(k.rotulo)}: ${v}</b>
-      <span style="color:var(--dim)"> · meta ${k.meta==null?"—":esc(String(k.meta))} · ${esc(k.status||"")}</span></div>`;
+      <span style="color:var(--dim)"> · meta ${k.meta==null?"—":esc(String(k.meta))} · ${esc(k.status||"")}${
+        idade==null?"":` · medido ${idade<1?"há menos de 1h":"há "+idade+"h"}`}</span></div>`;
   }).join("")+`<div style="margin-top:6px;color:var(--dim)">Baseline de 28/08/2026, antes da v25: 647 KB por carga, 156 itens na fila, 7,8 aberturas por ação, zero cliques em "li" em 14 dias.</div>`;}
 
 /* ---------- ACERVO ---------- */
