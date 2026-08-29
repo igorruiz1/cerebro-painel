@@ -163,7 +163,11 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
 .dono.igor{background:#3a2a12;color:#f5c26b}.dono.claude{background:#12283a;color:#8fc4f5}
 .dono.livre{background:var(--card2);color:var(--dim)}
 
-.fbar{display:flex;gap:8px;align-items:center;width:100%}
+/* v26: renomeada de .fbar para .filtbar. O nome colidia com a barra de progresso do card
+   de frente (.fbar{height:8px;overflow:hidden}), e o container da busca herdava 8px de altura
+   com corte: era esse o campo "prensado" no celular. Colisao de classe nao se contorna com
+   !important, se renomeia. */
+.filtbar{display:flex;gap:8px;align-items:center;width:100%;min-height:44px}
 .fchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
 .btfil{display:none;white-space:nowrap}
 .btfil .cav{display:inline-block;transition:transform .15s}
@@ -399,6 +403,72 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 .kbd{font-size:11px;color:var(--dim);border:1px solid var(--line2);border-radius:5px;
  padding:1px 5px;font-family:ui-monospace,monospace}
 @media(hover:none){.sokbd{display:none}}
+
+/* ================= v26 · CELULAR PRIMEIRO =================
+   Quatro destinos no celular viram BARRA INFERIOR, que e o padrao das duas casas que
+   definiram isso: Apple HIG (Tab Bars) e Material (Bottom Navigation), ambas para 3 a 5
+   destinos. Motivo medido em 390px: as abas no topo ocupavam 479px de largura em 390
+   disponiveis, entao MAQUINA vivia cortada, e o cabecalho gastava 127px de altura antes
+   do primeiro conteudo. Embaixo elas ficam sempre visiveis, no alcance do polegar,
+   e o topo devolve a altura para o que importa. */
+:root{--topo:0px}
+/* STICKY EM CASCATA: cada camada gruda logo abaixo da anterior, nunca em cima dela.
+   A altura do topo e MEDIDA em tempo real, porque ela muda com filtro aberto e com o
+   inset da status bar. Sem isso a barra de leituras grudava em top:0, ou seja, atras
+   do cabecalho, que foi o defeito relatado em 29/08. */
+.secnav{position:sticky;top:var(--topo);z-index:6;background:var(--bg);
+  padding:12px 0 12px;margin:0 0 12px}
+.lebar{top:var(--topo)}
+@media(max-width:640px){
+  /* backdrop-filter no ancestral cria containing block e sequestra o position:fixed do filho.
+     Foi por isso que a barra inferior nasceu grudada no topo no primeiro teste. Fundo solido
+     no celular resolve sem perder legibilidade. */
+  .top{backdrop-filter:none;background:var(--bg)}
+  .tabs{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;max-width:none;
+    background:rgba(13,17,23,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line2);
+    padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px));
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;overflow:visible}
+  .tab{flex-direction:column;display:flex;align-items:center;justify-content:center;
+    padding:9px 2px 7px;font-size:9.5px;letter-spacing:.7px;gap:3px;
+    border-bottom:0;border-top:2px solid transparent}
+  .tab.on{border-top-color:var(--acc);border-bottom-color:transparent}
+  /* o badge reserva a linha mesmo vazio, senao a aba sem contador desalinha das outras */
+  .tab .n{margin-left:0;font-size:10px;padding:0 5px;min-height:15px;min-width:8px;
+    display:inline-flex;align-items:center;justify-content:center}
+  .tab .n:empty{background:none}
+  main{padding-bottom:104px}
+  .desf,.log{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  /* o topo cabe em UMA linha: identidade, estado e recarregar. O resto entra no ⋯ */
+  .topin{padding:8px 13px 8px;gap:8px;flex-wrap:nowrap}
+  /* degrau e elo sao bastidor: cortados pela metade nao informam nada e roubam a linha.
+     Vivem inteiros na MAQUINA, secao Pares e escada. */
+  .deg{display:none}
+  .btmais{display:inline-flex}
+  .top .btn.some{display:none}
+  .top .btn.some.abre{display:inline-flex}
+  .maisbar{display:none;width:100%;gap:8px;padding:0 13px 10px}
+  .maisbar.on{display:flex}
+  /* busca: rotulo curto, alvo maior, nada prensado */
+  .filtros{padding:8px 13px 10px}
+  .busca input{font-size:16px;min-height:40px}
+  .secnav{padding:10px 0;gap:6px}
+  .secbt{padding:8px 13px;font-size:12px;min-height:36px}
+}
+@media(min-width:641px){ .btmais{display:none} .maisbar{display:none} }
+.btmais{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
+  padding:7px 11px;font-size:15px;line-height:1;cursor:pointer;min-height:34px}
+/* deliberar dentro da peca de leitura */
+.ledelib{margin-top:9px;display:none}
+.ledelib.on{display:block}
+.ledelib textarea{width:100%;background:var(--bg);border:1px solid var(--line2);color:var(--ink);
+  border-radius:9px;padding:9px 11px;font-size:14.5px;font-family:inherit;resize:vertical;min-height:64px}
+.ledelib textarea:focus{outline:none;border-color:var(--acc)}
+.lerow .acoesle{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.lerow .acoesle button{background:none;border:1px solid var(--line2);color:var(--mut);
+  border-radius:8px;padding:6px 11px;font-size:12.5px;font-family:inherit;cursor:pointer;min-height:34px}
+.lerow .acoesle button:hover{border-color:var(--acc);color:var(--ink)}
+.lerow .acoesle button.prim{background:#12321f;border-color:var(--grn);color:var(--ok);font-weight:600}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -461,7 +531,12 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
-    <button class="btn" onclick="abrirSenha()" title="definir senha do celular">senha</button>
+    <button class="btn some" onclick="abrirSenha()" title="definir senha">senha</button>
+    <button class="btn some" onclick="sair()">sair</button>
+    <button class="btmais" onclick="maisTopo()" aria-label="mais opções" title="mais">⋯</button>
+  </div>
+  <div class="maisbar" id="maisbar">
+    <button class="btn" onclick="abrirSenha()">senha</button>
     <button class="btn" onclick="sair()">sair</button>
   </div>
   <div class="tabs" id="tabs">
@@ -471,10 +546,10 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
   </div>
   <div class="filtros on" id="filtros">
-    <div class="fbar">
+    <div class="filtbar">
       <div class="busca">
         <span class="lupa">⌕</span>
-        <input id="q" type="search" placeholder="buscar em título, recomendação, frente…" autocomplete="off"
+        <input id="q" type="search" placeholder="buscar" autocomplete="off"
           oninput="onBusca(this.value)">
         <button class="x" onclick="limpaBusca()" id="qx" style="display:none" aria-label="limpar">×</button>
       </div>
@@ -634,6 +709,7 @@ async function abrir(nome){
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
   const pane=document.getElementById("p-"+nome); if(pane)pane.classList.add("on");
   document.getElementById("filtros").classList.toggle("on",nome==="agora");
+  requestAnimationFrame(mediTopo);
   window.scrollTo({top:0,behavior:"smooth"});
   await carregarAba(nome);
 }
@@ -664,6 +740,22 @@ document.addEventListener("keydown",e=>{
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
   else if(k>="1"&&k<="4"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
 });
+
+/* v26: a altura do topo fixo e MEDIDA, nunca chutada. Ela muda com o filtro aberto,
+   com o inset da status bar e entre celular e computador. Toda camada sticky abaixo
+   dela le --topo, entao nada mais gruda por cima de nada. */
+function mediTopo(){
+  const t=document.querySelector(".top"); if(!t)return;
+  const h=Math.round(t.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--topo", h+"px");
+}
+function maisTopo(){
+  const b=document.getElementById("maisbar"); if(b)b.classList.toggle("on");
+  requestAnimationFrame(mediTopo);
+}
+addEventListener("load",mediTopo);
+addEventListener("resize",()=>requestAnimationFrame(mediTopo));
+addEventListener("orientationchange",()=>setTimeout(mediTopo,200));
 
 /* ---------- v25: onde este painel esta rodando ----------
    O link magico sempre abre no navegador PADRAO do sistema. Dentro de um app embutido isso joga
@@ -791,7 +883,7 @@ async function carregar(){
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
@@ -1176,8 +1268,41 @@ function rLeituras(){
           <span>${x.dias===0?"hoje":x.dias+"d"}</span>
           <span>${x.dias_para_decurso>0?"decurso em "+x.dias_para_decurso+"d":"vence hoje por decurso"}</span></div>
         ${x.veredito?`<div class="v">${esc(x.veredito)}</div>`:""}
+        <div class="acoesle">
+          <button onclick="abreDelib('${esc(x.ref)}')" id="bd-${esc(x.ref)}">deliberar</button>
+        </div>
+        <div class="ledelib" id="ld-${esc(x.ref)}">
+          <textarea id="dt-${esc(x.ref)}" rows="3"
+            placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
+          <div class="acoesle">
+            <button class="prim" onclick="enviaDelib('${esc(x.ref)}')">registrar e marcar lida</button>
+            <button onclick="abreDelib('${esc(x.ref)}')">cancelar</button>
+          </div>
+        </div>
       </div></div>`).join("")
    :`<div class="empty">nada esperando sua ciência.</div>`;}
+function abreDelib(ref){
+  const d=document.getElementById("ld-"+ref); if(!d)return;
+  const abriu=!d.classList.contains("on");
+  d.classList.toggle("on",abriu);
+  const b=document.getElementById("bd-"+ref); if(b)b.textContent=abriu?"fechar":"deliberar";
+  if(abriu){const t=document.getElementById("dt-"+ref); if(t)t.focus();}
+}
+async function enviaDelib(ref){
+  /* deliberar em output ja e executavel: agir() encaminha para deliberar(), testado em 29/08.
+     A peca sai da pilha de leitura no mesmo ato, porque quem escreveu sobre ela leu. */
+  const t=document.getElementById("dt-"+ref);
+  const v=(t&&t.value||"").trim();
+  if(v.length<3){msg("Escreva o que você quer perguntar ou deixar valendo.","bad",3500);if(t)t.focus();return;}
+  const {data,error}=await sb.rpc("agir",{p_origem:"output",p_ref:ref,p_verbo:"deliberar",p_valor:v});
+  if(error){msg("Erro: "+error.message,"bad",8000);return;}
+  const r=(typeof data==="string")?data:"registrado";
+  if(String(r).indexOf("RECUSADO")===0){msg(r,"bad",8000);return;}
+  msg(r,"ok",6000);
+  await sb.rpc("marcar_leituras",{p_refs:[ref]});
+  await carregarAba("leituras",true);
+  await recarregarFila();
+}
 async function marcarLote(){
   /* Corrigido em 29/08: a resposta do banco manda na tela. Antes, qualquer texto virava verde,
      e um "RECUSADO" passava por sucesso enquanto os cards ficavam onde estavam. */
