@@ -582,6 +582,9 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
       <div class="fsep"></div>
       <span class="flabel">TIPO</span>
       <div class="chips" id="chipsOrigem"></div>
+      <div class="fsep"></div>
+      <span class="flabel">NATUREZA <span style="font-weight:400;text-transform:none">o que o card exige de você</span></span>
+      <div class="chips" id="chipsNat"></div>
       <button class="btn" id="btLimpar" onclick="limparFiltros()" style="display:none">limpar filtros</button>
     </div>
   </div>
@@ -617,7 +620,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <div class="pane" id="p-panorama">
   <div class="secnav" id="nav-panorama"></div>
   <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
-  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div></section>
+  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
   <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
 
@@ -625,7 +628,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
   <div class="secnav" id="nav-maquina"></div>
   <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
   <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
-  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
+  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
   <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
 </div>
 
@@ -649,14 +652,14 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v26";
+const VER="v27";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
-let F={q:"",frente:null,origem:null};          // filtros
+let F={q:"",frente:null,origem:null,nat:null}; // filtros (v27: nat = natureza do ato)
 let mostrarResto=false, pendente=null;          // estado de UI
 
 /* ---------- utilitários ---------- */
@@ -723,6 +726,13 @@ async function carregarSecao(id,forcar){
     D.am=await q_("v_painel_automedicao");LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();}
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
     D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
+  /* v27: faixa por frente entra na secao FRENTES, e as duas medidas de motor na secao ROTINAS.
+     Nenhuma das tres viaja na abertura: a regra da v25 e que a abertura leva so o que a abertura mostra. */
+  if(id==="frentes"&&(forcar||!LAZY.faixa)){
+    D.faixa=await q_("v_faixa_frente");LAZY.faixa=1;SECQUANDO.frentes=Date.now();rFaixas();}
+  if(id==="rotinas"&&(forcar||!LAZY.motor2)){
+    const [dm,es]=await Promise.all([q_("v_cron_deadman"),q_("v_esforco_sem_entrega")]);
+    D.dm=dm||[];D.es=(es&&es[0])||null;LAZY.motor2=1;rDeadman();rEsforco();}
 }
 async function abrir(nome){
   ABA=nome;
@@ -883,20 +893,22 @@ async function carregar(){
   const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
   /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
      647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
-  const [fila,cont,cor,fresc,rw,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr]=await Promise.all([
+  const [fila,cont,cor,fresc,rw,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip]=await Promise.all([
     q("v_painel_fila",b=>b.eq("camada_tela","hoje")),
     q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),
     q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
     q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
-    q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude")]);
+    q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
+    q("v_stack_natureza"),q("v_wip_igor")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={...D,fila:fila||[],cont:(cont&&cont[0])||{},cor:cor||[],fresc:(fresc&&fresc[0])||null,
      rw:(rw&&rw[0])||null,ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
      pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
+     nat:nat||[],wip:(wip&&wip[0])||null,
      depois:D.depois||[]};
-  LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;
+  LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;
   CARGA=Date.now(); SECQUANDO={};
   render();
   await carregarAba(ABA,true);
@@ -932,9 +944,16 @@ function marcaAbas(){
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- FILTROS ---------- */
+/* v27: mapa ref -> natureza. So tarefa tem natureza; demanda, fluxo e gargalo ficam de fora
+   de proposito, porque natureza descreve o que o card exige do Igor, e so tarefa declara isso. */
+function natDe(it){
+  if(it.origem!=="tarefa")return null;
+  const r=(D.nat||[]).find(x=>String(x.id)===String(it.ref));
+  return r?r.natureza:null;}
 function passa(it){
   if(F.frente){const f=it.frente||"sem frente";if(f!==F.frente)return false;}
   if(F.origem&&it.origem!==F.origem)return false;
+  if(F.nat&&natDe(it)!==F.nat)return false;
   if(F.q){const alvo=norm([it.titulo_completo,it.titulo,it.recomendacao,it.porque_agora,it.frente,it.ref,it.valor_txt].join(" "));
     if(!norm(F.q).split(/\s+/).filter(Boolean).every(t=>alvo.includes(t)))return false;}
   return true;}
@@ -948,8 +967,14 @@ function montaFiltros(){
   document.getElementById("chipsOrigem").innerHTML=
     Object.keys(co).sort().map(o=>`<button class="chip ${F.origem===o?"on":""}" onclick="setOrigem('${esc(o)}')">
       ${esc(rot[o]||o)}<span class="c">${co[o]}</span></button>`).join("");
-  document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q)?"inline-flex":"none";
-  const nAt=(F.frente?1:0)+(F.origem?1:0),fn=document.getElementById("fnAtivos");
+  const cn={};
+  D.fila.forEach(it=>{const n=natDe(it);if(n)cn[n]=(cn[n]||0)+1;});
+  const en=document.getElementById("chipsNat");
+  if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip ${F.nat===n?"on":""}" onclick="setNat('${esc(n)}')">
+      ${esc(n.replace(/^\d+\s/,""))}<span class="c">${cn[n]}</span></button>`).join("")
+      ||'<span style="color:var(--dim);font-size:12px">nenhuma tarefa sua na fila de hoje</span>';
+  document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q||F.nat)?"inline-flex":"none";
+  const nAt=(F.frente?1:0)+(F.origem?1:0)+(F.nat?1:0),fn=document.getElementById("fnAtivos");
   if(fn){fn.textContent=nAt;fn.style.display=nAt?"inline-block":"none";}
   if(!montaFiltros._init){montaFiltros._init=1;
     let ab=null;try{ab=localStorage.getItem("fchips")}catch(e){}
@@ -983,14 +1008,16 @@ function setFrente(f){F.frente=F.frente===f?null:f;pref("frente",F.frente);monta
   if(innerWidth<=640)fechaChips();}
 function setOrigem(o){F.origem=F.origem===o?null:o;pref("origem",F.origem);montaFiltros();rAgora();
   if(innerWidth<=640)fechaChips();}
+function setNat(n){F.nat=F.nat===n?null:n;pref("nat",F.nat);montaFiltros();rAgora();
+  if(innerWidth<=640)fechaChips();}
 document.addEventListener("click",e=>{if(innerWidth>640)return;
   const c=document.getElementById("fchips");if(!c||!c.classList.contains("abre"))return;
   if(!c.contains(e.target)&&!e.target.closest("#btFil"))fechaChips();},true);
 function onBusca(v){F.q=v;document.getElementById("qx").style.display=v?"block":"none";
   clearTimeout(onBusca._t);onBusca._t=setTimeout(()=>{montaFiltros();rAgora()},160);}
 function limpaBusca(){document.getElementById("q").value="";onBusca("");}
-function limparFiltros(){F={q:"",frente:null,origem:null};document.getElementById("q").value="";
-  document.getElementById("qx").style.display="none";pref("frente",null);pref("origem",null);
+function limparFiltros(){F={q:"",frente:null,origem:null,nat:null};document.getElementById("q").value="";
+  document.getElementById("qx").style.display="none";pref("frente",null);pref("origem",null);pref("nat",null);
   montaFiltros();rAgora();}
 
 /* ---------- MODAL ---------- */
@@ -1126,6 +1153,7 @@ function rAgora(){
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
+      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}</span>`:""}
       <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
@@ -1787,6 +1815,39 @@ function rAutoMedicao(){
       <span style="color:var(--dim)"> · meta ${k.meta==null?"—":esc(String(k.meta))} · ${esc(k.status||"")}${
         idade==null?"":` · medido ${idade<1?"há menos de 1h":"há "+idade+"h"}`}</span></div>`;
   }).join("")+`<div style="margin-top:6px;color:var(--dim)">Baseline de 28/08/2026, antes da v25: 647 KB por carga, 156 itens na fila, 7,8 aberturas por ação, zero cliques em "li" em 14 dias.</div>`;}
+
+/* ---------- v27 · FAIXA POR FRENTE, ROTINA MUDA E ESFORCO SEM ENTREGA ---------- */
+function rFaixas(){
+  const el=document.getElementById("faixas");if(!el)return;
+  const f=(D.faixa||[]).filter(x=>x.cards_abertos>0||x.faixa.startsWith("A"));
+  if(!f.length){el.innerHTML="";return;}
+  el.innerHTML='<tr><th>frente</th><th>faixa</th><th>gera caixa</th><th style="text-align:right">abertos</th><th style="text-align:right">vencidos</th><th></th></tr>'
+   +f.map(x=>`<tr><td>${esc(x.nome||x.slug)}</td><td>${esc(x.faixa)}</td>
+      <td>${x.gera_caixa?'<span class="tag ok">sim</span>':'<span class="tag">não</span>'}</td>
+      <td style="text-align:right">${x.cards_abertos}</td>
+      <td style="text-align:right"${x.vencidos>0?' class="fora"':''}>${x.vencidos}</td>
+      <td>${x.alerta?`<span class="tag bad">${esc(x.alerta)}</span>`:""}</td></tr>`).join("");}
+function rDeadman(){
+  const el=document.getElementById("deadman");if(!el)return;
+  const d=D.dm||[];
+  if(!d.length){el.innerHTML='<tr><td style="color:var(--dim)">nenhuma rotina agendada.</td></tr>';return;}
+  const dt=x=>x?new Date(x).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"nunca";
+  el.innerHTML='<tr><th>rotina</th><th>agenda</th><th>último SUCESSO</th><th>última tentativa</th><th style="text-align:right">falhas 45d</th><th>veredito</th></tr>'
+   +d.map(x=>{const morto=String(x.veredito||"").startsWith("MORTO");
+     return `<tr><td>${esc(x.jobname)}</td><td style="color:var(--dim)">${esc(x.schedule)}</td>
+      <td${morto?' class="fora"':''}>${dt(x.ultimo_sucesso)}</td><td>${dt(x.ultima_tentativa)}</td>
+      <td style="text-align:right">${x.falhas_45d}</td>
+      <td>${morto?`<span class="tag bad">${esc(x.veredito)}</span>`:`<span class="tag ${x.veredito==="vivo"?"ok":""}">${esc(x.veredito)}</span>`}</td></tr>`;}).join("");}
+function rEsforco(){
+  const el=document.getElementById("esforco");if(!el)return;
+  const e=D.es;
+  if(!e){el.innerHTML='<div class="empty">sem medição ainda.</div>';return;}
+  const p=e.pct_sem_entrega==null?null:+e.pct_sem_entrega;
+  const cor=p==null?"var(--dim)":(p>=50?"var(--bad)":(p>=30?"var(--warn)":"var(--ok)"));
+  el.innerHTML=`<div class="card" style="border-left-color:${cor}">
+    <div style="font-size:26px;font-weight:700;color:${cor}">${p==null?"—":p.toLocaleString("pt-BR")+"%"}</div>
+    <div style="color:var(--mut);margin-top:4px">${e.sem_entrega} de ${e.fechadas_no_mes} cards fechados no mês não moveram caixa nem destravaram terceiro.</div>
+    <div style="color:var(--dim);font-size:12px;margin-top:6px">Card fechado por poda, fusão, falso alarme ou perda de objeto fica fora da conta: senão a medida puniria justamente a limpeza.</div></div>`;}
 
 /* ---------- ACERVO ---------- */
 function rAcervo(){
