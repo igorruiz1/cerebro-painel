@@ -336,6 +336,18 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 .avisoapp b{color:#fff}
 .alertalink{background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.42);color:var(--warn);
  border-radius:9px;padding:9px 12px;margin:8px 0 0;font-size:12.5px;line-height:1.5;text-align:left}
+/* ---------- v25 onda B: quatro superficies, uma por momento de uso ----------
+   Shneiderman: panorama primeiro, filtrar e aproximar depois, detalhe sob demanda.
+   Dentro de PANORAMA e MAQUINA so UMA secao ocupa a tela por vez, e a secao pesada
+   so busca o dado quando e escolhida. */
+.secnav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding-bottom:12px;
+ border-bottom:1px solid var(--line)}
+.secbt{background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:20px;
+ padding:7px 14px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;min-height:34px}
+.secbt:hover{border-color:var(--line2);color:var(--ink2)}
+.secbt.on{background:#1b2a49;border-color:var(--acc);color:#fff;font-weight:600}
+.sec{display:none}
+.sec.on{display:block}
 /* ---------- v25 · CARD INVERTIDO, LEITURAS, DESFAZER ---------- */
 /* O dado de 14 dias (28/08/2026): 46 de 60 acoes do dono foram "deliberar", zero foram "li".
    O card passa a abrir pelo que ele faz, escrever, e nao pelo que ele ignora, clicar status. */
@@ -447,11 +459,8 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
   <div class="tabs" id="tabs">
     <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
     <button class="tab" data-p="leituras">LEITURAS<span class="n" id="n-le"></span></button>
-    <button class="tab" data-p="dash">DASHBOARD</button>
-    <button class="tab" data-p="comando">COMANDO<span class="n" id="n-cmd"></span></button>
-    <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
-    <button class="tab" data-p="motor">MOTOR<span class="n" id="n-mo"></span></button>
-    <button class="tab" data-p="acervo">ACERVO<span class="n" id="n-ac"></span></button>
+    <button class="tab" data-p="panorama">PANORAMA<span class="n" id="n-cmd"></span></button>
+    <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="fbar">
@@ -476,27 +485,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 </div>
 
 <main>
-  <div class="pane" id="p-dash">
-    <div id="frescor"></div>
-    <div id="delta"></div>
-    <div id="runway"></div>
-    <div id="hero-dash"></div>
-    <h2>O PLACAR <span class="s">— cada barra contra a própria meta, nunca contra a barra do lado</span></h2>
-    <div id="placar"></div>
-    <h2>MATRIZ 9Q <span class="s">— esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2>
-    <div class="m9wrap"><div class="m9" id="m9"></div>
-      <div class="m9leg">
-        <span><i style="background:rgba(229,72,77,.55)"></i>FUGA — células 1, 2 e 4</span>
-        <span><i style="background:var(--line2)"></i>EQUILÍBRIO — diagonal 7-5-3</span>
-        <span><i style="background:rgba(76,141,255,.55)"></i>ALVO — células 6, 8 e 9</span>
-        <span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span>
-      </div>
-    </div>
-    <h2>AS FRENTES, DE HELICÓPTERO <span class="s">— ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2>
-    <div class="fgrid" id="frentes"></div>
-    <h2>O QUE O SISTEMA ESTÁ VENDO <span class="s">— três primeiros; o resto na aba COMANDO</span></h2>
-    <div id="ins-top"></div>
-  </div>
+  
 
   <div class="pane on" id="p-agora">
     <div id="hero"></div>
@@ -514,69 +503,28 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
       Marque em lote o que você já viu. O que você não marcar some daqui no prazo, sem sumir do acervo.</div>
   </div>
 
-  <div class="pane" id="p-comando">
-    <h2>INSIGHTS DE GESTÃO <span class="s">— cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2>
-    <div id="insights"></div>
-    <h2>DE QUEM É A FILA, DE VERDADE</h2>
-    <div class="g4" id="automacao"></div>
-    <div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div>
-    <div class="foot"><b>A / S / M</b> — <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto,
-      você só aprova ou envia · <b>M</b>: só você — credencial, assinatura, presença, voz, relação ou decisão.
-      Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div>
-  </div>
+  
 
-  <div class="pane" id="p-evolucao">
-    <div id="loop"></div>
+  
 
-    <h2>O ESPELHO <span class="s">— o que você decidiu e o que aconteceu depois</span></h2>
-    <div id="espelho-placar"></div>
-    <div id="espelho"></div>
-    <div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou —
-      o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu.
-      Taxa alta demais é bajulação: o executor está propondo o que você já ia fazer.
-      Baixa demais é ruído: a recomendação não está servindo, e o defeito é dele.<br>
-      <b>Régua:</b> laço OODA (John Boyd) — observar, orientar, decidir, agir e <b>medir o resultado</b>.</div>
+  
 
-    <h2>OS PARES <span class="s">— todo número de atividade com o número de resultado ao lado</span></h2>
-    <div id="pares"></div>
-    <div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser
-      burlado, e a defesa não é escolher um melhor — é emparelhar. Número de atividade sozinho ensina a
-      produzir atividade.</div>
+  
+<div class="pane" id="p-panorama">
+  <div class="secnav" id="nav-panorama"></div>
+  <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
+  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div></section>
+  <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
+</div>
 
-    <h2>O PLACAR DA SIMBIOSE <span class="s">— o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2>
-    <div id="placarsim"></div>
+<div class="pane" id="p-maquina">
+  <div class="secnav" id="nav-maquina"></div>
+  <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
+  <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
+  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
+  <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
+</div>
 
-    <h2>A ESCADA <span class="s">— CMMI · o nível do sistema é o MENOR elo</span></h2>
-    <div id="escada"></div>
-    <div class="card" style="border-left-color:var(--line)" id="dims"></div>
-    <div id="kpis"></div>
-    <div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta.
-      <b>Indeterminado não é zero</b> — indicador sem base mínima devolve vazio de propósito.
-      Nada aqui é digitado: sai de <code>kpi</code> + <code>medir_kpi()</code>.<br>
-      <b>Réguas:</b> CMMI · DORA · camada semântica (dbt/LookML) · ISO 15489 · SRE do Google.</div>
-  </div>
-
-  <div class="pane" id="p-motor">
-    <h2>ROTINAS <span class="s">— quem bate ponto sozinho</span></h2>
-    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div>
-
-    <h2>A VARREDURA DO DRIVE <span class="s">— Dabli: arquivo novo vira item de fila</span></h2>
-    <div id="varredura"></div>
-
-    <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
-    <h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2>
-    <div id="automed" class="automed"></div>
-    <div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>:
-      as horas em que a rotina não deve rodar não contam. Rotina manual (janela 0h) não se vigia por relógio.</div>
-  </div>
-
-  <div class="pane" id="p-acervo">
-    <h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div>
-    <h2>AS QUE MAIS TRABALHAM <span class="s">— por uso real</span></h2>
-    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div>
-    <h2>OFERECIDAS E IGNORADAS <span class="s">— chegaram na hora e não mudaram nada</span></h2>
-    <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div>
-  </div>
 </main></div>
 
 <!-- ===================== MODAL ===================== -->
@@ -625,7 +573,36 @@ function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
 let ABA="agora";
-const LAZY={leituras:0,acervo:0,evolucao:0,motor:0};
+const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0};
+/* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
+const SECOES={
+  panorama:[["caixa","Caixa e placar"],["frentes","Frentes"],["insights","O que o sistema vê"]],
+  maquina :[["espelho","Espelho"],["medida","Pares e escada"],["rotinas","Rotinas"],["acervo","Acervo"]]
+};
+let SECATIVA={panorama:"caixa", maquina:"espelho"};
+function montaSecnav(sup){
+  const el=document.getElementById("nav-"+sup); if(!el)return;
+  el.innerHTML=SECOES[sup].map(([id,rot])=>
+    `<button class="secbt${SECATIVA[sup]===id?" on":""}" onclick="abrirSecao('${sup}','${id}')">${rot}</button>`).join("");
+}
+async function abrirSecao(sup,id){
+  SECATIVA[sup]=id; montaSecnav(sup);
+  SECOES[sup].forEach(([sid])=>{const e=document.getElementById("s-"+sid);
+    if(e)e.classList.toggle("on",sid===id);});
+  await carregarSecao(id);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+async function carregarSecao(id,forcar){
+  if(id==="espelho"&&(forcar||!LAZY.espelho)){
+    const [loop,esp,espP]=await Promise.all([q_("v_painel_rodada"),q_("v_espelho"),q_("v_espelho_placar")]);
+    D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.espelho=1;
+    rEvolucao();rEspelho();}
+  if(id==="rotinas"&&(forcar||!LAZY.rotinas)){
+    D.am=await q_("v_painel_automedicao");LAZY.rotinas=1;rAutoMedicao();}
+  if(id==="acervo"&&(forcar||!LAZY.acervo)){
+    D.ac=await q_("v_painel_acervo");LAZY.acervo=1;rAcervo();}
+}
 async function abrir(nome){
   ABA=nome;
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.p===nome));
@@ -636,17 +613,9 @@ async function abrir(nome){
   await carregarAba(nome);
 }
 async function carregarAba(nome,forcar){
-  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
   if(nome==="leituras"&&(forcar||!LAZY.leituras)){
-    LE=await q("v_painel_leituras");LAZY.leituras=1;SEL.clear();rLeituras();}
-  if(nome==="motor"&&(forcar||!LAZY.motor)){
-    D.am=await q("v_painel_automedicao");LAZY.motor=1;rAutoMedicao();}
-  if(nome==="acervo"&&(forcar||!LAZY.acervo)){
-    D.ac=await q("v_painel_acervo");LAZY.acervo=1;rAcervo();}
-  if(nome==="evolucao"&&(forcar||!LAZY.evolucao)){
-    const [loop,esp,espP]=await Promise.all([q("v_painel_rodada"),q("v_espelho"),q("v_espelho_placar")]);
-    D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.evolucao=1;
-    rEvolucao();rEspelho();}
+    LE=await q_("v_painel_leituras");LAZY.leituras=1;SEL.clear();rLeituras();}
+  if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
 
@@ -668,7 +637,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
-  else if(k>="1"&&k<="6"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
+  else if(k>="1"&&k<="4"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
 });
 
 /* ---------- v25: onde este painel esta rodando ----------
@@ -1183,13 +1152,21 @@ function rLeituras(){
       </div></div>`).join("")
    :`<div class="empty">nada esperando sua ciência.</div>`;}
 async function marcarLote(){
+  /* Corrigido em 29/08: a resposta do banco manda na tela. Antes, qualquer texto virava verde,
+     e um "RECUSADO" passava por sucesso enquanto os cards ficavam onde estavam. */
   if(!SEL.size)return;
   const refs=[...SEL];
   const linhas=[...document.querySelectorAll("#leituras .lerow.sel")];
   linhas.forEach(l=>l.style.opacity=".35");
   const {data,error}=await sb.rpc("marcar_leituras",{p_refs:refs});
-  if(error){linhas.forEach(l=>l.style.opacity="");msg("Erro: "+error.message,"bad",7000);return;}
-  msg(typeof data==="string"?data:"marcadas","ok",5000);
+  linhas.forEach(l=>l.style.opacity="");
+  if(error){msg("Erro: "+error.message,"bad",8000);return;}
+  const t=(typeof data==="string")?data:"";
+  const recusou=t.indexOf("RECUSADO")===0;
+  msg(t||"sem resposta do banco", recusou?"bad":"ok", recusou?8000:5000);
+  /* Recusa NAO recarrega: recarregar apagaria a selecao e o dono ficaria sem saber
+     o que tentar de novo. Foi assim que a falha de 29/08 apareceu como "sumiu tudo e nada mudou". */
+  if(recusou)return;
   SEL.clear();
   await carregarAba("leituras",true);
   await recarregarFila();}
@@ -1310,7 +1287,8 @@ function irAba(p){const t=document.querySelector('.tab[data-p="'+p+'"]'); if(t)t
   window.scrollTo({top:0,behavior:"smooth"});}
 function rInsTop(){
   const I=(D.ins||[]).slice(0,3);
-  document.getElementById("ins-top").innerHTML=I.length?I.map(i=>`
+  const _t=document.getElementById("ins-top"); if(!_t)return;
+  _t.innerHTML=I.length?I.map(i=>`
     <div class="card ${esc(i.nivel)}" style="cursor:pointer" onclick="irAba('comando')">
       <div class="meta"><span class="tag ${i.nivel==="critico"?"bad":i.nivel==="alto"?"med":""}">${esc(i.nivel)}</span>
         <span class="mono">${esc(i.area)}</span>
@@ -1556,8 +1534,7 @@ function rEvolucao(){
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
         <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}</span>
         ${spark(k.serie,k.meta_num,k.direcao,98,34)}</div></div>`}).join("")}</div>`).join("");
-  const nf=D.ev.filter(k=>k.situacao==="fora").length;
-  const nb=document.getElementById("n-ev");nb.textContent=nf||"";nb.className="n"+(nf?" warn":"");}
+}
 function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
   const t=D.loop.slice();D.loop=[Object.assign({},L,{recencia:1})].concat(t.filter(l=>l.rodada!==r));
   rEvolucao();D.loop=t;}
@@ -1613,7 +1590,7 @@ function rAcervo(){
   document.getElementById("acign").innerHTML=cab+
     (ign.length?ign.sort((a,b)=>b.exposicoes-a.exposicoes).slice(0,10).map(linha).join("")
      :`<tr><td colspan="5" class="empty">nenhuma lição oferecida 3+ vezes sem ser usada.</td></tr>`);
-  const nb=document.getElementById("n-ac");nb.textContent=ign.length||"";nb.className="n"+(ign.length?" warn":"");}
+}
 
 /* ---------- atalhos ---------- */
 document.addEventListener("keydown",e=>{
