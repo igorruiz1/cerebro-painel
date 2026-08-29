@@ -652,7 +652,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v27";
+const VER="v28";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -899,7 +899,7 @@ async function carregar(){
     q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
     q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
     q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
-    q("v_stack_natureza"),q("v_wip_igor")]);
+    q("v_fila_natureza"),q("v_wip_igor")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
@@ -944,11 +944,12 @@ function marcaAbas(){
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- FILTROS ---------- */
-/* v27: mapa ref -> natureza. So tarefa tem natureza; demanda, fluxo e gargalo ficam de fora
-   de proposito, porque natureza descreve o que o card exige do Igor, e so tarefa declara isso. */
+/* v28 CONSERTO: na v27 a natureza so existia para origem=tarefa, e a fila de HOJE nao tem
+   nenhuma tarefa (ela e feita de demanda, fluxo e decisao). O corte nascia sempre vazio.
+   Agora a natureza vem de v_fila_natureza, que classifica TODA a fila, em todas as camadas:
+   para tarefa pelo automat_motivo, para o resto pelo verbo da recomendacao. */
 function natDe(it){
-  if(it.origem!=="tarefa")return null;
-  const r=(D.nat||[]).find(x=>String(x.id)===String(it.ref));
+  const r=(D.nat||[]).find(x=>x.origem===it.origem&&String(x.ref)===String(it.ref));
   return r?r.natureza:null;}
 function passa(it){
   if(F.frente){const f=it.frente||"sem frente";if(f!==F.frente)return false;}
@@ -972,7 +973,7 @@ function montaFiltros(){
   const en=document.getElementById("chipsNat");
   if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip ${F.nat===n?"on":""}" onclick="setNat('${esc(n)}')">
       ${esc(n.replace(/^\d+\s/,""))}<span class="c">${cn[n]}</span></button>`).join("")
-      ||'<span style="color:var(--dim);font-size:12px">nenhuma tarefa sua na fila de hoje</span>';
+      ||'<span style="color:var(--dim);font-size:12px">sem natureza classificada nesta fila</span>';
   document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q||F.nat)?"inline-flex":"none";
   const nAt=(F.frente?1:0)+(F.origem?1:0)+(F.nat?1:0),fn=document.getElementById("fnAtivos");
   if(fn){fn.textContent=nAt;fn.style.display=nAt?"inline-block":"none";}
