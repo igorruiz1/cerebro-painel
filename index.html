@@ -168,6 +168,19 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
    com corte: era esse o campo "prensado" no celular. Colisao de classe nao se contorna com
    !important, se renomeia. */
 .filtbar{display:flex;gap:8px;align-items:center;width:100%;min-height:44px}
+/* v26: FAIXA DE VERSAO VELHA. painel_ping ja devolvia sincronizado desde a v10 e o painel
+   JOGAVA FORA a resposta: mecanismo inteiro, nos dois lados, sem consumidor. Medido em
+   29/08/2026: pings de v24, v25 e v26 na MESMA hora, ou seja, ha aba antiga em uso e o dono
+   nao tem como saber. Padrao de mercado: prompt de atualizacao de PWA (Workbox, "new content
+   available, refresh"). Recarrega com cache-bust porque o Pages serve a versao anterior por
+   alguns minutos e um reload simples devolveria a mesma tela velha. */
+#velha{display:none;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#3a2a12;border:1px solid var(--yel);border-radius:10px;
+  padding:10px 13px;margin:0 0 12px;font-size:13.5px;color:var(--ink)}
+#velha.on{display:flex}
+#velha b{color:var(--yel)}
+#velha button{background:var(--yel);color:#1b1405;border:0;border-radius:8px;
+  padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;min-height:34px}
 /* v26: estado vazio de AGORA. Sem alarme, sem cor de alerta no container: e estado,
    nao ocorrencia. Cada linha e um instrumento, e as saidas ficam embaixo. */
 .vazio{text-align:left;padding:6px 2px 14px}
@@ -575,6 +588,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 </div>
 
 <main>
+<div id="velha"><b>Tela desatualizada.</b><span id="velhatxt"></span><button onclick="recarregarNovo()">recarregar</button></div>
   
 
   <div class="pane on" id="p-agora">
@@ -887,9 +901,26 @@ async function carregar(){
   render();
   await carregarAba(ABA,true);
   try{const r=await sb.rpc("painel_ping",{p_versao:VER,p_origem:location.hostname});
-      if(r&&r.error)console.warn("[painel_ping]",r.error.message);}
+      if(r&&r.error)console.warn("[painel_ping]",r.error.message);
+      else avisaVersao(r&&r.data);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
+/* v26: o ping so servia para gravar log. Agora a resposta VOLTA para a tela. */
+function avisaVersao(d){
+  const el=document.getElementById("velha"); if(!el||!d)return;
+  const fora = d.sincronizado === false;
+  el.classList.toggle("on", fora);
+  if(fora){const t=document.getElementById("velhatxt");
+    /* o contrato guarda "26" e a tela manda "v26": normaliza para o dono ler a mesma coisa. */
+    const vv=x=>x?("v"+String(x).replace(/^v/i,"")):"?";
+    if(t)t.textContent="Você está na "+vv(d.viva)+" e o banco já espera a "+vv(d.esperada)+".";}
+}
+function recarregarNovo(){
+  /* cache-bust na propria URL: o Pages serve a versao anterior por alguns minutos e
+     reload simples devolveria a mesma tela velha. */
+  const u=new URL(location.href); u.searchParams.set("v", Date.now());
+  location.replace(u.toString());
+}
 function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
