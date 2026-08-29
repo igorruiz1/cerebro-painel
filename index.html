@@ -348,6 +348,14 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 .secbt.on{background:#1b2a49;border-color:var(--acc);color:#fff;font-weight:600}
 .sec{display:none}
 .sec.on{display:block}
+/* v25 onda D, versao enxuta: cada secao carregada sob demanda diz de quando e o dado dela.
+   A onda B fez a secao buscar so quando escolhida; sem isso, o dono ficaria olhando numero
+   de uma carga antiga sem saber. Dado velho com cara de novo e pior que tela vazia. */
+.selosec{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--dim);
+ margin:-6px 0 14px;flex-wrap:wrap}
+.selosec.velho{color:var(--warn)}
+.selosec button{background:none;border:0;color:var(--acc);font-size:11.5px;font-family:inherit;
+ cursor:pointer;text-decoration:underline;padding:0}
 /* ---------- v25 · CARD INVERTIDO, LEITURAS, DESFAZER ---------- */
 /* O dado de 14 dias (28/08/2026): 46 de 60 acoes do dono foram "deliberar", zero foram "li".
    O card passa a abrir pelo que ele faz, escrever, e nao pelo que ele ignora, clicar status. */
@@ -572,7 +580,7 @@ function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
 /* ---------- navegação · v25: cada aba carrega o que ela mostra, e nada mais ---------- */
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
-let ABA="agora";
+let ABA="agora"; let CARGA=Date.now();
 const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
 const SECOES={
@@ -580,6 +588,21 @@ const SECOES={
   maquina :[["espelho","Espelho"],["medida","Pares e escada"],["rotinas","Rotinas"],["acervo","Acervo"]]
 };
 let SECATIVA={panorama:"caixa", maquina:"espelho"};
+let SECQUANDO={};   /* quando cada secao buscou o dado que esta na tela */
+function seloSecao(sup,id){
+  const el=document.getElementById("nav-"+sup); if(!el)return;
+  let sl=document.getElementById("selo-"+sup);
+  if(!sl){sl=document.createElement("div");sl.id="selo-"+sup;sl.className="selosec";
+          el.parentNode.insertBefore(sl, el.nextSibling);}
+  const t=SECQUANDO[id];
+  if(!t){sl.innerHTML="";return;}
+  const min=Math.round((Date.now()-t)/60000);
+  const velho=min>=15;
+  sl.className="selosec"+(velho?" velho":"");
+  sl.innerHTML=`dados desta seção medidos ${min<1?"agora":"há "+min+" min"}`
+    +(velho?` <button onclick="recarregarSecao('${sup}','${id}')">atualizar</button>`:"");
+}
+async function recarregarSecao(sup,id){ await carregarSecao(id,true); seloSecao(sup,id); }
 function montaSecnav(sup){
   const el=document.getElementById("nav-"+sup); if(!el)return;
   el.innerHTML=SECOES[sup].map(([id,rot])=>
@@ -590,6 +613,8 @@ async function abrirSecao(sup,id){
   SECOES[sup].forEach(([sid])=>{const e=document.getElementById("s-"+sid);
     if(e)e.classList.toggle("on",sid===id);});
   await carregarSecao(id);
+  if(!SECQUANDO[id])SECQUANDO[id]=CARGA;
+  seloSecao(sup,id);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
@@ -597,11 +622,11 @@ async function carregarSecao(id,forcar){
   if(id==="espelho"&&(forcar||!LAZY.espelho)){
     const [loop,esp,espP]=await Promise.all([q_("v_painel_rodada"),q_("v_espelho"),q_("v_espelho_placar")]);
     D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.espelho=1;
-    rEvolucao();rEspelho();}
+    SECQUANDO.espelho=Date.now(); rEvolucao();rEspelho();}
   if(id==="rotinas"&&(forcar||!LAZY.rotinas)){
-    D.am=await q_("v_painel_automedicao");LAZY.rotinas=1;rAutoMedicao();}
+    D.am=await q_("v_painel_automedicao");LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();}
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
-    D.ac=await q_("v_painel_acervo");LAZY.acervo=1;rAcervo();}
+    D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
 }
 async function abrir(nome){
   ABA=nome;
@@ -758,7 +783,8 @@ async function carregar(){
      rw:(rw&&rw[0])||null,ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
      pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
      depois:D.depois||[]};
-  LAZY.leituras=0;LAZY.acervo=0;LAZY.evolucao=0;LAZY.motor=0;
+  LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;
+  CARGA=Date.now(); SECQUANDO={};
   render();
   await carregarAba(ABA,true);
   try{const r=await sb.rpc("painel_ping",{p_versao:VER,p_origem:location.hostname});
