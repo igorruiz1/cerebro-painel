@@ -330,33 +330,90 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
   max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
  .fsep{display:none}
 }
+
+.avisoapp{background:rgba(76,141,255,.10);border:1px solid var(--acc);border-radius:12px;
+ padding:12px 15px;margin:0 0 14px;font-size:13.5px;line-height:1.5;color:var(--ink2);text-align:left}
+.avisoapp b{color:#fff}
+.alertalink{background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.42);color:var(--warn);
+ border-radius:9px;padding:9px 12px;margin:8px 0 0;font-size:12.5px;line-height:1.5;text-align:left}
+/* ---------- v25 · CARD INVERTIDO, LEITURAS, DESFAZER ---------- */
+/* O dado de 14 dias (28/08/2026): 46 de 60 acoes do dono foram "deliberar", zero foram "li".
+   O card passa a abrir pelo que ele faz, escrever, e nao pelo que ele ignora, clicar status. */
+.resp{margin-top:10px}
+.resp textarea{width:100%;background:var(--bg);border:1px solid var(--line2);color:var(--ink);
+ border-radius:9px;padding:10px 12px;font-size:14.5px;font-family:inherit;resize:vertical;min-height:44px}
+.resp textarea:focus{outline:none;border-color:var(--acc)}
+.resplin{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.resplin .prim{flex:0 0 auto;width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px}
+.mais{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:9px;
+ padding:9px 12px;font-size:14px;font-family:inherit;cursor:pointer;min-height:40px}
+.mais:hover{border-color:var(--acc);color:var(--ink)}
+.menu{display:none;gap:6px;flex-wrap:wrap;margin-top:8px}
+.menu.on{display:flex}
+.estouro{background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.42);color:var(--warn);
+ border-radius:var(--r);padding:11px 14px;font-size:13.5px;margin-top:10px;
+ display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.estouro button{background:none;border:0;color:var(--acc);font-size:13.5px;font-family:inherit;
+ cursor:pointer;text-decoration:underline;padding:0}
+.lebar{position:sticky;top:0;z-index:5;background:var(--card2);border:1px solid var(--line2);
+ border-radius:var(--r);padding:10px 13px;margin-bottom:12px;display:flex;gap:10px;
+ align-items:center;flex-wrap:wrap;font-size:13.5px}
+.lerow{display:flex;gap:11px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+ border-radius:var(--r);padding:11px 13px;margin-bottom:7px}
+.lerow.sel{border-color:var(--acc);background:#16203a}
+.lerow input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;accent-color:var(--acc);flex:0 0 20px}
+.lerow .cor{flex:1;min-width:0}
+.lerow .t{font-size:14.5px;line-height:1.4;color:var(--ink)}
+.lerow .m{font-size:11.5px;color:var(--dim);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.lerow .v{font-size:13px;color:var(--ink2);margin-top:5px;border-left:2px solid var(--vio);padding-left:9px}
+.desf{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));
+ background:var(--raise);border:1px solid var(--acc);border-radius:11px;padding:11px 15px;
+ display:none;gap:14px;align-items:center;z-index:60;font-size:14px;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.desf.on{display:flex}
+.desf button{background:none;border:0;color:var(--acc);font-weight:650;font-size:14px;
+ font-family:inherit;cursor:pointer;padding:4px}
+.card.saindo{opacity:.35;transition:opacity .18s}
+.automed{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.7}
+.automed b{color:var(--ink2);font-variant-numeric:tabular-nums}
+.automed .fora{color:var(--warn)}
+.kbd{font-size:11px;color:var(--dim);border:1px solid var(--line2);border-radius:5px;
+ padding:1px 5px;font-family:ui-monospace,monospace}
+@media(hover:none){.sokbd{display:none}}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login" class="login hidden">
   <h1 style="letter-spacing:4px;font-size:14px">CÉREBRO IGOR</h1>
+  <div id="avisoapp" class="avisoapp" style="display:none"></div>
   <div class="box" style="margin:20px 0 10px">
     <input id="em" type="email" placeholder="e-mail" autocomplete="username" inputmode="email">
     <input id="pw" type="password" placeholder="senha" autocomplete="current-password" style="margin-top:9px"
       onkeydown="if(event.key==='Enter')comSenha()">
     <button class="prim" style="margin-top:12px;width:100%" onclick="comSenha()">Entrar</button>
-    <p>Não usa e-mail — funciona no atalho da tela de início, sempre.
-       <b>Sem senha ainda?</b> Abra no computador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
+    <p>Este é o caminho que <b>nunca sai desta janela</b>: serve no atalho da tela de início e dentro do app do Claude.
+       <b>Sem senha ainda?</b> Entre uma vez pelo navegador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
   </div>
+  <button class="link" onclick="esqueciSenha()">esqueci minha senha</button>
   <button class="link" onclick="document.getElementById('alt').classList.toggle('hidden')">outras formas de entrar</button>
   <div id="alt" class="hidden" style="display:grid;gap:10px;margin-top:8px">
     <div class="box"><div class="h">LINK POR E-MAIL</div>
       <button class="sec" style="width:100%" onclick="entrar()">Receber link</button>
-      <p>O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio.</p></div>
+      <p>O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio.</p>
+      <div class="alertalink"><b>Atenção:</b> o link do e-mail abre no seu <b>navegador padrão</b>.
+        Se você está dentro do app do Claude, a sessão nasce no navegador e <b>não volta para esta janela</b>.
+        Aqui, use a senha, ou copie o endereço do link e cole no campo abaixo.</div></div>
     <div class="box"><div class="h">COLAR O LINK RECEBIDO</div>
-      <input id="colado" type="text" placeholder="cole o link inteiro do e-mail" autocomplete="off" spellcheck="false">
-      <button class="sec" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button>
-      <p>Segure o link no e-mail e escolha <b>copiar endereço</b> — não clique, é de uso único.</p></div>
+      <button class="prim" style="width:100%;padding:14px;font-size:15.5px" onclick="colarDoClipboard()">
+        Colar da área de transferência e entrar</button>
+      <p>No e-mail, clique com o <b>botão direito</b> em "Sign in" e escolha <b>copiar endereço do link</b>.
+         Não clique nele: é de uso único e abre no navegador.</p>
+      <input id="colado" type="text" placeholder="ou cole o link aqui, se preferir" autocomplete="off" spellcheck="false">
+      <button class="sec" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button></div>
     <div class="box"><div class="h">CÓDIGO DE 6 DÍGITOS</div>
       <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
         style="letter-spacing:6px;text-align:center;font-size:20px">
       <button class="sec" style="width:100%;margin-top:9px" onclick="codigo()">Entrar com o código</button>
-      <p>Disponível depois do SMTP próprio (t228).</p></div>
+      <p>Só funciona quando o template de e-mail do Supabase incluir <b>{{ .Token }}</b>. Não depende de SMTP próprio.</p></div>
   </div>
   <p id="lmsg" style="font-size:13.5px;margin-top:16px;min-height:20px"></p>
 </div>
@@ -389,6 +446,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
   </div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
+    <button class="tab" data-p="leituras">LEITURAS<span class="n" id="n-le"></span></button>
     <button class="tab" data-p="dash">DASHBOARD</button>
     <button class="tab" data-p="comando">COMANDO<span class="n" id="n-cmd"></span></button>
     <button class="tab" data-p="evolucao">EVOLUÇÃO<span class="n" id="n-ev"></span></button>
@@ -445,8 +503,15 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <div id="correcoes"></div>
     <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
     <h2>DEPOIS <span class="s">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
-    <div style="text-align:center;margin-top:12px"><button class="link" onclick="verResto()" id="btresto"></button></div>
-    <div id="fila3" style="margin-top:8px;display:none"></div>
+    <div id="estouro"></div>
+  </div>
+
+  <div class="pane" id="p-leituras">
+    <div id="le-barra" class="lebar"></div>
+    <h2>ESPERANDO SUA CIÊNCIA <span class="s">peça sem palavra sua por 7 dias vira ciente por decurso e sai daqui sozinha</span></h2>
+    <div id="leituras"></div>
+    <div class="foot"><b>Isto não é decisão.</b> É a pilha de leitura, separada de propósito da fila de hoje.
+      Marque em lote o que você já viu. O que você não marcar some daqui no prazo, sem sumir do acervo.</div>
   </div>
 
   <div class="pane" id="p-comando">
@@ -499,6 +564,8 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     <div id="varredura"></div>
 
     <h2>ACHADOS ABERTOS</h2><div id="achados"></div>
+    <h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2>
+    <div id="automed" class="automed"></div>
     <div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>:
       as horas em que a rotina não deve rodar não contam. Rotina manual (janela 0h) não se vigia por relógio.</div>
   </div>
@@ -524,12 +591,13 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
     </div>
   </div>
 </div>
+<div class="desf" id="desf"><span id="desfmsg"></span><button onclick="desfazer()">desfazer</button></div>
 <div class="log" id="log"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v24";
+const VER="v25";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -553,13 +621,73 @@ function msg(t,tipo,ms){const l=document.getElementById("log");
 function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
   v===null?localStorage.removeItem("ci_"+k):localStorage.setItem("ci_"+k,v);}catch(e){return null}}
 
-/* ---------- navegação ---------- */
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+/* ---------- navegação · v25: cada aba carrega o que ela mostra, e nada mais ---------- */
+/* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
+   atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
+let ABA="agora";
+const LAZY={leituras:0,acervo:0,evolucao:0,motor:0};
+async function abrir(nome){
+  ABA=nome;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.p===nome));
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
-  b.classList.add("on");document.getElementById("p-"+b.dataset.p).classList.add("on");
-  document.getElementById("filtros").classList.toggle("on",b.dataset.p==="agora");
-  window.scrollTo({top:0,behavior:"smooth"});});
+  const pane=document.getElementById("p-"+nome); if(pane)pane.classList.add("on");
+  document.getElementById("filtros").classList.toggle("on",nome==="agora");
+  window.scrollTo({top:0,behavior:"smooth"});
+  await carregarAba(nome);
+}
+async function carregarAba(nome,forcar){
+  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+  if(nome==="leituras"&&(forcar||!LAZY.leituras)){
+    LE=await q("v_painel_leituras");LAZY.leituras=1;SEL.clear();rLeituras();}
+  if(nome==="motor"&&(forcar||!LAZY.motor)){
+    D.am=await q("v_painel_automedicao");LAZY.motor=1;rAutoMedicao();}
+  if(nome==="acervo"&&(forcar||!LAZY.acervo)){
+    D.ac=await q("v_painel_acervo");LAZY.acervo=1;rAcervo();}
+  if(nome==="evolucao"&&(forcar||!LAZY.evolucao)){
+    const [loop,esp,espP]=await Promise.all([q("v_painel_rodada"),q("v_espelho"),q("v_espelho_placar")]);
+    D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.evolucao=1;
+    rEvolucao();rEspelho();}
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
+
+/* Teclado no computador. No celular nada muda: o alvo continua de polegar. */
+let foco=-1;
+function cards(){return [...document.querySelectorAll("#fila1 .card")];}
+function focar(i){
+  const c=cards(); if(!c.length)return;
+  foco=Math.max(0,Math.min(i,c.length-1));
+  c.forEach((x,j)=>x.style.outline=j===foco?"2px solid var(--acc)":"");
+  c[foco].scrollIntoView({behavior:"smooth",block:"center"});
+}
+document.addEventListener("keydown",e=>{
+  const t=e.target.tagName;
+  if(t==="INPUT"||t==="TEXTAREA"){ if(e.key==="Escape")e.target.blur(); return; }
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==="j"){e.preventDefault();focar(foco+1);}
+  else if(k==="k"){e.preventDefault();focar(foco-1);}
+  else if(k==="z"){e.preventDefault();desfazer();}
+  else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
+  else if(k>="1"&&k<="6"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
+});
+
+/* ---------- v25: onde este painel esta rodando ----------
+   O link magico sempre abre no navegador PADRAO do sistema. Dentro de um app embutido isso joga
+   a sessao para fora da janela e ela nao volta. A tela passa a dizer isso ANTES do dono pedir o link. */
+const EMBUTIDO=(()=>{ try{
+  const ua=navigator.userAgent||"";
+  return /Electron|Claude|wv\)|; wv/i.test(ua) || window.top!==window.self;
+}catch(e){return true} })();
+(function avisaOndeEstou(){
+  if(!EMBUTIDO)return;
+  const a=document.getElementById("avisoapp"); if(!a)return;
+  a.style.display="block";
+  a.innerHTML=`<b>Você está dentro de um app, não no navegador.</b>
+    O link por e-mail abriria no navegador padrão e a sessão não voltaria para cá.
+    Entre com <b>e-mail e senha</b> logo abaixo: é o único caminho que não sai desta janela,
+    e a sessão fica guardada aqui depois da primeira vez.`;
+  const alt=document.getElementById("alt"); if(alt)alt.classList.add("hidden");
+})();
 
 /* ---------- autenticação ---------- */
 function lm(t,c){const p=document.getElementById("lmsg");p.innerHTML=t;
@@ -582,6 +710,28 @@ async function entrar(){
   lm(error.status===429
     ? "<b>Limite de e-mails (429).</b> O provedor grátis bloqueia após poucos envios por hora. Use senha, ou espere ~1h."
     : ("Erro "+(error.status||"")+": "+error.message),"bad");}
+async function colarDoClipboard(){
+  /* v25: o dono nao digita token. Ele copia o endereco no e-mail e clica uma vez. */
+  const campo=document.getElementById("colado");
+  try{
+    const t=(await navigator.clipboard.readText()||"").trim();
+    if(t.indexOf("http")!==0){
+      lm('Não achei um link copiado. No e-mail, clique com o <b>botão direito</b> em "Sign in" e escolha <b>copiar endereço do link</b>.',"bad");return;}
+    campo.value=t; lm("link recebido, entrando…");
+    await colar();
+  }catch(e){
+    lm("O navegador não deixou ler a área de transferência. Cole o link no campo abaixo e use <b>Entrar com este link</b>.","bad");
+    campo.focus();
+  }}
+async function esqueciSenha(){
+  const e=document.getElementById("em").value.trim();
+  if(!e){lm("Digite o e-mail primeiro.","bad");document.getElementById("em").focus();return;}
+  lm("enviando…");
+  const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
+  if(error){lm("Erro "+(error.status||"")+": "+error.message,"bad");return;}
+  document.getElementById("alt").classList.remove("hidden");
+  lm("Enviei o link de redefinição. No e-mail, copie o <b>endereço</b> do link e use o botão de colar abaixo. Depois de entrar, clique em <b>senha</b> no topo para definir a nova.","ok");
+  const c=document.getElementById("colado"); if(c)c.scrollIntoView({block:"center"});}
 async function colar(){
   const raw=(document.getElementById("colado").value||"").trim();
   if(!raw){lm("Cole o link do e-mail.","bad");return;}
@@ -622,34 +772,38 @@ async function salvarSenha(){
 
 /* ---------- carga ---------- */
 async function carregar(){
-  msg("carregando…",null,1500);
-  const q=v=>sb.from(v).select("*").then(r=>r.error?[]:r.data);
-  const [fila,cor,ev,mo,ac,mat,ins,fr,au,loop]=await Promise.all([
-    q("v_fila_do_igor"),q("v_correcoes_abertas"),q("v_painel_evolucao"),q("v_painel_motor"),
-    q("v_painel_acervo"),q("v_simbiose_maturidade"),q("v_painel_insight"),q("v_painel_frente"),
-    q("v_automacao_fila"),q("v_painel_rodada")]);
-  const m9=await q("v_painel_matriz");
-  const rw=await q("v_runway");
-  const [dv,pls,fresc]=await Promise.all([q("v_painel_desde_ultima_visita"),q("v_placar"),q("v_frescor")]);
-  /* v24: as tres views novas da onda 1. Falha de qualquer uma NAO derruba o painel — cai em vazio. */
-  const [esp,espP,par,varr]=await Promise.all([
-    q("v_espelho"),q("v_espelho_placar"),q("v_pares"),q("v_varredura_dabli_saude")]);
+  msg("carregando…",null,1200);
+  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+  /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
+     647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
+  const [fila,cont,cor,fresc,rw,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr]=await Promise.all([
+    q("v_painel_fila",b=>b.eq("camada_tela","hoje")),
+    q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),
+    q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
+    q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
+    q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude")]);
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
-  D={fila:fila||[],cor:cor||[],ev:ev||[],mo:mo||[],ac:ac||[],mat:mat||[],ins:ins||[],
-     fr:fr||[],au:au||[],semi:semi||[],loop:loop||[],m9:m9||[],rw:(rw&&rw[0])||null,
-     dv:dv||[],pls:pls||[],fresc:(fresc&&fresc[0])||null,
-     esp:esp||[],espP:(espP&&espP[0])||null,par:par||[],varr:(varr&&varr[0])||null};
+  D={...D,fila:fila||[],cont:(cont&&cont[0])||{},cor:cor||[],fresc:(fresc&&fresc[0])||null,
+     rw:(rw&&rw[0])||null,ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
+     pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
+     depois:D.depois||[]};
+  LAZY.leituras=0;LAZY.acervo=0;LAZY.evolucao=0;LAZY.motor=0;
   render();
-  // PING (corrigido 18/08): havia DUAS painel_ping sobrecarregadas e o PostgREST nao escolhia —
-  // a chamada morria no catch vazio e o banco ficou achando que o painel era v11 desde 16/08.
-  // Passar os DOIS argumentos desfaz a ambiguidade, e a falha agora aparece no console.
+  await carregarAba(ABA,true);
   try{const r=await sb.rpc("painel_ping",{p_versao:VER,p_origem:location.hostname});
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rEvolucao();rEspelho();rPares();rMotor();rVarredura();rAcervo();}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();}
+function marcaAbas(){
+  const c=D.cont||{};
+  const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
+    e.textContent=n||"";e.className="n"+(n?(" "+cls):"");};
+  set("n-agora",(D.fila||[]).length,"hot");
+  set("n-le",c.leituras,"warn");
+}
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
 
 /* ---------- FILTROS ---------- */
@@ -749,9 +903,9 @@ function bloco(lbl,txt,cls,id){
     ${longo?`<button class="ver" onclick="document.getElementById('${id}').classList.toggle('aberto');
       this.textContent=this.textContent.trim()==='ver tudo'?'recolher':'ver tudo'">ver tudo</button>`:""}</div>`;}
 function cardFila(it){
-  const acts=it.acoes||[];
-  const sug=acts.find(a=>a.verbo===it.verbo_sugerido)||acts[0]||null;
-  const outros=acts.filter(a=>a!==sug);
+  /* v25: o card abre pelo que o dono FAZ. Medido em 14 dias ate 28/08/2026: 46 de 60 acoes
+     foram deliberar, ou seja escrever; zero foram "li"; uma foi "feita". Status virou secundario. */
+  const acts=(it.acoes||[]).filter(a=>a.verbo!=="deliberar");
   const k=uid(it.origem+it.ref);
   const p=partes(it.titulo_completo||it.titulo);
   return `<div class="card n${it.nivel}" id="c-${k}">
@@ -766,10 +920,17 @@ function cardFila(it){
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${bloco("RECOMENDO",it.recomendacao,"","r-"+k)}
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor"),"vio","p-"+k):""}
-   <div class="acts">
-     ${sug?`<button class="prim" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(sug.verbo)}','${esc(sug.campo||"")}','${esc(sug.label)}')">✓ ${esc(sug.label)}</button>`:""}
-     ${outros.map(a=>`<button class="sec" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}','${esc(a.label)}')">${esc(a.label)}</button>`).join("")}
-     <button class="link" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
+   <div class="resp">
+     <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
+       onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')registrar('${esc(it.origem)}','${esc(it.ref)}','t-${k}')"></textarea>
+     <div class="resplin">
+       <button class="prim" onclick="registrar('${esc(it.origem)}','${esc(it.ref)}','t-${k}')">registrar</button>
+       ${acts.length?`<button class="mais" onclick="toggleMenu('${k}')" aria-expanded="false">outras ações</button>`:""}
+       <button class="link" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
+     </div>
+     <div class="menu" id="m-${k}">
+       ${acts.map(a=>`<button class="sec" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}','${esc(a.label)}')">${esc(a.label)}</button>`).join("")}
+     </div>
    </div></div>`;}
 function cardCorrecao(c){
   const k="cor"+c.dialogo_id;
@@ -796,30 +957,45 @@ function cardCorrecao(c){
        return `<button class="${cls}" onclick="corrigir(${c.dialogo_id},'${esc(a.rpc)}',${a.arg===undefined?"null":a.arg},'${esc(a.campo||"")}','${esc(a.label)}','${esc(a.placeholder||"")}')">${esc(a.label)}</button>`;
      }).join("")}
    </div></div>`;}
+const TETO=7; let semTeto=false;
+function verTudo(){semTeto=true;rAgora();}
+async function verDepois(){
+  const q=sb.from("v_painel_fila").select("*").eq("camada_tela","depois");
+  const r=await q; D.depois=r.error?[]:r.data; rAgora();
+}
 function rAgora(){
-  const vis=D.fila.filter(passa);
-  const n1=vis.filter(f=>f.nivel===1),n2=vis.filter(f=>f.nivel===2),n3=vis.filter(f=>f.nivel>2);
+  const vis=(D.fila||[]).filter(passa);
+  const mostra=semTeto?vis:vis.slice(0,TETO);
+  const resto=vis.length-mostra.length;
   const saldo=kv("caixa.saldo_30d"),parado=kv("caixa.decisao_parada_rs");
   const filtrando=F.frente||F.origem||F.q;
-  document.getElementById("hero").innerHTML=`<div class="hero ${n1.length||D.cor.length?"alert":""}">
-    <div class="t">${n1.length?n1.length+" precisa"+(n1.length>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")}</div>
+  const c=D.cont||{};
+  document.getElementById("hero").innerHTML=`<div class="hero ${vis.length||D.cor.length?"alert":""}">
+    <div class="t">${vis.length?vis.length+" precisa"+(vis.length>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")}</div>
     <div class="s">${D.cor.length?`<span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span>`:""}
-      <span>${n2.length} em segundo plano</span><span>·</span><span>${vis.length}${filtrando?" de "+D.fila.length:""} no funil</span>
+      <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
-      ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}</div></div>`;
+      ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
+      <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
   document.getElementById("h-fila1").innerHTML=`PRECISA DE VOCÊ HOJE${filtrando?' <span class="s">— filtrado</span>':""}`;
-  document.getElementById("fila1").innerHTML=n1.length?n1.map(cardFila).join("")
+  document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :`<div class="empty">${filtrando?"nenhum item de hoje neste filtro.":"fila limpa — silêncio aqui é informação."}</div>`;
-  document.getElementById("fila2").innerHTML=n2.length?n2.map(cardFila).join("")
-    :`<div class="empty">nada em segundo plano.</div>`;
-  const nb=document.getElementById("n-agora");nb.textContent=n1.length||"";nb.className="n"+(n1.length?" hot":"");
-  const bt=document.getElementById("btresto");
-  bt.textContent=n3.length?(mostrarResto?"esconder os outros "+n3.length:"ver os outros "+n3.length):"";
-  document.getElementById("fila3").style.display=mostrarResto?"block":"none";
-  document.getElementById("fila3").innerHTML=n3.map(cardFila).join("");}
+  /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24. */
+  document.getElementById("estouro").innerHTML=resto>0
+    ? `<div class="estouro">Mostrando <b>${mostra.length} de ${vis.length}</b> itens que exigem você hoje.
+        O teto é de exibição, não de existência.
+        <button onclick="verTudo()">ver os ${resto} restantes</button></div>` : "";
+  const dep=D.depois||[];
+  document.getElementById("fila2").innerHTML=dep.length
+    ? dep.filter(passa).map(cardFila).join("")
+    : (c.depois ? `<div class="empty">${c.depois} item(ns) em segundo plano.
+        <button class="link" onclick="verDepois()">carregar</button></div>`
+      : `<div class="empty">nada em segundo plano.</div>`);
+  foco=-1;   /* reset sem desenhar: contorno so aparece quando o dono aperta J ou K */
+}
 /* ---------- v24 · O ESPELHO (P2) ---------- */
 function rEspelho(){
   const P=D.espP, box=document.getElementById("espelho-placar");
@@ -889,16 +1065,72 @@ function rVarredura(){
   </div>`;
 }
 
-function verResto(){mostrarResto=!mostrarResto;rAgora();}
 
-/* ---------- AÇÕES ---------- */
+/* ---------- AÇÕES · v25 ----------
+   Desfazer de verdade: o card sai da tela na hora e a gravacao SO acontece 6 segundos depois.
+   Desfazer cancela antes de tocar no banco, no padrao do "undo send". Nada de prometer
+   reversao que o banco nao tem.
+   E o sucesso deixou de recarregar o painel inteiro: recarrega a fila de hoje e os contadores,
+   que sao ~12 KB contra os 647 KB que cada clique custava na v24. */
+let PEND=null;
+function agendar(fn,txt,el){
+  if(PEND)enviarPendente();
+  const pai=el?el.parentNode:null, prox=el?el.nextSibling:null;
+  if(el)el.remove();
+  PEND={fn,el,pai,prox,txt};
+  document.getElementById("desfmsg").textContent=txt;
+  document.getElementById("desf").classList.add("on");
+  PEND.timer=setTimeout(enviarPendente,6000);
+}
+function volta(p){ if(p.pai&&p.el)p.pai.insertBefore(p.el,p.prox); }
+async function enviarPendente(){
+  if(!PEND)return; const p=PEND; PEND=null;
+  clearTimeout(p.timer);
+  document.getElementById("desf").classList.remove("on");
+  const {data,error}=await p.fn();
+  if(error){msg("Erro: "+error.message,"bad",7000);volta(p);return;}
+  const t=(typeof data==="string")?data:"feito";
+  if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);volta(p);return;}
+  msg(t,"ok");
+  await recarregarFila();
+}
+function desfazer(){
+  if(!PEND){return;}
+  clearTimeout(PEND.timer);
+  const p=PEND; PEND=null;
+  document.getElementById("desf").classList.remove("on");
+  volta(p);
+  msg("desfeito. Nada foi gravado.",null,2600);
+}
+async function recarregarFila(){
+  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+  const [fila,cont,cor]=await Promise.all([
+    q("v_painel_fila",b=>b.eq("camada_tela","hoje")),q("v_painel_contagem"),q("v_correcoes_abertas")]);
+  D.fila=fila||[];D.cont=(cont&&cont[0])||{};D.cor=cor||[];
+  rAgora();marcaAbas();
+}
 async function exec(fn,okMsg){
   const {data,error}=await fn();
   if(error){msg("Erro: "+error.message,"bad",7000);return false;}
-  msg(okMsg||(typeof data==="string"?data:"feito"),"ok");
-  await carregar();return true;}
+  const t=(typeof data==="string")?data:(okMsg||"feito");
+  if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);return false;}
+  msg(okMsg||t,"ok");
+  await recarregarFila();return true;}
+
+/* REGISTRAR: a acao primaria da v25. O dono escreve, o executor le. */
+function registrar(origem,ref,idc){
+  const ta=document.getElementById(idc);
+  const v=(ta&&ta.value||"").trim();
+  if(v.length<3){msg("Escreva o que fica valendo antes de registrar.","bad",3500);if(ta)ta.focus();return;}
+  const el=document.getElementById("c-"+uid(origem+ref));
+  agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:"deliberar",p_valor:v}),
+          "registrado em "+ref,el);
+}
+function toggleMenu(k){const m=document.getElementById("m-"+k);if(m)m.classList.toggle("on");}
 function agir(origem,ref,verbo,campo,label){
-  const go=v=>exec(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:v}));
+  const el=document.getElementById("c-"+uid(origem+ref));
+  const go=v=>agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:v}),
+                      label+" em "+ref,el);
   if(!campo)return go(null);
   pendente={ph:campo==="texto"?"o que fica valendo":null};
   abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>`,campo,go,label);}
@@ -913,6 +1145,54 @@ function corrigir(id,rpc,arg,campo,label,ph){
   pendente={ph:ph||"sua posição: o que fica valendo, e até quando"};
   abrirModal(label,"Nem aceitar nem manter — a sua posição vira o que fica valendo.","texto",
     v=>exec(()=>sb.rpc("deliberar_correcao",{p_id:id,p_texto:v}),"deliberação registrada."),"registrar");}
+
+/* ---------- LEITURAS · v25 ---------- */
+let LE=[], SEL=new Set();
+function leSel(ref,el){
+  if(SEL.has(ref))SEL.delete(ref);else SEL.add(ref);
+  if(el)el.closest(".lerow").classList.toggle("sel",SEL.has(ref));
+  leBarra();}
+function leTodas(){
+  const todas=LE.length&&SEL.size===LE.length;
+  SEL.clear(); if(!todas)LE.forEach(x=>SEL.add(x.ref));
+  rLeituras();}
+function leBarra(){
+  const b=document.getElementById("le-barra");if(!b)return;
+  b.innerHTML=LE.length
+   ? `<b>${LE.length}</b> peça(s) esperando sua ciência
+      <span class="spacer" style="flex:1"></span>
+      <button class="mais" onclick="leTodas()">${SEL.size===LE.length&&LE.length?"limpar seleção":"selecionar todas"}</button>
+      <button class="prim" style="width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px"
+        onclick="marcarLote()" ${SEL.size?"":"disabled style=\"width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:14px;opacity:.45\""}>
+        marcar ${SEL.size||""} como lida${SEL.size===1?"":"s"}</button>`
+   : `<b>zero</b> peças esperando sua ciência. Silêncio aqui é informação.`;}
+function rLeituras(){
+  leBarra();
+  const el=document.getElementById("leituras");if(!el)return;
+  el.innerHTML=LE.length?LE.map(x=>`
+    <div class="lerow${SEL.has(x.ref)?" sel":""}">
+      <input type="checkbox" ${SEL.has(x.ref)?"checked":""} aria-label="marcar ${esc(x.ref)}"
+        onchange="leSel('${esc(x.ref)}',this)">
+      <div class="cor">
+        <div class="t">${esc(x.titulo)}</div>
+        <div class="m"><span class="mono">#${esc(x.ref)}</span><span>${esc(x.tipo||"")}</span>
+          ${x.frente?`<span>${esc(String(x.frente).replace(/^\d+-/,""))}</span>`:""}
+          <span>${x.dias===0?"hoje":x.dias+"d"}</span>
+          <span>${x.dias_para_decurso>0?"decurso em "+x.dias_para_decurso+"d":"vence hoje por decurso"}</span></div>
+        ${x.veredito?`<div class="v">${esc(x.veredito)}</div>`:""}
+      </div></div>`).join("")
+   :`<div class="empty">nada esperando sua ciência.</div>`;}
+async function marcarLote(){
+  if(!SEL.size)return;
+  const refs=[...SEL];
+  const linhas=[...document.querySelectorAll("#leituras .lerow.sel")];
+  linhas.forEach(l=>l.style.opacity=".35");
+  const {data,error}=await sb.rpc("marcar_leituras",{p_refs:refs});
+  if(error){linhas.forEach(l=>l.style.opacity="");msg("Erro: "+error.message,"bad",7000);return;}
+  msg(typeof data==="string"?data:"marcadas","ok",5000);
+  SEL.clear();
+  await carregarAba("leituras",true);
+  await recarregarFila();}
 
 /* ---------- COMANDO ---------- */
 function rDash(){ rDelta(); rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
@@ -1301,6 +1581,17 @@ function rMotor(){
      <div class="meta">janela ${r.janela_horas}h · ${r.horas_uteis_sem_ponto??"—"}h úteis sem ponto</div>
      <div class="txt">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
     :`<div class="empty">nenhuma rotina atrasada. As marcadas <b>manual</b> ou <b>nova</b> não se vigiam por relógio, por desenho.</div>`;}
+
+function rAutoMedicao(){
+  const el=document.getElementById("automed");if(!el)return;
+  const am=D.am||[];
+  if(!am.length){el.innerHTML='<span style="color:var(--dim)">sem medição ainda.</span>';return;}
+  el.innerHTML=am.map(k=>{
+    const fora=k.status==="fora";
+    const v=k.valor==null?"—":(+k.valor).toLocaleString("pt-BR");
+    return `<div><b class="${fora?"fora":""}">${esc(k.rotulo)}: ${v}</b>
+      <span style="color:var(--dim)"> · meta ${k.meta==null?"—":esc(String(k.meta))} · ${esc(k.status||"")}</span></div>`;
+  }).join("")+`<div style="margin-top:6px;color:var(--dim)">Baseline de 28/08/2026, antes da v25: 647 KB por carga, 156 itens na fila, 7,8 aberturas por ação, zero cliques em "li" em 14 dias.</div>`;}
 
 /* ---------- ACERVO ---------- */
 function rAcervo(){
