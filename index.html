@@ -168,6 +168,13 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
    com corte: era esse o campo "prensado" no celular. Colisao de classe nao se contorna com
    !important, se renomeia. */
 .filtbar{display:flex;gap:8px;align-items:center;width:100%;min-height:44px}
+/* v26: estado vazio de AGORA. Sem alarme, sem cor de alerta no container: e estado,
+   nao ocorrencia. Cada linha e um instrumento, e as saidas ficam embaixo. */
+.vazio{text-align:left;padding:6px 2px 14px}
+.vzl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 0;
+  border-top:1px solid var(--line);font-size:13.5px;color:var(--mut)}
+.vzl b{color:var(--ink2);font-weight:600;min-width:132px}
+.vza{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
 .fchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
 .btfil{display:none;white-space:nowrap}
 .btfil .cav{display:inline-block;transition:transform .15s}
@@ -1050,6 +1057,31 @@ async function verDepois(){
   const q=sb.from("v_painel_fila").select("*").eq("camada_tela","depois");
   const r=await q; D.depois=r.error?[]:r.data; rAgora();
 }
+/* v26 - FILA VAZIA ACIONAVEL. Fila de hoje zerada nao e fim de assunto, e fim do
+   assunto DE HOJE. Medido em 29/08/2026: 528 aberturas para 75 acoes em 14 dias
+   (7 aberturas por acao), 60 itens em segundo plano e 36 tarefas do dono vencidas.
+   Tela vazia sem saida devolve o custo de abrir sem retorno e treina a ignorar.
+   O cockpit escuro da v24 vale para ALARME; instrumento de ESTADO fica ligado.
+   Por isso aqui entra o que vence a seguir e quanto tempo o caixa da, nada mais.
+   Reguas: Google SRE (toda pagina deve ser acionavel) e NN/g (empty state ensina
+   o proximo passo). Custo zero de rede: os dois numeros ja viajam na abertura. */
+function vazioAgora(){
+  const c=D.cont||{}, r=D.rw||null;
+  const dias=c.proximo_dias;
+  const selo=dias==null?"":dias<0?Math.abs(dias)+"d atrasado":dias===0?"vence hoje":"em "+dias+"d";
+  const cor=dias==null?"":dias<0?"bad":dias<=3?"med":"ok";
+  const prox=c.proximo_titulo?`<div class="vzl"><b>Próximo vencimento</b>
+      <span class="tag ${cor}">${selo}</span>
+      <span>${esc(c.proximo_titulo)}</span>
+      <span class="s">${esc(c.proximo_frente||"")}</span></div>`:"";
+  const cx=(r&&r.dias_sobrevida!=null)?`<div class="vzl"><b>Caixa</b>
+      <span class="tag ${r.dias_sobrevida_pior<30?"bad":"ok"}">${r.dias_sobrevida} dias</span>
+      <span>${r.dias_sobrevida_pior} dias no pior caso</span></div>`:"";
+  const dep=c.depois?`<button class="link" onclick="verDepois()">ver os ${c.depois} em segundo plano</button>`:"";
+  const le=c.leituras?`<button class="link" onclick="irAba('leituras')">${c.leituras} esperando ciência</button>`:"";
+  /* o cabecalho da aba ja diz "nada precisa de voce hoje": repetir aqui era redundancia. */
+  return `<div class="empty vazio">${prox}${cx}<div class="vza">${dep}${le}</div></div>`;
+}
 function rAgora(){
   const vis=(D.fila||[]).filter(passa);
   const mostra=semTeto?vis:vis.slice(0,TETO);
@@ -1069,7 +1101,7 @@ function rAgora(){
       +D.cor.map(cardCorrecao).join("") : "";
   document.getElementById("h-fila1").innerHTML=`PRECISA DE VOCÊ HOJE${filtrando?' <span class="s">— filtrado</span>':""}`;
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
-    :`<div class="empty">${filtrando?"nenhum item de hoje neste filtro.":"fila limpa — silêncio aqui é informação."}</div>`;
+    :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
   /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24. */
   document.getElementById("estouro").innerHTML=resto>0
     ? `<div class="estouro">Mostrando <b>${mostra.length} de ${vis.length}</b> itens que exigem você hoje.
