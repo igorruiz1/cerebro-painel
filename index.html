@@ -652,7 +652,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v28";
+const VER="v29";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -723,7 +723,8 @@ async function carregarSecao(id,forcar){
     D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.espelho=1;
     SECQUANDO.espelho=Date.now(); rEvolucao();rEspelho();}
   if(id==="rotinas"&&(forcar||!LAZY.rotinas)){
-    D.am=await q_("v_painel_automedicao");LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();}
+    const [_am,_se]=await Promise.all([q_("v_painel_automedicao"),(D.se&&D.se.length)?Promise.resolve(D.se):q_("v_painel_serie")]);
+    D.am=_am;D.se=(_se&&_se.length)?_se:(D.se||[]);LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();injetaSeries();}
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
     D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
   /* v27: faixa por frente entra na secao FRENTES, e as duas medidas de motor na secao ROTINAS.
@@ -893,9 +894,9 @@ async function carregar(){
   const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
   /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
      647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
-  const [fila,cont,cor,fresc,rw,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip]=await Promise.all([
+  const [fila,cont,cor,fresc,rw,se,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip]=await Promise.all([
     q("v_painel_fila",b=>b.eq("camada_tela","hoje")),
-    q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),
+    q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),q("v_painel_serie"),
     q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
     q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
     q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
@@ -904,7 +905,7 @@ async function carregar(){
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
   D={...D,fila:fila||[],cont:(cont&&cont[0])||{},cor:cor||[],fresc:(fresc&&fresc[0])||null,
-     rw:(rw&&rw[0])||null,ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
+     rw:(rw&&rw[0])||null,se:se||[],ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
      pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
      nat:nat||[],wip:(wip&&wip[0])||null,
      depois:D.depois||[]};
@@ -933,7 +934,7 @@ function recarregarNovo(){
   const u=new URL(location.href); u.searchParams.set("v", Date.now());
   location.replace(u.toString());
 }
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();requestAnimationFrame(mediTopo);}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
@@ -1550,9 +1551,9 @@ function rPlacar(){
      que era a jogada numero 1 do plano de 18/08. Aplica os aprendizados 601 (painel escrito a mao
      nasce velho) e 654 (painel se governa por camada, nao por lista). KPI novo no banco entra
      sozinho na tela a partir daqui; KPI sem bloco aparece como DEFEITO em vez de sumir. */
-  const B=(lab,val,meta,dir,fmt,cap,serie,extra)=>{
+  const B=(lab,val,meta,dir,fmt,cap,serie,extra,extraP10,extraP90)=>{
     const spk = (serie&&serie.filter(v=>v!=null).length>2)
-      ? `<span style="opacity:.75">${spark(serie,meta,dir==="maior"?"maior_melhor":"menor_melhor",70,22)}</span>` : "";
+      ? `<span style="opacity:.75">${spark(serie,meta,dir==="maior"?"maior_melhor":"menor_melhor",70,22,extraP10,extraP90)}</span>` : "";
     if(val==null) return `<div class="blt"><div class="h"><span class="lab">${lab}</span>
       <span class="val" style="color:var(--dim)">indeterminado</span></div>
       <div class="cap"><span>${cap||""}</span><span><b>sem base para medir</b></span></div></div>`;
@@ -1560,7 +1561,11 @@ function rPlacar(){
     const teto = Math.max(v, alvo||0, 1)*1.15;
     const pct  = Math.min(100, 100*v/teto), mpc = alvo==null?null:Math.min(100,100*alvo/teto);
     const bom  = meta==null ? null : (dir==="maior"? val>=meta : val<=meta);
-    const cor  = bom===null?"var(--nt)":bom?"var(--bl)":"var(--rd)";
+    /* v29: a cor sai da BANDA quando ha 7+ dias de serie; a meta continua desenhada como
+       marcador e escrita no rodape, entao ela nao foi afrouxada, so parou de pintar tudo. */
+    const temB = extraP10!=null && extraP90!=null && (serie||[]).filter(x=>x!=null).length>=7;
+    const foraB= temB ? (dir==="maior"? val<+extraP10 : val>+extraP90) : null;
+    const cor  = temB ? (foraB?"var(--rd)":"var(--bl)") : (bom===null?"var(--nt)":bom?"var(--bl)":"var(--rd)");
     return `<div class="blt">
       <div class="h"><span class="lab">${lab}</span>
         <span style="display:flex;align-items:center;gap:10px">${spk||""}
@@ -1568,7 +1573,8 @@ function rPlacar(){
       <div class="trk"><span class="fl" style="width:${pct.toFixed(1)}%;background:${cor}"></span>
         ${mpc==null?"":`<span class="mk" style="left:${mpc.toFixed(1)}%"></span>`}</div>
       <div class="cap"><span>${cap||""}</span>
-        <span>${extra||""}${meta==null?"<b>sem meta ainda</b>":`meta ${fmt(meta)} · <b>${bom?"dentro":"fora"}</b>`}</span></div></div>`;};
+        <span>${extra||""}${meta==null?"<b>sem meta ainda</b>":`meta ${fmt(meta)} · <b>${bom?"dentro":"fora"}</b>`}${
+          temB?` · normal ${fmt(+extraP10)} a ${fmt(+extraP90)} · <b style="color:${foraB?"var(--rd)":"var(--bl)"}">${foraB?"fora do normal":"no normal"}</b>`:""}</span></div></div>`;};
 
   const fmtDe=k=>{const c=k.chave||"", r=k.rotulo||"";
     if(/_pct$/.test(c)||/%/.test(r))            return v=>(+v).toFixed(0)+"%";
@@ -1609,14 +1615,14 @@ function rPlacar(){
     return `<div class="bl-grupo"><div class="bl-tit">${esc(ROT[nb]||nb.toUpperCase())}</div>`+
       ks.map(k=>B(esc(k.rotulo||k.chave), k.valor, k.meta_num, dirDe(k), fmtDe(k),
                   esc((k.camada==="mae"?"★ mãe · ":k.camada==="freio"?"freio · ":"")+(k.alarme_elo||"")),
-                  k.serie, selo(k))).join("")+`</div>`;}).join("");
+                  k.serie, selo(k), k.p10, k.p90)).join("")+`</div>`;}).join("");
 
   /* KPI sem bloco nao some: vira achado. Sumir em silencio foi o defeito que o v21 tinha. */
   if(semBloco.length) html += `<div class="bl-grupo"><div class="bl-tit" style="color:var(--warn)">
     ⚠ ${semBloco.length} INDICADOR(ES) SEM BLOCO DECLARADO — medidos e sem lugar na tela</div>`+
     semBloco.map(k=>B(esc(k.rotulo||k.chave), k.valor, k.meta_num, dirDe(k), fmtDe(k),
       esc("defeito de dicionário: kpi.bloco e kpi.ordem_tela estão nulos · "+(k.alarme_elo||"")),
-      k.serie, selo(k))).join("")+`</div>`;
+      k.serie, selo(k), k.p10, k.p90)).join("")+`</div>`;
 
   const res=D.ev.find(k=>k.chave==="apoio.silencioso");
   if(res) html += `<div class="cap" style="margin-top:10px;justify-content:flex-start">
@@ -1718,21 +1724,95 @@ function irParaFrente(slug){F.frente=slug;F.origem=null;F.q="";
   montaFiltros();rAgora();msg("filtrado por "+slug,null,2200);}
 
 /* ---------- EVOLUÇÃO ---------- */
-function spark(serie,meta,dir,w,h){
+/* v29 (30/08/2026, t591 e t592) — BANDA DE NORMALIDADE.
+   Ate a v28 a cor da sparkline saia do julgamento binario contra a meta, e com 13 de 16 KPIs
+   fora da meta a tela ficava 87,5% vermelha, ponto em que a cor para de informar (Google SRE).
+   Agora a faixa cinza marca p10-p90 dos 21 dias, como manda o Tufte, e o vermelho passa a
+   significar FORA DO NORMAL DESTA METRICA. A meta continua desenhada como linha tracejada e
+   continua medida no banco em painel.fora_da_meta_pct: nada foi afrouxado, mudou o que se pinta.
+   p10 e p90 vem prontos do banco (v_painel_evolucao e v_painel_serie); a serie sozinha ainda
+   funciona e cai no criterio antigo, entao seccao que ainda nao passa banda nao quebra. */
+function spark(serie,meta,dir,w,h,p10,p90){
   const s=(serie||[]).map(Number).filter(v=>!isNaN(v));
   if(!s.length)return `<svg width="${w}" height="${h}"></svg>`;
-  const vals=meta!=null?s.concat([+meta]):s;
+  const temBanda = p10!=null && p90!=null && s.length>=7 && +p90>+p10;
+  const vals=(meta!=null?s.concat([+meta]):s).concat(temBanda?[+p10,+p90]:[]);
   let mn=Math.min(...vals),mx=Math.max(...vals);
   if(mx===mn){mx=mn+1;mn=mn-1}
   const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
   const X=i=>s.length===1?w/2:4+i*(w-8)/(s.length-1), Y=v=>h-4-((v-mn)/(mx-mn))*(h-8);
   const d=s.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
-  const last=s[s.length-1], ok=meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
-  const col=ok===null?"#8b98ae":ok?"#30a46c":"#e5484d";
-  return `<svg width="${w}" height="${h}" role="img" aria-label="série de ${s.length} ponto(s)">
+  const last=s[s.length-1];
+  const foraBanda = temBanda ? (dir==="maior_melhor" ? last<+p10 : last>+p90) : null;
+  const okMeta = meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
+  const estado = foraBanda!=null ? (foraBanda?"anomalia":"normal") : (okMeta==null?"neutro":(okMeta?"normal":"anomalia"));
+  const col = estado==="neutro"?"#8b98ae":estado==="normal"?"#30a46c":"#e5484d";
+  const yb1=temBanda?Y(+p90):0, yb2=temBanda?Y(+p10):0;
+  const banda = temBanda ? `<rect x="0" y="${Math.min(yb1,yb2).toFixed(1)}" width="${w}" height="${Math.max(1,Math.abs(yb2-yb1)).toFixed(1)}" fill="#8b98ae" opacity=".16"/>` : "";
+  const rot = temBanda ? `série de ${s.length} pontos, faixa normal de ${(+p10).toLocaleString("pt-BR")} a ${(+p90).toLocaleString("pt-BR")}, ${foraBanda?"fora do normal":"dentro do normal"}`
+                       : `série de ${s.length} ponto(s)`;
+  return `<svg width="${w}" height="${h}" role="img" aria-label="${rot}"><title>${rot}</title>
+    ${banda}
     ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" stroke="#5d6b82" stroke-width="1" stroke-dasharray="3 3"/>`:""}
     <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/></svg>`;}
+    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/>
+    ${estado==="anomalia"?`<path d="M${(X(s.length-1)-3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${(X(s.length-1)+3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${X(s.length-1).toFixed(1)} ${(Y(last)-3.2).toFixed(1)} Z" fill="${col}"/>`:""}</svg>`;}
+
+/* v29 — A SERIE VIAJA COM A CHAVE. Qualquer secao que saiba a chave do KPI desenha a sparkline
+   sem ser reescrita: le v_painel_serie, carregada sob demanda em D.se. Devolve string vazia
+   quando nao ha serie, entao nunca quebra o layout de quem chamar. */
+function sparkKPI(chave,w,h){
+  const r=(D.se||[]).find(x=>x.chave===chave);
+  if(!r||!r.serie||r.serie.length<2)return "";
+  return `<span class="spk" style="opacity:.85;vertical-align:middle">${spark(r.serie,r.meta_num,r.direcao,w||64,h||20,r.p10,r.p90)}</span>`;}
+/* v29 — A SERIE ENTRA NAS SECOES POR DECLARACAO, NAO POR REESCRITA.
+   O defeito medido em 29/08: 20 das 23 secoes tinham 21 dias de serie no banco e mostravam so o
+   numero de hoje. Em vez de reescrever secao por secao, cada container declara aqui a metrica que
+   e o ASSUNTO dele, e o injetor pendura a faixa (valor, sparkline com banda e selo) logo abaixo.
+   Secao nova so precisa de uma linha neste mapa. Nenhuma metrica foi pendurada por enfeite:
+   cada uma e a medida do proprio bloco. */
+const SERIE_SECAO={
+  "runway":"caixa.sobrevida_dias",
+  "hero-dash":"carga.igor_n",
+  "automacao":"carga.igor_pct",
+  "rotinas":"motor.rotinas_no_ponto_pct",
+  "deadman":"motor.slo_rotina_pct",
+  "acnum":"acervo.aproveitamento_pct",
+  "leituras":"entrega.output_sem_ack",
+  "esforco":"medicao.zona_fuga_pct",
+  "varredura":"arquivo.ponteiro_orfao",
+  "frescor":"memoria.lead_time_retomada_min",
+  "m9":"medicao.nao_planejado_pct",
+  "placarsim":"contexto.custo_n1"
+};
+function faixaKPI(chave){
+  const r=(D.se||[]).find(x=>x.chave===chave);
+  if(!r||!r.serie||r.serie.length<2)return "";
+  const ult=r.serie[r.serie.length-1];
+  const n=(+ult).toLocaleString("pt-BR",{maximumFractionDigits:1});
+  const alvo=r.meta_num==null?"":` · meta ${r.direcao==="maior_melhor"?"≥":"≤"} ${(+r.meta_num).toLocaleString("pt-BR",{maximumFractionDigits:1})}`;
+  const faixa=(r.p10==null||r.situacao_banda==="sem_banda")?"":
+    ` · normal ${(+r.p10).toLocaleString("pt-BR",{maximumFractionDigits:1})} a ${(+r.p90).toLocaleString("pt-BR",{maximumFractionDigits:1})}`;
+  return `<div class="cap" style="margin-top:8px;gap:9px;align-items:center;flex-wrap:wrap">
+    <span class="mono" style="color:var(--dim)">${esc(chave)}</span>
+    <b>${n}</b>${sparkKPI(chave,84,22)}${bandaTxt(chave)}
+    <span style="color:var(--dim)">${r.serie.length} dia(s) de série${alvo}${faixa}</span></div>`;}
+function injetaSeries(){
+  if(!(D.se||[]).length)return;
+  Object.keys(SERIE_SECAO).forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const alvo=(el.tagName==="TBODY"||el.tagName==="TABLE")?(el.closest("section")||el.parentElement):el;
+    if(!alvo)return;
+    let f=document.getElementById("ss-"+id);
+    if(!f){f=document.createElement("div");f.id="ss-"+id;f.className="serie-secao";
+      alvo.parentNode.insertBefore(f, alvo.nextSibling);}
+    f.innerHTML=faixaKPI(SERIE_SECAO[id]);});}
+function bandaTxt(chave){
+  const r=(D.se||[]).find(x=>x.chave===chave);
+  if(!r||r.situacao_banda==="sem_banda"||r.situacao_banda==="indeterminado")return "";
+  return r.situacao_banda==="fora_banda"
+    ? ' <span class="tag bad" title="fora da faixa normal de 21 dias">fora do normal</span>'
+    : ' <span class="tag" title="dentro da faixa normal de 21 dias">normal</span>';}
 const DIMR={contrato:"Contrato e precedência",memoria:"Memória e handoff",acervo:"Acervo de aprendizado",
 motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e LC-11",
 fluxo:"Fluxo e ritmo",medicao:"Metanálise — o sistema olhando para si",caixa:"Caixa e negócio"};
@@ -1777,7 +1857,7 @@ function rEvolucao(){
       return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
         <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}</span>
-        ${spark(k.serie,k.meta_num,k.direcao,98,34)}</div></div>`}).join("")}</div>`).join("");
+        ${spark(k.serie,k.meta_num,k.direcao,98,34,k.p10,k.p90)}</div></div>`}).join("")}</div>`).join("");
 }
 function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
   const t=D.loop.slice();D.loop=[Object.assign({},L,{recencia:1})].concat(t.filter(l=>l.rodada!==r));
@@ -1812,7 +1892,9 @@ function rAutoMedicao(){
     const v=k.valor==null?"—":(+k.valor).toLocaleString("pt-BR");
     const q=k.aferido_em?new Date(k.aferido_em):null;
     const idade=q?Math.round((Date.now()-q.getTime())/3600000):null;
-    return `<div><b class="${fora?"fora":""}">${esc(k.rotulo)}: ${v}</b>
+    /* v29: a serie entra aqui pela CHAVE, sem que esta secao precise conhecer a view de serie. */
+    return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <b class="${fora?"fora":""}">${esc(k.rotulo)}: ${v}</b>${sparkKPI(k.chave,64,20)}${bandaTxt(k.chave)}
       <span style="color:var(--dim)"> · meta ${k.meta==null?"—":esc(String(k.meta))} · ${esc(k.status||"")}${
         idade==null?"":` · medido ${idade<1?"há menos de 1h":"há "+idade+"h"}`}</span></div>`;
   }).join("")+`<div style="margin-top:6px;color:var(--dim)">Baseline de 28/08/2026, antes da v25: 647 KB por carga, 156 itens na fila, 7,8 aberturas por ação, zero cliques em "li" em 14 dias.</div>`;}
