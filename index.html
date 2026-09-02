@@ -370,8 +370,11 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
  padding:7px 14px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;min-height:34px}
 .secbt:hover{border-color:var(--line2);color:var(--ink2)}
 .secbt.on{background:#1b2a49;border-color:var(--acc);color:#fff;font-weight:600}
-.sec{display:none}
-.sec.on{display:block}
+/* 02/09/2026: .sec era usada por DUAS coisas, a secao navegavel e o botao secundario.
+   A regra generica apagava todo button.sec: o menu "outras acoes" abria vazio, o cancelar
+   do modal sumia e os 3 caminhos alternativos de login ficavam invisiveis. Escopo em section. */
+section.sec{display:none}
+section.sec.on{display:block}
 /* v25 onda D, versao enxuta: cada secao carregada sob demanda diz de quando e o dado dela.
    A onda B fez a secao buscar so quando escolhida; sem isso, o dono ficaria olhando numero
    de uma carga antiga sem saber. Dado velho com cara de novo e pior que tela vazia. */
@@ -1068,11 +1071,11 @@ function cardFila(it){
      ${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}
      ${it.frente?`<span class="tag f">${esc(it.frente.replace(/^\d+-/,""))}</span>`:""}
      ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
-     ${it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:""}
+     ${it.parado_txt?`<span>${esc(it.parado_txt)}</span>`:(it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:"")}
      ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
    </div>
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
-   ${bloco("RECOMENDO",it.recomendacao,"","r-"+k)}
+   ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor"),"vio","p-"+k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
@@ -1111,7 +1114,7 @@ function cardCorrecao(c){
        return `<button class="${cls}" onclick="corrigir(${c.dialogo_id},'${esc(a.rpc)}',${a.arg===undefined?"null":a.arg},'${esc(a.campo||"")}','${esc(a.label)}','${esc(a.placeholder||"")}')">${esc(a.label)}</button>`;
      }).join("")}
    </div></div>`;}
-const TETO=7; let semTeto=false;
+const TETO=5; let semTeto=false;
 function verTudo(){semTeto=true;rAgora();}
 async function verDepois(){
   const q=sb.from("v_painel_fila").select("*").eq("camada_tela","depois");
