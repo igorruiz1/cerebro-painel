@@ -1152,7 +1152,7 @@ function rAgora(){
   const saldo=kv("caixa.saldo_30d"),parado=kv("caixa.decisao_parada_rs");
   const filtrando=F.frente||F.origem||F.q;
   const c=D.cont||{};
-  document.getElementById("hero").innerHTML=`<div class="hero ${vis.length||D.cor.length?"alert":""}">
+  document.getElementById("hero").innerHTML=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div class="hero" style="margin-bottom:8px"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}<div class="hero ${vis.length||D.cor.length?"alert":""}">
     <div class="t">${vis.length?vis.length+" precisa"+(vis.length>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")}</div>
     <div class="s">${D.cor.length?`<span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span>`:""}
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
@@ -1163,7 +1163,7 @@ function rAgora(){
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
-  document.getElementById("h-fila1").innerHTML=`PRECISA DE VOCÊ HOJE${filtrando?' <span class="s">— filtrado</span>':""}`;
+  document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
   /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24. */
@@ -1702,10 +1702,10 @@ function rFrentes(){
     const dono = tot===0 ? ["livre","parqueada"]
                : meu/Math.max(tot,1) >= .5 ? ["igor","gargalo é seu"]
                : ["claude","gargalo é meu"];
-    const wr=100*(f.a_receber||0)/teto, wp=100*(f.a_pagar||0)/teto;
+    const wr=100*(f.a_receber||0)/teto, wp=100*(f.a_pagar||0)/teto; const dsem=f.dias_sem_tocar, mv=dsem==null?["","sem registro"]:dsem<=1?["ok","andou hoje"]:dsem<=3?["ok","andou ha "+dsem+"d"]:dsem<=7?["med","parada ha "+dsem+"d"]:["bad","parada ha "+dsem+"d"];
     return `<div class="fcard ${esc(f.status)}" onclick="irParaFrente('${esc(f.slug)}')">
       <div class="fh"><span class="fn">${esc(f.slug.replace(/^\d+-/,""))}</span>
-        <span class="tag ${f.status==="vermelho"?"bad":f.status==="amarelo"?"med":f.status==="azul"?"vio":"ok"}">${ic} ${lb}</span></div>
+        <span class="tag ${mv[0]}" title="status declarado: ${lb}">${ic} ${mv[1]}</span></div>
       <div class="fbar">
         <span style="width:${wr.toFixed(1)}%;background:var(--bl)"></span>
         <span style="width:${wp.toFixed(1)}%;background:var(--rd)"></span></div>
