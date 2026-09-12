@@ -655,7 +655,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v32";
+const VER="v33";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1190,13 +1190,13 @@ function rAgora(){
   const filtrando=F.frente||F.origem||F.q||F.nat;
   const tot=vis.length+(D.depois||[]).filter(passa).length;
   const c=D.cont||{};
-  document.getElementById("hero").innerHTML=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div class="hero" style="margin-bottom:8px"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}<div class="hero ${tot||D.cor.length?"alert":""}">
-    <div class="t">${tot?tot+" precisa"+(tot>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")}</div>
+  document.getElementById("hero").innerHTML=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div class="hero" style="margin-bottom:8px"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}<div class="hero ${tot||D.cor.length?"alert":""}">
+    <div class="t">${tot?tot+" precisa"+(tot>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje"):(filtrando?"nada neste filtro":"nada precisa de você hoje")} ${sparkKPI("carga.igor_n",64,20)}</div>
     <div class="s">${D.cor.length?`<span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span>`:""}
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
-      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}</span>`:""}
+      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}${sparkKPI("fila.wip_sobrecarga_x",48,16)}</span>`:""}`:""}
       <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
@@ -1824,7 +1824,7 @@ const SERIE_SECAO={
   "varredura":"arquivo.ponteiro_orfao",
   "frescor":"memoria.lead_time_retomada_min",
   "m9":"medicao.nao_planejado_pct",
-  "placarsim":"contexto.custo_n1"
+    "placarsim":"contexto.custo_n1",   /* v33: o bloco MAQUINA passa a dizer QUANTO CUSTA a propria abertura, ao lado do que ela      entrega. painel.carga_abertura_kb ja e medido por medir_kpi e nunca aparecia na tela:      o painel media o proprio peso e guardava para si. Meta 80 KB, hoje 19,6. */   "automed":"painel.carga_abertura_kb",   "achados":"motor.achados_alto" };
 };
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
