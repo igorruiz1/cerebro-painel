@@ -1196,7 +1196,7 @@ function rAgora(){
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
-      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}${sparkKPI("fila.wip_sobrecarga_x",48,16)}</span>`:""}`:""}
+      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}${sparkKPI("fila.wip_sobrecarga_x",48,16)}</span>`:""}
       <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
@@ -1824,7 +1824,7 @@ const SERIE_SECAO={
   "varredura":"arquivo.ponteiro_orfao",
   "frescor":"memoria.lead_time_retomada_min",
   "m9":"medicao.nao_planejado_pct",
-    "placarsim":"contexto.custo_n1",   /* v33: o bloco MAQUINA passa a dizer QUANTO CUSTA a propria abertura, ao lado do que ela      entrega. painel.carga_abertura_kb ja e medido por medir_kpi e nunca aparecia na tela:      o painel media o proprio peso e guardava para si. Meta 80 KB, hoje 19,6. */   "automed":"painel.carga_abertura_kb",   "achados":"motor.achados_alto" };
+    "placarsim":"contexto.custo_n1",   /* v33: o bloco MAQUINA passa a dizer QUANTO CUSTA a propria abertura, ao lado do que ela      entrega. painel.carga_abertura_kb ja e medido por medir_kpi e nunca aparecia na tela:      o painel media o proprio peso e guardava para si. Meta 80 KB, hoje 19,6. */   "automed":"painel.carga_abertura_kb",   "achados":"motor.achados_alto"
 };
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
