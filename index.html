@@ -188,8 +188,8 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
   border-top:1px solid var(--line);font-size:13.5px;color:var(--mut)}
 .vzl b{color:var(--ink2);font-weight:600;min-width:132px}
 .vza{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
-.fchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
-.btfil{display:none;white-space:nowrap}
+.fchips{display:none;gap:8px;flex-wrap:wrap;align-items:center;width:100%} .fchips.abre{display:flex}
+.btfil{display:inline-flex;white-space:nowrap}
 .btfil .cav{display:inline-block;transition:transform .15s}
 .btfil.abre .cav{transform:rotate(180deg)}
 .btfil .fn{background:var(--acc);color:#fff;border-radius:20px;font-size:10.5px;font-weight:700;
@@ -655,7 +655,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v33";
+const VER="v34";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
