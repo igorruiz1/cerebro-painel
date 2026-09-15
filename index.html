@@ -451,7 +451,7 @@ section.sec.on{display:block}
     background:rgba(13,17,23,.97);backdrop-filter:blur(14px);
     border-top:1px solid var(--line2);
     padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px));
-    display:grid;grid-template-columns:repeat(4,1fr);gap:0;overflow:visible}
+    display:grid;grid-template-columns:repeat(5,1fr);gap:0;overflow:visible}
   .tab{flex-direction:column;display:flex;align-items:center;justify-content:center;
     padding:9px 2px 7px;font-size:9.5px;letter-spacing:.7px;gap:3px;
     border-bottom:0;border-top:2px solid transparent}
@@ -492,6 +492,43 @@ section.sec.on{display:block}
   border-radius:8px;padding:6px 11px;font-size:12.5px;font-family:inherit;cursor:pointer;min-height:34px}
 .lerow .acoesle button:hover{border-color:var(--acc);color:var(--ink)}
 .lerow .acoesle button.prim{background:#12321f;border-color:var(--grn);color:var(--ok);font-weight:600}
+
+/* ---------- INVENTARIO · v36 (15/09/2026) ----------
+   A v35 desenhou a aba TUDO como TABELA de 7 colunas. No celular ela estourava na horizontal
+   e cortava a coluna que mais importa, o "o que e". Aqui a linha e FLEX e REFLUI: no desktop
+   cabe em uma linha, no celular quebra em tres blocos (identidade, texto, acoes) sem scroll
+   lateral. Referencia: linha de item do Linear e do Height, que sao linhas flex e nao tabela. */
+.ivwrap{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.ivrow{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;
+ padding:11px 13px;border-bottom:1px solid var(--line2)}
+.ivrow:last-child{border-bottom:0}
+.ivrow.foi{opacity:.4}
+.ivm{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ font-size:11.5px;color:var(--mut);font-family:ui-monospace,monospace}
+.ivm code{background:var(--card2);border-radius:6px;padding:2px 6px;color:var(--ink2)}
+.ivm .atr{color:var(--bad)}
+.ivm .na{color:var(--ok)}
+.ivm .fo{color:var(--dim)}
+.ivt{flex:1 1 300px;min-width:0;font-size:13px;line-height:1.45;color:var(--ink2)}
+.iva{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap}
+.ivb{background:var(--card2);color:var(--ink2);border:1px solid var(--line2);border-radius:8px;
+ padding:5px 9px;font-size:11.5px;line-height:1;cursor:pointer;min-height:30px;white-space:nowrap}
+.ivb:hover{border-color:var(--acc);color:#fff}
+.ivb.pri{color:var(--ok)}
+.ivb.neg{color:var(--bad)}
+@media(max-width:640px){
+  /* a grade de KPI usava minmax(178px,1fr): em 390px a linha util e 364 e dois cartoes com o gap
+     pedem 366. Dois pixels faziam os quatro numeros virarem UMA COLUNA e comerem quatro telas
+     de rolagem antes do primeiro card. No celular a grade e fixa em 2x2. */
+  .g4{grid-template-columns:repeat(2,1fr);gap:8px}
+  .kpi{padding:11px 12px}
+  .kpi .n{font-size:22px}
+  .ivrow{gap:7px;padding:12px 11px}
+  .ivm{flex:1 1 100%;order:1;font-size:12px}
+  .ivt{flex:1 1 100%;order:2;font-size:13.5px}
+  .iva{flex:1 1 100%;order:3;margin-top:3px;gap:5px}
+  .ivb{flex:1 1 auto;min-width:58px;min-height:38px;font-size:12px;text-align:center}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -642,7 +679,7 @@ section.sec.on{display:block}
   <div id="tudo-lista"></div>
   <div class="foot"><b>Por que esta aba existe.</b> A aba AGORA responde o que precisa de você hoje, e corta de propósito.
     Esta responde outra pergunta: <b>quanto existe de verdade</b> em cada frente. São as duas camadas que todo quadro de trabalho
-    tem, a fila e o inventário. Medido em 15/09/2026, antes desta aba: 180 cards abertos e só 54 apareciam no painel.
+    tem, a fila e o inventário. Medido em 15/09/2026, antes desta aba: 180 cards abertos e só 54 apareciam no painel. Desde a v36 os botões valem aqui também: o banco passou a oferecer feita, prazo, arquivar e deliberar para card aberto que não está na fila de decisão.
     <br><b>Fonte:</b> <code>v_inventario_resumo</code> e <code>v_inventario_frente</code>. Nada aqui é digitado.</div>
 </div>
 
@@ -666,7 +703,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v35";
+const VER="v36";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -710,8 +747,8 @@ function rTudo(){
     `<div class="g4">
       <div class="kpi"><div class="k">ABERTAS NO TOTAL</div><div class="n">${tot}</div></div>
       <div class="kpi"><div class="k">SUAS</div><div class="n">${suas}</div></div>
-      <div class="kpi${venc?" fora":" dentro"}"><div class="k">VENCIDAS</div><div class="n">${venc}</div></div>
-      <div class="kpi${ocultas?" fora":" dentro"}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
+      <div class="kpi${venc?" fora":""}"><div class="k">VENCIDAS</div><div class="n">${venc}</div></div>
+      <div class="kpi${ocultas?" fora":""}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
     </div>`;
   const nav=document.getElementById("nav-tudo");
   if(nav) nav.innerHTML=FX.map(([k,r])=>{
@@ -731,21 +768,52 @@ function rTudo(){
     const r=(R.find(z=>z.frente===f))||{};
     const linhas=rs.map(x=>{
       const pz = x.prazo ? String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7) : "sem prazo";
-      const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span style="color:var(--bad)">+${x.atraso_dias}d</span>` : "";
-      return `<tr>
-        <td style="white-space:nowrap"><code>${esc2(x.id)}</code></td>
-        <td style="white-space:nowrap">${x.dono==="igor"?"você":"eu"}</td>
-        <td style="white-space:nowrap">${esc2(x.faixa)}</td>
-        <td style="white-space:nowrap">${pz}${atr}</td>
-        <td style="white-space:nowrap">${esc2(x.natureza||"")}</td>
-        <td style="white-space:nowrap;color:${x.no_painel?"var(--ok)":"var(--dim)"}">${x.no_painel?"na fila":"fora"}</td>
-        <td>${esc2(x.resumo)}</td></tr>`;}).join("");
+      const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span class="atr">+${x.atraso_dias}d</span>` : "";
+      const id = esc2(x.id);
+      return `<div class="ivrow" id="iv-${id}">
+        <div class="ivm">
+          <code>${id}</code>
+          <span>${x.dono==="igor"?"você":"eu"}</span>
+          <span>${esc2(x.faixa)}</span>
+          <span>${pz}${atr}</span>
+          <span class="${x.no_painel?"na":"fo"}">${x.no_painel?"na fila":"fora da fila"}</span>
+        </div>
+        <div class="ivt">${esc2(x.resumo)}</div>
+        <div class="iva">
+          <button class="ivb pri" onclick="ivFeita(${id})">feita</button>
+          <button class="ivb" onclick="ivAdiar(${id},7)">+7d</button>
+          <button class="ivb" onclick="ivAgir(${id},'repactuar','date','novo prazo')">prazo</button>
+          <button class="ivb neg" onclick="ivAgir(${id},'arquivar','texto','arquivar')">arquivar</button>
+          <button class="ivb" onclick="ivAgir(${id},'deliberar','texto','deliberar')">deliberar</button>
+        </div>
+      </div>`;}).join("");
     return `<h2>${esc2(f)} <span class="s">${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA</span></h2>
-      <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table>
-      <tr><th>id</th><th>dono</th><th>faixa</th><th>prazo</th><th>ato</th><th>aba AGORA</th><th>o que é</th></tr>
-      ${linhas}</table></div>`;
+      <div class="ivwrap">${linhas}</div>`;
   }).join("");
   const nt=document.getElementById("n-tudo"); if(nt) nt.textContent=tot?String(tot):"";
+}
+
+/* ---------- AGIR A PARTIR DO INVENTARIO · v36 ----------
+   Ate a v35 a tela so listava: a fila de decisao era o UNICO cardapio de acoes do banco e os
+   cards fora dela nao aceitavam verbo nenhum. Em 15/09/2026 o banco ganhou v_acoes_inventario
+   com os 4 verbos seguros (feita, repactuar, arquivar, deliberar) e agir() passou a ler os DOIS
+   cardapios pelo MESMO portao. Aqui a tela apenas usa o que o banco ja devolve — que e a licao
+   do acervo 641: quem desenha a interface pelo que imagina constroi metade e chama de pronto. */
+const ivData=d=>{const p=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());};
+function ivEnviar(ref,verbo,valor,label){
+  const el=document.getElementById("iv-"+ref);
+  agendar(()=>sb.rpc("agir",{p_origem:"tarefa",p_ref:String(ref),p_verbo:verbo,p_valor:valor}),
+          label+" em "+ref, el);
+}
+function ivFeita(ref){ ivEnviar(ref,"feita",null,"feita"); }
+function ivAdiar(ref,dias){ const d=new Date(); d.setDate(d.getDate()+dias);
+  ivEnviar(ref,"repactuar",ivData(d),"novo prazo"); }
+function ivAgir(ref,verbo,campo,label){
+  pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
+                                   : "o que fica valendo neste card"};
+  abrirModal(label,`<span class="mono">tarefa ${esc(String(ref))}</span>`,campo,
+             v=>ivEnviar(ref,verbo,v,label), label);
 }
 function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smooth"}); }
 
@@ -1401,6 +1469,10 @@ async function recarregarFila(){
   const [fila,cont,cor]=await Promise.all([
     q("v_painel_fila",b=>b.eq("camada_tela","hoje")),q("v_painel_contagem"),q("v_correcoes_abertas")]);
   D.fila=fila||[];D.cont=(cont&&cont[0])||{};D.cor=cor||[];
+  if(LAZY.tudo){
+    const [rz,it]=await Promise.all([q("v_inventario_resumo"),q("v_inventario_frente")]);
+    D.invr=rz||[]; D.inv=it||[]; rTudo();
+  }
   rAgora();marcaAbas();
 }
 async function exec(fn,okMsg){
