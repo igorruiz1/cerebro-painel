@@ -548,6 +548,38 @@ section.sec.on{display:block}
   .agl{font-size:11.5px}
   .agv{font-size:11px}
 }
+
+/* ---------- v38 · O CARD NA ABA TUDO ----------
+   Ate a v37 a linha mostrava os primeiros 160 chars da descricao. Medido em 15/09/2026:
+   descricao media de 1.163 chars, maior de 5.283 — a lista mostrava prosa cortada no meio
+   e nao dava para decidir. Agora: titulo escaneavel, o que esta em jogo, e o corpo da
+   decisao sob demanda (progressive disclosure). */
+.ivt.tit{font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.35;margin-bottom:3px}
+.ivj{font-size:12.5px;color:var(--ink2);line-height:1.45;margin-bottom:5px}
+.ivraw{font-size:10.5px;color:var(--dim);border:1px solid var(--line2);border-radius:4px;
+  padding:1px 5px;margin-right:5px;white-space:nowrap}
+.ivproj{font-size:10.5px;color:var(--lil);border:1px solid var(--line2);border-radius:4px;padding:0 5px}
+.ivd{margin:2px 0 6px}
+.ivd summary{font-size:11.5px;color:var(--acc);cursor:pointer;list-style:none;
+  padding:3px 0;user-select:none}
+.ivd summary::-webkit-details-marker{display:none}
+.ivd summary::before{content:"▸ ";color:var(--dim)}
+.ivd[open] summary::before{content:"▾ "}
+.ivop{margin:4px 0 6px;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.ivop li{font-size:12px;line-height:1.4;padding:5px 9px;background:var(--card2);
+  border-radius:7px;border-left:2px solid var(--line2)}
+.ivop li b{color:var(--ink);display:block}
+.ivop li span{color:var(--mut)}
+.ivrec{font-size:12.5px;line-height:1.45;color:var(--ink2);padding:6px 10px;
+  background:rgba(76,141,255,.08);border-left:2px solid var(--acc);border-radius:7px;margin-bottom:4px}
+.ivrec b{color:var(--acc);display:block;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase}
+.ivcp{font-size:11.5px;color:var(--mut);line-height:1.4;padding:5px 10px;
+  border-left:2px solid var(--line2);border-radius:7px}
+.ivcp b{color:var(--dim);display:block;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase}
+@media(max-width:520px){
+  .ivt.tit{font-size:14px}
+  .ivj{font-size:12px}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -723,7 +755,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v37";
+const VER="v38";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -762,6 +794,7 @@ function rTudo(){
   const tot=I.length, ocultas=I.filter(x=>!x.no_painel).length;
   const suas=I.filter(x=>x.dono==="igor").length;
   const venc=I.filter(x=>x.faixa==="vencida").length;
+  const semcard=I.filter(x=>!x.card_pronto).length;
   const topo=document.getElementById("tudo-topo");
   if(topo) topo.innerHTML=
     `<div class="g4">
@@ -769,6 +802,7 @@ function rTudo(){
       <div class="kpi"><div class="k">SUAS</div><div class="n">${suas}</div></div>
       <div class="kpi${venc?" fora":""}"><div class="k">VENCIDAS</div><div class="n">${venc}</div></div>
       <div class="kpi${ocultas?" fora":""}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
+      <div class="kpi${semcard?" fora":""}"><div class="k">AINDA SEM CARD</div><div class="n">${semcard}</div></div>
     </div>`;
   const nav=document.getElementById("nav-tudo");
   if(nav) nav.innerHTML=FX.map(([k,r])=>{
@@ -797,8 +831,20 @@ function rTudo(){
           <span>${esc2(x.faixa)}</span>
           <span>${pz}${atr}</span>
           <span class="${x.no_painel?"na":"fo"}">${x.no_painel?"na fila":"fora da fila"}</span>
+          ${x.demanda_id?`<span class="ivproj">${esc2(x.demanda_id)}</span>`:""}
         </div>
-        <div class="ivt">${esc2(x.resumo)}</div>
+        ${x.card_pronto
+          ? `<div class="ivt tit">${esc2(x.titulo)}</div>
+             ${x.em_jogo?`<div class="ivj">${esc2(x.em_jogo)}</div>`:""}
+             ${(x.opcoes||x.recomendacao||x.criterio_pronto)
+               ? `<details class="ivd"><summary>o que pesa nesta decisão</summary>
+                   ${x.opcoes&&x.opcoes.length?`<ul class="ivop">`+x.opcoes.map(o=>
+                      `<li><b>${esc2(o.label)}</b><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`:""}
+                   ${x.recomendacao?`<div class="ivrec"><b>minha recomendação</b> ${esc2(x.recomendacao)}</div>`:""}
+                   ${x.criterio_pronto?`<div class="ivcp"><b>pronto quando</b> ${esc2(x.criterio_pronto)}</div>`:""}
+                 </details>`
+               : ""}`
+          : `<div class="ivt"><span class="ivraw">sem card</span> ${esc2(x.resumo)}</div>`}
         <div class="iva">
           <button class="ivb pri" onclick="ivFeita(${id})">feita</button>
           <button class="ivb" onclick="ivAdiar(${id},7)">+7d</button>
