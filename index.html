@@ -529,6 +529,25 @@ section.sec.on{display:block}
   .iva{flex:1 1 100%;order:3;margin-top:3px;gap:5px}
   .ivb{flex:1 1 auto;min-width:58px;min-height:38px;font-size:12px;text-align:center}
 }
+
+/* ---------- v37 · MOVIMENTO ----------
+   Barra horizontal ordenada para magnitude entre categorias. Rotulo direto sempre:
+   o painel abre no celular e hover nao existe la. */
+.agw{display:flex;flex-direction:column;gap:7px}
+.agrow{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:10px;align-items:center}
+.agl{font-size:12px;color:var(--ink2);line-height:1.25;overflow-wrap:anywhere}
+.agl small{display:block;font-size:10.5px;color:var(--dim)}
+.agt{position:relative;height:16px;min-width:0;background:transparent}
+.agb{position:absolute;left:0;top:0;height:16px;border-radius:5px;background:var(--raise);min-width:3px}
+.agb.ac{background:var(--yel);opacity:.95}
+.agb.est{background:var(--red)}
+.agv{font-size:11.5px;color:var(--mut);line-height:1.2;text-align:right;max-width:38vw;overflow-wrap:anywhere}
+.agv small{display:block;font-size:10px;color:var(--dim)}
+@media(max-width:520px){
+  .agrow{grid-template-columns:78px minmax(0,1fr) auto;gap:7px}
+  .agl{font-size:11.5px}
+  .agv{font-size:11px}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -667,6 +686,7 @@ section.sec.on{display:block}
 
 <div class="pane" id="p-maquina">
   <div class="secnav" id="nav-maquina"></div>
+  <section class="sec" id="s-movimento"><h2>O ENVELHECIMENTO DA FILA <span class="s">o único gráfico do kanban que age sobre trabalho ainda salvável; o resto é autópsia</span></h2><div class="g4" id="mov-kpi"></div><div id="mov-aging"></div><h2>A REPRESA DE PRAZO <span class="s">quantos cards vencem no mesmo dia, e de quem eles são</span></h2><div id="mov-represa"></div><div class="foot"><b>Como ler.</b> A régua é o percentil 85 do tempo de ciclo do que já fechou: item acima dele aparece <b>antes</b> de vencer, não depois. Na represa, o teto desenhado é 8 por dia útil — acima disso o dia vira um bloco de vencidos de uma vez só.</div></section>
   <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
   <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
   <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
@@ -703,7 +723,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v36";
+const VER="v37";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -821,13 +841,13 @@ function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smoot
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
 let ABA="agora"; let CARGA=Date.now();
-const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0};
+const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0,movimento:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
 const SECOES={
   panorama:[["caixa","Caixa e placar"],["frentes","Frentes"],["insights","O que o sistema vê"]],
-  maquina :[["espelho","Espelho"],["medida","Pares e escada"],["rotinas","Rotinas"],["acervo","Acervo"]]
+  maquina :[["movimento","Movimento"],["espelho","Espelho"],["medida","Pares e escada"],["rotinas","Rotinas"],["acervo","Acervo"]]
 };
-let SECATIVA={panorama:"caixa", maquina:"espelho"};
+let SECATIVA={panorama:"caixa", maquina:"movimento"};
 let SECQUANDO={};   /* quando cada secao buscou o dado que esta na tela */
 function seloSecao(sup,id){
   const el=document.getElementById("nav-"+sup); if(!el)return;
@@ -866,6 +886,11 @@ async function carregarSecao(id,forcar){
   if(id==="rotinas"&&(forcar||!LAZY.rotinas)){
     const [_am,_se]=await Promise.all([q_("v_painel_automedicao"),(D.se&&D.se.length)?Promise.resolve(D.se):q_("v_painel_serie")]);
     D.am=_am;D.se=(_se&&_se.length)?_se:(D.se||[]);LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();injetaSeries();}
+  /* v37 · ONDA 2: a camada de MOVIMENTO. As views existiam desde agosto e nenhuma aba
+     as consumia — o painel mostrava ESTADO e nao mostrava para onde a fila anda. */
+  if(id==="movimento"&&(forcar||!LAZY.movimento)){
+    const [ag,rp]=await Promise.all([q_("v_fila_aging"),q_("v_represa_prazo")]);
+    D.ag=ag||[];D.rp=rp||[];LAZY.movimento=1;SECQUANDO.movimento=Date.now();rMovimento();}
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
     D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
   /* v27: faixa por frente entra na secao FRENTES, e as duas medidas de motor na secao ROTINAS.
@@ -1032,6 +1057,52 @@ async function salvarSenha(){
   document.getElementById("np1").value="";document.getElementById("np2").value="";
   put("<b>Senha salva.</b> Agora entre no celular com seu e-mail e esta senha.","ok");}
 
+/* ---------- v37 · MOVIMENTO ---------- */
+function rMovimento(){
+  const A=D.ag||[], R=D.rp||[];
+  const p85=A.length?+A[0].p85_dias:null;
+  const acima=A.filter(x=>x.acima_p85).length;
+  const velho=A.reduce((m,x)=>Math.max(m,+x.idade_dias||0),0);
+  const venc=A.filter(x=>x.vencida).length;
+  const k=document.getElementById("mov-kpi");
+  if(k) k.innerHTML=
+    `<div class="kpi${acima?" fora":""}"><div class="k">ACIMA DO P85</div><div class="n">${acima}</div></div>
+     <div class="kpi"><div class="k">RÉGUA P85</div><div class="n">${p85==null?"—":p85.toFixed(1)+"d"}</div></div>
+     <div class="kpi${velho>30?" fora":""}"><div class="k">O MAIS VELHO</div><div class="n">${Math.round(velho)}d</div></div>
+     <div class="kpi${venc?" fora":""}"><div class="k">JÁ VENCIDAS</div><div class="n">${venc}</div></div>`;
+
+  /* por frente: quantos abertos, quantos passaram da regua, e a idade do mais velho */
+  const porF={};
+  A.forEach(x=>{const f=x.frente_slug||"—";
+    (porF[f]=porF[f]||{n:0,acima:0,max:0})&&0;
+    porF[f].n++; if(x.acima_p85)porF[f].acima++;
+    porF[f].max=Math.max(porF[f].max,+x.idade_dias||0);});
+  const linhas=Object.entries(porF).sort((a,b)=>b[1].acima-a[1].acima||b[1].max-a[1].max);
+  const maxN=Math.max(1,...linhas.map(x=>x[1].n));
+  const el=document.getElementById("mov-aging");
+  if(el) el.innerHTML=linhas.length? `<div class="agw">`+linhas.map(([f,v])=>{
+      const pa=Math.round(v.acima/v.n*100);
+      return `<div class="agrow"><span class="agl">${esc(f)}<small>${Math.round(v.max)}d o mais velho</small></span>
+        <span class="agt"><b class="agb" style="width:${v.n/maxN*100}%"></b><b class="agb ac" style="width:${v.acima/maxN*100}%"></b></span>
+        <span class="agv">${v.acima} de ${v.n}<small>${pa}% passou da régua</small></span></div>`;
+    }).join("")+`</div><div class="foot" style="margin-top:6px">Barra clara é o total de cards abertos na frente; a escura é quanto disso já passou do percentil 85.</div>`
+    : `<div class="card">Nada aberto para envelhecer.</div>`;
+
+  /* represa: cada data com o quanto vence nela */
+  const maxR=Math.max(1,...R.map(x=>+x.n||0));
+  const er=document.getElementById("mov-represa");
+  if(er) er.innerHTML=R.length? `<div class="agw">`+R.map(x=>{
+      const n=+x.n||0, ig=+x.do_igor||0, cl=+x.do_claude||0;
+      const d=new Date(x.prazo+"T12:00:00");
+      const dia=["dom","seg","ter","qua","qui","sex","sáb"][d.getDay()];
+      const fds=d.getDay()===0||d.getDay()===6;
+      return `<div class="agrow"><span class="agl">${esc(x.prazo.slice(8,10)+"/"+x.prazo.slice(5,7))}<small>${dia}${fds?" · fim de semana":""}</small></span>
+        <span class="agt"><b class="agb${n>8?" est":""}" style="width:${n/maxR*100}%"></b></span>
+        <span class="agv">${n}${n>8?" · acima do teto":""}<small>${ig} suas · ${cl} minhas</small></span></div>`;
+    }).join("")+`</div>`
+    : `<div class="card">Nenhuma data com acúmulo.</div>`;
+}
+
 /* ---------- carga ---------- */
 async function carregar(){
   msg("carregando…",null,1200);
@@ -1053,7 +1124,7 @@ async function carregar(){
      pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
      nat:nat||[],wip:(wip&&wip[0])||null,rotp:(rotp&&rotp[0])||null,
      depois:D.depois||[]};
-  LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;
+  LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   CARGA=Date.now(); SECQUANDO={};
   render();
   await carregarAba(ABA,true);
