@@ -567,6 +567,7 @@ section.sec.on{display:block}
     <button class="tab" data-p="leituras">LEITURAS<span class="n" id="n-le"></span></button>
     <button class="tab" data-p="panorama">PANORAMA<span class="n" id="n-cmd"></span></button>
     <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
+    <button class="tab" data-p="tudo">TUDO<span class="n" id="n-tudo"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="filtbar">
@@ -635,6 +636,16 @@ section.sec.on{display:block}
   <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
 </div>
 
+<div class="pane" id="p-tudo">
+  <div id="tudo-topo"></div>
+  <div class="secnav" id="nav-tudo"></div>
+  <div id="tudo-lista"></div>
+  <div class="foot"><b>Por que esta aba existe.</b> A aba AGORA responde o que precisa de você hoje, e corta de propósito.
+    Esta responde outra pergunta: <b>quanto existe de verdade</b> em cada frente. São as duas camadas que todo quadro de trabalho
+    tem, a fila e o inventário. Medido em 15/09/2026, antes desta aba: 180 cards abertos e só 54 apareciam no painel.
+    <br><b>Fonte:</b> <code>v_inventario_resumo</code> e <code>v_inventario_frente</code>. Nada aqui é digitado.</div>
+</div>
+
 </main></div>
 
 <!-- ===================== MODAL ===================== -->
@@ -655,7 +666,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v34";
+const VER="v35";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -679,11 +690,70 @@ function msg(t,tipo,ms){const l=document.getElementById("log");
 function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
   v===null?localStorage.removeItem("ci_"+k):localStorage.setItem("ci_"+k,v);}catch(e){return null}}
 
+
+/* ---------- TUDO · v35 · camada de INVENTARIO ----------
+   A fila de decisao (v_painel_fila) responde "o que precisa de voce hoje" e corta por desenho.
+   Esta aba responde "quanto existe", que e outra pergunta. Medido em 15/09/2026: o painel
+   mostrava 54 de 180 cards abertos e seis frentes inteiras nao apareciam em aba nenhuma. */
+let TUDOF="todas";
+const FX=[["todas","tudo"],["vencida","vencidas"],["vence hoje","vencem hoje"],
+          ["esta semana","esta semana"],["sem prazo","sem prazo"],
+          ["aguardando terceiro","com terceiro"],["depois","depois"]];
+function fxCount(k){ return k==="todas"?(D.inv||[]).length:(D.inv||[]).filter(x=>x.faixa===k).length; }
+function rTudo(){
+  const R=D.invr||[], I=D.inv||[];
+  const tot=I.length, ocultas=I.filter(x=>!x.no_painel).length;
+  const suas=I.filter(x=>x.dono==="igor").length;
+  const venc=I.filter(x=>x.faixa==="vencida").length;
+  const topo=document.getElementById("tudo-topo");
+  if(topo) topo.innerHTML=
+    `<div class="g4">
+      <div class="kpi"><div class="k">ABERTAS NO TOTAL</div><div class="n">${tot}</div></div>
+      <div class="kpi"><div class="k">SUAS</div><div class="n">${suas}</div></div>
+      <div class="kpi${venc?" fora":" dentro"}"><div class="k">VENCIDAS</div><div class="n">${venc}</div></div>
+      <div class="kpi${ocultas?" fora":" dentro"}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
+    </div>`;
+  const nav=document.getElementById("nav-tudo");
+  if(nav) nav.innerHTML=FX.map(([k,r])=>{
+    const n=fxCount(k); if(!n&&k!=="todas")return "";
+    return `<button class="secbt${TUDOF===k?" on":""}" onclick="filtraTudo('${k.replace(/'/g,"")}')">${r} <span class="n">${n}</span></button>`;
+  }).join("");
+  const alvo = TUDOF==="todas" ? I : I.filter(x=>x.faixa===TUDOF);
+  const porFrente={};
+  alvo.forEach(x=>{(porFrente[x.frente]=porFrente[x.frente]||[]).push(x);});
+  const ordem=Object.keys(porFrente).sort((a,b)=>porFrente[b].length-porFrente[a].length||a.localeCompare(b));
+  const esc2=t=>esc(String(t==null?"":t));
+  const box=document.getElementById("tudo-lista");
+  if(!box) return;
+  if(!ordem.length){ box.innerHTML=`<div class="card" style="border-left-color:var(--line)">Nada nesta faixa.</div>`; return; }
+  box.innerHTML=ordem.map(f=>{
+    const rs=porFrente[f].slice().sort((a,b)=>(a.ordem_faixa-b.ordem_faixa)||String(a.prazo||"9999").localeCompare(String(b.prazo||"9999")));
+    const r=(R.find(z=>z.frente===f))||{};
+    const linhas=rs.map(x=>{
+      const pz = x.prazo ? String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7) : "sem prazo";
+      const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span style="color:var(--bad)">+${x.atraso_dias}d</span>` : "";
+      return `<tr>
+        <td style="white-space:nowrap"><code>${esc2(x.id)}</code></td>
+        <td style="white-space:nowrap">${x.dono==="igor"?"você":"eu"}</td>
+        <td style="white-space:nowrap">${esc2(x.faixa)}</td>
+        <td style="white-space:nowrap">${pz}${atr}</td>
+        <td style="white-space:nowrap">${esc2(x.natureza||"")}</td>
+        <td style="white-space:nowrap;color:${x.no_painel?"var(--ok)":"var(--dim)"}">${x.no_painel?"na fila":"fora"}</td>
+        <td>${esc2(x.resumo)}</td></tr>`;}).join("");
+    return `<h2>${esc2(f)} <span class="s">${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA</span></h2>
+      <div class="card" style="border-left-color:var(--line);overflow-x:auto"><table>
+      <tr><th>id</th><th>dono</th><th>faixa</th><th>prazo</th><th>ato</th><th>aba AGORA</th><th>o que é</th></tr>
+      ${linhas}</table></div>`;
+  }).join("");
+  const nt=document.getElementById("n-tudo"); if(nt) nt.textContent=tot?String(tot):"";
+}
+function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smooth"}); }
+
 /* ---------- navegação · v25: cada aba carrega o que ela mostra, e nada mais ---------- */
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
 let ABA="agora"; let CARGA=Date.now();
-const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0};
+const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
 const SECOES={
   panorama:[["caixa","Caixa e placar"],["frentes","Frentes"],["insights","O que o sistema vê"]],
@@ -751,6 +821,9 @@ async function abrir(nome){
 async function carregarAba(nome,forcar){
   if(nome==="leituras"&&(forcar||!LAZY.leituras)){
     LE=await q_("v_painel_leituras");LAZY.leituras=1;SEL.clear();rLeituras();}
+  if(nome==="tudo"&&(forcar||!LAZY.tudo)){
+    const [rz,it]=await Promise.all([q_("v_inventario_resumo"),q_("v_inventario_frente")]);
+    D.invr=rz||[]; D.inv=it||[]; LAZY.tudo=1; SECQUANDO.tudo=Date.now(); rTudo();}
   if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
