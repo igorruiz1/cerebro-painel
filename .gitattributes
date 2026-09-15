@@ -1,0 +1,19 @@
+# .gitattributes — as duas superficies passam a concordar sobre o que esta sujo.
+# Escrito em 15/09/2026 (s372) depois de duas publicacoes em que a MESMA arvore
+# aparecia limpa na sessao Claude Code local (Windows, core.autocrlf=true) e suja
+# na ponte (VM Linux, sem autocrlf), porque o blob do repo esta em LF e o working
+# tree em CRLF. Sem isto, so "git diff -w" era honesto de fora.
+#
+# text=auto  -> o repositorio guarda LF, como ja guarda hoje.
+# eol=crlf   -> o working tree recebe CRLF em QUALQUER sistema, como o do Igor ja tem.
+* text=auto eol=crlf
+
+# Binario nunca se converte.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
