@@ -529,6 +529,9 @@ section.sec.on{display:block}
 .raia-claude .raiat{border-left-color:var(--line2)}
 .raiat .s{float:right;font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim)}
 .ivnat{background:var(--card2);border-radius:6px;padding:2px 6px;color:var(--dim)}
+.ivnat.ex-rotina,.ivnat.ex-sessao{color:var(--ok)}
+.ivnat.ex-preparo{color:var(--acc)}
+.ivnat.ex-ninguem{color:var(--bad)}
 .ivsem{font-size:11.5px;color:var(--dim);font-style:italic}
 @media(max-width:640px){
   /* a grade de KPI usava minmax(178px,1fr): em 390px a linha util e 364 e dois cartoes com o gap
@@ -786,7 +789,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v41";
+const VER="v42";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -853,6 +856,7 @@ function rTudo(){
   const suas=I.filter(x=>x.dono==="igor").length;
   const venc=I.filter(x=>x.faixa==="vencida").length;
   const semcard=I.filter(x=>!x.card_pronto).length;
+  const desalinhados=I.filter(x=>x.dono==="igor"&&x.executor_possivel&&x.executor_possivel!=="igor").length;
   const topo=document.getElementById("tudo-topo");
   if(topo) topo.innerHTML=
     `<div class="g4">
@@ -861,6 +865,7 @@ function rTudo(){
       <div class="kpi${venc?" fora":""}"><div class="k">VENCIDAS</div><div class="n">${venc}</div></div>
       <div class="kpi${ocultas?" fora":""}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
       <div class="kpi${semcard?" fora":""}"><div class="k">AINDA SEM CARD</div><div class="n">${semcard}</div></div>
+      <div class="kpi${desalinhados?" fora":""}" title="cards na sua fila que a rotina, uma sessão ou um preparo meu já conseguem tocar"><div class="k">SUAS QUE NÃO PRECISAVAM SER</div><div class="n">${desalinhados}</div></div>
     </div>`;
   const ordbar=document.getElementById("ord-tudo");
   if(ordbar) ordbar.innerHTML=
@@ -939,7 +944,7 @@ function grupoHTML(alvo,R,esc2){
       return `<div class="ivrow" id="iv-${id}">
         <div class="ivm">
           <code>${id}</code>
-          ${x.natureza?`<span class="ivnat" title="${x.natureza==="A"?"automatizável":x.natureza==="S"?"semiautomática — precisa de você em algum ponto":"manual — só você"}">${esc2(x.natureza)}</span>`:""}
+          ${execChip(x)}
           <span>${esc2(x.faixa)}</span>
           <span>${pz}${atr}</span>
           <span${(x.parado_dias||0)>=14?' class="atr"':''}>parado ${x.parado_dias!=null?x.parado_dias:(x.idade_dias||0)}d</span>
@@ -978,6 +983,22 @@ function grupoHTML(alvo,R,esc2){
    ARQUIVAR que agir() recusa por construcao — e a recusa aparecia como defeito do painel.
    Agora v_inventario_frente devolve o menu real pelos dois cardapios e isto aqui so renderiza.
    Quem desenha a interface pelo que imagina constroi metade e chama de pronto (acervo 641). */
+/* ---------- v42 · QUEM CONSEGUE EXECUTAR ----------
+   A tela dizia so DE QUEM e o card (dono). Faltava a outra metade: quem CONSEGUE faze-lo.
+   O banco tinha uma lente so, caps_agendadas(), que e o conjunto da rotina cloud — e por isso
+   chamava de BLOQUEADO tudo que exige disco, navegador ou push, que esta sessao local tem.
+   Agora sao duas lentes mais a natureza do trabalho: 'M' e presenca fisica sao do Igor,
+   'S' e human-in-the-loop (a maquina prepara, ele fecha) e so 'A' com ambiente coberto roda
+   de ponta a ponta. Medido em 16/09/2026: 16 cards estavam na fila DELE e nao precisavam. */
+const EXEC={igor:["você","só você faz este — trabalho manual ou presença física"],
+            preparo:["preparo → você","eu preparo, você fecha: semiautomática"],
+            rotina:["rotina","a rotina agendada executa sozinha"],
+            sessao:["sessão","precisa de uma sessão com disco, navegador ou push — não da rotina agendada"],
+            ninguem:["sem executor","exige ambiente que ninguém tem hoje"]};
+function execChip(x){
+  const e=EXEC[x.executor_possivel]; if(!e) return "";
+  return `<span class="ivnat ex-${x.executor_possivel}" title="${esc(e[1])}">${esc(e[0])}</span>`;
+}
 function botoesIv(x,esc2){
   const id=esc2(x.id);
   const acoes=Array.isArray(x.acoes)?x.acoes:[];
