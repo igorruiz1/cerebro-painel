@@ -516,6 +516,20 @@ section.sec.on{display:block}
 .ivb:hover{border-color:var(--acc);color:#fff}
 .ivb.pri{color:var(--ok)}
 .ivb.neg{color:var(--bad)}
+/* ---------- RAIA · v41 (16/09/2026) ----------
+   A aba TUDO listava 86 tarefas suas e 54 minhas na MESMA pilha, separadas so por um chip de
+   11px escrito "voce"/"eu". O dado do dono existe no banco desde sempre; a tela e que nao
+   usava. Raia e o padrao de swimlane do Kanban: a primeira pergunta ao abrir a aba nao e
+   "de que frente e", e "isto depende de mim ou ja esta com a maquina". */
+.raia{margin-bottom:22px}
+.raiat{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);
+ margin:0 0 9px;padding:7px 11px;border-radius:8px;background:var(--card2);
+ border-left:3px solid var(--line2);font-weight:600}
+.raia-igor .raiat{border-left-color:var(--acc);color:var(--ink2)}
+.raia-claude .raiat{border-left-color:var(--line2)}
+.raiat .s{float:right;font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim)}
+.ivnat{background:var(--card2);border-radius:6px;padding:2px 6px;color:var(--dim)}
+.ivsem{font-size:11.5px;color:var(--dim);font-style:italic}
 @media(max-width:640px){
   /* a grade de KPI usava minmax(178px,1fr): em 390px a linha util e 364 e dois cartoes com o gap
      pedem 366. Dois pixels faziam os quatro numeros virarem UMA COLUNA e comerem quatro telas
@@ -772,7 +786,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v40";
+const VER="v41";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -818,12 +832,21 @@ function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
    Esta aba responde "quanto existe", que e outra pergunta. Medido em 15/09/2026: o painel
    mostrava 54 de 180 cards abertos e seis frentes inteiras nao apareciam em aba nenhuma. */
 let TUDOF="todas";
-let TUDOORD=(function(){try{return localStorage.getItem("ci_tudo_ord")||"frente"}catch(e){return "frente"}})();
-function ordenaTudo(k){ TUDOORD=k; try{localStorage.setItem("ci_tudo_ord",k)}catch(e){} rTudo(); }
+const lsGet=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+let TUDOORD=lsGet("ci_tudo_ord","frente");
+let TUDOR  =lsGet("ci_tudo_raia","todas");   // v41: raia = suas x minhas
+function ordenaTudo(k){ TUDOORD=k; lsSet("ci_tudo_ord",k); rTudo(); }
+function raiaTudo(k){ TUDOR=k; lsSet("ci_tudo_raia",k); rTudo(); window.scrollTo({top:0,behavior:"smooth"}); }
+const ehSua=x=>x.dono==="igor";
+const naRaia=x=>TUDOR==="todas"||(TUDOR==="igor")===ehSua(x);
 const FX=[["todas","tudo"],["vencida","vencidas"],["vence hoje","vencem hoje"],
           ["esta semana","esta semana"],["sem prazo","sem prazo"],
           ["aguardando terceiro","com terceiro"],["depois","depois"]];
-function fxCount(k){ return k==="todas"?(D.inv||[]).length:(D.inv||[]).filter(x=>x.faixa===k).length; }
+/* v41: a contagem da faixa respeita a raia. Antes o botao dizia "vencidas 9" e a lista
+   mostrava 4, porque o filtro de dono nao chegava ao contador. */
+function fxCount(k){ const b=(D.inv||[]).filter(naRaia);
+  return k==="todas"?b.length:b.filter(x=>x.faixa===k).length; }
 function rTudo(){
   const R=D.invr||[], I=D.inv||[];
   const tot=I.length, ocultas=I.filter(x=>!x.no_painel).length;
@@ -841,6 +864,9 @@ function rTudo(){
     </div>`;
   const ordbar=document.getElementById("ord-tudo");
   if(ordbar) ordbar.innerHTML=
+    `<span class="ordl">raia</span>`+
+    [["todas","as duas"],["igor","suas"],["claude","minhas"]].map(([k,r])=>
+      `<button class="ordb${TUDOR===k?" on":""}" onclick="raiaTudo('${k}')">${r}</button>`).join("")+
     `<span class="ordl">ordenar por</span>`+
     [["frente","frente"],["prazo","prazo"],["idade","mais parado"]].map(([k,r])=>
       `<button class="ordb${TUDOORD===k?" on":""}" onclick="ordenaTudo('${k}')">${r}</button>`).join("");
@@ -849,12 +875,38 @@ function rTudo(){
     const n=fxCount(k); if(!n&&k!=="todas")return "";
     return `<button class="secbt${TUDOF===k?" on":""}" onclick="filtraTudo('${k.replace(/'/g,"")}')">${r} <span class="n">${n}</span></button>`;
   }).join("");
-  const alvo = TUDOF==="todas" ? I : I.filter(x=>x.faixa===TUDOF);
+  const alvoBruto = TUDOF==="todas" ? I : I.filter(x=>x.faixa===TUDOF);
+  const esc2=t=>esc(String(t==null?"":t));
+  const box=document.getElementById("tudo-lista");
+  if(!box) return;
+  /* v41: a raia e o corte de FORA. Dentro de cada raia vale o agrupamento escolhido.
+     Uma tarefa que so voce pode fazer e uma que a maquina faz nao concorrem pela mesma
+     atencao: misturar as duas na mesma pilha e o que fazia a aba parecer um deposito. */
+  const RAIAS = TUDOR==="todas"
+    ? [["igor","SUAS · dependem de você"],["claude","MINHAS · a máquina executa"]]
+    : TUDOR==="igor" ? [["igor","SUAS · dependem de você"]]
+                     : [["claude","MINHAS · a máquina executa"]];
+  box.innerHTML = RAIAS.map(([d,rot])=>{
+    const alvo = alvoBruto.filter(x=>ehSua(x)===(d==="igor"));
+    const corpo = alvo.length ? grupoHTML(alvo,R,esc2)
+      : `<div class="card" style="border-left-color:var(--line)">Nada nesta raia com este filtro.</div>`;
+    return `<div class="raia raia-${d}"><h1 class="raiat">${rot} <span class="s">${alvo.length}</span></h1>${corpo}</div>`;
+  }).join("");
+  const nt=document.getElementById("n-tudo"); if(nt) nt.textContent=tot?String(tot):"";
+}
+
+function grupoHTML(alvo,R,esc2){
   /* v39: a aba nasceu agrupada por frente, que responde "onde esta o trabalho".
-     Por PRAZO responde outra pergunta, "o que vence primeiro", e o card do dia 16
-     de uma frente importa mais que o do dia 30 da mesma frente. Por IDADE mostra
-     o que esta apodrecendo, no espirito do aging chart. */
+     Por PRAZO responde outra pergunta, "o que vence primeiro". Por PARADO mostra
+     o que esta apodrecendo, no espirito do aging chart.
+     v41: "mais parado" ordenava por idade_dias, que conta desde aberta_em — idade de
+     NASCIMENTO. Deliberar, escolher ou repactuar nao tocam aberta_em, entao a ordem nao
+     mudava depois de uma deliberacao no painel. Medido em 16/09/2026: 70 dos 140 cards
+     tiveram movimento depois de abertos, idade media 14,3d contra parado real 7,3d —
+     metade da fila estava ordenada pela pergunta errada. A view passou a expor
+     parado_dias, que conta desde o ULTIMO ATO. */
   const semPrazo = d => d==null ? "9999-12-31" : String(d);
+  const par = x => x.parado_dias!=null ? x.parado_dias : (x.idade_dias||0);
   const porFrente={};
   if(TUDOORD==="frente"){
     alvo.forEach(x=>{(porFrente[x.frente]=porFrente[x.frente]||[]).push(x);});
@@ -863,21 +915,19 @@ function rTudo(){
       .forEach(x=>{const k=x.prazo?("vence "+String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7)):"sem prazo";
                    (porFrente[k]=porFrente[k]||[]).push(x);});
   }else{
-    [...alvo].sort((a,b)=>(b.idade_dias||0)-(a.idade_dias||0)||a.id-b.id)
-      .forEach(x=>{const d=x.idade_dias||0;
-                   const k=d>=60?"aberto ha mais de 60 dias":d>=30?"aberto ha 30 a 59 dias":d>=14?"aberto ha 14 a 29 dias":"aberto ha menos de 14 dias";
+    [...alvo].sort((a,b)=>par(b)-par(a)||a.id-b.id)
+      .forEach(x=>{const d=par(x);
+                   const k=d>=30?"parado há 30 dias ou mais":d>=14?"parado há 14 a 29 dias":
+                           d>=7?"parado há 7 a 13 dias":"teve movimento nos últimos 7 dias";
                    (porFrente[k]=porFrente[k]||[]).push(x);});
   }
   /* v39: por FRENTE o grupo maior vem primeiro, que e a leitura de volume. Por prazo ou
-     idade a ordem de insercao JA e a cronologia, e reordenar por tamanho destruiria ela. */
+     parado a ordem de insercao JA e a cronologia, e reordenar por tamanho destruiria ela. */
   const ordem = TUDOORD==="frente"
     ? Object.keys(porFrente).sort((a,b)=>porFrente[b].length-porFrente[a].length||a.localeCompare(b))
     : Object.keys(porFrente);
-  const esc2=t=>esc(String(t==null?"":t));
-  const box=document.getElementById("tudo-lista");
-  if(!box) return;
-  if(!ordem.length){ box.innerHTML=`<div class="card" style="border-left-color:var(--line)">Nada nesta faixa.</div>`; return; }
-  box.innerHTML=ordem.map(f=>{
+  if(!ordem.length) return "";
+  return ordem.map(f=>{
     const rs = TUDOORD==="frente"
       ? porFrente[f].slice().sort((a,b)=>(a.ordem_faixa-b.ordem_faixa)||String(a.prazo||"9999").localeCompare(String(b.prazo||"9999")))
       : porFrente[f].slice();
@@ -889,9 +939,10 @@ function rTudo(){
       return `<div class="ivrow" id="iv-${id}">
         <div class="ivm">
           <code>${id}</code>
-          <span>${x.dono==="igor"?"você":"eu"}</span>
+          ${x.natureza?`<span class="ivnat" title="${x.natureza==="A"?"automatizável":x.natureza==="S"?"semiautomática — precisa de você em algum ponto":"manual — só você"}">${esc2(x.natureza)}</span>`:""}
           <span>${esc2(x.faixa)}</span>
           <span>${pz}${atr}</span>
+          <span${(x.parado_dias||0)>=14?' class="atr"':''}>parado ${x.parado_dias!=null?x.parado_dias:(x.idade_dias||0)}d</span>
           <span class="${x.no_painel?"na":"fo"}">${x.no_painel?"na fila":"fora da fila"}</span>
           ${TUDOORD!=="frente"?`<span class="ivfr">${esc2(x.frente)}</span>`:""}
           ${x.demanda_id?`<span class="ivproj">${esc2(x.demanda_id)}</span>`:""}
@@ -909,21 +960,38 @@ function rTudo(){
                  </details>`
                : ""}`
           : `<div class="ivt"><span class="ivraw">sem card</span> ${esc2(x.resumo)}</div>`}
-        <div class="iva">
-          <button class="ivb pri" onclick="ivFeita(${id})">feita</button>
-          <button class="ivb" onclick="ivAdiar(${id},7)">+7d</button>
-          <button class="ivb" onclick="ivAgir(${id},'repactuar','date','novo prazo')">prazo</button>
-          <button class="ivb neg" onclick="ivAgir(${id},'arquivar','texto','arquivar')">arquivar</button>
-          <button class="ivb" onclick="ivAgir(${id},'deliberar','texto','deliberar')">deliberar</button>
-        </div>
+        <div class="iva">${botoesIv(x,esc2)}</div>
       </div>`;}).join("");
     const sub = TUDOORD==="frente"
       ? `${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA`
-      : `${rs.length} card${rs.length===1?"":"s"} · ${rs.filter(z=>z.dono==="igor").length} seus`;
+      : `${rs.length} card${rs.length===1?"":"s"}`;
     return `<h2>${esc2(f)} <span class="s">${sub}</span></h2>
       <div class="ivwrap">${linhas}</div>`;
   }).join("");
-  const nt=document.getElementById("n-tudo"); if(nt) nt.textContent=tot?String(tot):"";
+}
+
+/* ---------- v41 · A TELA PARA DE CHUTAR O CARDAPIO ----------
+   A v36 escreveu que "a tela apenas usa o que o banco ja devolve" e desenhou os CINCO botoes
+   fixos em todas as linhas. Medido em 16/09/2026: das 140 linhas da aba, so 113 tinham menu em
+   v_acoes_inventario; as outras 27 estao na fila de decisao e tiram menu de v_fila_do_igor,
+   que nao oferece "arquivar" em 37 dos seus 43 cards. Ou seja: 27 cards exibiam um botao
+   ARQUIVAR que agir() recusa por construcao — e a recusa aparecia como defeito do painel.
+   Agora v_inventario_frente devolve o menu real pelos dois cardapios e isto aqui so renderiza.
+   Quem desenha a interface pelo que imagina constroi metade e chama de pronto (acervo 641). */
+function botoesIv(x,esc2){
+  const id=esc2(x.id);
+  const acoes=Array.isArray(x.acoes)?x.acoes:[];
+  if(!acoes.length) return `<span class="ivsem">o banco não oferece ação para este card</span>`;
+  const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
+  const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
+    const rot=esc2(a.rotulo||a.verbo);
+    if(a.arg==null) return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}')">${rot}</button>`;
+    const campo=a.arg==="data"?"date":"texto";
+    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${a.verbo}','${campo}','${escAttr(a.rotulo||a.verbo)}')">${rot}</button>`;
+  });
+  /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
+  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" onclick="ivAdiar(${id},7)">+7d</button>`);
+  return bs.join("");
 }
 
 /* ---------- AGIR A PARTIR DO INVENTARIO · v36 ----------
@@ -951,7 +1019,8 @@ function ivEscolher(ref,opcao){
 const escAttr=s=>String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
 function ivAgir(ref,verbo,campo,label){
   pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
-                                   : "o que fica valendo neste card"};
+                                   : "o que fica valendo neste card",
+            min: verbo==="arquivar" ? 5 : 0};
   abrirModal(label,`<span class="mono">tarefa ${esc(String(ref))}</span>`,campo,
              v=>ivEnviar(ref,verbo,v,label), label);
 }
@@ -1397,6 +1466,11 @@ async function confirmarModal(){
   const el=document.getElementById("mval");
   const v=el?el.value.trim():null;
   if(pendente&&pendente.campo&&!v){msg("Preencha antes de confirmar.","bad");return;}
+  /* v41: agir() recusa motivo de arquivamento com menos de 5 caracteres, e a recusa chegava
+     como erro generico depois da ida ao banco. A regra e do banco; a tela so para de deixar
+     voce descobrir isso pelo caminho longo. */
+  if(pendente&&pendente.min&&v&&v.length<pendente.min){
+    msg(`O banco exige pelo menos ${pendente.min} caracteres — matar um card sem dizer por quê apaga a prova da decisão.`,"bad");return;}
   const fn=pendente&&pendente.fn;fecharModal();if(fn)await fn(v);}
 
 /* ---------- AGORA ---------- */
