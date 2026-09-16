@@ -459,14 +459,24 @@ section.sec.on{display:block}
      Foi por isso que a barra inferior nasceu grudada no topo no primeiro teste. Fundo solido
      no celular resolve sem perder legibilidade. */
   .top{backdrop-filter:none;background:var(--bg)}
+  /* v46: aqui estava cravado repeat(5,1fr) enquanto a barra ja tinha SEIS destinos desde a
+     v43. Dois donos para o mesmo numero — o mesmo defeito do selo de versao da v22 — e a
+     sexta aba, justo a SENTINELA, caia sozinha numa SEGUNDA LINHA que comia o conteudo e
+     nao parecia navegacao. Agora a coluna NASCE da contagem real de abas: acrescentar ou
+     tirar destino nao volta a quebrar a barra. */
   .tabs{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;max-width:none;
     background:rgba(13,17,23,.97);backdrop-filter:blur(14px);
     border-top:1px solid var(--line2);
     padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px));
-    display:grid;grid-template-columns:repeat(5,1fr);gap:0;overflow:visible}
+    display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;overflow:visible}
   .tab{flex-direction:column;display:flex;align-items:center;justify-content:center;
-    padding:9px 2px 7px;font-size:9.5px;letter-spacing:.7px;gap:3px;
-    border-bottom:0;border-top:2px solid transparent}
+    padding:9px 0 7px;letter-spacing:.2px;gap:3px;min-width:0;
+    border-bottom:0;border-top:2px solid transparent;
+    /* o rotulo acompanha a largura da tela em vez de ser chutado. Calibrado no rotulo mais
+       largo (PANORAMA) para caber INTEIRO em 320, 390 e 430 — medido, nao estimado. */
+    font-size:clamp(7.6px,2.32vw,10px)}
+  /* rotulo em UMA linha: SENTINELA quebrada no meio e pior que SENTINELA menor */
+  .tab .tl{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tab.on{border-top-color:var(--acc);border-bottom-color:transparent}
   /* o badge reserva a linha mesmo vazio, senao a aba sem contador desalinha das outras */
   .tab .n{margin-left:0;font-size:10px;padding:0 5px;min-height:15px;min-width:8px;
@@ -704,12 +714,12 @@ section.sec.on{display:block}
     <button class="btn" onclick="sair()">sair</button>
   </div>
   <div class="tabs" id="tabs">
-    <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
-    <button class="tab" data-p="leituras">LEITURAS<span class="n" id="n-le"></span></button>
-    <button class="tab" data-p="panorama">PANORAMA<span class="n" id="n-cmd"></span></button>
-    <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
-    <button class="tab" data-p="tudo">TUDO<span class="n" id="n-tudo"></span></button>
-    <button class="tab" data-p="sentinela">SENTINELA<span class="n" id="n-sent"></span></button>
+    <button class="tab on" data-p="agora"><span class="tl">AGORA</span><span class="n" id="n-agora"></span></button>
+    <button class="tab" data-p="sentinela"><span class="tl">SENTINELA</span><span class="n" id="n-sent"></span></button>
+    <button class="tab" data-p="leituras"><span class="tl">LEITURAS</span><span class="n" id="n-le"></span></button>
+    <button class="tab" data-p="panorama"><span class="tl">PANORAMA</span><span class="n" id="n-cmd"></span></button>
+    <button class="tab" data-p="maquina"><span class="tl">MÁQUINA</span><span class="n" id="n-mo"></span></button>
+    <button class="tab" data-p="tudo"><span class="tl">TUDO</span><span class="n" id="n-tudo"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="filtbar">
@@ -801,6 +811,12 @@ section.sec.on{display:block}
     card, e padrão que voltou mesmo com aprendizado registrado. Sinal sem destino é sinal morto, e é o pior defeito:
     o sistema parece saudável.
     <br><b>Régua:</b> página de alertas de observabilidade — todo sinal tem dono, severidade e consequência, ou não é sinal.
+    <br><b>v46 · a aba passou a aceitar a palavra.</b> Até a v45 aqui não havia um único botão: o alarme tinha destino
+    e a resposta ao alarme não tinha. Medido em 16/09/2026: dos 66 sinais, 36 já tinham cardápio completo no banco
+    (feita, novo prazo, arquivar, deliberar) e a tela não oferecia nenhum. Agora oferece, pelo mesmo portão
+    <code>agir()</code> das abas AGORA e TUDO — nenhum verbo novo. Os outros 30 não têm card atrás: reincidência vem
+    sem <code>ref</code> e sangria traz contraparte, não id de tarefa. Nesses a linha <b>diz por que não tem botão</b>,
+    em vez de oferecer um que o banco recusaria.
     <br><b>Fonte:</b> <code>v_sentinela</code>, que une <code>v_pronto_falta_igor</code>, <code>v_pf_sangria_pj</code>,
     <code>v_prazo_incoerente</code> e <code>v_reincidencia</code>.</div>
 </div>
@@ -825,7 +841,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v45";
+const VER="v46";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1030,6 +1046,26 @@ const SIN={
   prazo_incoerente :["PRAZO QUE CONTRADIZ O CARD","o campo diz uma data, o texto do card promete outra"],
   reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"]
 };
+/* v46 · A SENTINELA PASSA A ACEITAR A PALAVRA.
+   Ate a v45 esta aba so LIA: nenhum onclick na superficie inteira. Era o proprio defeito que
+   ela denuncia, um degrau acima — o alarme tinha destino, e a resposta ao alarme nao tinha.
+   Medido em 16/09/2026: dos 66 sinais, 36 (6 pronto_falta_igor + 30 prazo_incoerente) ja
+   tinham cardapio COMPLETO em v_acoes_inventario — feita, repactuar, arquivar, deliberar — e
+   a tela nao oferecia nenhum deles. Os outros 30 nao tem card atras: reincidencia vem com ref
+   NULO e sangria_pf_pj traz nome de contraparte, nao id de tarefa. Para esses, botao seria
+   mentira, entao a linha DIZ por que nao tem botao, que e a regra da v42.
+   Nenhum verbo novo: mesmo portao agir(), mesmo cardapio que a aba TUDO le. */
+const SEMACAO={
+  sangria_pf_pj:"sem card atrás: isto é lançamento financeiro, some quando a conciliação separar PF de PJ",
+  reincidencia :"sem card atrás: o padrão se fecha no aprendizado, não em um verbo de tarefa"};
+const mapaAcoes=ac=>{const m={};
+  (ac||[]).forEach(a=>{ if(a&&a.ref!=null&&Array.isArray(a.acoes)&&a.acoes.length) m[String(a.ref)]=a.acoes; });
+  return m;};
+function sentAcoes(x){
+  if(!x||!x.ref) return null;
+  const a=(D.sentAc||{})[String(x.ref)];
+  return (a&&a.length)?a:null;
+}
 function rSentinela(){
   const S=D.sent||[];
   const topo=document.getElementById("sent-topo");
@@ -1048,9 +1084,12 @@ function rSentinela(){
     const rs=S.filter(x=>x.sinal===k).sort((a,b)=>(a.severidade-b.severidade)
       ||String(a.data_ref||"9999").localeCompare(String(b.data_ref||"9999")));
     const n1=rs.filter(x=>x.severidade===1).length;
-    return `<h2>${esc(SIN[k][0])} <span class="s">${esc(SIN[k][1])} · ${rs.length} ${rs.length===1?"sinal":"sinais"}${n1?" · "+n1+" para hoje":""}</span></h2>
-      <div class="ivwrap">`+rs.map(x=>`
-        <div class="ivrow sev${x.severidade}">
+    const nAcao=rs.filter(x=>sentAcoes(x)).length;
+    return `<h2>${esc(SIN[k][0])} <span class="s">${esc(SIN[k][1])} · ${rs.length} ${rs.length===1?"sinal":"sinais"}${n1?" · "+n1+" para hoje":""}${nAcao?" · "+nAcao+" com ação aqui":""}</span></h2>
+      <div class="ivwrap">`+rs.map(x=>{
+        const ac=sentAcoes(x);
+        return `
+        <div class="ivrow sev${x.severidade}"${ac?` id="sv-${esc(x.ref)}"`:""}>
           <div class="ivm">
             <span class="sevb s${x.severidade}">${x.severidade===1?"hoje":x.severidade===2?"semana":"higiene"}</span>
             ${x.ref&&x.ref!==x.titulo?`<code>${esc(x.ref)}</code>`:""}
@@ -1059,7 +1098,10 @@ function rSentinela(){
           </div>
           <div class="ivt tit">${esc(x.titulo)}</div>
           <div class="ivj">${esc(x.detalhe)}</div>
-        </div>`).join("")+`</div>`;
+          <div class="iva">${ac
+            ? botoesIv({id:x.ref,acoes:ac},esc,"sv-")
+            : `<span class="ivsem">${SEMACAO[x.sinal]||"o banco não oferece ação para este sinal"}</span>`}</div>
+        </div>`;}).join("")+`</div>`;
   }).join("");
   const nse=document.getElementById("n-sent");
   if(nse) nse.textContent=(sev(1)+sev(2))?String(sev(1)+sev(2)):"";
@@ -1082,19 +1124,20 @@ function execChip(x){
   const e=EXEC[x.executor_possivel]; if(!e) return "";
   return `<span class="ivnat ex-${x.executor_possivel}" title="${esc(e[1])}">${esc(e[0])}</span>`;
 }
-function botoesIv(x,esc2){
+function botoesIv(x,esc2,pref){
   const id=esc2(x.id);
+  const P="'"+(pref||"iv-")+"'";
   const acoes=Array.isArray(x.acoes)?x.acoes:[];
   if(!acoes.length) return `<span class="ivsem">o banco não oferece ação para este card</span>`;
   const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
   const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
     const rot=esc2(a.rotulo||a.verbo);
-    if(a.arg==null) return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}')">${rot}</button>`;
+    if(a.arg==null) return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
     const campo=a.arg==="data"?"date":"texto";
-    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${a.verbo}','${campo}','${escAttr(a.rotulo||a.verbo)}')">${rot}</button>`;
+    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${a.verbo}','${campo}','${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
   });
   /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
-  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" onclick="ivAdiar(${id},7)">+7d</button>`);
+  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" onclick="ivAdiar(${id},7,${P})">+7d</button>`);
   return bs.join("");
 }
 
@@ -1106,14 +1149,18 @@ function botoesIv(x,esc2){
    do acervo 641: quem desenha a interface pelo que imagina constroi metade e chama de pronto. */
 const ivData=d=>{const p=n=>String(n).padStart(2,"0");
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());};
-function ivEnviar(ref,verbo,valor,label){
-  const el=document.getElementById("iv-"+ref);
+/* v46: o MESMO card pode estar desenhado em DUAS abas ao mesmo tempo (TUDO e SENTINELA),
+   e as duas ficam no DOM — a aba fechada apenas perde a classe .on. Com um id so, o
+   getElementById devolvia a linha da aba INVISIVEL e o desfazer tirava da tela errada.
+   Agora cada superficie declara seu prefixo: iv- na TUDO, sv- na SENTINELA. */
+function ivEnviar(ref,verbo,valor,label,pref){
+  const el=document.getElementById((pref||"iv-")+ref);
   agendar(()=>sb.rpc("agir",{p_origem:"tarefa",p_ref:String(ref),p_verbo:verbo,p_valor:valor}),
           label+" em "+ref, el);
 }
 function ivFeita(ref){ ivEnviar(ref,"feita",null,"feita"); }
-function ivAdiar(ref,dias){ const d=new Date(); d.setDate(d.getDate()+dias);
-  ivEnviar(ref,"repactuar",ivData(d),"novo prazo"); }
+function ivAdiar(ref,dias,pref){ const d=new Date(); d.setDate(d.getDate()+dias);
+  ivEnviar(ref,"repactuar",ivData(d),"novo prazo",pref); }
 /* v39: a opcao entra como VALOR, nao como frase. O banco compara com a opcao marcada
    recomendada e grava seguiu ou divergiu sozinho — e o que faltava para medir adesao. */
 function ivEscolher(ref,opcao){
@@ -1121,12 +1168,12 @@ function ivEscolher(ref,opcao){
   agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}), "escolher em "+ref, el);
 }
 const escAttr=s=>String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
-function ivAgir(ref,verbo,campo,label){
+function ivAgir(ref,verbo,campo,label,pref){
   pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
                                    : "o que fica valendo neste card",
             min: verbo==="arquivar" ? 5 : 0};
   abrirModal(label,`<span class="mono">tarefa ${esc(String(ref))}</span>`,campo,
-             v=>ivEnviar(ref,verbo,v,label), label);
+             v=>ivEnviar(ref,verbo,v,label,pref), label);
 }
 function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smooth"}); }
 
@@ -1215,8 +1262,12 @@ async function carregarAba(nome,forcar){
   if(nome==="tudo"&&(forcar||!LAZY.tudo)){
     const [rz,it]=await Promise.all([q_("v_inventario_resumo"),q_("v_inventario_frente")]);
     D.invr=rz||[]; D.inv=it||[]; LAZY.tudo=1; SECQUANDO.tudo=Date.now(); rTudo();}
+  /* v46: sinal e cardapio viajam JUNTOS. Carregar um sem o outro desenharia a aba ora com
+     botao, ora sem, conforme a ordem de chegada — e a tela mentiria sobre o que o banco aceita. */
   if(nome==="sentinela"&&(forcar||!LAZY.sentinela)){
-    D.sent=await q_("v_sentinela")||[]; LAZY.sentinela=1; SECQUANDO.sentinela=Date.now(); rSentinela();}
+    const [sn,ac]=await Promise.all([q_("v_sentinela"),q_("v_acoes_inventario",b=>b.eq("origem","tarefa"))]);
+    D.sent=sn||[]; D.sentAc=mapaAcoes(ac);
+    LAZY.sentinela=1; SECQUANDO.sentinela=Date.now(); rSentinela();}
   if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
@@ -1239,7 +1290,10 @@ document.addEventListener("keydown",e=>{
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
-  else if(k>="1"&&k<="4"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
+  /* v46: o atalho parou em "4" quando as abas ja eram 6. Le a contagem real, nao um numero
+     escrito a mao, que e o mesmo defeito da grade de 5 colunas corrigida no CSS. */
+  else if(k>="1"&&k<="9"){const ts=document.querySelectorAll(".tab");const tb=ts[+k-1];
+    if(tb){e.preventDefault();tb.click();}}
 });
 
 /* v26: a altura do topo fixo e MEDIDA, nunca chutada. Ela muda com o filtro aberto,
@@ -1934,6 +1988,13 @@ async function recarregarFila(){
   if(LAZY.tudo){
     const [rz,it]=await Promise.all([q("v_inventario_resumo"),q("v_inventario_frente")]);
     D.invr=rz||[]; D.inv=it||[]; rTudo();
+  }
+  /* v46: a SENTINELA passou a agir, entao ela tem de RELER. Sem isto o sinal atendido
+     continuaria na tela e o contador da aba seguiria contando alarme ja resolvido —
+     que e exatamente o defeito que a aba existe para denunciar. */
+  if(LAZY.sentinela){
+    const [sn,ac]=await Promise.all([q("v_sentinela"),q("v_acoes_inventario",b=>b.eq("origem","tarefa"))]);
+    D.sent=sn||[]; D.sentAc=mapaAcoes(ac); rSentinela();
   }
   rAgora();marcaAbas();
 }
