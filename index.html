@@ -580,6 +580,22 @@ section.sec.on{display:block}
   .ivt.tit{font-size:14px}
   .ivj{font-size:12px}
 }
+
+/* ---------- v39 · ESCOLHA E ORDEM ---------- */
+.ivop li.esc{border-left-color:var(--grn);background:rgba(48,164,108,.10)}
+.opb{display:block;width:100%;text-align:left;background:none;border:0;padding:0;
+  color:var(--ink);font-size:12px;font-weight:600;cursor:pointer;line-height:1.4}
+.opb:hover{color:var(--acc)}
+.recmk{font-style:normal;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--acc);border:1px solid var(--acc);border-radius:4px;padding:0 4px;margin-left:5px;
+  vertical-align:middle;font-weight:600}
+.ivesc{font-size:11.5px;color:var(--ok);margin:2px 0 6px}
+.ordbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.ordl{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.ordb{background:var(--card);border:1px solid var(--line);color:var(--mut);
+  border-radius:20px;padding:4px 11px;font-size:12px;cursor:pointer}
+.ordb.on{background:var(--raise);border-color:var(--acc);color:var(--ink)}
+.ivfr{font-size:10.5px;color:var(--mut);border:1px solid var(--line2);border-radius:4px;padding:0 5px}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -727,6 +743,7 @@ section.sec.on{display:block}
 
 <div class="pane" id="p-tudo">
   <div id="tudo-topo"></div>
+  <div id="ord-tudo" class="ordbar"></div>
   <div class="secnav" id="nav-tudo"></div>
   <div id="tudo-lista"></div>
   <div class="foot"><b>Por que esta aba existe.</b> A aba AGORA responde o que precisa de você hoje, e corta de propósito.
@@ -755,7 +772,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v38";
+const VER="v39";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -785,6 +802,8 @@ function pref(k,v){try{if(v===undefined)return localStorage.getItem("ci_"+k);
    Esta aba responde "quanto existe", que e outra pergunta. Medido em 15/09/2026: o painel
    mostrava 54 de 180 cards abertos e seis frentes inteiras nao apareciam em aba nenhuma. */
 let TUDOF="todas";
+let TUDOORD=(function(){try{return localStorage.getItem("ci_tudo_ord")||"frente"}catch(e){return "frente"}})();
+function ordenaTudo(k){ TUDOORD=k; try{localStorage.setItem("ci_tudo_ord",k)}catch(e){} rTudo(); }
 const FX=[["todas","tudo"],["vencida","vencidas"],["vence hoje","vencem hoje"],
           ["esta semana","esta semana"],["sem prazo","sem prazo"],
           ["aguardando terceiro","com terceiro"],["depois","depois"]];
@@ -804,21 +823,48 @@ function rTudo(){
       <div class="kpi${ocultas?" fora":""}"><div class="k">FORA DA ABA AGORA</div><div class="n">${ocultas}</div></div>
       <div class="kpi${semcard?" fora":""}"><div class="k">AINDA SEM CARD</div><div class="n">${semcard}</div></div>
     </div>`;
+  const ordbar=document.getElementById("ord-tudo");
+  if(ordbar) ordbar.innerHTML=
+    `<span class="ordl">ordenar por</span>`+
+    [["frente","frente"],["prazo","prazo"],["idade","mais parado"]].map(([k,r])=>
+      `<button class="ordb${TUDOORD===k?" on":""}" onclick="ordenaTudo('${k}')">${r}</button>`).join("");
   const nav=document.getElementById("nav-tudo");
   if(nav) nav.innerHTML=FX.map(([k,r])=>{
     const n=fxCount(k); if(!n&&k!=="todas")return "";
     return `<button class="secbt${TUDOF===k?" on":""}" onclick="filtraTudo('${k.replace(/'/g,"")}')">${r} <span class="n">${n}</span></button>`;
   }).join("");
   const alvo = TUDOF==="todas" ? I : I.filter(x=>x.faixa===TUDOF);
+  /* v39: a aba nasceu agrupada por frente, que responde "onde esta o trabalho".
+     Por PRAZO responde outra pergunta, "o que vence primeiro", e o card do dia 16
+     de uma frente importa mais que o do dia 30 da mesma frente. Por IDADE mostra
+     o que esta apodrecendo, no espirito do aging chart. */
+  const semPrazo = d => d==null ? "9999-12-31" : String(d);
   const porFrente={};
-  alvo.forEach(x=>{(porFrente[x.frente]=porFrente[x.frente]||[]).push(x);});
-  const ordem=Object.keys(porFrente).sort((a,b)=>porFrente[b].length-porFrente[a].length||a.localeCompare(b));
+  if(TUDOORD==="frente"){
+    alvo.forEach(x=>{(porFrente[x.frente]=porFrente[x.frente]||[]).push(x);});
+  }else if(TUDOORD==="prazo"){
+    [...alvo].sort((a,b)=>semPrazo(a.prazo).localeCompare(semPrazo(b.prazo))||a.id-b.id)
+      .forEach(x=>{const k=x.prazo?("vence "+String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7)):"sem prazo";
+                   (porFrente[k]=porFrente[k]||[]).push(x);});
+  }else{
+    [...alvo].sort((a,b)=>(b.idade_dias||0)-(a.idade_dias||0)||a.id-b.id)
+      .forEach(x=>{const d=x.idade_dias||0;
+                   const k=d>=60?"aberto ha mais de 60 dias":d>=30?"aberto ha 30 a 59 dias":d>=14?"aberto ha 14 a 29 dias":"aberto ha menos de 14 dias";
+                   (porFrente[k]=porFrente[k]||[]).push(x);});
+  }
+  /* v39: por FRENTE o grupo maior vem primeiro, que e a leitura de volume. Por prazo ou
+     idade a ordem de insercao JA e a cronologia, e reordenar por tamanho destruiria ela. */
+  const ordem = TUDOORD==="frente"
+    ? Object.keys(porFrente).sort((a,b)=>porFrente[b].length-porFrente[a].length||a.localeCompare(b))
+    : Object.keys(porFrente);
   const esc2=t=>esc(String(t==null?"":t));
   const box=document.getElementById("tudo-lista");
   if(!box) return;
   if(!ordem.length){ box.innerHTML=`<div class="card" style="border-left-color:var(--line)">Nada nesta faixa.</div>`; return; }
   box.innerHTML=ordem.map(f=>{
-    const rs=porFrente[f].slice().sort((a,b)=>(a.ordem_faixa-b.ordem_faixa)||String(a.prazo||"9999").localeCompare(String(b.prazo||"9999")));
+    const rs = TUDOORD==="frente"
+      ? porFrente[f].slice().sort((a,b)=>(a.ordem_faixa-b.ordem_faixa)||String(a.prazo||"9999").localeCompare(String(b.prazo||"9999")))
+      : porFrente[f].slice();
     const r=(R.find(z=>z.frente===f))||{};
     const linhas=rs.map(x=>{
       const pz = x.prazo ? String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7) : "sem prazo";
@@ -831,6 +877,7 @@ function rTudo(){
           <span>${esc2(x.faixa)}</span>
           <span>${pz}${atr}</span>
           <span class="${x.no_painel?"na":"fo"}">${x.no_painel?"na fila":"fora da fila"}</span>
+          ${TUDOORD!=="frente"?`<span class="ivfr">${esc2(x.frente)}</span>`:""}
           ${x.demanda_id?`<span class="ivproj">${esc2(x.demanda_id)}</span>`:""}
         </div>
         ${x.card_pronto
@@ -839,7 +886,8 @@ function rTudo(){
              ${(x.opcoes||x.recomendacao||x.criterio_pronto)
                ? `<details class="ivd"><summary>o que pesa nesta decisão</summary>
                    ${x.opcoes&&x.opcoes.length?`<ul class="ivop">`+x.opcoes.map(o=>
-                      `<li><b>${esc2(o.label)}</b><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`:""}
+                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" onclick="ivEscolher(${id},'${escAttr(o.label)}')">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
+                      +(x.escolha?`<div class="ivesc">escolhido: <b>${esc2(x.escolha)}</b></div>`:``):""}
                    ${x.recomendacao?`<div class="ivrec"><b>minha recomendação</b> ${esc2(x.recomendacao)}</div>`:""}
                    ${x.criterio_pronto?`<div class="ivcp"><b>pronto quando</b> ${esc2(x.criterio_pronto)}</div>`:""}
                  </details>`
@@ -853,7 +901,10 @@ function rTudo(){
           <button class="ivb" onclick="ivAgir(${id},'deliberar','texto','deliberar')">deliberar</button>
         </div>
       </div>`;}).join("");
-    return `<h2>${esc2(f)} <span class="s">${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA</span></h2>
+    const sub = TUDOORD==="frente"
+      ? `${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA`
+      : `${rs.length} card${rs.length===1?"":"s"} · ${rs.filter(z=>z.dono==="igor").length} seus`;
+    return `<h2>${esc2(f)} <span class="s">${sub}</span></h2>
       <div class="ivwrap">${linhas}</div>`;
   }).join("");
   const nt=document.getElementById("n-tudo"); if(nt) nt.textContent=tot?String(tot):"";
@@ -875,6 +926,13 @@ function ivEnviar(ref,verbo,valor,label){
 function ivFeita(ref){ ivEnviar(ref,"feita",null,"feita"); }
 function ivAdiar(ref,dias){ const d=new Date(); d.setDate(d.getDate()+dias);
   ivEnviar(ref,"repactuar",ivData(d),"novo prazo"); }
+/* v39: a opcao entra como VALOR, nao como frase. O banco compara com a opcao marcada
+   recomendada e grava seguiu ou divergiu sozinho — e o que faltava para medir adesao. */
+function ivEscolher(ref,opcao){
+  const el=document.getElementById("iv-"+ref);
+  agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}), "escolher em "+ref, el);
+}
+const escAttr=s=>String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
 function ivAgir(ref,verbo,campo,label){
   pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
                                    : "o que fica valendo neste card"};
