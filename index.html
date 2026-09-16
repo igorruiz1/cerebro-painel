@@ -772,7 +772,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v39";
+const VER="v40";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -790,6 +790,22 @@ const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).to
   (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0)));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
+/* v40: promessa que nao volta e pior que erro — o erro a tela mostra, o silencio nao.
+   Toda ida ao banco passa por aqui com um teto de tempo. Estourou, a tela DIZ, e diz a
+   verdade util: o efeito pode ter chegado, recarregue para ver o estado real. */
+const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
+function comTeto(promessa, ms, rotulo){
+  let t;
+  const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
+  return Promise.race([Promise.resolve(promessa), estouro]).finally(()=>clearTimeout(t));
+}
+function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf("__TETO__")===0; }
+function avisaTravou(rotulo, gravou){
+  msg(gravou
+    ? "A ação foi enviada, mas a tela não conseguiu conferir o resultado ("+rotulo+"). Recarregue a página: o efeito pode já estar gravado."
+    : "Sem resposta do banco em "+rotulo+". Nada foi confirmado — recarregue e tente de novo.",
+    "bad", 12000);
+}
 function msg(t,tipo,ms){const l=document.getElementById("log");
   l.textContent=t;l.className="log on"+(tipo?" "+tipo:"");
   clearTimeout(msg._t);msg._t=setTimeout(()=>l.className="log",ms||4200);}
@@ -1624,12 +1640,18 @@ async function enviarPendente(){
   if(!PEND)return; const p=PEND; PEND=null;
   clearTimeout(p.timer);
   document.getElementById("desf").classList.remove("on");
-  const {data,error}=await p.fn();
+  let data,error;
+  try{ ({data,error}=await comTeto(p.fn(),LIMITE_ACAO,"12s")); }
+  catch(e){
+    if(ehTeto(e)){avisaTravou("12s",false);volta(p);return;}
+    msg("Erro: "+e.message,"bad",7000);volta(p);return;}
   if(error){msg("Erro: "+error.message,"bad",7000);volta(p);return;}
   const t=(typeof data==="string")?data:"feito";
   if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);volta(p);return;}
   msg(t,"ok");
-  await recarregarFila();
+  /* NAO devolve o card em caso de teto aqui: o banco ja gravou e repor na tela seria mentir */
+  try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
+  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela nao releu: "+e.message,"bad",9000); }
 }
 function desfazer(){
   if(!PEND){return;}
@@ -1640,7 +1662,8 @@ function desfazer(){
   msg("desfeito. Nada foi gravado.",null,2600);
 }
 async function recarregarFila(){
-  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
+    return comTeto(b.then(r=>r.error?[]:r.data), LIMITE_RECARGA, "15s").catch(e=>{if(ehTeto(e))throw e;return [];});};
   const [fila,cont,cor]=await Promise.all([
     q("v_painel_fila",b=>b.eq("camada_tela","hoje")),q("v_painel_contagem"),q("v_correcoes_abertas")]);
   D.fila=fila||[];D.cont=(cont&&cont[0])||{};D.cor=cor||[];
@@ -1651,12 +1674,17 @@ async function recarregarFila(){
   rAgora();marcaAbas();
 }
 async function exec(fn,okMsg){
-  const {data,error}=await fn();
+  let data,error;
+  try{ ({data,error}=await comTeto(fn(),LIMITE_ACAO,"12s")); }
+  catch(e){ if(ehTeto(e)){avisaTravou("12s",false);return false;} msg("Erro: "+e.message,"bad",7000);return false; }
   if(error){msg("Erro: "+error.message,"bad",7000);return false;}
   const t=(typeof data==="string")?data:(okMsg||"feito");
   if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);return false;}
   msg(okMsg||t,"ok");
-  await recarregarFila();return true;}
+  /* daqui em diante o banco JA gravou: se a tela nao conseguir reler, o aviso tem de dizer isso */
+  try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
+  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela nao releu: "+e.message,"bad",9000); }
+  return true;}
 
 /* REGISTRAR: a acao primaria da v25. O dono escreve, o executor le. */
 function registrar(origem,ref,idc){
