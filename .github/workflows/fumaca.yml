@@ -1,0 +1,35 @@
+# Smoke test do painel. Roda em todo push e em toda proposta de mudanca.
+#
+# Por que existe: quatro versoes (v22, v26, v43, v45) cairam pela MESMA classe de defeito —
+# um numero escrito a mao que deixou de valer. Corrigimos a instancia tres vezes e a classe
+# nenhuma. Aqui a classe morre: a suite afirma o obvio antes de cada deploy, em ~3 segundos.
+name: fumaça
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  fumaca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      # so o chromium: o painel e uma pagina estatica e tres navegadores triplicariam o
+      # tempo sem triplicar a informacao
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rastro-da-falha
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
