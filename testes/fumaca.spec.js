@@ -121,6 +121,33 @@ test('A ESCADA desenha os 5 degraus so com render(), sem abrir outra secao antes
   expect(r.placar,  'placar da simbiose nem vazio declarou').toBeGreaterThan(0);
 });
 
+/* CLASSE DE DEFEITO 3 · v48: o BANCO tem o dado e a TELA nao mostra. tarefa.opcoes existia
+   desde a v39 e a rpc escolher() tambem, mas v_painel_fila nunca expos a coluna: na fila de
+   HOJE o card so oferecia "feita". 3 escolhas registradas contra 134 cards abertos. Nao da
+   para deliberar o que nao esta desenhado. O teste afirma o caminho inteiro do desenho:
+   dado em D.op -> botao de opcao, marca de recomendada e o verbo que chama a rpc. */
+test('o card da fila de HOJE desenha a escolha quando o banco oferece opcao', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    let err=null, html='';
+    try{
+      D.op=[{origem:'tarefa', ref:'731', escolha:null, opcoes:[
+        {label:'Ajustar a meta', consequencia:'numero menor mas cumprido', recomendada:true},
+        {label:'Manter os tetos', consequencia:'terceiro mes de estouro'}]}];
+      html = cardFila({origem:'tarefa', ref:'731', nivel:1, acoes:[],
+        titulo:'Decidir o corte dos tetos', titulo_completo:'Decidir o corte dos tetos',
+        recomendacao:'Ajustar a meta.'});
+    }catch(e){ err=String(e); }
+    return {err, botao:html.includes('faEscolher'), marca:html.includes('recmk'),
+            rotulo:html.includes('Ajustar a meta'), consequencia:html.includes('terceiro mes de estouro')};
+  });
+  expect(r.err,          'cardFila derrubou').toBe(null);
+  expect(r.botao,        'botao de escolha no card da fila').toBe(true);
+  expect(r.marca,        'marca de opcao recomendada').toBe(true);
+  expect(r.rotulo,       'rotulo da opcao').toBe(true);
+  expect(r.consequencia, 'consequencia de cada opcao').toBe(true);
+});
+
 test('a abertura nao derruba o script', async ({page})=>{
   const erros = await abrir(page);
   await page.waitForTimeout(400);
