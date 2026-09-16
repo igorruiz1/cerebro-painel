@@ -99,6 +99,28 @@ for (const largura of [320, 390, 430]) {
   });
 }
 
+/* CLASSE DE DEFEITO 2 · v47: secao cujo TITULO existe e cujo CORPO so e desenhado por uma
+   funcao que mora no ramo de OUTRA secao. A ESCADA, o PLACAR DA SIMBIOSE e a grade de KPI
+   viviam em rEvolucao(), chamada so ao abrir o ESPELHO: quem clicava direto em "Pares e
+   escada" via tres caixas vazias — sem erro no console, sem aviso de carga incompleta, sem
+   nada para reclamar. Ausencia silenciosa e pior que falha barulhenta.
+   A escada e o caso testavel da classe: os 5 degraus do CMMI sao fixos, nao dependem de
+   dado nenhum. Se render() nao os desenha, o corpo esta pendurado em outro ramo de novo. */
+test('A ESCADA desenha os 5 degraus so com render(), sem abrir outra secao antes', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    let err=null; try{ render(); }catch(e){ err=String(e); }
+    return {err,
+      degraus:document.querySelectorAll('#escada .dim').length,
+      /* vazio DECLARADO conta como desenhado; o que nao pode e o div nunca ser tocado */
+      placar:document.getElementById('placarsim').innerHTML.trim().length};
+  });
+  expect(r.err,     'render() derrubou o script').toBe(null);
+  expect(r.degraus, 'degraus desenhados pela escada').toBe(5);
+  expect(r.placar,  'placar da simbiose nem vazio declarou').toBeGreaterThan(0);
+});
+
 test('a abertura nao derruba o script', async ({page})=>{
   const erros = await abrir(page);
   await page.waitForTimeout(400);
