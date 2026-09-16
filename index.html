@@ -845,7 +845,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v46";
+const VER="v47";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1240,6 +1240,9 @@ async function carregarSecao(id,forcar){
   if(id==="movimento"&&(forcar||!LAZY.movimento)){
     const [ag,rp]=await Promise.all([q_("v_fila_aging"),q_("v_represa_prazo")]);
     D.ag=ag||[];D.rp=rp||[];LAZY.movimento=1;SECQUANDO.movimento=Date.now();rMovimento();}
+  /* v47: a secao "Pares e escada" passa a ter carga propria. Nao busca nada (o dado vem na
+     abertura), mas redesenha e carimba o frescor — antes ela nao existia neste roteador. */
+  if(id==="medida"){ SECQUANDO.medida=SECQUANDO.medida||CARGA; rPares(); rEvolucao(); }
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
     D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
   /* v27: faixa por frente entra na secao FRENTES, e as duas medidas de motor na secao ROTINAS.
@@ -1581,7 +1584,14 @@ function recarregarNovo(){
   const u=new URL(location.href); u.searchParams.set("v", Date.now());
   location.replace(u.toString());
 }
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rMotor();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
+/* v47 CONSERTO: A ESCADA, o PLACAR DA SIMBIOSE e a grade de KPI eram desenhados SO por
+   rEvolucao(), e rEvolucao() so era chamada no ramo "espelho" de carregarSecao(). Quem
+   clicava direto em MAQUINA > "Pares e escada" via os titulos e tres caixas vazias — sem
+   erro, sem aviso, sem falha de carga. O dado (v_simbiose_maturidade, v_painel_evolucao,
+   v_placar) SEMPRE veio na abertura: o defeito era de chamada, nao de banco. Medido em
+   16/09/2026. A classe do defeito — secao cujo titulo existe e cujo corpo depende de outra
+   secao ter sido aberta antes — morre no smoke test "A ESCADA desenha os 5 degraus". */
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rEvolucao();rMotor();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
@@ -2536,8 +2546,10 @@ motor:"Motor, rotinas e teste",fila_decisao:"Fila e decisão",arquivo:"Arquivo e
 fluxo:"Fluxo e ritmo",medicao:"Metanálise — o sistema olhando para si",caixa:"Caixa e negócio"};
 function rEvolucao(){
   rPlacarSimbiose();
-  const L=D.loop.find(l=>l.recencia===1);
-  document.getElementById("loop").innerHTML=L?`<div class="loop">
+  const L=(D.loop||[]).find(l=>l.recencia===1);
+  /* v47: render() roda antes de a secao ESPELHO carregar. Sem dado de rodada a tela NAO
+     apaga o que ja estava la — apagar seria trocar dado velho por afirmacao falsa. */
+  if((D.loop||[]).length) document.getElementById("loop").innerHTML=L?`<div class="loop">
     <div class="t">${esc(L.titulo)}</div><div class="s">${esc(L.subtitulo||"")} · ${esc(L.rodada)} · ${esc(L.data)}</div>
     <div class="lx">${esc(L.leitura)}</div>
     ${(L.achados||[]).map(a=>`<div class="ach">${esc(a)}</div>`).join("")}
@@ -2545,8 +2557,8 @@ function rEvolucao(){
     ${D.loop.length>1?`<div style="margin-top:12px"><select onchange="verLoop(this.value)">
       ${D.loop.map(l=>`<option value="${esc(l.rodada)}">${esc(l.data)} · ${esc(l.rodada)}</option>`).join("")}</select></div>`:""}
   </div>`:"";
-  const min=D.mat.length?Math.min(...D.mat.map(m=>m.nivel)):null;
-  const elo=D.mat.slice().sort((a,b)=>a.nivel-b.nivel||a.ordem-b.ordem)[0];
+  const min=(D.mat||[]).length?Math.min(...D.mat.map(m=>m.nivel)):null;
+  const elo=(D.mat||[]).slice().sort((a,b)=>a.nivel-b.nivel||a.ordem-b.ordem)[0];
   document.getElementById("degrau").innerHTML=min?`degrau <b>${min}</b> · elo ${esc(elo?elo.dimensao:"—")}`:"";
   const nomes=["Inicial","Gerenciado","Definido","Quantitativo","Otimizando"];
   const desc=["Depende de alguém lembrar. Não há sensor.","Registro, dono e prazo — execução por disciplina.",
@@ -2557,7 +2569,7 @@ function rEvolucao(){
       <span style="font-size:19px;font-weight:700;color:${on?"var(--ok)":"var(--mut)"};width:22px">${i+1}</span>
       <span class="nm">${n} ${i+1===min?'<span class="tag ok">o sistema está aqui</span>':""}</span>
       <span style="font-size:12.5px;color:var(--mut);flex:2;min-width:180px">${desc[i]}</span></div>`}).join("");
-  document.getElementById("dims").innerHTML=D.mat.map(m=>{
+  document.getElementById("dims").innerHTML=(D.mat||[]).map(m=>{
     const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
     return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
       <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`}).join("");
