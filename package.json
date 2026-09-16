@@ -1,0 +1,7 @@
+{
+  "name": "cerebro-painel",
+  "private": true,
+  "description": "Painel do Cerebro Igor. O artefato e o index.html; isto aqui so existe para testa-lo.",
+  "scripts": { "teste": "playwright test" },
+  "devDependencies": { "@playwright/test": "1.56.1" }
+}
