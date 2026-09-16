@@ -181,6 +181,18 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
 #velha b{color:var(--yel)}
 #velha button{background:var(--yel);color:#1b1405;border:0;border-radius:8px;
   padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;min-height:34px}
+/* v44: "carga incompleta" e vermelho, nao amarelo. Tela desatualizada e um incomodo;
+   tela que mostra menos do que existe e uma MENTIRA, e a pior delas foi medida em
+   16/09/2026: a fila de hoje voltou vazia por falha de rede e o painel escreveu
+   "nada precisa de voce hoje" com 16 cards abertos no banco. */
+#falhou{display:none;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#3a1416;border:1px solid var(--bad);border-radius:10px;
+  padding:10px 13px;margin:0 0 12px;font-size:13.5px;color:var(--ink)}
+#falhou.on{display:flex}
+#falhou b{color:var(--bad)}
+#falhou small{color:var(--mut);font-family:ui-monospace,monospace;font-size:11.5px;flex:1 1 100%}
+#falhou button{background:var(--bad);color:#fff;border:0;border-radius:8px;
+  padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;min-height:34px}
 /* v26: estado vazio de AGORA. Sem alarme, sem cor de alerta no container: e estado,
    nao ocorrencia. Cada linha e um instrumento, e as saidas ficam embaixo. */
 .vazio{text-align:left;padding:6px 2px 14px}
@@ -726,6 +738,7 @@ section.sec.on{display:block}
 
 <main>
 <div id="velha"><b>Tela desatualizada.</b><span id="velhatxt"></span><button onclick="recarregarNovo()">recarregar</button></div>
+<div id="falhou"><b>Carga incompleta.</b><span id="falhoutxt"></span><button onclick="carregar()">tentar de novo</button><small id="falhoudet"></small></div>
   
 
   <div class="pane on" id="p-agora">
@@ -812,7 +825,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v43";
+const VER="v44";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1156,7 +1169,12 @@ async function abrirSecao(sup,id){
   seloSecao(sup,id);
   window.scrollTo({top:0,behavior:"smooth"});
 }
-const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+/* v44: as abas tinham o mesmo defeito da carga: erro virava lista vazia, e a aba dizia
+   "nada nesta faixa" quando na verdade a consulta nao voltou. Agora o aviso vermelho sobe. */
+const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
+  return comTeto(b, LIMITE_RECARGA, v)
+    .then(r=>{ if(r&&r.error){avisaFalha([v+" — "+r.error.message]); return [];} return (r&&r.data)||[]; })
+    .catch(e=>{ avisaFalha([v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":"erro")]); return []; });};
 async function carregarSecao(id,forcar){
   if(id==="espelho"&&(forcar||!LAZY.espelho)){
     const [loop,esp,espP]=await Promise.all([q_("v_painel_rodada"),q_("v_espelho"),q_("v_espelho_placar")]);
@@ -1387,7 +1405,23 @@ function rMovimento(){
 /* ---------- carga ---------- */
 async function carregar(){
   msg("carregando…",null,1200);
-  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);return b.then(r=>r.error?[]:r.data);};
+  /* v44: ate aqui q() devolvia [] tanto para "nao ha nada" quanto para "a consulta falhou".
+     Medido em 16/09/2026: v_painel_fila voltou vazia numa rajada de 20 requisicoes
+     simultaneas e a tela escreveu "nada precisa de voce hoje" com 16 cards abertos no
+     banco. Vazio e resposta; falha e ausencia de resposta. A tela nao pode confundir as
+     duas — e a mesma licao da v40, que so tinha sido aplicada as ACOES, nao a CARGA. */
+  const FALHAS=[];
+  /* EM ABERTO (16/09/2026): a abertura dispara as 20 consultas de uma vez. Cada uma sozinha
+     responde em ate 1,2s; as 20 juntas levaram 13,7s numa medicao e estouraram o teto em
+     outra — foi assim que a fila de hoje voltou vazia. Um limitador de concorrencia e o
+     remedio obvio, mas NAO entrou nesta versao: a unica bancada disponivel aqui e a aba do
+     navegador embutido, que o proprio app estrangula quando nao esta em foco, e otimizacao
+     que nao se consegue medir nao se embarca. O que entrou foi a parte que se prova: a tela
+     passa a DIZER quando a carga veio incompleta, em vez de exibir o vazio como verdade. */
+  const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
+    return comTeto(b, LIMITE_RECARGA, v)
+      .then(r=>{ if(r&&r.error){FALHAS.push(v+" — "+r.error.message); return null;} return (r&&r.data)||[]; })
+      .catch(e=>{ FALHAS.push(v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":(e&&e.message)||"erro")); return null; });};
   /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
      647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
   const [fila,cont,cor,fresc,rw,se,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip,rotp]=await Promise.all([
@@ -1400,27 +1434,59 @@ async function carregar(){
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
-  const sentN=await sb.from("v_sentinela").select("sinal",{count:"exact",head:true})
-    .lte("severidade",2).then(r=>r.error?null:r.count);
+  const sentN=await comTeto(sb.from("v_sentinela").select("sinal",{count:"exact",head:true})
+    .lte("severidade",2), LIMITE_RECARGA, "v_sentinela")
+    .then(r=>r&&!r.error?r.count:null)
+    .catch(()=>null);
+  if(sentN===null) FALHAS.push("v_sentinela — contador não voltou");
   const nse=document.getElementById("n-sent"); if(nse) nse.textContent=sentN?String(sentN):"";
-  const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
-    .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
-    .then(r=>r.error?[]:r.data);
-  D={...D,fila:fila||[],cont:(cont&&cont[0])||{},cor:cor||[],fresc:(fresc&&fresc[0])||null,
-     rw:(rw&&rw[0])||null,se:se||[],ev:ev||[],ins:ins||[],fr:fr||[],m9:m9||[],mat:mat||[],au:au||[],
-     pls:pls||[],dv:dv||[],par:par||[],mo:mo||[],varr:(varr&&varr[0])||null,semi:semi||[],
-     nat:nat||[],wip:(wip&&wip[0])||null,rotp:(rotp&&rotp[0])||null,
+  const semi=await comTeto(sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
+    .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo"),
+    LIMITE_RECARGA, "tarefa/semi")
+    .then(r=>{if(r&&r.error){FALHAS.push("tarefa (semiautomáticas) — "+r.error.message);return null;} return (r&&r.data)||[];})
+    .catch(()=>{FALHAS.push("tarefa (semiautomáticas) — sem resposta");return null;});
+  /* v44: consulta que FALHOU (null) nao apaga o que ja estava na tela — mantem o dado
+     anterior e o aviso vermelho diz que ele e velho. Apagar seria trocar um dado
+     desatualizado por uma afirmacao falsa, que e sempre pior. */
+  const L=(x,ant)=> x===null ? (ant||[]) : x;
+  const U=(x,ant,vazio)=> x===null ? (ant!==undefined?ant:(vazio??null)) : ((x&&x[0])??(vazio??null));
+  D={...D,fila:L(fila,D.fila),cont:U(cont,D.cont,{}),cor:L(cor,D.cor),fresc:U(fresc,D.fresc),
+     rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
+     mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
+     varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
      depois:D.depois||[]};
+  avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
   CARGA=Date.now(); SECQUANDO={};
   render();
   await carregarAba(ABA,true);
-  try{const r=await sb.rpc("painel_ping",{p_versao:VER,p_origem:location.hostname});
+  /* v44: este ping era a ultima linha da carga e NAO tinha teto. Bastava ele pendurar para
+     carregar() nunca resolver — e a tela ficava no "carregando…" para sempre, com o dado
+     ja na mao. Medido em 16/09/2026. O selo de versao e informacao lateral: nunca pode
+     segurar a carga. */
+  try{const r=await comTeto(sb.rpc("painel_ping",{p_versao:VER,p_origem:location.hostname}),
+                            LIMITE_ACAO, "painel_ping");
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);
       else avisaVersao(r&&r.data);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
   msg("atualizado "+new Date().toLocaleTimeString("pt-BR"),null,1800);}
+/* v44: a tela DIZ quando veio incompleta, e diz o que faltou. Antes, falha de carga saia
+   como "nada precisa de voce hoje" — a unica frase do painel que nao pode ser inventada. */
+function avisaFalha(falhas){
+  const el=document.getElementById("falhou"); if(!el) return;
+  const houve=Array.isArray(falhas)&&falhas.length>0;
+  el.classList.toggle("on", houve);
+  if(!houve) return;
+  const t=document.getElementById("falhoutxt");
+  if(t) t.textContent=falhas.length===1
+    ? "1 consulta não voltou. O que está na tela pode estar incompleto ou velho — não conclua nada daqui."
+    : falhas.length+" consultas não voltaram. O que está na tela pode estar incompleto ou velho — não conclua nada daqui.";
+  const d=document.getElementById("falhoudet");
+  if(d) d.textContent=falhas.join("  ·  ");
+  console.warn("[carga incompleta]", falhas);
+}
+
 /* v26: o ping so servia para gravar log. Agora a resposta VOLTA para a tela. */
 function avisaVersao(d){
   const el=document.getElementById("velha"); if(!el||!d)return;
