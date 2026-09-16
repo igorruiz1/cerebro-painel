@@ -845,13 +845,13 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v47";
+const VER="v48";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
 const sb=supabase.createClient(URL_,KEY_);
 
-let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[],sent:[]};
+let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[],sent:[],op:[]};
 let F={q:"",frente:null,origem:null,nat:null}; // filtros (v27: nat = natureza do ato)
 let mostrarResto=false, pendente=null;          // estado de UI
 let CARGAINCOMPLETA=false;                      // v45: a ultima carga voltou completa?
@@ -1499,13 +1499,17 @@ async function carregar(ehRetentativa){
   });
   /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
      647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
-  const [fila,cont,cor,fresc,rw,se,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip,rotp]=await Promise.all([
+  const [fila,cont,cor,fresc,rw,se,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip,rotp,op]=await Promise.all([
     q("v_painel_fila",b=>b.eq("camada_tela","hoje")),
     q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),q("v_painel_serie"),
     q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
     q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
     q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
-    q("v_fila_natureza"),q("v_wip_igor"),q("v_rotina_proxima")]);
+    q("v_fila_natureza"),q("v_wip_igor"),q("v_rotina_proxima"),
+    /* v48: a OPCAO viaja separada de proposito. v_painel_fila cita v_fila_do_igor, que ja
+       estourou o teto do painel uma vez; v_fila_opcoes so tem os cards abertos que TEM
+       opcao — hoje 7 linhas. Barato, e nao encosta na view cara. */
+    q("v_fila_opcoes")]);
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1529,7 +1533,7 @@ async function carregar(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     depois:D.depois||[]};
+     op:L(op,D.op), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1770,6 +1774,7 @@ function cardFila(it){
    </div>
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
+   ${opcoesFila(it)}
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor — "+promessaResposta()),"vio","p-"+k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
@@ -1783,6 +1788,27 @@ function cardFila(it){
        ${acts.map(a=>`<button class="sec" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}','${esc(a.label)}')">${esc(a.label)}</button>`).join("")}
      </div>
    </div></div>`;}
+/* ---------- v48: A ESCOLHA CHEGA NA FILA DE HOJE ----------
+   O mecanismo inteiro ja existia: tarefa.opcoes (jsonb), a rpc escolher(), e a tela
+   desenhando os botoes — mas SO na aba TUDO, desde a v39. v_painel_fila nunca expos a
+   coluna, entao na fila de HOJE, a unica tela que se abre todo dia, o card mostrava texto
+   e um botao de "feita". Nao da para escolher o que nao esta na tela: em toda a historia do
+   banco houve 3 escolhas registradas, contra 134 cards abertos. Medido em 16/09/2026.
+   O numero agora tem dono: kpi fila.hoje_com_opcao_pct, meta 100, hoje em 20. */
+function opcoesFila(it){
+  const o=(D.op||[]).find(x=>x.origem===it.origem&&String(x.ref)===String(it.ref));
+  if(!o||!Array.isArray(o.opcoes)||!o.opcoes.length) return "";
+  const k=uid(it.origem+it.ref);
+  return `<ul class="ivop">`+o.opcoes.map(x=>
+    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" onclick="faEscolher('${esc(it.origem)}','${esc(it.ref)}','${escAttr(x.label)}','c-${k}')">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
+    +`</ul>`+(o.escolha?`<div class="ivesc">escolhido: <b>${esc(o.escolha)}</b></div>`:"");
+}
+function faEscolher(origem,ref,opcao,idel){
+  /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
+     marcada recomendada, gravando seguiu ou divergiu. A tela nao julga adesao. */
+  agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}),
+          "escolher em "+ref, document.getElementById(idel));
+}
 function cardCorrecao(c){
   const k="cor"+c.dialogo_id;
   const p=partes(c.objeto_resumo);
