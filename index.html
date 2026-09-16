@@ -532,6 +532,14 @@ section.sec.on{display:block}
 .ivnat.ex-rotina,.ivnat.ex-sessao{color:var(--ok)}
 .ivnat.ex-preparo{color:var(--acc)}
 .ivnat.ex-ninguem{color:var(--bad)}
+/* SENTINELA · v43: a severidade e a primeira coisa que o olho pega, nao a data */
+.sevb{border-radius:6px;padding:2px 7px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase}
+.sevb.s1{background:rgba(229,72,77,.18);color:var(--bad)}
+.sevb.s2{background:rgba(76,141,255,.16);color:var(--acc)}
+.sevb.s3{background:var(--card2);color:var(--dim)}
+.ivrow.sev1{border-left:3px solid var(--bad)}
+.ivrow.sev2{border-left:3px solid var(--acc)}
+.ivrow.sev3{border-left:3px solid var(--line2)}
 .ivsem{font-size:11.5px;color:var(--dim);font-style:italic}
 @media(max-width:640px){
   /* a grade de KPI usava minmax(178px,1fr): em 390px a linha util e 364 e dois cartoes com o gap
@@ -689,6 +697,7 @@ section.sec.on{display:block}
     <button class="tab" data-p="panorama">PANORAMA<span class="n" id="n-cmd"></span></button>
     <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
     <button class="tab" data-p="tudo">TUDO<span class="n" id="n-tudo"></span></button>
+    <button class="tab" data-p="sentinela">SENTINELA<span class="n" id="n-sent"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="filtbar">
@@ -769,6 +778,20 @@ section.sec.on{display:block}
     <br><b>Fonte:</b> <code>v_inventario_resumo</code> e <code>v_inventario_frente</code>. Nada aqui é digitado.</div>
 </div>
 
+<div class="pane" id="p-sentinela">
+  <div id="sent-topo"></div>
+  <div id="sent-lista"></div>
+  <div class="foot"><b>Por que esta aba existe.</b> Em 16/09/2026 uma varredura cruzou as 136 views do banco contra
+    TODOS os consumidores possíveis — o HTML deste painel, outras views, corpo de função, procedimento das 22 rotinas,
+    leis e runtime. <b>Quatro views calculavam alarme certo e ninguém as lia.</b> Trabalho preparado e travado no Igor
+    com retorno vencido, dinheiro atravessando o muro PF/PJ, prazo de campo contradizendo o prazo escrito no próprio
+    card, e padrão que voltou mesmo com aprendizado registrado. Sinal sem destino é sinal morto, e é o pior defeito:
+    o sistema parece saudável.
+    <br><b>Régua:</b> página de alertas de observabilidade — todo sinal tem dono, severidade e consequência, ou não é sinal.
+    <br><b>Fonte:</b> <code>v_sentinela</code>, que une <code>v_pronto_falta_igor</code>, <code>v_pf_sangria_pj</code>,
+    <code>v_prazo_incoerente</code> e <code>v_reincidencia</code>.</div>
+</div>
+
 </main></div>
 
 <!-- ===================== MODAL ===================== -->
@@ -789,13 +812,13 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v42";
+const VER="v43";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
 const sb=supabase.createClient(URL_,KEY_);
 
-let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[]};
+let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[],sent:[]};
 let F={q:"",frente:null,origem:null,nat:null}; // filtros (v27: nat = natureza do ato)
 let mostrarResto=false, pendente=null;          // estado de UI
 
@@ -983,6 +1006,52 @@ function grupoHTML(alvo,R,esc2){
    ARQUIVAR que agir() recusa por construcao — e a recusa aparecia como defeito do painel.
    Agora v_inventario_frente devolve o menu real pelos dois cardapios e isto aqui so renderiza.
    Quem desenha a interface pelo que imagina constroi metade e chama de pronto (acervo 641). */
+/* ---------- SENTINELA · v43 (16/09/2026) ----------
+   Quatro views do banco calculavam alarme certo e nenhum consumidor as lia. Esta aba e o
+   destino. Ordena por severidade, nao por data: alarme ordenado por data vira log, e log
+   ninguem le. Severidade 1 = age hoje; 2 = olhe esta semana; 3 = higiene. */
+const SIN={
+  pronto_falta_igor:["PRONTO, TRAVADO EM VOCÊ","o trabalho está feito e espera só a sua palavra"],
+  sangria_pf_pj    :["DINHEIRO ATRAVESSANDO O MURO","PF e PJ se misturando — matéria da LC-01"],
+  prazo_incoerente :["PRAZO QUE CONTRADIZ O CARD","o campo diz uma data, o texto do card promete outra"],
+  reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"]
+};
+function rSentinela(){
+  const S=D.sent||[];
+  const topo=document.getElementById("sent-topo");
+  const sev=n=>S.filter(x=>x.severidade===n).length;
+  if(topo) topo.innerHTML=
+    `<div class="g4">
+      <div class="kpi${sev(1)?" fora":""}"><div class="k">AGE HOJE</div><div class="n">${sev(1)}</div></div>
+      <div class="kpi"><div class="k">ESTA SEMANA</div><div class="n">${sev(2)}</div></div>
+      <div class="kpi"><div class="k">HIGIENE</div><div class="n">${sev(3)}</div></div>
+      <div class="kpi"><div class="k">SINAIS NO TOTAL</div><div class="n">${S.length}</div></div>
+    </div>`;
+  const box=document.getElementById("sent-lista"); if(!box) return;
+  if(!S.length){ box.innerHTML=`<div class="card" style="border-left-color:var(--ok)">Nenhum sinal aberto. A sentinela está quieta — e isto aqui é medido, não é otimismo.</div>`; return; }
+  const ordem=Object.keys(SIN).filter(k=>S.some(x=>x.sinal===k));
+  box.innerHTML=ordem.map(k=>{
+    const rs=S.filter(x=>x.sinal===k).sort((a,b)=>(a.severidade-b.severidade)
+      ||String(a.data_ref||"9999").localeCompare(String(b.data_ref||"9999")));
+    const n1=rs.filter(x=>x.severidade===1).length;
+    return `<h2>${esc(SIN[k][0])} <span class="s">${esc(SIN[k][1])} · ${rs.length} ${rs.length===1?"sinal":"sinais"}${n1?" · "+n1+" para hoje":""}</span></h2>
+      <div class="ivwrap">`+rs.map(x=>`
+        <div class="ivrow sev${x.severidade}">
+          <div class="ivm">
+            <span class="sevb s${x.severidade}">${x.severidade===1?"hoje":x.severidade===2?"semana":"higiene"}</span>
+            ${x.ref&&x.ref!==x.titulo?`<code>${esc(x.ref)}</code>`:""}
+            ${x.frente?`<span class="ivfr">${esc(x.frente)}</span>`:""}
+            ${x.valor!=null?`<span class="${+x.valor<0?"atr":""}">${+x.valor<0?rs_(x.valor):x.valor+"x"}</span>`:""}
+          </div>
+          <div class="ivt tit">${esc(x.titulo)}</div>
+          <div class="ivj">${esc(x.detalhe)}</div>
+        </div>`).join("")+`</div>`;
+  }).join("");
+  const nse=document.getElementById("n-sent");
+  if(nse) nse.textContent=(sev(1)+sev(2))?String(sev(1)+sev(2)):"";
+}
+const rs_=v=>"R$ "+(+v).toLocaleString("pt-BR",{maximumFractionDigits:0});
+
 /* ---------- v42 · QUEM CONSEGUE EXECUTAR ----------
    A tela dizia so DE QUEM e o card (dono). Faltava a outra metade: quem CONSEGUE faze-lo.
    O banco tinha uma lente so, caps_agendadas(), que e o conjunto da rotina cloud — e por isso
@@ -1051,7 +1120,7 @@ function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smoot
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
 let ABA="agora"; let CARGA=Date.now();
-const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0,movimento:0};
+const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0,movimento:0,sentinela:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
 const SECOES={
   panorama:[["caixa","Caixa e placar"],["frentes","Frentes"],["insights","O que o sistema vê"]],
@@ -1127,6 +1196,8 @@ async function carregarAba(nome,forcar){
   if(nome==="tudo"&&(forcar||!LAZY.tudo)){
     const [rz,it]=await Promise.all([q_("v_inventario_resumo"),q_("v_inventario_frente")]);
     D.invr=rz||[]; D.inv=it||[]; LAZY.tudo=1; SECQUANDO.tudo=Date.now(); rTudo();}
+  if(nome==="sentinela"&&(forcar||!LAZY.sentinela)){
+    D.sent=await q_("v_sentinela")||[]; LAZY.sentinela=1; SECQUANDO.sentinela=Date.now(); rSentinela();}
   if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
@@ -1326,6 +1397,12 @@ async function carregar(){
     q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
     q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
     q("v_fila_natureza"),q("v_wip_igor"),q("v_rotina_proxima")]);
+  /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
+     aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
+     três semanas disparando para ninguém. Só a contagem, não as linhas. */
+  const sentN=await sb.from("v_sentinela").select("sinal",{count:"exact",head:true})
+    .lte("severidade",2).then(r=>r.error?null:r.count);
+  const nse=document.getElementById("n-sent"); if(nse) nse.textContent=sentN?String(sentN):"";
   const semi=await sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
     .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo")
     .then(r=>r.error?[]:r.data);
@@ -1335,6 +1412,7 @@ async function carregar(){
      nat:nat||[],wip:(wip&&wip[0])||null,rotp:(rotp&&rotp[0])||null,
      depois:D.depois||[]};
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
+  LAZY.tudo=0;LAZY.sentinela=0;
   CARGA=Date.now(); SECQUANDO={};
   render();
   await carregarAba(ABA,true);
