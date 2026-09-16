@@ -459,14 +459,24 @@ section.sec.on{display:block}
      Foi por isso que a barra inferior nasceu grudada no topo no primeiro teste. Fundo solido
      no celular resolve sem perder legibilidade. */
   .top{backdrop-filter:none;background:var(--bg)}
+  /* v46: aqui estava cravado repeat(5,1fr) enquanto a barra ja tinha SEIS destinos desde a
+     v43. Dois donos para o mesmo numero — o mesmo defeito do selo de versao da v22 — e a
+     sexta aba, justo a SENTINELA, caia sozinha numa SEGUNDA LINHA que comia o conteudo e
+     nao parecia navegacao. Agora a coluna NASCE da contagem real de abas: acrescentar ou
+     tirar destino nao volta a quebrar a barra. */
   .tabs{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;max-width:none;
     background:rgba(13,17,23,.97);backdrop-filter:blur(14px);
     border-top:1px solid var(--line2);
     padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px));
-    display:grid;grid-template-columns:repeat(5,1fr);gap:0;overflow:visible}
+    display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;overflow:visible}
   .tab{flex-direction:column;display:flex;align-items:center;justify-content:center;
-    padding:9px 2px 7px;font-size:9.5px;letter-spacing:.7px;gap:3px;
-    border-bottom:0;border-top:2px solid transparent}
+    padding:9px 0 7px;letter-spacing:.2px;gap:3px;min-width:0;
+    border-bottom:0;border-top:2px solid transparent;
+    /* o rotulo acompanha a largura da tela em vez de ser chutado. Calibrado no rotulo mais
+       largo (PANORAMA) para caber INTEIRO em 320, 390 e 430 — medido, nao estimado. */
+    font-size:clamp(7.6px,2.32vw,10px)}
+  /* rotulo em UMA linha: SENTINELA quebrada no meio e pior que SENTINELA menor */
+  .tab .tl{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tab.on{border-top-color:var(--acc);border-bottom-color:transparent}
   /* o badge reserva a linha mesmo vazio, senao a aba sem contador desalinha das outras */
   .tab .n{margin-left:0;font-size:10px;padding:0 5px;min-height:15px;min-width:8px;
@@ -704,12 +714,12 @@ section.sec.on{display:block}
     <button class="btn" onclick="sair()">sair</button>
   </div>
   <div class="tabs" id="tabs">
-    <button class="tab on" data-p="agora">AGORA<span class="n" id="n-agora"></span></button>
-    <button class="tab" data-p="leituras">LEITURAS<span class="n" id="n-le"></span></button>
-    <button class="tab" data-p="panorama">PANORAMA<span class="n" id="n-cmd"></span></button>
-    <button class="tab" data-p="maquina">MÁQUINA<span class="n" id="n-mo"></span></button>
-    <button class="tab" data-p="tudo">TUDO<span class="n" id="n-tudo"></span></button>
-    <button class="tab" data-p="sentinela">SENTINELA<span class="n" id="n-sent"></span></button>
+    <button class="tab on" data-p="agora"><span class="tl">AGORA</span><span class="n" id="n-agora"></span></button>
+    <button class="tab" data-p="sentinela"><span class="tl">SENTINELA</span><span class="n" id="n-sent"></span></button>
+    <button class="tab" data-p="leituras"><span class="tl">LEITURAS</span><span class="n" id="n-le"></span></button>
+    <button class="tab" data-p="panorama"><span class="tl">PANORAMA</span><span class="n" id="n-cmd"></span></button>
+    <button class="tab" data-p="maquina"><span class="tl">MÁQUINA</span><span class="n" id="n-mo"></span></button>
+    <button class="tab" data-p="tudo"><span class="tl">TUDO</span><span class="n" id="n-tudo"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="filtbar">
@@ -825,7 +835,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v45";
+const VER="v46";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1239,7 +1249,10 @@ document.addEventListener("keydown",e=>{
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
-  else if(k>="1"&&k<="4"){const tb=document.querySelectorAll(".tab")[+k-1];if(tb){e.preventDefault();tb.click();}}
+  /* v46: o atalho parou em "4" quando as abas ja eram 6. Le a contagem real, nao um numero
+     escrito a mao, que e o mesmo defeito da grade de 5 colunas corrigida no CSS. */
+  else if(k>="1"&&k<="9"){const ts=document.querySelectorAll(".tab");const tb=ts[+k-1];
+    if(tb){e.preventDefault();tb.click();}}
 });
 
 /* v26: a altura do topo fixo e MEDIDA, nunca chutada. Ela muda com o filtro aberto,
