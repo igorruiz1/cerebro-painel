@@ -823,7 +823,8 @@ section.sec.on{display:block}
     em vez de oferecer um que o banco recusaria.
     <br><b>Fonte:</b> <code>v_sentinela</code>, que une <code>v_pronto_falta_igor</code>, <code>v_pf_sangria_pj</code>,
     <code>v_prazo_incoerente</code>, <code>v_reincidencia</code>, <code>v_fila_sem_opcao</code>,
-    <code>v_afirmacao_vencida</code> e <code>painel_fixture_log</code>.</div>
+    <code>v_afirmacao_vencida</code>, <code>painel_fixture_log</code>,
+    <code>v_ponteiro_divergente_arquivo</code> e <code>v_catalogo_recusa</code>.</div>
 </div>
 
 </main></div>
@@ -846,7 +847,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v51";
+const VER="v52";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1057,7 +1058,9 @@ const SIN={
   reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"],
   fila_sem_opcao   :["CARD DE HOJE SEM ESCOLHA","chegou na fila do dia sem opções nomeadas: dá para marcar feita, não dá para decidir"],
   numero_do_card_venceu:["O CARD AFIRMA UM NÚMERO QUE NÃO VALE MAIS","o número está na vitrine do card e a fonte devolve outro"],
-  fixture_vermelha :["A FIXTURE DO BANCO TEM CASO VERMELHO","a suíte de regressão do motor falhou na última rodada — isto é o motor mentindo"]
+  fixture_vermelha :["A FIXTURE DO BANCO TEM CASO VERMELHO","a suíte de regressão do motor falhou na última rodada — isto é o motor mentindo"],
+  ponteiro_de_arquivo_quebrado:["O BANCO APONTA PARA UM ARQUIVO QUE NÃO ESTÁ LÁ","mover pasta no Drive quebra o ponteiro do banco e nada levanta exceção"],
+  achado_descartado_em_silencio:["ACHADO ALTO JOGADO FORA SEM VIRAR NADA","a auditoria viu, um gatilho descartou, e ninguém ficou sabendo"]
 };
 /* v50: SIN era um mapa FECHADO e `ordem` so listava as chaves dele — sinal novo no banco
    sumia da lista em silencio, ainda contado nos quatro contadores do topo. A tela diria
