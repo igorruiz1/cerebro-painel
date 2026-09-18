@@ -103,7 +103,38 @@ if [ -z "$REGRAS" ]; then
   ]'
 fi
 
-BLOCO="{\"permissions\":{\"allow\":$REGRAS}}"
+# O que NEGAR, e por que isto nao e paranoia (medido em 18/09/2026).
+#
+# A pagina dizia que o caro e o irreversivel "continuam pedindo confirmacao" por
+# NAO estarem na allowlist. Na nuvem isso e falso: o launcher pre-aprova sozinho,
+# no --allowed-tools, deploy_edge_function, pause_project, restore_project e o
+# ciclo de branches. Ausencia na allowlist nao barra nada — a barreira estava
+# documentada e nao existia.
+#
+# O que barra e permissions.deny, e isso foi medido: com deny no arquivo, a
+# ferramenta MCP some do catalogo do init (o modelo nem a enxerga), com controles
+# antes e depois — PRESENTE -> AUSENTE, AUSENTE -> PRESENTE.
+#
+# execute_sql e apply_migration NAO entram aqui: sao a dor original e precisam do
+# allow. get_publishable_keys tambem nao: chave publicavel e desenhada para ir no
+# cliente e ja esta no index.html do painel; nega-la seria teatro.
+#
+# PARA DESFAZER: tire o nome daqui, salve o ambiente, abra SESSAO NOVA. Managed
+# settings nao se sobrepoem de dentro da sessao — e o preco de a barreira ser
+# real.
+NEGAR='[
+    "mcp__Supabase__create_project",
+    "mcp__Supabase__pause_project",
+    "mcp__Supabase__restore_project",
+    "mcp__Supabase__deploy_edge_function",
+    "mcp__Supabase__create_branch",
+    "mcp__Supabase__delete_branch",
+    "mcp__Supabase__merge_branch",
+    "mcp__Supabase__reset_branch",
+    "mcp__Supabase__rebase_branch"
+  ]'
+
+BLOCO="{\"permissions\":{\"allow\":$REGRAS,\"deny\":$NEGAR}}"
 
 # Dois alvos de proposito. As configuracoes gerenciadas tem a precedencia mais
 # alta que existe; as de usuario sao o plano B para o caso de a superfície
@@ -123,11 +154,15 @@ fundir() {
       const [destino, bloco] = process.argv.slice(1)
       let atual = {}
       try { atual = JSON.parse(fs.readFileSync(destino, "utf8")) } catch (e) { process.exit(3) }
-      const novas = JSON.parse(bloco).permissions.allow
-      const tem = new Set(atual.permissions?.allow ?? [])
+      const novo = JSON.parse(bloco).permissions
+      const juntar = (chave) => {
+        const tem = new Set(atual.permissions?.[chave] ?? [])
+        return [...(atual.permissions?.[chave] ?? []), ...(novo[chave] ?? []).filter((r) => !tem.has(r))]
+      }
       atual.permissions = {
         ...(atual.permissions ?? {}),
-        allow: [...(atual.permissions?.allow ?? []), ...novas.filter((r) => !tem.has(r))],
+        allow: juntar("allow"),
+        deny: juntar("deny"),
       }
       fs.writeFileSync(destino, JSON.stringify(atual, null, 2) + "\n")
     ' "$destino" "$BLOCO" 2>/dev/null || true
