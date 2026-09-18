@@ -148,6 +148,38 @@ test('o card da fila de HOJE desenha a escolha quando o banco oferece opcao', as
   expect(r.consequencia, 'consequencia de cada opcao').toBe(true);
 });
 
+/* CLASSE DE DEFEITO 4 · v50: mapa FECHADO na tela contra fonte ABERTA no banco. A SENTINELA
+   listava so as chaves de SIN; sinal novo em v_sentinela sumia da lista em silencio, ainda
+   somado nos quatro contadores do topo — a tela diria "26 sinais" e desenharia 20.
+   O invariante que mata a classe nao e "conhece a chave nova": e o CONTADOR BATER COM A LISTA. */
+test('sinal que o mapa nao conhece aparece mesmo assim, e o contador bate com a lista', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    let err=null;
+    try{
+      D.sent=[
+        {sinal:'reincidencia', severidade:1, ref:null, frente:null,
+         titulo:'padrao conhecido', detalhe:'voltou 2x', valor:2, data_ref:'2026-09-01'},
+        {sinal:'sinal_que_ainda_nao_existe', severidade:2, ref:'42', frente:'00-memoria',
+         titulo:'alarme recem-nascido no banco', detalhe:'ninguem ensinou a tela', valor:null, data_ref:'2026-09-02'}
+      ];
+      rSentinela();
+    }catch(e){ err=String(e); }
+    const box  = document.getElementById('sent-lista');
+    const topo = document.getElementById('sent-topo');
+    return {err,
+      linhas: box.querySelectorAll('.ivrow').length,
+      secoes: box.querySelectorAll('h2').length,
+      mostraNovo: box.innerHTML.includes('alarme recem-nascido no banco'),
+      totalNoTopo: Number(topo.querySelectorAll('.kpi .n')[3].textContent)};
+  });
+  expect(r.err,         'rSentinela derrubou').toBe(null);
+  expect(r.linhas,      'toda linha que o banco mandou foi desenhada').toBe(r.totalNoTopo);
+  expect(r.secoes,      'uma secao por sinal, inclusive o desconhecido').toBe(2);
+  expect(r.mostraNovo,  'o sinal que o mapa nao conhece aparece').toBe(true);
+});
+
 test('a abertura nao derruba o script', async ({page})=>{
   const erros = await abrir(page);
   await page.waitForTimeout(400);

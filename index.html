@@ -822,7 +822,7 @@ section.sec.on{display:block}
     sem <code>ref</code> e sangria traz contraparte, não id de tarefa. Nesses a linha <b>diz por que não tem botão</b>,
     em vez de oferecer um que o banco recusaria.
     <br><b>Fonte:</b> <code>v_sentinela</code>, que une <code>v_pronto_falta_igor</code>, <code>v_pf_sangria_pj</code>,
-    <code>v_prazo_incoerente</code> e <code>v_reincidencia</code>.</div>
+    <code>v_prazo_incoerente</code>, <code>v_reincidencia</code> e <code>v_fila_sem_opcao</code>.</div>
 </div>
 
 </main></div>
@@ -845,7 +845,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v49";
+const VER="v50";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1053,8 +1053,15 @@ const SIN={
   pronto_falta_igor:["PRONTO, TRAVADO EM VOCÊ","o trabalho está feito e espera só a sua palavra"],
   sangria_pf_pj    :["DINHEIRO ATRAVESSANDO O MURO","PF e PJ se misturando — matéria da LC-01"],
   prazo_incoerente :["PRAZO QUE CONTRADIZ O CARD","o campo diz uma data, o texto do card promete outra"],
-  reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"]
+  reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"],
+  fila_sem_opcao   :["CARD DE HOJE SEM ESCOLHA","chegou na fila do dia sem opções nomeadas: dá para marcar feita, não dá para decidir"]
 };
+/* v50: SIN era um mapa FECHADO e `ordem` so listava as chaves dele — sinal novo no banco
+   sumia da lista em silencio, ainda contado nos quatro contadores do topo. A tela diria
+   "26 sinais" e desenharia 20. Agora a chave desconhecida aparece com rotulo derivado e
+   diz que a aba ainda nao tem texto proprio para ela: chegar feio e melhor que sumir. */
+const sinRot=k=>SIN[k]||[String(k).replace(/_/g," ").toUpperCase(),
+  "sinal novo do banco — esta aba ainda não tem texto próprio para ele"];
 /* v46 · A SENTINELA PASSA A ACEITAR A PALAVRA.
    Ate a v45 esta aba so LIA: nenhum onclick na superficie inteira. Era o proprio defeito que
    ela denuncia, um degrau acima — o alarme tinha destino, e a resposta ao alarme nao tinha.
@@ -1088,13 +1095,15 @@ function rSentinela(){
     </div>`;
   const box=document.getElementById("sent-lista"); if(!box) return;
   if(!S.length){ box.innerHTML=`<div class="card" style="border-left-color:var(--ok)">Nenhum sinal aberto. A sentinela está quieta — e isto aqui é medido, não é otimismo.</div>`; return; }
-  const ordem=Object.keys(SIN).filter(k=>S.some(x=>x.sinal===k));
+  const ordem=Object.keys(SIN).filter(k=>S.some(x=>x.sinal===k))
+    .concat([...new Set(S.map(x=>x.sinal))].filter(k=>!(k in SIN)));
   box.innerHTML=ordem.map(k=>{
     const rs=S.filter(x=>x.sinal===k).sort((a,b)=>(a.severidade-b.severidade)
       ||String(a.data_ref||"9999").localeCompare(String(b.data_ref||"9999")));
     const n1=rs.filter(x=>x.severidade===1).length;
     const nAcao=rs.filter(x=>sentAcoes(x)).length;
-    return `<h2>${esc(SIN[k][0])} <span class="s">${esc(SIN[k][1])} · ${rs.length} ${rs.length===1?"sinal":"sinais"}${n1?" · "+n1+" para hoje":""}${nAcao?" · "+nAcao+" com ação aqui":""}</span></h2>
+    const rot=sinRot(k);
+    return `<h2>${esc(rot[0])} <span class="s">${esc(rot[1])} · ${rs.length} ${rs.length===1?"sinal":"sinais"}${n1?" · "+n1+" para hoje":""}${nAcao?" · "+nAcao+" com ação aqui":""}</span></h2>
       <div class="ivwrap">`+rs.map(x=>{
         const ac=sentAcoes(x);
         return `
