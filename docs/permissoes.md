@@ -64,9 +64,41 @@ ferramentas que o host decidiu não pré-aprovar** — `execute_sql` e
 `apply_migration`. Todo o resto do Supabase nunca dependeu de rota nenhuma.
 
 Consequência prática: o valor de qualquer rota desta página é medido em duas
-ferramentas, não em vinte e cinco. E o `--allowed-tools` pode mudar de sessão
-para sessão — antes de desenhar teste, leia o `/proc/$CLAUDE_PID/cmdline` **da
-sessão em que você está**, não o desta página.
+ferramentas, não em vinte e cinco.
+
+**Segundo ponto de dados, outra sessão (18/09/2026, `CLAUDE_PID=103`).** A mesma
+leitura repetida numa sessão diferente, em container diferente, devolveu a lista
+**idêntica** — as mesmas 23 ferramentas Supabase e exatamente as mesmas quatro
+de fora. Não é prova de que a lista nunca varia, mas duas sessões independentes
+com a mesma lista tornam a hipótese *"varia por sessão"* bem mais cara de
+sustentar. Leia a sua mesmo assim antes de desenhar teste; o custo é um comando.
+
+### O outro arquivo que o launcher injeta
+
+O `--allowed-tools` não vem sozinho. O launcher também passa
+`--settings /root/.claude/launcher-settings.json`, e vale saber o que tem dentro:
+
+```json
+{
+  "hooks": { "Stop": [ { "matcher": "", "hooks": [
+      { "type": "command", "command": "~/.claude/stop-hook-git-check.sh" } ] } ] },
+  "permissions": { "allow": ["Skill"] }
+}
+```
+
+Pouca coisa hoje — uma regra e um hook de verificação de git no fim do turno. **O
+que importa é a posição dele na precedência.** `--settings` é o nível 2 da escala
+oficial, logo abaixo das configurações gerenciadas:
+
+```
+managed-settings.json  >  --settings (launcher)  >  .claude/settings.json  >  ~/.claude/settings.json
+        alvo 1                  do host                  rota 3                     alvo 2
+```
+
+Ou seja: o **alvo 1 ganha do launcher; o alvo 2 perde**. Enquanto o launcher só
+traz um `allow`, isso é irrelevante — `allow` não conflita com `allow`. No dia em
+que ele trouxer um `deny`, o alvo 2 não resolve e o alvo 1 sim. É a segunda razão
+para o script continuar escrevendo nos dois, além da doc ambígua.
 
 ## Rota 1: o setup script
 
@@ -97,6 +129,14 @@ environment's setup script or allowed network hosts, and when the cache reaches
 its expiry after roughly seven days."* Mas *"Resuming an existing session never
 re-runs the setup script"* — tem que ser **sessão nova**, não a que já estava
 aberta.
+
+**Medido, e mais duro do que a frase sugere.** Uma sessão aberta *antes* de o
+script existir foi retomada depois, e o container dela foi **reprovisionado do
+zero**: `uptime` de 70 s, processo do Claude Code iniciado 17:19:55 UTC, VM nova
+para todos os efeitos. Mesmo assim `/etc/claude-code/` **não existia** — nem o
+diretório. Isto é: *resume* não re-roda o setup script nem quando a máquina é
+construída de novo. Uma sessão antiga **nunca** ganha a cura, por mais que você
+a reabra; ela morre sem allowlist. Só sessão nova.
 
 **Duas regras de escrita do script**, ou a sessão nem sobe: precisa **sair com
 zero** (*"if the script exits non-zero, the session fails to start"*) e terminar
@@ -214,6 +254,14 @@ Três armadilhas, todas pisadas hoje:
   quase enterrou o alvo 1 de novo. O arquivo em disco não mente.
 - **Medição única não vale.** Repita, e intercale controles antes e depois.
   `NEGADO → FEZ → FEZ → NEGADO` é evidência; um `NEGADO` solto não é.
+- **Escolher a sonda sem ler o terreno.** Esta é a quarta, e produziu um dos
+  diagnósticos furados. Para provar que *"não foi a allowlist do repo"*, uma
+  sessão escolheu `list_edge_functions` por ela não estar em
+  `.claude/settings.json` — e concluiu, do fato de ela rodar sem prompt, que
+  outra rota estava cobrindo. Só que ela está nomeada no `--allowed-tools` do
+  launcher. **O controle não controlava nada**, e a conclusão tinha que estar
+  errada mesmo que por acaso acertasse. Antes de eleger qualquer ferramenta como
+  sonda, confira se o launcher já a pré-aprova.
 
 **O que não existe, para não procurar:** `/status` é comando do cliente
 interativo e **não está disponível para o agente numa sessão de nuvem** — não há
@@ -286,11 +334,23 @@ e `list_edge_functions` estão nomeadas na lista. Não era mistério, era terren
 não inspecionado — ninguém tinha olhado a linha de comando do processo.
 
 **O que continua em aberto:** `execute_sql` naquela sessão. Ele **não** está no
-`--allowed-tools` desta sessão, a allowlist do repo ainda não estava em disco
-(snapshot velho) e o setup script não existia. A hipótese barata é que o
-`--allowed-tools` varia por sessão, conforme os conectores habilitados na conta.
-Não foi medido. Quem for medir: leia `/proc/$CLAUDE_PID/cmdline` **antes** de
-formular teoria.
+`--allowed-tools`, a allowlist do repo ainda não estava em disco (snapshot velho)
+e o setup script não existia.
+
+A hipótese barata era *"o `--allowed-tools` varia por sessão"*. Ela **perdeu
+força**: a leitura numa segunda sessão deu lista idêntica (seção do launcher).
+Duas hipóteses sobraram, nenhuma medida:
+
+- o `launcher-settings.json` daquela sessão trazia mais coisa do que o desta,
+  que só traz `allow: ["Skill"]`;
+- houve uma releitura de permissões depois do boot, com o clone já atualizado.
+  Esta ganhou peso hoje: o container desta sessão foi **reprovisionado** às
+  17:19:55 UTC — `uptime` de 70 s com a conversa inteira preservada — e nesse
+  reprovisionamento o Claude Code subiu de novo, agora com a allowlist do repo
+  já em disco. Um "boot" não é um por sessão; é um por VM.
+
+Quem for medir: leia `/proc/$CLAUDE_PID/cmdline` **e** o `--settings` que ele
+aponta, **antes** de formular teoria.
 
 **A consequência prática permanece:** a ausência de prompt não serve de controle
 para medir rota nenhuma. O que mudou é que agora existe um controle que serve.
