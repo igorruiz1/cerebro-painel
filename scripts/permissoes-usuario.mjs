@@ -35,6 +35,7 @@ import { fileURLToPath } from 'node:url'
 const args = new Set(process.argv.slice(2))
 const conferir = args.has('--conferir')
 const todas = args.has('--todas')
+const podar = args.has('--podar')
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..')
 const origem = join(raiz, '.claude', 'settings.json')
@@ -209,13 +210,52 @@ console.log(
     `${todas ? ` + ${outrasRegras.length} regras Bash` : ''})`
 )
 
-if (faltando.length === 0) {
+// Poda: regra de um servidor MCP que nao existe mais nesta maquina.
+//
+// Nasce de duas situacoes reais: a versao antiga deste script, que escrevia o
+// nome da nuvem (`mcp__Supabase__*`), e o conector reinstalado, cujo UUID muda.
+// Nos dois casos sobra regra inerte — nao faz mal, mas mente sobre o que esta
+// em vigor quando alguem abre o arquivo para entender.
+//
+// O criterio e estreito de proposito: so poda um servidor que NAO foi descoberto
+// agora E cujas regras no arquivo sao todas ferramentas da nossa politica. Assim
+// uma regra posta a mao para outro servidor nunca entra na conta, mesmo que
+// compartilhe nome de ferramenta.
+const daPolitica = new Set(ferramentasDaPolitica)
+const vivos = new Set(servidores)
+const porServidorNoArquivo = new Map()
+for (const regra of atual.permissions?.allow ?? []) {
+  const m = /^mcp__([A-Za-z0-9_.-]+?)__([A-Za-z0-9_]+)$/.exec(regra)
+  if (!m) continue
+  if (!porServidorNoArquivo.has(m[1])) porServidorNoArquivo.set(m[1], [])
+  porServidorNoArquivo.get(m[1]).push({ regra, ferramenta: m[2] })
+}
+const aPodar = []
+if (podar) {
+  for (const [servidor, regras] of porServidorNoArquivo) {
+    if (vivos.has(servidor)) continue
+    if (!regras.every((r) => daPolitica.has(r.ferramenta))) continue
+    aPodar.push(...regras.map((r) => r.regra))
+  }
+}
+
+if (faltando.length === 0 && aPodar.length === 0) {
   console.log('\nJa esta tudo la. Nada a escrever.')
+  const orfaos = [...porServidorNoArquivo.keys()].filter((s) => !vivos.has(s))
+  if (!podar && orfaos.length > 0) {
+    console.log(`Ha regra de ${orfaos.length} servidor(es) que nao existe(m) mais aqui. Veja com --podar.`)
+  }
   process.exit(0)
 }
 
-console.log(`\nA acrescentar (${faltando.length}):`)
-for (const regra of faltando) console.log(`  + ${regra}`)
+if (faltando.length > 0) {
+  console.log(`\nA acrescentar (${faltando.length}):`)
+  for (const regra of faltando) console.log(`  + ${regra}`)
+}
+if (aPodar.length > 0) {
+  console.log(`\nA podar (${aPodar.length}), de servidor que nao existe nesta maquina:`)
+  for (const regra of aPodar) console.log(`  - ${regra}`)
+}
 
 if (conferir) {
   console.log('\n--conferir: nenhum arquivo foi tocado.')
@@ -226,7 +266,10 @@ const novo = {
   ...atual,
   permissions: {
     ...(atual.permissions ?? {}),
-    allow: [...(atual.permissions?.allow ?? []), ...faltando],
+    allow: [
+      ...(atual.permissions?.allow ?? []).filter((r) => !aPodar.includes(r)),
+      ...faltando,
+    ],
   },
 }
 
