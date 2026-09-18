@@ -107,7 +107,11 @@ dele está certa. O que falhou em 18/09/2026 foi o relógio. Reflog do container
 ```
 
 O ambiente restaura um snapshot do sistema de arquivos e o `git fetch` que
-atualiza o clone roda **depois** do boot. A allowlist entrou em `39a6f55`,
+atualiza o clone roda **depois** do boot. A documentação explica de onde vem esse
+snapshot velho: é o **cache do ambiente**, um snapshot de filesystem que a
+Anthropic tira depois do primeiro setup e reusa nas sessões seguintes, com
+validade de **cerca de sete dias**. Ele só é refeito quando o setup script ou os
+hosts de rede do ambiente mudam, ou quando expira. A allowlist entrou em `39a6f55`,
 posterior a `a0f9f29`: estava no GitHub e não estava no disco na hora que
 importava. Tende a não repetir depois que o cache do ambiente reconstrói, mas
 não há garantia — por isso ela é rota 2, não rota 1.
@@ -120,22 +124,53 @@ resolve isso; ali só a rota 1 funciona.
 
 ## Rota 3: o setup script, com a ressalva na cara
 
-`scripts/setup-nuvem.sh`, colado em claude.ai/code → ícone do ambiente → campo
-**Setup script**. É o único gancho que roda **antes do Claude Code lançar**, e o
-que ele escreve em disco entra no snapshot do ambiente.
+`scripts/setup-nuvem.sh`, colado no campo **Setup script** do ambiente. É o único
+gancho que roda **antes do Claude Code lançar**, e o que ele escreve em disco
+entra no snapshot do ambiente.
 
-**A ressalva.** Ele escreve `/etc/claude-code/managed-settings.json`, que é
-*endpoint-managed*, e a documentação diz:
+### Onde fica o campo, exatamente
 
-> Endpoint-managed settings don't reach cloud sessions in Anthropic-hosted
-> environments
+Conferido na documentação em 18/09/2026, porque o caminho não é óbvio:
 
-Essa frase descreve o arquivo na **sua máquina**, não no container — o container
-não é um endpoint gerenciado por MDM. Mas a documentação não afirma em lugar
-nenhum que o arquivo do container é lido, e para ambiente self-hosted ela afirma
-o contrário explicitamente. **Então é aposta, e está escrito aqui como aposta.**
-Por isso o script escreve também nas configurações de usuário do container, que é
-a segunda hipótese, e por isso deixa um marcador em vez de pedir fé:
+1. Em claude.ai/code, o seletor de ambiente é o **ícone de nuvem com o nome do
+   ambiente, na linha logo acima da caixa de mensagem** — não no topo da página.
+   A doc é explícita: *"There's no settings page or direct URL for the selector."*
+2. Clique nele. No menu, **passe o mouse sobre o ambiente** e clique no **ícone de
+   engrenagem que aparece à direita**.
+3. Abre o diálogo **Update cloud environment**, com nome, nível de rede, variáveis
+   de ambiente e **Setup script**. Cole e salve.
+
+**Salvar já força o rebuild.** Não existe botão de recriar ambiente, e não é
+preciso: *"The setup script runs again to rebuild the cache when you change the
+environment's setup script or allowed network hosts, and when the cache reaches
+its expiry after roughly seven days."* Mas *"Resuming an existing session never
+re-runs the setup script"* — tem que ser **sessão nova**, não a que já estava
+aberta.
+
+**Duas regras de escrita do script**, ou a sessão nem sobe: precisa **sair com
+zero** (*"if the script exits non-zero, the session fails to start"*) e terminar
+em ~5 minutos. O `setup-nuvem.sh` cumpre: `set -uo pipefail` sem `-e`, `|| true`
+em cada escrita, `exit 0` no fim.
+
+### A ressalva, que a doc de 18/09/2026 piorou
+
+Ele escreve `/etc/claude-code/managed-settings.json`. A frase que existia antes
+era ambígua quanto ao container. A redação atual é mais dura:
+
+> Managed settings: only **server-managed settings** reach a cloud session; a
+> `managed-settings.json` file or MDM profile on your device doesn't. **A
+> self-hosted environment also reads the managed settings file in its runner
+> image.**
+
+Esse *"also"* é o problema: ele separa o self-hosted, que **lê** o arquivo da
+imagem, do ambiente hospedado pela Anthropic, que é o nosso. Não é uma negação
+literal do arquivo do container, mas a leitura natural é contra. **O alvo 1 da
+rota 3 está mais para morto do que para aposta.**
+
+Sobra o alvo 2, as configurações de usuário **do container** — que a doc não
+contradiz, porque quando ela diz que `~/.claude/settings.json` não é lido está
+falando do arquivo na *sua máquina*, que obviamente não chega lá. Por isso o
+script escreve nos dois e deixa um marcador em vez de pedir fé:
 
 ```bash
 cat /etc/claude-code/.origem-cerebro    # quando rodou, de onde veio, quantas regras
@@ -158,9 +193,12 @@ aberto até haver uma sessão que peça autorização para servir de controle.
 
 O caminho oficial para política em sessão de nuvem:
 
-> **Endpoint-managed settings don't reach cloud sessions** in Anthropic-hosted
-> environments, so organizations whose developers run cloud sessions should
-> configure **server-managed settings** as well.
+> only **server-managed settings** reach a cloud session; a
+> `managed-settings.json` file or MDM profile on your device doesn't.
+
+(Redação de 18/09/2026. A anterior dizia *"Endpoint-managed settings don't reach
+cloud sessions in Anthropic-hosted environments"* — mesma conclusão, palavras
+diferentes. Se você encontrar a frase antiga em outro lugar, é a mesma regra.)
 
 Configura-se em Admin Settings → Claude Code → Managed settings, em
 claude.ai/admin-settings/claude-code, e aceita `permissions.allow`. Duas
