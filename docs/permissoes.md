@@ -9,7 +9,7 @@ que é certeza e o que é aposta.
 
 | # | Rota | Cobre | Custo | Certeza |
 | --- | --- | --- | --- | --- |
-| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | documentada |
+| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | **medida em sessão** |
 | 2 | Allowlist em `.claude/settings.json` | só as 14 regras Supabase | já feito | funciona **quando lida a tempo** |
 | 3 | `scripts/setup-nuvem.sh` no Setup script | idem, antes do boot | 1 config | **aposta**, ver ressalva |
 | 4 | Server-managed settings | tudo, na organização | só Team/Enterprise | documentada, indisponível aqui |
@@ -34,6 +34,25 @@ Em `auto` as ferramentas MCP vão para um classificador em vez de virem para
 você — *"Everything else goes to the classifier"*. É o modo desenhado para
 exatamente esta dor, e a documentação o indica para *"long tasks, reducing
 prompt fatigue"*.
+
+### Medido em 18/09/2026: o modo `auto` resolve, e resolve MCP
+
+Sessão de nuvem aberta em `auto`, um repositório. Nenhum pedido de autorização em
+nenhuma chamada — `list_organizations`, `execute_sql` (`select 1`),
+`list_edge_functions`, e comandos `Bash` fora da allowlist (`ls`, `cat`,
+`git branch`, `git reflog`).
+
+Duas conferências para a medição não ser confundida com a rota 2:
+
+- `list_edge_functions` **não está** na allowlist de `.claude/settings.json` e
+  rodou sem prompt. Logo não foi a allowlist que cobriu.
+- o reflog do container mostra o snapshot subindo em `a0f9f29` às 13:53:32 —
+  commit **anterior** à allowlist — e o clone só chegando em `ff94946` às
+  15:38:51. Mesmo padrão de timing do incidente descrito na rota 2: no boot, a
+  allowlist não estava em disco.
+
+A rota 1 fica confirmada no mundo real, e não só na documentação. A rota 2 segue
+valendo para quem trabalha em modo Manual.
 
 **Por que não deixar isso cravado no repo:** a documentação é explícita de que
 `permissions.defaultMode` com valor `"auto"` **não tem efeito** em
