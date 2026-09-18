@@ -14,21 +14,30 @@
 # O setup script e o unico gancho que roda ANTES do Claude Code lancar, e o que
 # ele escreve em disco entra no snapshot do ambiente. Por isso a regra vai aqui.
 #
-# DOIS ALVOS, E O PRIMEIRO PROVAVELMENTE ESTA MORTO (revisado 18/09/2026)
-# A documentacao atual diz: "only server-managed settings reach a cloud session;
-# a managed-settings.json file or MDM profile on your device doesn't. A
+# DOIS ALVOS, E OS DOIS SAO LIDOS (medido em 18/09/2026)
+# Este bloco ja disse que o alvo 1 estava "provavelmente morto", por causa desta
+# frase da doc: "only server-managed settings reach a cloud session; a
+# managed-settings.json file or MDM profile on your device doesn't. A
 # self-hosted environment ALSO reads the managed settings file in its runner
-# image." Esse "also" separa o self-hosted, que le o arquivo da imagem, do
-# ambiente hospedado pela Anthropic, que e o nosso caso. Nao e negacao literal do
-# arquivo do container, mas a leitura natural e contra o alvo 1.
+# image." O "also" sugeria que so o self-hosted le o arquivo da imagem.
 #
-# O alvo 2, as configuracoes de usuario DO CONTAINER, segue de pe: o "nao e lido"
-# da doc fala do arquivo na maquina do usuario, que nunca chega aqui. Medido em
-# 18/09/2026: a sessao de nuvem roda como root com HOME=/root, e o setup script
-# tambem, entao os dois escrevem no mesmo /root/.claude/settings.json.
+# Medido, nao e isso. Numa sessao cloud_default, com a regra-sonda posta em um
+# alvo de cada vez e o resultado lido em disco:
 #
-# Por isso: escreve nos dois, deixa um marcador, e quem abrir a proxima sessao
-# mede em vez de acreditar. Ver docs/permissoes.md.
+#   /etc/claude-code/managed-settings.json   LIDO  (5 de 5 execucoes)
+#   /root/.claude/settings.json              LIDO  (2 de 2 execucoes)
+#   nenhum dos dois                          negado (3 de 3 execucoes)
+#
+# A frase da doc nao e falsa: ela fala do arquivo NA MAQUINA DO USUARIO, que
+# nunca chega aqui. O que vale e onde o arquivo nasce, nao o nome dele — escrito
+# dentro do container pelo setup script, e lido normalmente.
+#
+# A sessao de nuvem roda como root com HOME=/root, e o setup script tambem, entao
+# os dois escrevem no mesmo /root/.claude/settings.json.
+#
+# Continua escrevendo nos dois: redundancia barata contra doc ambigua. O metodo
+# de medicao, com as tres armadilhas que produziram diagnostico furado, esta em
+# docs/permissoes.md.
 #
 # COMO INSTALAR (uma vez)
 #   claude.ai/code -> icone de nuvem com o nome do ambiente, na linha ACIMA da
