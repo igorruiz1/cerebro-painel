@@ -182,6 +182,10 @@ fundir "$USUARIO"
   echo "escrito_em=$(TZ=America/Cuiaba date '+%Y-%m-%d %H:%M %Z')"
   echo "fonte=$FONTE"
   echo "regras=$(printf '%s' "$REGRAS" | grep -o 'mcp__Supabase__' | wc -l)"
+  # negadas=0 significa versao anterior ao deny colada no ambiente, nao ausencia
+  # de barreira por escolha. E o unico jeito de a proxima sessao distinguir as
+  # duas versoes do script, ja que regras=14 nas duas.
+  echo "negadas=$(printf '%s' "$NEGAR" | grep -o 'mcp__Supabase__' | wc -l)"
   echo "managed=$MANAGED"
   echo "usuario=$USUARIO"
 } > "$MANAGED_DIR/.origem-cerebro" 2>/dev/null || true
