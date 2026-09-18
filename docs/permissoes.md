@@ -427,19 +427,73 @@ história.
 | medir rota pela ausência de prompt | o launcher já pré-aprova `Bash`, `Write`, `Edit` e 23 ferramentas Supabase. Use o controle da rota 1 |
 | sonda de permissão com `echo` | comando sem efeito colateral é aprovado sozinho, com ou sem regra |
 
-## O que fica de fora da allowlist, de propósito
+## A barreira do caro e do irreversível: era decorativa, agora é real
 
-`get_publishable_keys` (devolve chave), `create_project`, `pause_project`,
-`restore_project`, `deploy_edge_function` e o ciclo de branches
-(`create` / `merge` / `reset` / `delete`). Caro ou irreversível continua pedindo
-confirmação — é a última barreira antes de um estrago silencioso.
+Esta página dizia que `get_publishable_keys`, `create_project`, `pause_project`,
+`restore_project`, `deploy_edge_function` e o ciclo de branches ficavam **de fora
+da allowlist de propósito**, e que com isso "caro ou irreversível continua pedindo
+confirmação — é a última barreira antes de um estrago silencioso".
 
-Ressalva medida em 18/09/2026: essa intenção é **parcialmente decorativa na
-nuvem**. O launcher pré-aprova por conta própria `get_publishable_keys`,
-`deploy_edge_function`, `pause_project`, `restore_project` e
-`merge` / `reset` / `rebase` / `delete_branch`. Deixar de fora da nossa allowlist
-não as barra. Quem quiser barrar de verdade tem que usar `permissions.deny`, que
-tem precedência sobre allow — e aí sim vale escrever no arquivo da rota 1.
+**Era falso na nuvem.** O launcher pré-aprova sozinho, no `--allowed-tools`,
+`get_publishable_keys`, `deploy_edge_function`, `pause_project`,
+`restore_project` e `merge` / `reset` / `rebase` / `delete_branch`. Ausência na
+nossa allowlist não barra nada. A barreira estava documentada e não existia —
+o pior tipo de proteção, porque quem lê a página confia nela.
+
+### Medido em 18/09/2026: o que barra é `permissions.deny`
+
+Dois experimentos, cada um com controle antes e depois, no cenário do launcher
+(`--allowed-tools` pré-aprovando a ferramenta) e com o `deny` no arquivo da
+rota 1:
+
+**Com `Bash`,** sonda `touch`, resultado lido em disco:
+
+| Run | `deny` | Arquivo criado |
+| --- | --- | --- |
+| A1, A2 | não | **sim** (2/2) |
+| B1, B2 | `Bash(touch:*)` | **não** (2/2) |
+| C1 | não | **sim** |
+
+**Com ferramenta MCP,** `list_projects`, lido no stream bruto:
+
+| Run | `deny` | No catálogo do `init` | Efeito |
+| --- | --- | --- | --- |
+| A1 | não | **presente** | chamou, dados vieram |
+| B1, B2 | `mcp__Supabase__list_projects` | **ausente** | modelo nem a enxerga |
+| C1 | não | **presente** | chamou, dados vieram |
+
+**O `deny` vence o `--allowed-tools` do launcher.** E o mecanismo difere por
+tipo, o que vale saber antes de desenhar teste:
+
+- **MCP:** o `deny` **remove a ferramenta do catálogo**. Ela não aparece no evento
+  `init`, e o modelo responde *"não tenho essa ferramenta disponível"*. Não é
+  negação na chamada, é ausência.
+- **`Bash` com padrão:** a ferramenta continua no catálogo, porque só o padrão foi
+  negado; a chamada é que é recusada.
+
+### O que o `setup-nuvem.sh` passou a negar
+
+Nove nomes, escritos junto com a allowlist no mesmo arquivo:
+
+```
+create_project   pause_project   restore_project   deploy_edge_function
+create_branch    delete_branch   merge_branch      reset_branch    rebase_branch
+```
+
+Três decisões deliberadas, para ninguém refazer a discussão:
+
+- **`execute_sql` e `apply_migration` ficam no `allow`.** São a dor original desta
+  investigação inteira. Negá-las seria resolver o problema matando o paciente.
+- **`get_publishable_keys` fica de fora do `deny`.** Chave *publicável* é desenhada
+  para ir no cliente, e já está no `index.html` do painel. Negá-la seria teatro
+  de segurança — exatamente o vício que esta seção veio corrigir.
+- **`create_project` e `create_branch` entram mesmo já estando fora do
+  `--allowed-tools`.** Redundância barata: se o launcher mudar de ideia numa
+  atualização, a barreira continua de pé.
+
+**Para desfazer:** tire o nome da lista, salve o ambiente, abra **sessão nova**.
+Configuração gerenciada não se sobrepõe de dentro da sessão — é o preço de a
+barreira ser real, e é o ponto.
 
 ## Sessões locais fora deste repo
 
