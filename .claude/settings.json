@@ -6,10 +6,15 @@
       "mcp__Supabase__list_organizations",
       "mcp__Supabase__list_projects",
       "mcp__Supabase__list_tables",
+      "mcp__Supabase__list_migrations",
+      "mcp__Supabase__list_extensions",
       "mcp__Supabase__get_advisors",
+      "mcp__Supabase__get_organization",
       "mcp__Supabase__get_project",
       "mcp__Supabase__get_project_url",
       "mcp__Supabase__query_logs",
+      "mcp__Supabase__search_docs",
+      "mcp__Supabase__generate_typescript_types",
       "Bash(date:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -19,8 +24,7 @@
       "Bash(git push:*)",
       "Bash(git fetch:*)",
       "Bash(git checkout:*)",
-      "Bash(cp .claude/settings.local.json .claude/settings.json)",
-      "Bash(git -c user.email=igorruiz.civil@gmail.com -c 'user.name=Igor Ruiz \\(via Claude\\)' commit -q -m 'chore: allowlist de permissoes do projeto para sessoes remotas *)"
+      "Bash(git -c *)"
     ]
   }
 }
