@@ -248,3 +248,28 @@ test("chave que o painel espera e o snapshot nao entrega vira aviso, nunca tela 
   expect(r.aceso, "o aviso de carga incompleta tem de acender").toBe(true);
   expect(r.det, "o aviso tem de dizer QUAL chave faltou").toContain("fila");
 });
+
+/* CLASSE DE DEFEITO 5 · v54 (t621): SMALL MULTIPLES SO COMPARAM SE A ESCALA FOR UMA SO.
+   Grade com escala por celula e pior que nao ter grade: toda frente parece igualmente
+   movimentada, que e exatamente o erro que o Tufte nomeia. E precisa desenhar com render()
+   sozinho, sem ninguem clicar em aba nenhuma, senao a comparacao so existe para quem procura.
+   O teste afirma as duas coisas: desenhou sem clique, e o teto do eixo e o mesmo em todas. */
+test('os small multiples desenham so com render() e todos no mesmo teto de eixo', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.frs=[{slug:"01-alfa",status:"verde",serie:[0,4,2],fechadas_periodo:6,pico:4,desde:"2026-09-16"},
+           {slug:"02-beta",status:"vermelho",serie:[1,1,0],fechadas_periodo:2,pico:1,desde:"2026-09-16"}];
+    let err=null; try{ rSmallMult(); }catch(e){ err=String(e); }
+    const cel=[...document.querySelectorAll('#smallmult .fcard')];
+    /* a barra mais alta de cada celula, em unidade do viewBox: com escala unica a de valor 4
+       ocupa a altura toda e a de valor 1 ocupa um quarto. Com escala por celula as duas
+       ocupariam a altura toda, e e esse o defeito que este teste recusa. */
+    const alturas=cel.map(c=>Math.max(...[...c.querySelectorAll('rect')].map(x=>+x.getAttribute('height'))));
+    return {err, celulas:cel.length, alturas};
+  });
+  expect(r.err,      'rSmallMult() derrubou o script').toBe(null);
+  expect(r.celulas,  'uma celula por frente, desenhada sem clique').toBe(2);
+  expect(r.alturas[0]>r.alturas[1], 'pico 4 tem de desenhar mais alto que pico 1: escala unica').toBe(true);
+  expect(Math.abs(r.alturas[0]/r.alturas[1]-4)<0.35, 'a razao das alturas segue a razao dos valores').toBe(true);
+});
