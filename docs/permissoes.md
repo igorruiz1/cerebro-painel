@@ -1,9 +1,19 @@
 # Permissões do Claude Code: onde a regra mora
 
 O problema concreto: `mcp__Supabase__execute_sql` pedindo autorização a cada
-chamada. A regra que resolve é sempre a mesma linha numa lista `permissions.allow`
-— o que muda é **em qual arquivo** ela precisa estar, e isso depende de onde a
-sessão abre. Errar o arquivo é o que faz a permissão "não pegar".
+chamada.
+
+São **duas travas em série**, e destravar uma só não abre a porta:
+
+1. **A allowlist** — a regra existe e o arquivo certo foi lido? É o resto desta
+   página.
+2. **O modo de permissão** da sessão — ver
+   [Ainda pergunta, mesmo com a regra no lugar](#ainda-pergunta-mesmo-com-a-regra-no-lugar).
+
+A regra que resolve a trava 1 é sempre a mesma linha numa lista
+`permissions.allow` — o que muda é **em qual arquivo** ela precisa estar, e isso
+depende de onde a sessão abre. Errar o arquivo é o que faz a permissão "não
+pegar".
 
 | Onde você abre a sessão | Arquivo que vale | Estado |
 | --- | --- | --- |
@@ -60,6 +70,60 @@ repositório que a sessão clona. Crie `.claude/settings.json` lá com:
 `restore_project`, `deploy_edge_function` e o ciclo de branches
 (`create` / `merge` / `reset` / `delete`). Caro ou irreversível continua pedindo
 confirmação — é a última barreira antes de um estrago silencioso.
+
+## Ainda pergunta, mesmo com a regra no lugar
+
+Sintoma: sessão na nuvem, allowlist commitada no `main`, e mesmo assim aparece
+"Permitir que Claude usar Execute SQL (Supabase)?" a cada chamada.
+
+Percorra na ordem — a primeira que casar é a sua.
+
+**1. A sessão é anterior à allowlist.** As permissões são lidas **quando a
+sessão abre**. Uma sessão aberta antes do commit da regra nunca a enxerga, por
+mais `git pull` que você dê dentro dela. É a causa mais comum.
+→ Abra uma sessão nova. A antiga só se resolve pelo modo (item 4).
+
+**2. A sessão tem mais de um repositório.** Documentado: uma sessão com vários
+repositórios começa *acima* dos clones e, de cada `.claude/settings.json`,
+carrega só os plugins e marketplaces declarados — **não as regras de
+permissão**. Sessão de repositório único lê tudo.
+→ Use sessão de um repositório só, ou resolva pelo modo (item 4).
+
+**3. O nome da ferramenta não bate.** A regra casa pelo identificador
+(`mcp__Supabase__execute_sql`), não pelo rótulo da caixa de diálogo
+("Execute SQL (Supabase)"). Servidor MCP registrado com outro nome → outra
+regra.
+→ Confira o `project_id`/nome do servidor no JSON que a caixa mostra.
+
+**4. O modo de permissão não cobre MCP.** `acceptEdits` ("Aceitar edições", o
+rótulo no rodapé) auto-aprova edição de arquivo e **não** ferramentas MCP.
+
+| Modo | Roda sem perguntar |
+| --- | --- |
+| `default` (Manual) | só leitura |
+| `acceptEdits` | leitura + edição de arquivo — **MCP continua perguntando** |
+| `auto` | tudo, com verificação de segurança em segundo plano |
+| `dontAsk` | leitura + ferramentas pré-aprovadas; o resto é **negado**, não perguntado |
+| `bypassPermissions` | tudo, sem verificação |
+
+→ Na nuvem o modo se escolhe no **dropdown da sessão**, ao criar a tarefa e com
+ela em curso. É a única alavanca que muda uma sessão **já aberta**.
+
+### Por que este repo não fixa um modo no settings.json
+
+`permissions.defaultMode` aceita valor em `.claude/settings.json`, mas:
+
+- `auto` e `bypassPermissions` **são ignorados** nesse arquivo por decisão do
+  produto (a sessão cai para Manual) — não adianta tentar.
+- `dontAsk` funcionaria e zeraria os prompts, mas **nega** tudo que não estiver
+  na allowlist: `Edit`, `Write`, e qualquer `Bash` fora da lista parariam de
+  funcionar sem sequer perguntar. Trocaria um incômodo por um travamento
+  silencioso.
+
+Por isso a divisão: **allowlist no repositório** (durável, versionada,
+auditável) + **modo escolhido na sessão** (contextual, reversível). É o mesmo
+desenho de `sudoers` + flag da invocação: política no arquivo, postura no
+momento da chamada.
 
 ## Sintaxe, para quando você editar à mão
 
