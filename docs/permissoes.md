@@ -9,18 +9,38 @@ que é certeza e o que é aposta.
 
 | # | Rota | Cobre | Custo | Certeza |
 | --- | --- | --- | --- | --- |
-| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | **medida em sessão** |
+| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | documentada, **não isolada** ainda |
 | 2 | Allowlist em `.claude/settings.json` | só as 14 regras Supabase | já feito | funciona **quando lida a tempo** |
 | 3 | `scripts/setup-nuvem.sh` no Setup script | idem, antes do boot | 1 config | **aposta**, ver ressalva |
 | 4 | Server-managed settings | tudo, na organização | só Team/Enterprise | documentada, indisponível aqui |
 
-A rota 1 é a que resolve. As outras reduzem prompt em modo Manual; nenhuma delas
-elimina.
+A rota 1 é a que a documentação indica, e é 1 clique — mas a medição de
+18/09/2026 **não conseguiu isolá-la** (ver abaixo). As outras reduzem prompt;
+nenhuma delas elimina.
 
 ## Rota 1: o modo de permissão
 
 É o único controle que muda o comportamento **com a sessão rodando**, pelo
-dropdown de modo. Os modos e o que roda sem perguntar:
+dropdown de modo.
+
+### O que a nuvem oferece de verdade: três modos, não cinco
+
+Conferido no dropdown em 18/09/2026. A lista de cinco modos abaixo é do **CLI
+local**; a sessão de nuvem mostra só três, com estes nomes:
+
+| No dropdown da nuvem | Descrição que aparece | Equivale a |
+| --- | --- | --- |
+| **Automático** | *Claude gerencia decisões de permissão* | `auto` |
+| **Aceitar edições** | *Aceitar todas as edições automaticamente* | `acceptEdits` |
+| **Plano** | *Criar um plano antes de fazer alterações* | `plan` |
+
+`dontAsk` e `bypassPermissions` **não são oferecidos** na nuvem. E `default`
+(Manual) não está no menu, embora exista como estado: a API de sessão reportou
+`permission_mode: "default"` para uma sessão cujo dropdown mostrava "Aceitar
+edições". Os dois não batem, e qual dos dois manda ainda não foi medido — não
+conte com nenhum deles para desenhar teste.
+
+Os cinco modos do CLI local, para referência:
 
 | Modo | Roda sem perguntar |
 | --- | --- |
@@ -35,24 +55,37 @@ você — *"Everything else goes to the classifier"*. É o modo desenhado para
 exatamente esta dor, e a documentação o indica para *"long tasks, reducing
 prompt fatigue"*.
 
-### Medido em 18/09/2026: o modo `auto` resolve, e resolve MCP
+### Medido em 18/09/2026: zero prompts — e nenhuma das rotas explica
 
-Sessão de nuvem aberta em `auto`, um repositório. Nenhum pedido de autorização em
-nenhuma chamada — `list_organizations`, `execute_sql` (`select 1`),
-`list_edge_functions`, e comandos `Bash` fora da allowlist (`ls`, `cat`,
-`git branch`, `git reflog`).
+Esta seção já esteve escrita como *"o modo `auto` resolve"*. Estava errada na
+causa e foi corrigida no mesmo dia. Fica o registro do erro, porque ele é o
+quarto diagnóstico furado desta mesma investigação.
 
-Duas conferências para a medição não ser confundida com a rota 2:
+**O fato, esse se sustenta.** Sessão de nuvem, um repositório. Nenhum pedido de
+autorização em nenhuma chamada: `list_organizations`, `execute_sql` (`select 1`),
+`list_edge_functions`, e `Bash` fora da allowlist (`ls`, `cat`, `git branch`,
+`git reflog`).
 
-- `list_edge_functions` **não está** na allowlist de `.claude/settings.json` e
-  rodou sem prompt. Logo não foi a allowlist que cobriu.
-- o reflog do container mostra o snapshot subindo em `a0f9f29` às 13:53:32 —
-  commit **anterior** à allowlist — e o clone só chegando em `ff94946` às
-  15:38:51. Mesmo padrão de timing do incidente descrito na rota 2: no boot, a
-  allowlist não estava em disco.
+**A causa não é a rota 2.** `list_edge_functions` não está na allowlist, e o
+reflog mostra o snapshot subindo em `a0f9f29` às 13:53:32 — anterior à
+allowlist — com o clone só chegando em `ff94946` às 15:38:51.
 
-A rota 1 fica confirmada no mundo real, e não só na documentação. A rota 2 segue
-valendo para quem trabalha em modo Manual.
+**E também não é a rota 1.** A sessão foi descrita como estando em `auto` e não
+estava: `get_session` reportou `permission_mode: "default"`, e o dropdown
+mostrava "Aceitar edições". Nenhum dos dois é `auto`. Em `default`, pela tabela
+acima, `ls` e `execute_sql` **deveriam** ter pedido autorização. Não pediram.
+
+Sobra a conclusão honesta: **nesta sessão o prompt não apareceu, e nenhuma das
+quatro rotas explica por quê.** Hipóteses ainda não medidas — o cliente
+(desktop app) aprovando por fora; o container subindo com permissão relaxada
+independentemente do dropdown; o modo real divergindo do exibido, que é a mesma
+divergência da seção anterior.
+
+**A consequência prática, essa é imediata:** a ausência de prompt nesta sessão
+**não serve de controle** para medir nenhuma outra rota. Qualquer teste que
+conclua "não pediu autorização, logo funcionou" está furado enquanto isso não
+for resolvido. O teste da rota 3 tem que se apoiar no marcador em disco, não na
+ausência de prompt.
 
 **Por que não deixar isso cravado no repo:** a documentação é explícita de que
 `permissions.defaultMode` com valor `"auto"` **não tem efeito** em
@@ -108,8 +141,18 @@ a segunda hipótese, e por isso deixa um marcador em vez de pedir fé:
 cat /etc/claude-code/.origem-cerebro    # quando rodou, de onde veio, quantas regras
 ```
 
-Sem esse arquivo, o script não rodou. Com ele, e ainda assim com prompt, os dois
-alvos foram recusados e a rota morre — registre aqui e caia para a rota 1.
+Sem esse arquivo, o script não rodou — o que costuma ser o ambiente
+reaproveitando um snapshot antigo, não a rota estando errada. Recrie o ambiente e
+meça de novo.
+
+**Como NÃO medir esta rota:** pela ausência de prompt. A sessão de 18/09/2026 não
+pediu autorização para nada, em modo nenhum, sem que qualquer rota explicasse
+(ver rota 1). Enquanto isso não for resolvido, "não pediu, logo funcionou" não
+prova nada. O que a rota 3 pode provar sozinha é mais modesto e ainda útil: **o
+setup script roda, e o que ele escreve sobrevive ao snapshot.** Isso o marcador
+responde. Se o marcador aparecer com a contagem de regras nos dois alvos, a rota
+3 deixa de ser aposta quanto à *entrega*; se ela de fato suprime prompt fica em
+aberto até haver uma sessão que peça autorização para servir de controle.
 
 ## Rota 4: server-managed settings
 
