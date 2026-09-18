@@ -19,7 +19,15 @@
 // Idempotente: rodar duas vezes nao duplica nada. Faz backup antes de escrever
 // e aborta sem tocar no arquivo se o JSON de destino estiver corrompido.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  copyFileSync,
+  readdirSync,
+  statSync,
+} from 'node:fs'
 import { homedir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -83,9 +91,92 @@ if (!doRepo) {
   process.exit(1)
 }
 
-const candidatas = (doRepo.permissions?.allow ?? []).filter(
-  (regra) => todas || regra.startsWith('mcp__Supabase__')
+// O repo diz QUAIS ferramentas liberar; a maquina diz ONDE elas moram.
+//
+// A allowlist versionada nomeia o servidor `Supabase`, que e como a sessao de
+// NUVEM o registra. Na maquina do Igor ele nao se chama assim: o conector da
+// conta entra com o UUID da instancia e o plugin entra como
+// `plugin_<plugin>_<servidor>`. Copiar a regra da nuvem para ca escreve um JSON
+// valido que nao casa com nada e nao da erro nenhum — foi o que aconteceu em
+// 18/09/2026. Por isso o prefixo e DESCOBERTO aqui, nunca escrito no repo:
+// descoberto sobrevive ao UUID mudar quando o conector e reinstalado, e nenhum
+// identificador de conta entra num repositorio publico.
+const FERRAMENTAS_ASSINATURA = ['execute_sql', 'list_tables', 'apply_migration']
+
+// De onde vem a descoberta: os transcripts das sessoes locais. Os servidores MCP
+// do app de desktop nao aparecem em ~/.claude.json (`mcpServers` vem vazio) nem
+// em manifesto de plugin — medido em 18/09/2026. O unico registro em disco do
+// nome como a SESSAO o enxerga sao os proprios transcripts.
+function descobrirServidores() {
+  const raizProjetos = join(homedir(), '.claude', 'projects')
+  if (!existsSync(raizProjetos)) return []
+
+  const transcripts = []
+  for (const pasta of readdirSync(raizProjetos)) {
+    const cheio = join(raizProjetos, pasta)
+    if (!statSync(cheio).isDirectory()) continue
+    for (const arq of readdirSync(cheio)) {
+      if (!arq.endsWith('.jsonl')) continue
+      const caminho = join(cheio, arq)
+      transcripts.push({ caminho, quando: statSync(caminho).mtimeMs })
+    }
+  }
+  transcripts.sort((a, b) => b.quando - a.quando)
+
+  // Oito basta: o que o servidor expoe nao muda a cada sessao, e ler o historico
+  // inteiro so custa tempo.
+  const porServidor = new Map()
+  const padrao = /"mcp__([A-Za-z0-9_.-]+?)__([A-Za-z0-9_]+)"/g
+  for (const { caminho } of transcripts.slice(0, 8)) {
+    const texto = readFileSync(caminho, 'utf8')
+    let achado
+    while ((achado = padrao.exec(texto)) !== null) {
+      if (!porServidor.has(achado[1])) porServidor.set(achado[1], new Set())
+      porServidor.get(achado[1]).add(achado[2])
+    }
+  }
+
+  // Duas das tres marcas bastam para identificar. Uma so daria falso positivo com
+  // qualquer servidor de banco; as tres juntas exigiriam que o Supabase tivesse
+  // sido exercitado por inteiro. Medido em 18/09/2026: dois servidores casam,
+  // nenhum falso positivo entre os 23 registrados.
+  const casam = []
+  for (const [servidor, ferramentas] of porServidor) {
+    const marcas = FERRAMENTAS_ASSINATURA.filter((f) => ferramentas.has(f))
+    if (marcas.length >= 2) casam.push(servidor)
+  }
+  return casam.sort()
+}
+
+// A politica — QUAIS ferramentas — continua vindo do repo, revisada em PR.
+const ferramentasDaPolitica = (doRepo.permissions?.allow ?? [])
+  .filter((regra) => regra.startsWith('mcp__Supabase__'))
+  .map((regra) => regra.slice('mcp__Supabase__'.length))
+
+const outrasRegras = (doRepo.permissions?.allow ?? []).filter(
+  (regra) => !regra.startsWith('mcp__Supabase__')
 )
+
+const forcados = [...args]
+  .filter((a) => a.startsWith('--servidor='))
+  .map((a) => a.slice('--servidor='.length).replace(/^mcp__|__$/g, ''))
+
+const servidores = forcados.length > 0 ? forcados : descobrirServidores()
+
+if (servidores.length === 0) {
+  console.error(
+    `Nao achei nenhum servidor Supabase nos transcripts desta maquina.
+Isso acontece em maquina nova, ou se o Supabase ainda nao foi usado aqui.
+Use o Supabase uma vez e rode de novo, ou passe o prefixo na mao:
+  node scripts/permissoes-usuario.mjs --servidor=mcp__NOME__`
+  )
+  process.exit(1)
+}
+
+const candidatas = [
+  ...servidores.flatMap((s) => ferramentasDaPolitica.map((f) => `mcp__${s}__${f}`)),
+  ...(todas ? outrasRegras : []),
+]
 if (candidatas.length === 0) {
   console.error('A allowlist do repo nao tem nenhuma regra para levar. Nada a fazer.')
   process.exit(1)
@@ -110,7 +201,13 @@ const faltando = candidatas.filter((regra) => !jaTem.has(regra))
 
 console.log(`Origem : ${origem}`)
 console.log(`Destino: ${destino}`)
-console.log(`Regras consideradas: ${candidatas.length} (${todas ? 'todas' : 'somente mcp__Supabase__*'})`)
+console.log(`Servidores Supabase nesta maquina: ${servidores.length}`)
+for (const s of servidores) console.log(`  mcp__${s}__`)
+console.log(
+  `Regras consideradas: ${candidatas.length}` +
+    ` (${ferramentasDaPolitica.length} ferramentas x ${servidores.length} servidores` +
+    `${todas ? ` + ${outrasRegras.length} regras Bash` : ''})`
+)
 
 if (faltando.length === 0) {
   console.log('\nJa esta tudo la. Nada a escrever.')
