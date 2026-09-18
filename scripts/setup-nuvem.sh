@@ -34,7 +34,9 @@ set -uo pipefail
 
 MANAGED_DIR=/etc/claude-code
 MANAGED=$MANAGED_DIR/managed-settings.json
-USUARIO=$HOME/.claude/settings.json
+# ${HOME:-/root} e nao $HOME: com set -u um HOME vazio mataria o script, e setup
+# script que sai diferente de zero IMPEDE A SESSAO DE ABRIR.
+USUARIO=${HOME:-/root}/.claude/settings.json
 
 # A fonte da verdade e a allowlist versionada no repo. O clone acontece antes do
 # setup script, entao na maioria das vezes ela esta aqui e nao precisamos manter
@@ -83,9 +85,37 @@ BLOCO="{\"permissions\":{\"allow\":$REGRAS}}"
 # Dois alvos de proposito. As configuracoes gerenciadas tem a precedencia mais
 # alta que existe; as de usuario sao o plano B para o caso de a superfície
 # hospedada aceitar so as segundas. Custa dois arquivos e cobre as duas hipoteses.
-mkdir -p "$MANAGED_DIR" "$(dirname "$USUARIO")" 2>/dev/null || true
-printf '%s\n' "$BLOCO" > "$MANAGED" 2>/dev/null || true
-printf '%s\n' "$BLOCO" > "$USUARIO" 2>/dev/null || true
+#
+# FUNDE, nao sobrescreve. No container de nuvem esses arquivos nascem vazios e
+# daria na mesma, mas um ambiente self-hosted ou uma imagem customizada pode ja
+# ter configuracao de usuario ali, e um > cego apagaria tema, deny e hooks de
+# quem nunca pediu isso. Sem node, escreve apenas se o destino NAO existir: e
+# melhor nao instalar a regra do que destruir configuracao alheia.
+fundir() {
+  local destino=$1
+  mkdir -p "$(dirname "$destino")" 2>/dev/null || true
+  if [ -s "$destino" ] && command -v node >/dev/null 2>&1; then
+    node -e '
+      const fs = require("fs")
+      const [destino, bloco] = process.argv.slice(1)
+      let atual = {}
+      try { atual = JSON.parse(fs.readFileSync(destino, "utf8")) } catch (e) { process.exit(3) }
+      const novas = JSON.parse(bloco).permissions.allow
+      const tem = new Set(atual.permissions?.allow ?? [])
+      atual.permissions = {
+        ...(atual.permissions ?? {}),
+        allow: [...(atual.permissions?.allow ?? []), ...novas.filter((r) => !tem.has(r))],
+      }
+      fs.writeFileSync(destino, JSON.stringify(atual, null, 2) + "\n")
+    ' "$destino" "$BLOCO" 2>/dev/null || true
+  elif [ ! -e "$destino" ]; then
+    printf '%s\n' "$BLOCO" > "$destino" 2>/dev/null || true
+  fi
+}
+
+mkdir -p "$MANAGED_DIR" 2>/dev/null || true
+fundir "$MANAGED"
+fundir "$USUARIO"
 
 # Marcador de diagnostico: na proxima sessao da para ler este arquivo e saber se
 # o setup script rodou, de onde veio a lista e quantas regras entraram — sem
