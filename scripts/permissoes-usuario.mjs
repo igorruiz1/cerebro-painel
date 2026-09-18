@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 // Leva a allowlist do Supabase deste repo para as configuracoes de USUARIO do
-// Claude Code (~/.claude/settings.json), que valem em qualquer diretorio.
+// Claude Code (~/.claude/settings.json), que valem em qualquer diretorio DA SUA
+// MAQUINA.
 //
 // Existe porque .claude/settings.json so e lido quando a sessao abre DENTRO
 // deste repositorio. Fora dele — outro projeto, outra pasta — a regra some e o
 // execute_sql volta a pedir autorizacao a cada chamada.
+//
+// NAO SERVE PARA SESSAO DE NUVEM. Sessao de nuvem nao le ~/.claude/settings.json
+// (a documentacao diz "not read") e le as permissoes so no boot, antes de este
+// script ter chance de rodar. La a regra entra por scripts/setup-nuvem.sh, no
+// campo Setup script do ambiente. Ver docs/permissoes.md.
 //
 //   node scripts/permissoes-usuario.mjs --conferir   # mostra o que faria
 //   node scripts/permissoes-usuario.mjs              # aplica
@@ -83,6 +89,19 @@ const candidatas = (doRepo.permissions?.allow ?? []).filter(
 if (candidatas.length === 0) {
   console.error('A allowlist do repo nao tem nenhuma regra para levar. Nada a fazer.')
   process.exit(1)
+}
+
+// Rodar isto numa sessao de nuvem nao resolve nada e da a falsa sensacao de ter
+// resolvido. Avisar e mais util do que escrever um arquivo que ninguem vai ler.
+if (process.env.CLAUDE_CODE_REMOTE === 'true' || process.env.CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE) {
+  console.error(
+    'Isto aqui e uma sessao de NUVEM, que nao le ~/.claude/settings.json.\n' +
+      'Escrever o arquivo agora nao tira nenhum pedido de autorizacao.\n' +
+      'O caminho da nuvem e scripts/setup-nuvem.sh no campo Setup script do\n' +
+      'ambiente em claude.ai/code. Ver docs/permissoes.md.\n\n' +
+      'Para escrever assim mesmo (teste do proprio script): --forcar'
+  )
+  if (!args.has('--forcar')) process.exit(1)
 }
 
 const atual = lerJson(destino, 'suas configuracoes de usuario') ?? {}
