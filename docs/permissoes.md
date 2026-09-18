@@ -426,6 +426,8 @@ história.
 | hook `SessionStart` que instala a regra | roda *"After Claude Code launches"*, depois da leitura que tentaria alterar |
 | medir rota pela ausência de prompt | o launcher já pré-aprova `Bash`, `Write`, `Edit` e 23 ferramentas Supabase. Use o controle da rota 1 |
 | sonda de permissão com `echo` | comando sem efeito colateral é aprovado sozinho, com ou sem regra |
+| copiar a regra `mcp__Supabase__*` da nuvem para a sua máquina | o servidor não se chama `Supabase` no desktop. JSON válido, zero efeito, nenhum erro. Ver "Sessões locais fora deste repo" |
+| usar o nome de exibição do plugin como prefixo | `plugin:igor-cerebro:supabase` é rótulo; o prefixo troca `:` por `_` |
 
 ## A barreira do caro e do irreversível: era decorativa, agora é real
 
@@ -551,12 +553,69 @@ node scripts/permissoes-usuario.mjs --conferir   # mostra o que faria
 node scripts/permissoes-usuario.mjs              # aplica
 ```
 
-Funde as regras `mcp__Supabase__*` no seu `~/.claude/settings.json`, preservando
-o que já estiver lá. Backup carimbado, idempotente, aborta sem tocar em nada se o
-JSON de destino estiver corrompido. `--todas` leva também as regras `Bash(git ...)`.
-Recusa rodar em sessão de nuvem, onde não teria efeito.
+Backup carimbado, idempotente, aborta sem tocar em nada se o JSON de destino
+estiver corrompido. `--todas` leva também as regras `Bash(git ...)`. Recusa rodar
+em sessão de nuvem, onde não teria efeito.
 
 **Vale a partir da próxima sessão**, porque a permissão é lida no boot.
+
+### O nome do servidor não é o mesmo aqui e na nuvem
+
+Esta página dizia que o script "funde as regras `mcp__Supabase__*` no seu
+`~/.claude/settings.json`". **Medido em 18/09/2026: fundia, e não servia para
+nada.** As 14 regras foram escritas, o JSON ficou válido, o script imprimiu
+"Escrito" — e nenhuma delas casava com coisa alguma.
+
+O servidor só se chama `Supabase` na **sessão de nuvem**. Nesta máquina ele entra
+com outro nome, e são dois:
+
+| Superfície | Prefixo da regra |
+| --- | --- |
+| Sessão de nuvem | `mcp__Supabase__` |
+| Conector da conta, no desktop | `mcp__<uuid-da-instância>__` |
+| Servidor do plugin, no desktop | `mcp__plugin_<plugin>_<servidor>__` |
+
+O nome de exibição do plugin (`plugin:igor-cerebro:supabase`) **não** é o prefixo:
+os dois-pontos viram underscore. Quem copiar o nome que a sessão mostra erra, e
+erra em silêncio.
+
+**Regra que não casa não dá erro.** Não há mensagem, não há aviso, não há log —
+o arquivo fica válido e inerte. É o modo de falha mais caro desta página inteira,
+porque parece sucesso.
+
+### Por isso o prefixo é descoberto, nunca escrito
+
+O repo continua dizendo **quais** ferramentas liberar — a lista `mcp__Supabase__*`
+da allowlist versionada é a política, revisada em PR. Quem diz **onde** elas moram
+é a máquina: o script descobre os servidores no momento em que roda e monta
+`mcp__<servidor>__<ferramenta>` para cada um.
+
+Como descobre, e por que assim: os servidores MCP do app de desktop **não** estão
+em `~/.claude.json` (`mcpServers` vem vazio) nem em manifesto de plugin — medido
+em 18/09/2026. O único registro em disco do nome como a sessão o enxerga são os
+transcripts em `~/.claude/projects/*.jsonl`. O script lê os 8 mais recentes e
+considera Supabase o servidor que expõe ao menos duas de `execute_sql`,
+`list_tables`, `apply_migration`. Medido: casa os dois servidores certos, nenhum
+falso positivo entre os 23 registrados.
+
+Duas consequências que valem o desenho:
+
+- **Reinstalar o conector muda o UUID.** Com o prefixo descoberto, rodar o script
+  de novo resolve. Com o prefixo escrito no repo, as regras morreriam em silêncio
+  e ninguém saberia.
+- **Nenhum identificador de conta entra no repositório**, que é público.
+
+Se a descoberta falhar (máquina nova, Supabase ainda não usado ali), o script para
+e diz o que fazer. Dá para forçar: `--servidor=mcp__NOME__`.
+
+O script emite a política inteira para **cada** servidor, sem interseção com o que
+aquele servidor expõe de fato. O plugin, por exemplo, não tem `list_projects` — a
+regra correspondente nasce morta. É de propósito: regra morta não custa nada, e
+regra faltando custa exatamente o prompt que o script existe para eliminar.
+
+**Ponto aberto:** o script só acrescenta, nunca poda. Quem rodou a versão antiga
+ficou com 14 regras `mcp__Supabase__*` inúteis no arquivo de usuário. São inertes;
+um `--podar` resolveria e ainda não existe.
 
 ## Sintaxe, para quando você editar à mão
 
