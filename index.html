@@ -847,7 +847,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v52";
+const VER="v53";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2132,11 +2132,14 @@ function leBarra(){
         onclick="marcarLote()">
         ${SEL.size?`marcar ${SEL.size} como lida${SEL.size===1?"":"s"}`:"marcar como lidas"}</button>`
    : `<b>zero</b> peças esperando sua ciência. Silêncio aqui é informação.`;}
-function rLeituras(){
-  leBarra();
-  const el=document.getElementById("leituras");if(!el)return;
-  el.innerHTML=LE.length?LE.map(x=>`
-    <div class="lerow${SEL.has(x.ref)?" sel":""}">
+/* v53 · DIVULGAÇÃO PROGRESSIVA (t619). A aba deixa de ser depósito: na dobra sobe só
+   o que chegou hoje ou está fora de banda por decurso; o resto fica atrás de "ver tudo",
+   com a contagem à vista. Teto de 6 na dobra para um dia de enxurrada não desfazer a régua.
+   O textarea de deliberar nasce só quando abre, e não N vezes no DOM. */
+let LE_TUDO=0;
+function leUrgente(x){return x.dias===0||(x.dias_para_decurso??99)<=1;}
+function leRow(x){
+  return `<div class="lerow${SEL.has(x.ref)?" sel":""}">
       <input type="checkbox" ${SEL.has(x.ref)?"checked":""} aria-label="marcar ${esc(x.ref)}"
         onchange="leSel('${esc(x.ref)}',this)">
       <div class="cor">
@@ -2149,18 +2152,28 @@ function rLeituras(){
         <div class="acoesle">
           <button onclick="abreDelib('${esc(x.ref)}')" id="bd-${esc(x.ref)}">deliberar</button>
         </div>
-        <div class="ledelib" id="ld-${esc(x.ref)}">
-          <textarea id="dt-${esc(x.ref)}" rows="3"
-            placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
-          <div class="acoesle">
-            <button class="prim" onclick="enviaDelib('${esc(x.ref)}')">registrar e marcar lida</button>
-            <button onclick="abreDelib('${esc(x.ref)}')">cancelar</button>
-          </div>
-        </div>
-      </div></div>`).join("")
-   :`<div class="empty">nada esperando sua ciência.</div>`;}
+        <div class="ledelib" id="ld-${esc(x.ref)}"></div>
+      </div></div>`;}
+function leVerTudo(){LE_TUDO=1;rLeituras();}
+function rLeituras(){
+  leBarra();
+  const el=document.getElementById("leituras");if(!el)return;
+  if(!LE.length){el.innerHTML=`<div class="empty">nada esperando sua ciência.</div>`;return;}
+  const ord=LE.slice().sort((a,b)=>((a.dias_para_decurso??99)-(b.dias_para_decurso??99)));
+  const dobra=LE_TUDO?ord:ord.filter(leUrgente).slice(0,6);
+  const fora=ord.length-dobra.length;
+  el.innerHTML=(dobra.length?dobra.map(leRow).join("")
+      :`<div class="empty">nada fora de banda. ${ord.length} peça(s) esperando ciência, todas em dia.</div>`)
+   +(fora>0?`<button class="mais" style="width:100%;margin-top:8px" onclick="leVerTudo()">ver tudo (${fora} em dia, fora da dobra)</button>`:"");}
 function abreDelib(ref){
   const d=document.getElementById("ld-"+ref); if(!d)return;
+  if(!d.innerHTML.trim()){
+    d.innerHTML=`<textarea id="dt-${ref}" rows="3"
+        placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
+      <div class="acoesle">
+        <button class="prim" onclick="enviaDelib('${ref}')">registrar e marcar lida</button>
+        <button onclick="abreDelib('${ref}')">cancelar</button>
+      </div>`;}
   const abriu=!d.classList.contains("on");
   d.classList.toggle("on",abriu);
   const b=document.getElementById("bd-"+ref); if(b)b.textContent=abriu?"fechar":"deliberar";
@@ -2632,7 +2645,9 @@ function rEvolucao(){
       <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`}).join("");
   const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
-  document.getElementById("kpis").innerHTML=Object.keys(por)
+  document.getElementById("kpis").innerHTML=
+   `<p class="s" style="margin:0 0 10px">Vermelho exige DUAS janelas: a métrica só alarma se estourou a meta hoje E na média da janela longa. Um dia ruim sozinho não pinta de vermelho.</p>`
+   +Object.keys(por)
     .sort((a,b)=>(ordem.indexOf(a)<0?99:ordem.indexOf(a))-(ordem.indexOf(b)<0?99:ordem.indexOf(b))).map(d=>
     `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${por[d].length} indicador(es)</span></h2>
      <div class="grid">${por[d].map(k=>{
@@ -2640,10 +2655,17 @@ function rEvolucao(){
       const t=k.tendencia==="melhorou"?'<span class="tag ok">melhorou</span>':
         k.tendencia==="piorou"?'<span class="tag bad">piorou</span>':
         k.tendencia==="estavel"?'<span class="tag">estável</span>':'<span class="tag">sem série</span>';
+      /* v53 · DUAS JANELAS (t618). O banco já decide o vermelho pelas duas janelas;
+         aqui a regra fica VISÍVEL, que é o que faltava: quando só uma das janelas
+         estourou, o card diz qual, em vez de ficar cinza sem explicação. */
+      const jan=(k.fora_da_meta===true&&k.janela_longa_fora===false)
+        ? '<span class="tag">hoje fora, janela longa dentro: não é alarme</span>'
+        : (k.fora_da_meta===false&&k.janela_longa_fora===true)
+        ? '<span class="tag">janela longa fora: vigiar</span>' : '';
       const v=k.valor==null?`<div class="n nd">indeterminado</div>`:`<div class="n">${nfmt(k.valor,k.unidade)}</div>`;
       return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
-        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}</span>
+        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}${jan}</span>
         ${spark(k.serie,k.meta_num,k.direcao,98,34,k.p10,k.p90)}</div></div>`}).join("")}</div>`).join("");
 }
 function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
