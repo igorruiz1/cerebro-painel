@@ -845,7 +845,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v48";
+const VER="v49";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -868,6 +868,11 @@ const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
    Toda ida ao banco passa por aqui com um teto de tempo. Estourou, a tela DIZ, e diz a
    verdade util: o efeito pode ter chegado, recarregue para ver o estado real. */
 const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
+/* v49: o painel le um snapshot. Snapshot velho e pior que consulta lenta, porque MENTE calado.
+   A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
+const IDADE_MAX=1200;
+const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1473,57 +1478,49 @@ async function carregar(ehRetentativa){
      banco. Vazio e resposta; falha e ausencia de resposta. A tela nao pode confundir as
      duas — e a mesma licao da v40, que so tinha sido aplicada as ACOES, nao a CARGA. */
   const FALHAS=[];
-  /* v45: a v44 deixou este limitador de fora por falta de medicao. A medicao apareceu.
-     Medido no banco, no papel authenticated, depois da correcao do RLS: as 21 views da
-     abertura somam ~15s de trabalho real. Disparar as 22 de uma vez nao faz o banco ir mais
-     rapido — o pool do PostgREST enfileira, e quem chega por ultimo espera o tempo de todos
-     os outros e ESTOURA o teto de 15s. Foi exatamente isso na tela: "22 consultas nao
-     voltaram" com o banco ocioso e o gateway respondendo 401 em 0,3s.
-     Quatro por vez: a fila e a mesma, mas ninguem espera mais do que precisa, e o teto de
-     cada consulta passa a medir a consulta, nao a fila na porta.
-     (Tentativa descartada no mesmo dia: um RPC unico devolvendo tudo. Nestas views o caro e
-     PLANEJAR, e planejar as 21 arvores num comando so levou de 40s a 84s. Menos idas a rede,
-     mais trabalho no banco — piorou. Nao repetir.) */
-  const LIMITE_PARALELO=4;
-  let ativas=0; const espera=[];
-  const vaga=()=> ativas<LIMITE_PARALELO ? (ativas++, Promise.resolve())
-                : new Promise(r=>espera.push(r)).then(()=>{ativas++;});
-  const solta=()=>{ ativas--; const n=espera.shift(); if(n) n(); };
-  const q=(v,f)=> vaga().then(()=>{
-    let b; try{ b=sb.from(v).select("*"); if(f) b=f(b); }
-    catch(e){ FALHAS.push(v+" — "+((e&&e.message)||"erro ao montar a consulta")); solta(); return null; }
-    return comTeto(b, LIMITE_RECARGA, v)
-      .then(r=>{ if(r&&r.error){FALHAS.push(v+" — "+r.error.message); return null;} return (r&&r.data)||[]; })
-      .catch(e=>{ FALHAS.push(v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":(e&&e.message)||"erro")); return null; })
-      .finally(solta);
-  });
-  /* v25: a ABERTURA leva so o que a abertura mostra. Baseline medido em 28/08/2026:
-     647 KB nas 19 views; a fila de hoje sozinha da ~12 KB. O resto entra por aba. */
-  const [fila,cont,cor,fresc,rw,se,ev,ins,fr,m9,mat,au,pls,dv,par,mo,varr,nat,wip,rotp,op]=await Promise.all([
-    q("v_painel_fila",b=>b.eq("camada_tela","hoje")),
-    q("v_painel_contagem"),q("v_correcoes_abertas"),q("v_frescor"),q("v_runway"),q("v_painel_serie"),
-    q("v_painel_evolucao"),q("v_painel_insight"),q("v_painel_frente"),q("v_painel_matriz"),
-    q("v_simbiose_maturidade"),q("v_automacao_fila"),q("v_placar"),
-    q("v_painel_desde_ultima_visita"),q("v_pares"),q("v_painel_motor"),q("v_varredura_dabli_saude"),
-    q("v_fila_natureza"),q("v_wip_igor"),q("v_rotina_proxima"),
-    /* v48: a OPCAO viaja separada de proposito. v_painel_fila cita v_fila_do_igor, que ja
-       estourou o teto do painel uma vez; v_fila_opcoes so tem os cards abertos que TEM
-       opcao — hoje 7 linhas. Barato, e nao encosta na view cara. */
-    q("v_fila_opcoes")]);
+  /* v49: a CAUSA da "carga incompleta", medida no banco em 18/09/2026 (s446).
+     O papel authenticated tem statement_timeout=8s. Em pg_stat_statements as views da
+     abertura tinham media de 30 a 750ms, mas MAXIMO de 5 a 7,7s em TODAS — inclusive nas
+     baratas (v_painel_frente media 133ms, maximo 5.354ms). Cauda igual em view cara e em
+     view barata nao e custo de consulta, e CONTENCAO: 21 arvores de view aninhada sendo
+     PLANEJADAS ao mesmo tempo, disputando a mesma CPU, e quem chega por ultimo estoura os 8s.
+     Escalonar em 4 por vez (v45) reduziu a frequencia e nao podia resolver: o trabalho total
+     continuava no caminho critico da abertura.
+     A correcao nao acelera a consulta, TIRA A CONSULTA DA FRENTE DELE. painel_snapshot_montar()
+     roda cada fonte em comando separado (23 planos pequenos, nunca um plano gigante — a tentativa
+     de RPC unico de 16/09 levou 40 a 84s e continua proibida), a cada 5 min, na rotina
+     painel-snapshot. O painel le painel_carga(): UMA requisicao, UM plano, leitura de chave
+     primaria. Medido logo apos instalar: montagem completa 2.929ms, painel_carga() 5,9ms
+     contra 8s de teto. Margem de 1.350x, e a carga deixa de depender de quanto o banco esta
+     ocupado. Fonte nova entra como LINHA em painel_snapshot_fonte, nunca editando funcao.
+     O preco e honesto e esta na tela: o dado tem IDADE, e a idade aparece. */
+  let dados={}, GERADO=null, IDADE=null;
+  const rc=await comTeto(sb.rpc("painel_carga"), LIMITE_RECARGA, "painel_carga")
+    .then(x=>{ if(x&&x.error){FALHAS.push("painel_carga — "+x.error.message); return null;} return (x&&x.data)||null; })
+    .catch(e=>{ FALHAS.push("painel_carga — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":(e&&e.message)||"erro")); return null; });
+  if(rc){
+    dados  = rc.dados||{};
+    GERADO = rc.gerado_em||null;
+    IDADE  = (typeof rc.idade_s==="number")?rc.idade_s:null;
+    Object.keys(rc.erros||{}).forEach(k=>FALHAS.push(k+" — "+rc.erros[k]));
+    /* poka-yoke: chave que o painel LE e o snapshot nao TEM vira falha declarada, nunca
+       tela silenciosa. Foi assim que a v44 descobriu que vazio e falha sao coisas diferentes. */
+    const faltando=CHAVES_PAINEL.filter(k=>!(k in dados));
+    if(faltando.length) FALHAS.push("sem dado no snapshot: "+faltando.join(", "));
+    if(IDADE!==null && IDADE>IDADE_MAX)
+      FALHAS.push("snapshot com "+Math.round(IDADE/60)+" min de idade (teto "+Math.round(IDADE_MAX/60)+" min) — a rotina painel-snapshot parou de rodar");
+  }
+  /* undefined = a chave nao veio (falha). [] = veio vazia (resposta). Nao sao a mesma coisa. */
+  const g=k=>(k in dados)?(dados[k]||[]):null;
+  const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
+        ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
+        dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
+        rotp=g("rotp"),op=g("op"),semi=g("semi");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
-  const sentN=await comTeto(sb.from("v_sentinela").select("sinal",{count:"exact",head:true})
-    .lte("severidade",2), LIMITE_RECARGA, "v_sentinela")
-    .then(r=>r&&!r.error?r.count:null)
-    .catch(()=>null);
-  if(sentN===null) FALHAS.push("v_sentinela — contador não voltou");
+  const _sn=g("sentN"); const sentN=(_sn&&_sn[0]&&typeof _sn[0].n==="number")?_sn[0].n:null;
   const nse=document.getElementById("n-sent"); if(nse) nse.textContent=sentN?String(sentN):"";
-  const semi=await comTeto(sb.from("tarefa").select("id,frente_slug,prazo,descricao,automat_motivo")
-    .eq("dono","igor").neq("status","feita").eq("automatibilidade","S").order("prazo"),
-    LIMITE_RECARGA, "tarefa/semi")
-    .then(r=>{if(r&&r.error){FALHAS.push("tarefa (semiautomáticas) — "+r.error.message);return null;} return (r&&r.data)||[];})
-    .catch(()=>{FALHAS.push("tarefa (semiautomáticas) — sem resposta");return null;});
   /* v44: consulta que FALHOU (null) nao apaga o que ja estava na tela — mantem o dado
      anterior e o aviso vermelho diz que ele e velho. Apagar seria trocar um dado
      desatualizado por uma afirmacao falsa, que e sempre pior. */
@@ -1549,7 +1546,10 @@ async function carregar(ehRetentativa){
       if(r&&r.error)console.warn("[painel_ping]",r.error.message);
       else avisaVersao(r&&r.data);}
   catch(e){console.warn("[painel_ping]",e&&e.message);}
-  msg(FALHAS.length?"carga incompleta":"atualizado "+new Date().toLocaleTimeString("pt-BR"),
+  /* v49: "atualizado 07:12" dizia quando a TELA leu, nunca quando o DADO nasceu. Com
+     snapshot as duas datas se separam de verdade, entao as duas aparecem. */
+  const _id=(IDADE===null)?"":(IDADE<90?" · dado de agora":" · dado de "+Math.round(IDADE/60)+" min atrás");
+  msg(FALHAS.length?"carga incompleta":"atualizado "+new Date().toLocaleTimeString("pt-BR")+_id,
       FALHAS.length?"bad":null, 1800);
   /* v45: janela ruim se cura sozinha. UMA retentativa, e so uma: repetir sem limite contra um
      banco ja saturado e piorar o que se quer consertar. Se a segunda tambem falhar, o aviso
@@ -2022,9 +2022,25 @@ function desfazer(){
 async function recarregarFila(){
   const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
     return comTeto(b.then(r=>r.error?[]:r.data), LIMITE_RECARGA, "15s").catch(e=>{if(ehTeto(e))throw e;return [];});};
-  const [fila,cont,cor]=await Promise.all([
-    q("v_painel_fila",b=>b.eq("camada_tela","hoje")),q("v_painel_contagem"),q("v_correcoes_abertas")]);
-  D.fila=fila||[];D.cont=(cont&&cont[0])||{};D.cor=cor||[];
+  /* v49: o Igor ACABOU de escrever. Mostrar o snapshot de ate 5 min atras seria devolver
+     a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
+     Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
+     e rele. As outras 15 continuam por conta do cron de 5 min. */
+  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN"];
+  try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s"); }
+  catch(e){ if(ehTeto(e))throw e; }
+  const rc=await comTeto(sb.rpc("painel_carga",{p_chaves:VIVAS}), LIMITE_RECARGA, "15s")
+    .then(x=>(x&&!x.error)?x.data:null).catch(e=>{if(ehTeto(e))throw e;return null;});
+  const d=(rc&&rc.dados)||{};
+  if(d.fila) D.fila=d.fila;
+  if(d.cont) D.cont=d.cont[0]||{};
+  if(d.cor)  D.cor=d.cor;
+  if(d.nat)  D.nat=d.nat;
+  if(d.op)   D.op=d.op;
+  if(d.semi) D.semi=d.semi;
+  if(d.wip)  D.wip=d.wip[0]||null;
+  if(d.sentN&&d.sentN[0]){const n=document.getElementById("n-sent");
+    if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
   if(LAZY.tudo){
     const [rz,it]=await Promise.all([q("v_inventario_resumo"),q("v_inventario_frente")]);
     D.invr=rz||[]; D.inv=it||[]; rTudo();
