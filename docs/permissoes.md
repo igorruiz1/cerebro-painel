@@ -60,6 +60,12 @@ posterior a `a0f9f29`: estava no GitHub e não estava no disco na hora que
 importava. Tende a não repetir depois que o cache do ambiente reconstrói, mas
 não há garantia — por isso ela é rota 2, não rota 1.
 
+**A segunda condição, esta permanente:** a rota 2 vale para sessão de **um**
+repositório. Com mais de um, a sessão começa *acima* dos clones e de cada
+`.claude/settings.json` carrega só os plugins e marketplaces declarados —
+*"not permission rules, hooks, `env`, or other keys"*. Nenhum acerto de timing
+resolve isso; ali só a rota 1 funciona.
+
 ## Rota 3: o setup script, com a ressalva na cara
 
 `scripts/setup-nuvem.sh`, colado em claude.ai/code → ícone do ambiente → campo
