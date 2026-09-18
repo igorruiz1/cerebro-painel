@@ -781,7 +781,7 @@ section.sec.on{display:block}
 <div class="pane" id="p-panorama">
   <div class="secnav" id="nav-panorama"></div>
   <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
-  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
+  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
   <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
 
@@ -847,7 +847,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v53";
+const VER="v54";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -874,7 +874,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1530,7 +1530,7 @@ async function carregar(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1545,7 +1545,7 @@ async function carregar(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -2215,7 +2215,7 @@ async function marcarLote(){
   await recarregarFila();}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rDelta(); rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rInsTop(); }
+function rDash(){ rDelta(); rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -2516,6 +2516,33 @@ function rFrentes(){
         <div class="fmeta" style="margin-top:0"><span class="dono livre">parqueadas</span>
         <span>${parq.map(f=>esc(f.slug.replace(/^\d+-/,""))).join(" · ")}</span>
         <span style="margin-left:auto">sem item aberto e sem dinheiro em jogo</span></div></div>`:"");}
+
+/* v54 · SMALL MULTIPLES (t621). Uma célula por frente, cards fechados por dia, e a mesma
+   escala em todas: o teto do eixo é o dia mais cheio do conjunto inteiro. Escala por célula
+   faria toda frente parecer igualmente movimentada, que é o erro que o Tufte nomeia.
+   A janela começa no primeiro dia com carimbo de fechamento, não em 21 dias fixos: antes
+   disso o campo não existia, e zero ali seria "sem dado" desenhado como "sem trabalho". */
+function rSmallMult(){
+  const el=document.getElementById("smallmult"); if(!el)return;
+  const S=(D.frs||[]).filter(f=>Array.isArray(f.serie)&&f.serie.length);
+  if(!S.length){el.innerHTML=`<div class="empty">sem série por frente ainda.</div>`;return;}
+  const teto=Math.max(1,...S.map(f=>Math.max(...f.serie)));
+  const dias=S[0].serie.length, desde=S[0].desde;
+  const ord=S.slice().sort((a,b)=>(b.fechadas_periodo||0)-(a.fechadas_periodo||0));
+  const W=104,H=30,g=2,bw=(W-(dias-1)*g)/dias;
+  el.innerHTML=`<p class="s" style="margin:0 0 8px">${dias} dia(s) desde ${esc(String(desde||""))}. Teto do eixo: ${teto} card(s) no dia mais cheio, o mesmo para todas.</p><div class="fgrid">`
+   +ord.map(f=>{
+      const barras=f.serie.map((v,i)=>{
+        const h=v/teto*H;
+        return `<rect x="${(i*(bw+g)).toFixed(1)}" y="${(H-Math.max(h,v?1:0)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,v?1:0).toFixed(1)}" fill="${v?"var(--bl)":"var(--line2)"}"/>`;
+      }).join("");
+      return `<div class="fcard ${esc(f.status||"")}" style="cursor:pointer" onclick="irParaFrente('${esc(f.slug)}')">
+        <div class="fh"><span class="fn">${esc(String(f.slug).replace(/^\d+-/,""))}</span>
+          <span class="tag">${f.fechadas_periodo||0} fechados</span></div>
+        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img"
+             aria-label="cards fechados por dia na frente ${esc(f.slug)}">${barras}</svg>
+        <div class="fmeta"><span style="color:var(--dim)">pico ${f.pico||0} no dia</span></div></div>`;
+    }).join("")+`</div>`;}
 
 function irParaFrente(slug){F.frente=slug;F.origem=null;F.q="";
   document.getElementById("q").value="";document.querySelector('.tab[data-p="agora"]').click();
