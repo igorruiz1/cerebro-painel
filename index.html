@@ -822,7 +822,8 @@ section.sec.on{display:block}
     sem <code>ref</code> e sangria traz contraparte, não id de tarefa. Nesses a linha <b>diz por que não tem botão</b>,
     em vez de oferecer um que o banco recusaria.
     <br><b>Fonte:</b> <code>v_sentinela</code>, que une <code>v_pronto_falta_igor</code>, <code>v_pf_sangria_pj</code>,
-    <code>v_prazo_incoerente</code>, <code>v_reincidencia</code> e <code>v_fila_sem_opcao</code>.</div>
+    <code>v_prazo_incoerente</code>, <code>v_reincidencia</code>, <code>v_fila_sem_opcao</code>,
+    <code>v_afirmacao_vencida</code> e <code>painel_fixture_log</code>.</div>
 </div>
 
 </main></div>
@@ -845,7 +846,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v50";
+const VER="v51";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1054,7 +1055,9 @@ const SIN={
   sangria_pf_pj    :["DINHEIRO ATRAVESSANDO O MURO","PF e PJ se misturando — matéria da LC-01"],
   prazo_incoerente :["PRAZO QUE CONTRADIZ O CARD","o campo diz uma data, o texto do card promete outra"],
   reincidencia     :["VOLTOU MESMO COM APRENDIZADO","o padrão já tinha lição registrada e reincidiu"],
-  fila_sem_opcao   :["CARD DE HOJE SEM ESCOLHA","chegou na fila do dia sem opções nomeadas: dá para marcar feita, não dá para decidir"]
+  fila_sem_opcao   :["CARD DE HOJE SEM ESCOLHA","chegou na fila do dia sem opções nomeadas: dá para marcar feita, não dá para decidir"],
+  numero_do_card_venceu:["O CARD AFIRMA UM NÚMERO QUE NÃO VALE MAIS","o número está na vitrine do card e a fonte devolve outro"],
+  fixture_vermelha :["A FIXTURE DO BANCO TEM CASO VERMELHO","a suíte de regressão do motor falhou na última rodada — isto é o motor mentindo"]
 };
 /* v50: SIN era um mapa FECHADO e `ordem` so listava as chaves dele — sinal novo no banco
    sumia da lista em silencio, ainda contado nos quatro contadores do topo. A tela diria
