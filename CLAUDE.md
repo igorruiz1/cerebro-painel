@@ -10,11 +10,31 @@ no começo de toda sessão, nesta ordem:
 ```bash
 git fetch --all --prune
 git log origin/main -5 --oneline
+curl -s https://api.github.com/repos/igorruiz1/cerebro-painel/pulls?state=open
 ```
 
-e liste os PRs abertos. Se houver PR tocando um arquivo que você vai mexer,
+O `gh` **não existe** na máquina do Igor — use a API, como acima. Branch
+`claude/*` sem PR aberto é resto de squash merge, não trabalho em curso. Se houver PR tocando um arquivo que você vai mexer,
 **entre nele** — commit na branch dele. Abrir PR concorrente sobre o mesmo
 arquivo é perda garantida.
+
+## Nuvem e local não são o mesmo ambiente
+
+O mesmo servidor MCP tem nomes diferentes nas duas superfícies, e a regra de
+permissão é casada por nome. Confundir as duas escreve um arquivo válido que não
+faz nada — sem erro, sem aviso.
+
+| | Sessão de nuvem | Máquina do Igor |
+| --- | --- | --- |
+| Arquivo que vale | `.claude/settings.json` do repo | `~/.claude/settings.json` |
+| Prefixo do Supabase | `mcp__Supabase__` | `mcp__<uuid>__` e `mcp__plugin_<plugin>_<servidor>__` |
+
+A allowlist versionada é a **política** — quais ferramentas. O prefixo é
+**endereço** e se descobre na máquina, nunca se escreve aqui.
+
+**Nenhum identificador de conta em arquivo versionado.** Este repo é público:
+UUID de conector, id de organização e afins ficam fora. Se uma regra precisa de
+um, o script descobre em tempo de execução.
 
 ## Permissões
 
