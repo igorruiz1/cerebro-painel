@@ -1,132 +1,83 @@
 # Permissões do Claude Code: onde a regra mora
 
 O problema concreto: `mcp__Supabase__execute_sql` pedindo autorização a cada
-chamada. Levou quatro PRs e várias sessões porque a causa foi diagnosticada
-errada três vezes. Esta página guarda o que foi **medido**, e diz de cada rota o
-que é certeza e o que é aposta.
+chamada. Levou cinco PRs e várias sessões porque a causa foi diagnosticada
+errada quatro vezes. Esta página guarda o que foi **medido**, e diz de cada rota
+o que é certeza e o que é aposta.
+
+Em 18/09/2026 a investigação saiu do escuro: apareceu um **controle observável**
+(ver *Como medir isto sem se enganar*), e com ele a rota 3 deixou de ser aposta,
+o alvo que estava dado como morto ressuscitou, e a anomalia que não tinha
+explicação ganhou uma.
 
 ## A hierarquia, do que mais resolve para o que menos
 
 | # | Rota | Cobre | Custo | Certeza |
 | --- | --- | --- | --- | --- |
-| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | documentada, **não isolada** ainda |
-| 2 | Allowlist em `.claude/settings.json` | só as 14 regras Supabase | já feito | funciona **quando lida a tempo** |
-| 3 | `scripts/setup-nuvem.sh` no Setup script | idem, antes do boot | 1 config | **aposta**, ver ressalva |
-| 4 | Server-managed settings | tudo, na organização | só Team/Enterprise | documentada, indisponível aqui |
+| 1 | **`scripts/setup-nuvem.sh` no Setup script** | as 14 regras, antes do boot | 1 config | **medida em 18/09/2026: entrega, e é lida nos dois alvos** |
+| 2 | Modo de permissão da sessão | todo prompt, MCP inclusive | 1 clique | documentada, **não isolada** ainda |
+| 3 | Allowlist em `.claude/settings.json` | as mesmas 14 regras | já feito | refém do snapshot, e morre em multi-repo |
+| 4 | Server-managed settings | tudo, na organização | só Team/Enterprise | documentada, **confirmada indisponível** |
 
-A rota 1 é a que a documentação indica, e é 1 clique — mas a medição de
-18/09/2026 **não conseguiu isolá-la** (ver abaixo). As outras reduzem prompt;
-nenhuma delas elimina.
+**A antiga rota 3 virou a rota 1 em 18/09/2026**, por medição com controle e com
+repetição, não por aposta. Ela subiu porque é a única que não depende de acertar
+o relógio do snapshot — escreve antes do Claude Code lançar — e a única que
+sobrevive a sessão multi-repo, por ser configuração de usuário e não de projeto.
+O modo de permissão desceu para 2 só por isso; continua sendo o único controle
+que muda a sessão **em andamento**.
 
-## Rota 1: o modo de permissão
+## Antes das rotas: o que o launcher da nuvem já pré-aprova sozinho
 
-É o único controle que muda o comportamento **com a sessão rodando**, pelo
-dropdown de modo.
+Isto não é rota, é o terreno — e explica por que quase toda medição anterior deu
+resultado confuso. O processo do Claude Code na sessão de nuvem **não** é lançado
+limpo. Lendo a linha de comando real do processo (`CLAUDE_PID=183`) em
+18/09/2026:
 
-### O que a nuvem oferece de verdade: três modos, não cinco
-
-Conferido no dropdown em 18/09/2026. A lista de cinco modos abaixo é do **CLI
-local**; a sessão de nuvem mostra só três, com estes nomes:
-
-| No dropdown da nuvem | Descrição que aparece | Equivale a |
-| --- | --- | --- |
-| **Automático** | *Claude gerencia decisões de permissão* | `auto` |
-| **Aceitar edições** | *Aceitar todas as edições automaticamente* | `acceptEdits` |
-| **Plano** | *Criar um plano antes de fazer alterações* | `plan` |
-
-`dontAsk` e `bypassPermissions` **não são oferecidos** na nuvem. E `default`
-(Manual) não está no menu, embora exista como estado: a API de sessão reportou
-`permission_mode: "default"` para uma sessão cujo dropdown mostrava "Aceitar
-edições". Os dois não batem, e qual dos dois manda ainda não foi medido — não
-conte com nenhum deles para desenhar teste.
-
-Os cinco modos do CLI local, para referência:
-
-| Modo | Roda sem perguntar |
-| --- | --- |
-| `default` (Manual) | só leitura |
-| `acceptEdits` | leitura, edição de arquivo, comandos comuns de fs |
-| `auto` | tudo, com verificação de segurança em segundo plano |
-| `dontAsk` | leitura e ferramentas pré-aprovadas; o resto é **negado**, não perguntado |
-| `bypassPermissions` | tudo |
-
-Em `auto` as ferramentas MCP vão para um classificador em vez de virem para
-você — *"Everything else goes to the classifier"*. É o modo desenhado para
-exatamente esta dor, e a documentação o indica para *"long tasks, reducing
-prompt fatigue"*.
-
-### Medido em 18/09/2026: zero prompts — e nenhuma das rotas explica
-
-Esta seção já esteve escrita como *"o modo `auto` resolve"*. Estava errada na
-causa e foi corrigida no mesmo dia. Fica o registro do erro, porque ele é o
-quarto diagnóstico furado desta mesma investigação.
-
-**O fato, esse se sustenta.** Sessão de nuvem, um repositório. Nenhum pedido de
-autorização em nenhuma chamada: `list_organizations`, `execute_sql` (`select 1`),
-`list_edge_functions`, e `Bash` fora da allowlist (`ls`, `cat`, `git branch`,
-`git reflog`).
-
-**A causa não é a rota 2.** `list_edge_functions` não está na allowlist, e o
-reflog mostra o snapshot subindo em `a0f9f29` às 13:53:32 — anterior à
-allowlist — com o clone só chegando em `ff94946` às 15:38:51.
-
-**E também não é a rota 1.** A sessão foi descrita como estando em `auto` e não
-estava: `get_session` reportou `permission_mode: "default"`, e o dropdown
-mostrava "Aceitar edições". Nenhum dos dois é `auto`. Em `default`, pela tabela
-acima, `ls` e `execute_sql` **deveriam** ter pedido autorização. Não pediram.
-
-Sobra a conclusão honesta: **nesta sessão o prompt não apareceu, e nenhuma das
-quatro rotas explica por quê.** Hipóteses ainda não medidas — o cliente
-(desktop app) aprovando por fora; o container subindo com permissão relaxada
-independentemente do dropdown; o modo real divergindo do exibido, que é a mesma
-divergência da seção anterior.
-
-**A consequência prática, essa é imediata:** a ausência de prompt nesta sessão
-**não serve de controle** para medir nenhuma outra rota. Qualquer teste que
-conclua "não pediu autorização, logo funcionou" está furado enquanto isso não
-for resolvido. O teste da rota 3 tem que se apoiar no marcador em disco, não na
-ausência de prompt.
-
-**Por que não deixar isso cravado no repo:** a documentação é explícita de que
-`permissions.defaultMode` com valor `"auto"` **não tem efeito** em
-`.claude/settings.json` — *"the value doesn't take effect"* — e o mesmo vale para
-`"bypassPermissions"`. Sobraria `"dontAsk"`, que funciona, mas **nega** em vez de
-perguntar tudo o que não estiver na allowlist: `Bash`, `Write`, `Edit` e
-`WebFetch` parariam de funcionar sem aviso claro. Foi avaliado e recusado. O modo
-fica no dropdown, que é decisão de quem está na sessão.
-
-## Rota 2: a allowlist versionada, e por que ela falhou uma vez
-
-O arquivo `.claude/settings.json` **é** lido em sessão de nuvem, e a regra dentro
-dele está certa. O que falhou em 18/09/2026 foi o relógio. Reflog do container:
-
-```
-13:53:32  snapshot do ambiente com o repo em a0f9f29 (antes da allowlist existir)
-          Claude Code sobe e lê as permissões desse estado
-14:35:19  checkout 9728989; a allowlist chega, tarde demais
+```bash
+tr '\0' '\n' < /proc/$CLAUDE_PID/cmdline      # o método; rode na sua sessão
 ```
 
-O ambiente restaura um snapshot do sistema de arquivos e o `git fetch` que
-atualiza o clone roda **depois** do boot. A documentação explica de onde vem esse
-snapshot velho: é o **cache do ambiente**, um snapshot de filesystem que a
-Anthropic tira depois do primeiro setup e reusa nas sessões seguintes, com
-validade de **cerca de sete dias**. Ele só é refeito quando o setup script ou os
-hosts de rede do ambiente mudam, ou quando expira. A allowlist entrou em `39a6f55`,
-posterior a `a0f9f29`: estava no GitHub e não estava no disco na hora que
-importava. Tende a não repetir depois que o cache do ambiente reconstrói, mas
-não há garantia — por isso ela é rota 2, não rota 1.
+O launcher passa `--settings /root/.claude/launcher-settings.json` e um
+`--allowed-tools` enorme. Dentro dele, **crus, sem padrão nenhum**:
 
-**A segunda condição, esta permanente:** a rota 2 vale para sessão de **um**
-repositório. Com mais de um, a sessão começa *acima* dos clones e de cada
-`.claude/settings.json` carrega só os plugins e marketplaces declarados —
-*"not permission rules, hooks, `env`, or other keys"*. Nenhum acerto de timing
-resolve isso; ali só a rota 1 funciona.
+```
+Bash   Write   Edit   MultiEdit   Read   Glob   Grep   WebFetch   Task   ...
+```
 
-## Rota 3: o setup script, com a ressalva na cara
+`Bash` cru significa: **qualquer** comando de shell roda sem pedir nada, em
+qualquer modo. `ls`, `cat`, `git reflog`, `rm` — todos. Era isto que a página
+antes chamava de anomalia inexplicada.
+
+E 23 ferramentas Supabase nomeadas, entre elas `list_organizations`,
+`list_edge_functions`, `get_publishable_keys`, `deploy_edge_function` e o ciclo
+de branches. Mas **quatro ficam de fora**:
+
+| Fora do `--allowed-tools` do launcher |
+| --- |
+| `mcp__Supabase__execute_sql` |
+| `mcp__Supabase__apply_migration` |
+| `mcp__Supabase__create_branch` |
+| `mcp__Supabase__create_project` |
+
+Ou seja: a dor original desta investigação inteira são **exatamente as duas
+ferramentas que o host decidiu não pré-aprovar** — `execute_sql` e
+`apply_migration`. Todo o resto do Supabase nunca dependeu de rota nenhuma.
+
+Consequência prática: o valor de qualquer rota desta página é medido em duas
+ferramentas, não em vinte e cinco. E o `--allowed-tools` pode mudar de sessão
+para sessão — antes de desenhar teste, leia o `/proc/$CLAUDE_PID/cmdline` **da
+sessão em que você está**, não o desta página.
+
+## Rota 1: o setup script
 
 `scripts/setup-nuvem.sh`, colado no campo **Setup script** do ambiente. É o único
 gancho que roda **antes do Claude Code lançar**, e o que ele escreve em disco
-entra no snapshot do ambiente.
+entra no snapshot do ambiente. Ele escreve em dois alvos:
+
+| Alvo | Arquivo | Status em 18/09/2026 |
+| --- | --- | --- |
+| 1 | `/etc/claude-code/managed-settings.json` | **lido** — surpresa, ver abaixo |
+| 2 | `/root/.claude/settings.json` | **lido** |
 
 ### Onde fica o campo, exatamente
 
@@ -152,42 +103,239 @@ zero** (*"if the script exits non-zero, the session fails to start"*) e terminar
 em ~5 minutos. O `setup-nuvem.sh` cumpre: `set -uo pipefail` sem `-e`, `|| true`
 em cada escrita, `exit 0` no fim.
 
-### A ressalva, que a doc de 18/09/2026 piorou
+### Medido em 18/09/2026: o script entrega
 
-Ele escreve `/etc/claude-code/managed-settings.json`. A frase que existia antes
-era ambígua quanto ao container. A redação atual é mais dura:
+Primeira sessão depois de colar o script no campo. Saída crua do marcador:
+
+```
+$ cat /etc/claude-code/.origem-cerebro
+escrito_em=2026-09-18 12:50 -04
+fonte=/home/user/cerebro-painel/.claude/settings.json
+regras=14
+managed=/etc/claude-code/managed-settings.json
+usuario=/root/.claude/settings.json
+```
+
+Os dois arquivos existem, com as 14 regras, carimbados 16:50 UTC junto com o
+resto do snapshot. **A entrega está provada:** o setup script roda, e o que ele
+escreve sobrevive ao snapshot do ambiente.
+
+### Medido em 18/09/2026: os dois alvos são lidos
+
+Entrega não é leitura. A leitura foi medida com o controle descrito adiante —
+regra-sonda `Bash(touch:*)` posta em **um alvo de cada vez**, com o outro
+restaurado ao original, e o resultado lido **no disco**, não na resposta do
+modelo:
+
+| Run | Regra em | Efeito |
+| --- | --- | --- |
+| C1, C2, C3 | nenhum arquivo | **negado**, arquivo ausente (3/3) |
+| U1, U2 | só `/root/.claude/settings.json` | **executou**, arquivo criado (2/2) |
+| M1, M2, npm1-3, nat1-2 | só `/etc/claude-code/managed-settings.json` | **executou**, arquivo criado (5/5) |
+
+Sequência controle → teste → controle, para não confundir com deriva de
+ambiente: `NEGADO → FEZ → FEZ → NEGADO`.
+
+A negação dos controles não é silêncio nem chute do modelo. O stream bruto traz
+o motivo, palavra por palavra:
+
+```
+"tool_result","content":"Permission for this tool use was denied. It requires
+approval, and this session has no approval surface — nobody can answer a
+permission prompt here — so it was denied automatically. The action was NOT
+performed"
+```
+
+**Veredito: a rota 1 (ex-rota 3) funciona.** Não é mais aposta.
+
+Fechamento de ponta a ponta, na sessão real e não em subprocesso:
+`mcp__Supabase__execute_sql` com `select 1` rodou **sem prompt**, e o launcher
+desta sessão **não** pré-aprova `execute_sql`. Logo, uma allowlist de arquivo foi
+lida. Esse teste sozinho não separa a rota 1 da rota 3, porque a regra está nas
+duas; quem separou foi o experimento isolado acima.
+
+### A surpresa: o alvo 1 está vivo, contra a leitura da documentação
+
+A página dizia, até hoje, que o alvo 1 estava *"mais para morto do que para
+aposta"*, com base neste trecho:
 
 > Managed settings: only **server-managed settings** reach a cloud session; a
 > `managed-settings.json` file or MDM profile on your device doesn't. **A
 > self-hosted environment also reads the managed settings file in its runner
 > image.**
 
-Esse *"also"* é o problema: ele separa o self-hosted, que **lê** o arquivo da
-imagem, do ambiente hospedado pela Anthropic, que é o nosso. Não é uma negação
-literal do arquivo do container, mas a leitura natural é contra. **O alvo 1 da
-rota 3 está mais para morto do que para aposta.**
+A leitura natural do *"also"* é que só o self-hosted lê o arquivo da imagem, e o
+ambiente hospedado pela Anthropic — o nosso — não leria. **Medido, não é isso.**
+`/etc/claude-code/managed-settings.json` foi lido em 5 de 5 execuções, em
+ambiente `cloud_default` (`CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE=cloud_default`),
+não self-hosted.
 
-Sobra o alvo 2, as configurações de usuário **do container** — que a doc não
-contradiz, porque quando ela diz que `~/.claude/settings.json` não é lido está
-falando do arquivo na *sua máquina*, que obviamente não chega lá. Por isso o
-script escreve nos dois e deixa um marcador em vez de pedir fé:
+A frase da doc não é falsa: ela fala do arquivo **na sua máquina**, que de fato
+não viaja para a nuvem. O que ela não diz — e a leitura natural sugeria o
+contrário — é que um arquivo escrito **dentro do container**, pelo setup script,
+é lido normalmente. Onde o arquivo nasce é o que importa, não o nome dele.
+
+Isso não muda a recomendação prática: o script continua escrevendo nos **dois**
+alvos, porque redundância barata contra doc ambígua é bom negócio. Mas o alvo 1
+sai do quase-morto e entra como o mais forte dos dois — settings gerenciadas têm
+precedência sobre as de usuário.
+
+### Como medir isto sem se enganar
+
+Este é o ativo mais reaproveitável da investigação, porque foi a falta dele que
+produziu quatro diagnósticos furados.
+
+**Nunca meça pela ausência de prompt.** O launcher pré-aprova `Bash`, `Write`,
+`Edit` e 23 ferramentas Supabase (seção acima). Numa sessão assim, "não pediu
+autorização" é o estado normal e não prova nada sobre nenhuma rota.
+
+**O controle que funciona** roda um Claude Code filho, num diretório **sem**
+`.claude`, com prompt desativado:
 
 ```bash
-cat /etc/claude-code/.origem-cerebro    # quando rodou, de onde veio, quantas regras
+cd /tmp/algum-dir-vazio
+claude -p --permission-mode manual --permission-prompts none \
+       --tools Bash --strict-mcp-config < /dev/null \
+       "Rode exatamente este comando no Bash, uma unica vez: touch /tmp/algum-dir-vazio/alvo.txt"
+test -f /tmp/algum-dir-vazio/alvo.txt && echo LIDO || echo NAO-LIDO
 ```
 
-Sem esse arquivo, o script não rodou — o que costuma ser o ambiente
-reaproveitando um snapshot antigo, não a rota estando errada. Recrie o ambiente e
-meça de novo.
+`--permission-prompts none` converte "perguntaria" em "negado": o que antes era
+invisível vira resultado binário em disco.
 
-**Como NÃO medir esta rota:** pela ausência de prompt. A sessão de 18/09/2026 não
-pediu autorização para nada, em modo nenhum, sem que qualquer rota explicasse
-(ver rota 1). Enquanto isso não for resolvido, "não pediu, logo funcionou" não
-prova nada. O que a rota 3 pode provar sozinha é mais modesto e ainda útil: **o
-setup script roda, e o que ele escreve sobrevive ao snapshot.** Isso o marcador
-responde. Se o marcador aparecer com a contagem de regras nos dois alvos, a rota
-3 deixa de ser aposta quanto à *entrega*; se ela de fato suprime prompt fica em
-aberto até haver uma sessão que peça autorização para servir de controle.
+Três armadilhas, todas pisadas hoje:
+
+- **Comando inofensivo não serve de sonda.** A primeira sonda foi `echo`, e
+  passou **com e sem** regra: comando sem efeito colateral é aprovado sozinho.
+  Use algo que escreve — `touch` serve.
+- **Não meça pela resposta do modelo, meça pelo disco.** Perguntar "responda só
+  FEZ ou NEGADO" produziu um **falso negativo**: numa execução o modelo
+  respondeu `NEGADO` sem sequer chamar a ferramenta. Foi esse falso negativo que
+  quase enterrou o alvo 1 de novo. O arquivo em disco não mente.
+- **Medição única não vale.** Repita, e intercale controles antes e depois.
+  `NEGADO → FEZ → FEZ → NEGADO` é evidência; um `NEGADO` solto não é.
+
+**O que não existe, para não procurar:** `/status` é comando do cliente
+interativo e **não está disponível para o agente numa sessão de nuvem** — não há
+como invocá-lo de dentro, nem existe "Setting sources" em lugar nenhum da saída
+do `claude doctor`, que lista versão, plataforma, managed settings remotas e
+avisos de instalação, e só. `claude --debug` também não imprime as fontes de
+settings carregadas. Quem quiser saber quais arquivos pesaram tem que medir pelo
+efeito, como acima.
+
+Uma pista falsa, para ninguém perder tempo: `/opt/node22/bin/claude` e
+`/opt/claude-code/bin/claude` parecem instalações diferentes — o `claude doctor`
+inclusive reclama de *"leftover npm global installation"*. São o **mesmo
+binário**: o primeiro é symlink do segundo, mesma versão 2.1.276. Diferença de
+resultado entre os dois é ruído de medição, não achado.
+
+## Rota 2: o modo de permissão
+
+É o único controle que muda o comportamento **com a sessão rodando**, pelo
+dropdown de modo.
+
+### O que a nuvem oferece de verdade: três modos, não cinco
+
+Conferido no dropdown em 18/09/2026. A lista de cinco modos abaixo é do **CLI
+local**; a sessão de nuvem mostra só três, com estes nomes:
+
+| No dropdown da nuvem | Descrição que aparece | Equivale a |
+| --- | --- | --- |
+| **Automático** | *Claude gerencia decisões de permissão* | `auto` |
+| **Aceitar edições** | *Aceitar todas as edições automaticamente* | `acceptEdits` |
+| **Plano** | *Criar um plano antes de fazer alterações* | `plan` |
+
+`dontAsk` e `bypassPermissions` **não são oferecidos** na nuvem. E `default`
+(Manual) não está no menu, embora exista como estado.
+
+Os cinco modos do CLI local, para referência:
+
+| Modo | Roda sem perguntar |
+| --- | --- |
+| `default` (Manual) | só leitura |
+| `acceptEdits` | leitura, edição de arquivo, comandos comuns de fs |
+| `auto` | tudo, com verificação de segurança em segundo plano |
+| `dontAsk` | leitura e ferramentas pré-aprovadas; o resto é **negado**, não perguntado |
+| `bypassPermissions` | tudo |
+
+Em `auto` as ferramentas MCP vão para um classificador em vez de virem para
+você — *"Everything else goes to the classifier"*.
+
+### A divergência de nomes, agora com uma peça a mais
+
+A página já registrava que a API reportou `permission_mode: "default"` para uma
+sessão cujo dropdown mostrava "Aceitar edições". Medido hoje, parte disso é só
+apelido: passando `--permission-mode manual` na linha de comando, o próprio
+Claude Code reporta no evento de init `"permissionMode":"default"`. **Manual e
+`default` são o mesmo modo com dois nomes.** Não explica o caso "Aceitar
+edições" da sessão anterior, que segue em aberto.
+
+### Medido em 18/09/2026: os zero prompts, finalmente explicados
+
+Esta seção já esteve escrita como *"o modo `auto` resolve"*, foi corrigida para
+*"nenhuma das quatro rotas explica"*, e agora fecha.
+
+**O fato.** Sessão de nuvem, um repositório, nenhum pedido de autorização em
+nenhuma chamada: `list_organizations`, `execute_sql` (`select 1`),
+`list_edge_functions`, e `Bash` fora da allowlist (`ls`, `cat`, `git branch`,
+`git reflog`).
+
+**A explicação, que faltava: o `--allowed-tools` do launcher.** `Bash` entra cru,
+então `ls`, `cat` e `git` nunca iam pedir nada, em modo nenhum. `list_organizations`
+e `list_edge_functions` estão nomeadas na lista. Não era mistério, era terreno
+não inspecionado — ninguém tinha olhado a linha de comando do processo.
+
+**O que continua em aberto:** `execute_sql` naquela sessão. Ele **não** está no
+`--allowed-tools` desta sessão, a allowlist do repo ainda não estava em disco
+(snapshot velho) e o setup script não existia. A hipótese barata é que o
+`--allowed-tools` varia por sessão, conforme os conectores habilitados na conta.
+Não foi medido. Quem for medir: leia `/proc/$CLAUDE_PID/cmdline` **antes** de
+formular teoria.
+
+**A consequência prática permanece:** a ausência de prompt não serve de controle
+para medir rota nenhuma. O que mudou é que agora existe um controle que serve.
+
+## Rota 3: a allowlist versionada, e por que ela falhou uma vez
+
+O arquivo `.claude/settings.json` **é** lido em sessão de nuvem, e a regra dentro
+dele está certa. O que falhou em 18/09/2026 foi o relógio. Reflog do container:
+
+```
+13:53:32  snapshot do ambiente com o repo em a0f9f29 (antes da allowlist existir)
+          Claude Code sobe e lê as permissões desse estado
+14:35:19  checkout 9728989; a allowlist chega, tarde demais
+```
+
+O ambiente restaura um snapshot do sistema de arquivos e o `git fetch` que
+atualiza o clone roda **depois** do boot. A documentação explica de onde vem esse
+snapshot velho: é o **cache do ambiente**, um snapshot de filesystem que a
+Anthropic tira depois do primeiro setup e reusa nas sessões seguintes, com
+validade de **cerca de sete dias**. Ele só é refeito quando o setup script ou os
+hosts de rede do ambiente mudam, ou quando expira. A allowlist entrou em `39a6f55`,
+posterior a `a0f9f29`: estava no GitHub e não estava no disco na hora que
+importava.
+
+**A segunda condição, esta permanente:** a rota 3 vale para sessão de **um**
+repositório. Com mais de um, a sessão começa *acima* dos clones e de cada
+`.claude/settings.json` carrega só os plugins e marketplaces declarados —
+*"not permission rules, hooks, `env`, or other keys"*. Nenhum acerto de timing
+resolve isso; ali só as rotas 1 e 2 funcionam.
+
+**Uma terceira ressalva, nova e não fechada.** O Claude Code filho recusou a
+allowlist do projeto com esta mensagem:
+
+```
+Ignoring 24 permissions.allow entries from .claude/settings.json: this workspace
+has not been trusted. Run Claude Code interactively here once and accept the
+trust dialog, or set projects["/home/user/cerebro-painel"].hasTrustDialogAccepted
+```
+
+E o `/root/.claude.json` do container tem `projects = {}` — nenhum workspace
+confiado. Se isso valesse também para a sessão principal, a rota 3 estaria morta
+na nuvem por falta de trust. **Não vale necessariamente:** a doc diz que o
+diálogo de confiança é pulado quando a saída não é TTY, que é o caso da sessão
+principal (`--output-format=stream-json`). Não foi medido qual dos dois manda.
+É mais uma razão para a rota 3 ficar abaixo da 1.
 
 ## Rota 4: server-managed settings
 
@@ -196,17 +344,14 @@ O caminho oficial para política em sessão de nuvem:
 > only **server-managed settings** reach a cloud session; a
 > `managed-settings.json` file or MDM profile on your device doesn't.
 
-(Redação de 18/09/2026. A anterior dizia *"Endpoint-managed settings don't reach
-cloud sessions in Anthropic-hosted environments"* — mesma conclusão, palavras
-diferentes. Se você encontrar a frase antiga em outro lugar, é a mesma regra.)
-
 Configura-se em Admin Settings → Claude Code → Managed settings, em
-claude.ai/admin-settings/claude-code, e aceita `permissions.allow`. Duas
+claude.ai/admin-settings/claude-code, e aceita `permissions.allow`. Três
 barreiras, medidas em 18/09/2026:
 
 - exige plano **Claude for Teams ou Enterprise** e papel **Owner / Primary Owner**;
-- `~/.claude/remote-settings.json` não existia no container, ou seja, nenhuma
-  política server-managed alcançou a sessão.
+- `~/.claude/remote-settings.json` não existia no container;
+- o `claude doctor` confirma, com todas as letras:
+  `Managed settings (remote): none configured for this organization`.
 
 Se a conta migrar para Team, esta vira a rota 1 e todo o resto desta página vira
 história.
@@ -215,19 +360,26 @@ história.
 
 | Tentativa | Por quê |
 | --- | --- |
-| `~/.claude/settings.json` | sessão de nuvem: *"not read"*. O PR #7 nasceu morto para a nuvem |
+| `~/.claude/settings.json` **da sua máquina** | sessão de nuvem: *"not read"*. O PR #7 nasceu morto para a nuvem. Não confunda com `/root/.claude/settings.json` **do container**, que é lido (rota 1) |
 | botão *sempre permitir* do prompt | grava em `.claude/settings.local.json`, que a nuvem não lê e o `.gitignore` descarta |
 | gravar qualquer settings durante a sessão | a permissão é lida uma vez, no boot. Medido: não tirou um único prompt |
 | hook `SessionStart` que instala a regra | roda *"After Claude Code launches"*, depois da leitura que tentaria alterar |
+| medir rota pela ausência de prompt | o launcher já pré-aprova `Bash`, `Write`, `Edit` e 23 ferramentas Supabase. Use o controle da rota 1 |
+| sonda de permissão com `echo` | comando sem efeito colateral é aprovado sozinho, com ou sem regra |
 
 ## O que fica de fora da allowlist, de propósito
 
 `get_publishable_keys` (devolve chave), `create_project`, `pause_project`,
 `restore_project`, `deploy_edge_function` e o ciclo de branches
 (`create` / `merge` / `reset` / `delete`). Caro ou irreversível continua pedindo
-confirmação — é a última barreira antes de um estrago silencioso. Em modo `auto`
-essas ficam com o classificador; se isso incomodar, o lugar de barrar é
-`permissions.deny`, não a ausência na allowlist.
+confirmação — é a última barreira antes de um estrago silencioso.
+
+Ressalva medida em 18/09/2026: essa intenção é **parcialmente decorativa na
+nuvem**. O launcher pré-aprova por conta própria `get_publishable_keys`,
+`deploy_edge_function`, `pause_project`, `restore_project` e
+`merge` / `reset` / `rebase` / `delete_branch`. Deixar de fora da nossa allowlist
+não as barra. Quem quiser barrar de verdade tem que usar `permissions.deny`, que
+tem precedência sobre allow — e aí sim vale escrever no arquivo da rota 1.
 
 ## Sessões locais fora deste repo
 
