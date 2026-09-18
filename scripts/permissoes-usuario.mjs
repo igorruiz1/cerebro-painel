@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+// Leva a allowlist do Supabase deste repo para as configuracoes de USUARIO do
+// Claude Code (~/.claude/settings.json), que valem em qualquer diretorio.
+//
+// Existe porque .claude/settings.json so e lido quando a sessao abre DENTRO
+// deste repositorio. Fora dele — outro projeto, outra pasta — a regra some e o
+// execute_sql volta a pedir autorizacao a cada chamada.
+//
+//   node scripts/permissoes-usuario.mjs --conferir   # mostra o que faria
+//   node scripts/permissoes-usuario.mjs              # aplica
+//   node scripts/permissoes-usuario.mjs --todas      # leva tambem as regras Bash
+//
+// Idempotente: rodar duas vezes nao duplica nada. Faz backup antes de escrever
+// e aborta sem tocar no arquivo se o JSON de destino estiver corrompido.
+
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const args = new Set(process.argv.slice(2))
+const conferir = args.has('--conferir')
+const todas = args.has('--todas')
+
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..')
+const origem = join(raiz, '.claude', 'settings.json')
+const destino = join(homedir(), '.claude', 'settings.json')
+
+function lerJson(caminho, rotulo) {
+  let bruto
+  try {
+    bruto = readFileSync(caminho, 'utf8')
+  } catch (erro) {
+    if (erro.code === 'ENOENT') return null
+    throw new Error(`nao consegui ler ${rotulo} (${caminho}): ${erro.message}`)
+  }
+  if (bruto.trim() === '') return {}
+  try {
+    return JSON.parse(bruto)
+  } catch (erro) {
+    throw new Error(
+      `${rotulo} (${caminho}) nao e JSON valido: ${erro.message}\n` +
+        'Nada foi alterado. Corrija o arquivo e rode de novo.'
+    )
+  }
+}
+
+// Carimbo em America/Cuiaba: o backup precisa bater com o relogio do Igor.
+function carimbo() {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Cuiaba',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+      .formatToParts(new Date())
+      .filter((x) => x.type !== 'literal')
+      .map((x) => [x.type, x.value])
+  )
+  return `${p.year}-${p.month}-${p.day}-${p.hour}${p.minute}`
+}
+
+// Erro previsto (arquivo corrompido, sem permissao de escrita) sai como uma
+// mensagem que se le, nao como stack trace.
+process.on('uncaughtException', (erro) => {
+  console.error(`\n${erro.message}`)
+  process.exit(1)
+})
+
+const doRepo = lerJson(origem, 'a allowlist do repo')
+if (!doRepo) {
+  console.error(`Nao achei ${origem}. Rode a partir de um clone do cerebro-painel.`)
+  process.exit(1)
+}
+
+const candidatas = (doRepo.permissions?.allow ?? []).filter(
+  (regra) => todas || regra.startsWith('mcp__Supabase__')
+)
+if (candidatas.length === 0) {
+  console.error('A allowlist do repo nao tem nenhuma regra para levar. Nada a fazer.')
+  process.exit(1)
+}
+
+const atual = lerJson(destino, 'suas configuracoes de usuario') ?? {}
+const jaTem = new Set(atual.permissions?.allow ?? [])
+const faltando = candidatas.filter((regra) => !jaTem.has(regra))
+
+console.log(`Origem : ${origem}`)
+console.log(`Destino: ${destino}`)
+console.log(`Regras consideradas: ${candidatas.length} (${todas ? 'todas' : 'somente mcp__Supabase__*'})`)
+
+if (faltando.length === 0) {
+  console.log('\nJa esta tudo la. Nada a escrever.')
+  process.exit(0)
+}
+
+console.log(`\nA acrescentar (${faltando.length}):`)
+for (const regra of faltando) console.log(`  + ${regra}`)
+
+if (conferir) {
+  console.log('\n--conferir: nenhum arquivo foi tocado.')
+  process.exit(0)
+}
+
+const novo = {
+  ...atual,
+  permissions: {
+    ...(atual.permissions ?? {}),
+    allow: [...(atual.permissions?.allow ?? []), ...faltando],
+  },
+}
+
+mkdirSync(dirname(destino), { recursive: true })
+if (existsSync(destino)) {
+  const backup = `${destino}.backup-${carimbo()}`
+  copyFileSync(destino, backup)
+  console.log(`\nBackup: ${backup}`)
+}
+writeFileSync(destino, `${JSON.stringify(novo, null, 2)}\n`, 'utf8')
+console.log('Escrito. Abra uma sessao nova do Claude Code para valer.')
