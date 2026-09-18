@@ -153,3 +153,66 @@ test('a abertura nao derruba o script', async ({page})=>{
   await page.waitForTimeout(400);
   expect(erros, 'erros de script na abertura').toEqual([]);
 });
+
+/* ---------- v49: A CARGA DA ABERTURA ----------
+   A classe de defeito: a abertura disparava 21 consultas de view ao mesmo tempo, cada uma
+   planejando uma arvore de view aninhada, sob statement_timeout=8s do papel authenticated.
+   Medido em 18/09/2026 no pg_stat_statements: media de 30 a 750ms por view e MAXIMO de 5 a
+   7,7s em TODAS, inclusive nas baratas — assinatura de contencao, nao de consulta cara.
+   Consertamos a INSTANCIA duas vezes (v45 escalonou em 4 por vez, v48 tirou v_fila_opcoes da
+   view cara) e a CLASSE nenhuma. Isto aqui mata a classe: a abertura le o snapshot por UMA
+   chamada de painel_carga e NAO pode voltar a consultar view direto.
+   Se alguem acrescentar uma view na abertura, este teste fica vermelho antes de o Igor ver
+   "carga incompleta" no celular. */
+const DUBLE_CONTA = `window.__n={from:[],rpc:{}};
+window.supabase={createClient:()=>({
+  from:(v)=>{window.__n.from.push(v);
+    const t={select:()=>t,eq:()=>t,neq:()=>t,lte:()=>t,order:()=>t,
+      then:(f,g)=>Promise.resolve({data:[],error:null,count:0}).then(f,g)};
+    return t;},
+  auth:{getSession:()=>new Promise(()=>{}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
+  rpc:(n)=>{window.__n.rpc[n]=(window.__n.rpc[n]||0)+1;
+    if(n==="painel_carga"){
+      const ks=(typeof CHAVES_PAINEL!=="undefined")?CHAVES_PAINEL:[];
+      const d={}; ks.forEach(k=>{d[k]=[];});
+      return Promise.resolve({data:{dados:d,gerado_em:new Date().toISOString(),
+                                    idade_s:42,erros:{},chaves:ks.length},error:null});}
+    return Promise.resolve({data:null,error:null});}})};`;
+
+async function abrirContando(page){
+  const erros=[];
+  page.on("pageerror",e=>erros.push(String(e)));
+  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_CONTA}));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="\u2014");
+  await revelarCasca(page);
+  await page.evaluate(()=>carregar());
+  return erros;
+}
+
+test("a abertura le o snapshot em UMA chamada e nao consulta view direto", async ({page})=>{
+  const erros = await abrirContando(page);
+  const r = await page.evaluate(()=>({n:window.__n, chaves:CHAVES_PAINEL.length}));
+  expect(erros, "erro de script durante a carga").toEqual([]);
+  expect(r.n.rpc.painel_carga, "chamadas a painel_carga na abertura").toBe(1);
+  expect(r.n.from, "view consultada direto na abertura — a carga voltou a ser N requisicoes").toEqual([]);
+  expect(r.chaves, "o painel tem de declarar as chaves que espera do snapshot").toBeGreaterThan(20);
+});
+
+test("chave que o painel espera e o snapshot nao entrega vira aviso, nunca tela muda", async ({page})=>{
+  const erros=[];
+  page.on("pageerror",e=>erros.push(String(e)));
+  /* o snapshot devolve TUDO menos a fila: a tela tem de gritar, nao inventar */
+  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",
+    body:DUBLE_CONTA.replace("ks.forEach(k=>{d[k]=[];});","ks.filter(k=>k!==\"fila\").forEach(k=>{d[k]=[];});")}));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="\u2014");
+  await revelarCasca(page);
+  await page.evaluate(()=>carregar());
+  const r = await page.evaluate(()=>({
+    aceso: document.getElementById("falhou").classList.contains("on"),
+    det:   document.getElementById("falhoudet").textContent}));
+  expect(erros, "erro de script").toEqual([]);
+  expect(r.aceso, "o aviso de carga incompleta tem de acender").toBe(true);
+  expect(r.det, "o aviso tem de dizer QUAL chave faltou").toContain("fila");
+});
