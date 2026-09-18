@@ -14,6 +14,15 @@
 # O setup script e o unico gancho que roda ANTES do Claude Code lancar, e o que
 # ele escreve em disco entra no snapshot do ambiente. Por isso a regra vai aqui.
 #
+# ISTO E UMA APOSTA, NAO UMA CERTEZA. A documentacao diz que "endpoint-managed
+# settings don't reach cloud sessions in Anthropic-hosted environments", e
+# managed-settings.json e endpoint-managed. A frase descreve o arquivo na maquina
+# do usuario, nao no container, mas a documentacao tambem nunca afirma que o do
+# container e lido. Por isso este script escreve nos DOIS alvos plausiveis e
+# deixa um marcador: quem abrir a proxima sessao mede em vez de acreditar.
+# A rota que NAO depende de aposta e o modo de permissao da sessao. Ver
+# docs/permissoes.md.
+#
 # COMO INSTALAR (uma vez)
 #   claude.ai/code -> icone do ambiente -> campo "Setup script" -> cole este arquivo.
 #   Trocar o setup script invalida o cache, entao a proxima sessao ja sobe curada.
