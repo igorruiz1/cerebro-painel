@@ -495,6 +495,52 @@ Três decisões deliberadas, para ninguém refazer a discussão:
 Configuração gerenciada não se sobrepõe de dentro da sessão — é o preço de a
 barreira ser real, e é o ponto.
 
+### Medido em 18/09/2026, na sessão principal: `allow` e `deny` em vigor ao mesmo tempo
+
+Tudo acima foi medido em Claude Code **filho**, com `--strict-mcp-config` e stream
+bruto. Faltava a prova no lugar que importa — a **sessão principal**, a que você
+usa de verdade. Medida agora, e nas duas direções de uma vez.
+
+**Lado do `deny`: a ferramenta sumiu do catálogo.** Nenhuma das nove negadas
+aparece na lista de ferramentas desta sessão. `deploy_edge_function` não existe
+para o modelo, e ela é o caso forte: o launcher **pré-aprova** ela no
+`--allowed-tools` (conferido nesta sessão, não herdado da página). Some mesmo
+assim. Já `get_edge_function`, que não está no `deny`, está lá. Nada precisou ser
+chamado: a medição é a ausência, e ela é legível de dentro.
+
+A aritmética fecha, e serve de conferência barata para a próxima sessão:
+
+| Conjunto | Nomes |
+| --- | --- |
+| No `--allowed-tools` do launcher | 23 |
+| Fora dele: `execute_sql`, `apply_migration`, `create_branch`, `create_project` | 4 |
+| Catálogo do servidor Supabase | 27 |
+| Removidas pelo `deny` | −9 |
+| **Visíveis nesta sessão** | **18** |
+
+Contadas na lista real: 18. Nenhum nome sobra nem falta.
+
+**Lado do `allow`: `execute_sql` rodou sem prompt.** `select 1`, devolveu
+`[{"?column?":1}]`. A sonda foi eleita depois de ler o `--allowed-tools` desta
+sessão, como a quarta armadilha exige: `execute_sql` **não** está nele. Logo a
+autorização veio de arquivo.
+
+**O que isto fecha.** O `allow` e o `deny` do mesmo arquivo estão valendo na mesma
+sessão, ao mesmo tempo: um abre o que o launcher não abriu, o outro fecha o que o
+launcher tinha aberto. Entrega e leitura param de ser dois fatos ligados por
+inferência — as duas pontas foram observadas no mesmo processo. E a barreira do
+caro e do irreversível deixa de ser só um experimento em subprocesso: ela está de
+pé aqui, onde o estrago aconteceria.
+
+O que este teste **não** faz é separar o alvo 1 do alvo 2 — a regra está nos dois
+arquivos. Essa separação continua vindo do experimento isolado da rota 1.
+
+**Terreno, terceira leitura independente.** `--allowed-tools` com as **mesmas 23**
+ferramentas Supabase, em `cloud_default`. Um detalhe para quem for medir: o
+processo subiu de novo como `CLAUDE_PID=103`, o mesmo número da sessão anterior
+registrada nesta página. O PID se repete entre containers e **não serve para
+distinguir sessões** — use o horário de início do processo (`ps -o lstart=`).
+
 ## Sessões locais fora deste repo
 
 As configurações de usuário valem em qualquer diretório da **sua máquina** — e só
