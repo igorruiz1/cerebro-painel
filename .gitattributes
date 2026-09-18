@@ -8,6 +8,13 @@
 # eol=crlf   -> o working tree recebe CRLF em QUALQUER sistema, como o do Igor ja tem.
 * text=auto eol=crlf
 
+# EXCECAO: shell script com CRLF nao roda. O bash do Linux le o \r como parte do
+# comando e morre ("syntax error near unexpected token $'do\r'"). Vale dobrado
+# para scripts/setup-nuvem.sh, que e colado no campo Setup script do ambiente:
+# setup script que sai diferente de zero IMPEDE A SESSAO DE ABRIR. Descoberto em
+# 18/09/2026, com o bash -n falhando no working tree e passando no blob.
+*.sh text eol=lf
+
 # Binario nunca se converte.
 *.png binary
 *.jpg binary

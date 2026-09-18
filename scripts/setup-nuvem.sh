@@ -14,28 +14,42 @@
 # O setup script e o unico gancho que roda ANTES do Claude Code lancar, e o que
 # ele escreve em disco entra no snapshot do ambiente. Por isso a regra vai aqui.
 #
-# ISTO E UMA APOSTA, NAO UMA CERTEZA. A documentacao diz que "endpoint-managed
-# settings don't reach cloud sessions in Anthropic-hosted environments", e
-# managed-settings.json e endpoint-managed. A frase descreve o arquivo na maquina
-# do usuario, nao no container, mas a documentacao tambem nunca afirma que o do
-# container e lido. Por isso este script escreve nos DOIS alvos plausiveis e
-# deixa um marcador: quem abrir a proxima sessao mede em vez de acreditar.
-# A rota que NAO depende de aposta e o modo de permissao da sessao. Ver
-# docs/permissoes.md.
+# DOIS ALVOS, E O PRIMEIRO PROVAVELMENTE ESTA MORTO (revisado 18/09/2026)
+# A documentacao atual diz: "only server-managed settings reach a cloud session;
+# a managed-settings.json file or MDM profile on your device doesn't. A
+# self-hosted environment ALSO reads the managed settings file in its runner
+# image." Esse "also" separa o self-hosted, que le o arquivo da imagem, do
+# ambiente hospedado pela Anthropic, que e o nosso caso. Nao e negacao literal do
+# arquivo do container, mas a leitura natural e contra o alvo 1.
+#
+# O alvo 2, as configuracoes de usuario DO CONTAINER, segue de pe: o "nao e lido"
+# da doc fala do arquivo na maquina do usuario, que nunca chega aqui. Medido em
+# 18/09/2026: a sessao de nuvem roda como root com HOME=/root, e o setup script
+# tambem, entao os dois escrevem no mesmo /root/.claude/settings.json.
+#
+# Por isso: escreve nos dois, deixa um marcador, e quem abrir a proxima sessao
+# mede em vez de acreditar. Ver docs/permissoes.md.
 #
 # COMO INSTALAR (uma vez)
-#   claude.ai/code -> icone do ambiente -> campo "Setup script" -> cole este arquivo.
-#   Trocar o setup script invalida o cache, entao a proxima sessao ja sobe curada.
+#   claude.ai/code -> icone de nuvem com o nome do ambiente, na linha ACIMA da
+#   caixa de mensagem (nao ha pagina nem URL para isso) -> passe o mouse sobre o
+#   ambiente -> engrenagem a direita -> dialogo "Update cloud environment" ->
+#   campo "Setup script" -> cole este arquivo -> salve.
+#   Salvar ja invalida o cache; a proxima SESSAO NOVA sobe curada. Retomar uma
+#   sessao existente nunca re-roda o setup script.
 #
 # Roda como root no Ubuntu 24.04. Exit zero e obrigatorio: se sair diferente de
-# zero a sessao nao abre. Por isso todo caminho de erro aqui termina em `true`.
+# zero A SESSAO NAO ABRE. Por isso todo caminho de erro aqui termina em `true`.
+# Limite de ~5 minutos; este script leva menos de um segundo.
 
 set -uo pipefail
 
 MANAGED_DIR=/etc/claude-code
 MANAGED=$MANAGED_DIR/managed-settings.json
 # ${HOME:-/root} e nao $HOME: com set -u um HOME vazio mataria o script, e setup
-# script que sai diferente de zero IMPEDE A SESSAO DE ABRIR.
+# script que sai diferente de zero IMPEDE A SESSAO DE ABRIR. O fallback /root
+# nao e chute: medido em 18/09/2026, a sessao de nuvem roda como root com
+# HOME=/root, mesmo usuario e mesmo home do setup script.
 USUARIO=${HOME:-/root}/.claude/settings.json
 
 # A fonte da verdade e a allowlist versionada no repo. O clone acontece antes do
