@@ -1,129 +1,150 @@
 # Permissões do Claude Code: onde a regra mora
 
 O problema concreto: `mcp__Supabase__execute_sql` pedindo autorização a cada
-chamada.
+chamada. Levou quatro PRs e várias sessões porque a causa foi diagnosticada
+errada três vezes. Esta página guarda o que foi **medido**, e diz de cada rota o
+que é certeza e o que é aposta.
 
-São **duas travas em série**, e destravar uma só não abre a porta:
+## A hierarquia, do que mais resolve para o que menos
 
-1. **A allowlist** — a regra existe e o arquivo certo foi lido? É o resto desta
-   página.
-2. **O modo de permissão** da sessão — ver
-   [Ainda pergunta, mesmo com a regra no lugar](#ainda-pergunta-mesmo-com-a-regra-no-lugar).
+| # | Rota | Cobre | Custo | Certeza |
+| --- | --- | --- | --- | --- |
+| 1 | **Modo de permissão da sessão** | todo prompt, MCP inclusive | 1 clique | documentada |
+| 2 | Allowlist em `.claude/settings.json` | só as 14 regras Supabase | já feito | funciona **quando lida a tempo** |
+| 3 | `scripts/setup-nuvem.sh` no Setup script | idem, antes do boot | 1 config | **aposta**, ver ressalva |
+| 4 | Server-managed settings | tudo, na organização | só Team/Enterprise | documentada, indisponível aqui |
 
-A regra que resolve a trava 1 é sempre a mesma linha numa lista
-`permissions.allow` — o que muda é **em qual arquivo** ela precisa estar, e isso
-depende de onde a sessão abre. Errar o arquivo é o que faz a permissão "não
-pegar".
+A rota 1 é a que resolve. As outras reduzem prompt em modo Manual; nenhuma delas
+elimina.
 
-| Onde você abre a sessão | Arquivo que vale | Estado |
-| --- | --- | --- |
-| Claude Code local, dentro deste clone | `.claude/settings.json` (versionado) | resolvido |
-| Claude Code local, em qualquer outra pasta | `~/.claude/settings.json` (sua máquina) | `scripts/permissoes-usuario.mjs` |
-| Sessão remota (claude.ai/code) em **outro** repositório | `.claude/settings.json` **daquele** repo | copiar o bloco abaixo |
-| Cowork, app, chat do claude.ai | nenhum — a superfície gerencia sozinha | fora de alcance |
+## Rota 1: o modo de permissão
+
+É o único controle que muda o comportamento **com a sessão rodando**, pelo
+dropdown de modo. Os modos e o que roda sem perguntar:
+
+| Modo | Roda sem perguntar |
+| --- | --- |
+| `default` (Manual) | só leitura |
+| `acceptEdits` | leitura, edição de arquivo, comandos comuns de fs |
+| `auto` | tudo, com verificação de segurança em segundo plano |
+| `dontAsk` | leitura e ferramentas pré-aprovadas; o resto é **negado**, não perguntado |
+| `bypassPermissions` | tudo |
+
+Em `auto` as ferramentas MCP vão para um classificador em vez de virem para
+você — *"Everything else goes to the classifier"*. É o modo desenhado para
+exatamente esta dor, e a documentação o indica para *"long tasks, reducing
+prompt fatigue"*.
+
+**Por que não deixar isso cravado no repo:** a documentação é explícita de que
+`permissions.defaultMode` com valor `"auto"` **não tem efeito** em
+`.claude/settings.json` — *"the value doesn't take effect"* — e o mesmo vale para
+`"bypassPermissions"`. Sobraria `"dontAsk"`, que funciona, mas **nega** em vez de
+perguntar tudo o que não estiver na allowlist: `Bash`, `Write`, `Edit` e
+`WebFetch` parariam de funcionar sem aviso claro. Foi avaliado e recusado. O modo
+fica no dropdown, que é decisão de quem está na sessão.
+
+## Rota 2: a allowlist versionada, e por que ela falhou uma vez
+
+O arquivo `.claude/settings.json` **é** lido em sessão de nuvem, e a regra dentro
+dele está certa. O que falhou em 18/09/2026 foi o relógio. Reflog do container:
+
+```
+13:53:32  snapshot do ambiente com o repo em a0f9f29 (antes da allowlist existir)
+          Claude Code sobe e lê as permissões desse estado
+14:35:19  checkout 9728989; a allowlist chega, tarde demais
+```
+
+O ambiente restaura um snapshot do sistema de arquivos e o `git fetch` que
+atualiza o clone roda **depois** do boot. A allowlist entrou em `39a6f55`,
+posterior a `a0f9f29`: estava no GitHub e não estava no disco na hora que
+importava. Tende a não repetir depois que o cache do ambiente reconstrói, mas
+não há garantia — por isso ela é rota 2, não rota 1.
+
+**A segunda condição, esta permanente:** a rota 2 vale para sessão de **um**
+repositório. Com mais de um, a sessão começa *acima* dos clones e de cada
+`.claude/settings.json` carrega só os plugins e marketplaces declarados —
+*"not permission rules, hooks, `env`, or other keys"*. Nenhum acerto de timing
+resolve isso; ali só a rota 1 funciona.
+
+## Rota 3: o setup script, com a ressalva na cara
+
+`scripts/setup-nuvem.sh`, colado em claude.ai/code → ícone do ambiente → campo
+**Setup script**. É o único gancho que roda **antes do Claude Code lançar**, e o
+que ele escreve em disco entra no snapshot do ambiente.
+
+**A ressalva.** Ele escreve `/etc/claude-code/managed-settings.json`, que é
+*endpoint-managed*, e a documentação diz:
+
+> Endpoint-managed settings don't reach cloud sessions in Anthropic-hosted
+> environments
+
+Essa frase descreve o arquivo na **sua máquina**, não no container — o container
+não é um endpoint gerenciado por MDM. Mas a documentação não afirma em lugar
+nenhum que o arquivo do container é lido, e para ambiente self-hosted ela afirma
+o contrário explicitamente. **Então é aposta, e está escrito aqui como aposta.**
+Por isso o script escreve também nas configurações de usuário do container, que é
+a segunda hipótese, e por isso deixa um marcador em vez de pedir fé:
+
+```bash
+cat /etc/claude-code/.origem-cerebro    # quando rodou, de onde veio, quantas regras
+```
+
+Sem esse arquivo, o script não rodou. Com ele, e ainda assim com prompt, os dois
+alvos foram recusados e a rota morre — registre aqui e caia para a rota 1.
+
+## Rota 4: server-managed settings
+
+O caminho oficial para política em sessão de nuvem:
+
+> **Endpoint-managed settings don't reach cloud sessions** in Anthropic-hosted
+> environments, so organizations whose developers run cloud sessions should
+> configure **server-managed settings** as well.
+
+Configura-se em Admin Settings → Claude Code → Managed settings, em
+claude.ai/admin-settings/claude-code, e aceita `permissions.allow`. Duas
+barreiras, medidas em 18/09/2026:
+
+- exige plano **Claude for Teams ou Enterprise** e papel **Owner / Primary Owner**;
+- `~/.claude/remote-settings.json` não existia no container, ou seja, nenhuma
+  política server-managed alcançou a sessão.
+
+Se a conta migrar para Team, esta vira a rota 1 e todo o resto desta página vira
+história.
+
+## O que NÃO funciona, para ninguém tentar de novo
+
+| Tentativa | Por quê |
+| --- | --- |
+| `~/.claude/settings.json` | sessão de nuvem: *"not read"*. O PR #7 nasceu morto para a nuvem |
+| botão *sempre permitir* do prompt | grava em `.claude/settings.local.json`, que a nuvem não lê e o `.gitignore` descarta |
+| gravar qualquer settings durante a sessão | a permissão é lida uma vez, no boot. Medido: não tirou um único prompt |
+| hook `SessionStart` que instala a regra | roda *"After Claude Code launches"*, depois da leitura que tentaria alterar |
+
+## O que fica de fora da allowlist, de propósito
+
+`get_publishable_keys` (devolve chave), `create_project`, `pause_project`,
+`restore_project`, `deploy_edge_function` e o ciclo de branches
+(`create` / `merge` / `reset` / `delete`). Caro ou irreversível continua pedindo
+confirmação — é a última barreira antes de um estrago silencioso. Em modo `auto`
+essas ficam com o classificador; se isso incomodar, o lugar de barrar é
+`permissions.deny`, não a ausência na allowlist.
 
 ## Sessões locais fora deste repo
 
-As configurações de usuário valem em qualquer diretório da sua máquina. Rode uma
-vez, a partir de um clone deste repositório:
+As configurações de usuário valem em qualquer diretório da **sua máquina** — e só
+dela. Rode uma vez, a partir de um clone deste repositório:
 
 ```bash
 node scripts/permissoes-usuario.mjs --conferir   # mostra o que faria
 node scripts/permissoes-usuario.mjs              # aplica
 ```
 
-Ele funde as regras `mcp__Supabase__*` da allowlist deste repo no seu
-`~/.claude/settings.json`, preservando tudo o que já estiver lá (tema, `deny`,
-hooks). Faz backup carimbado antes de escrever, é idempotente, e aborta sem
-tocar em nada se o JSON de destino estiver corrompido. `--todas` leva também as
-regras `Bash(git ...)`, o que só faz sentido se você quiser o mesmo fluxo de
-commit em outros projetos.
+Funde as regras `mcp__Supabase__*` no seu `~/.claude/settings.json`, preservando
+o que já estiver lá. Backup carimbado, idempotente, aborta sem tocar em nada se o
+JSON de destino estiver corrompido. `--todas` leva também as regras `Bash(git ...)`.
+Recusa rodar em sessão de nuvem, onde não teria efeito.
 
-A allowlist do repo é a fonte; o script é só o transporte. Mexeu numa,
-rode o outro.
-
-**Vale a partir da próxima sessão.** As permissões são lidas quando a sessão
-abre; a que já está rodando continua com a lista antiga.
-
-## Sessões remotas em outro repositório
-
-O container remoto é descartado ao fim da sessão, então `~/.claude/` não
-sobrevive e o script acima não ajuda ali. A regra precisa estar versionada no
-repositório que a sessão clona. Crie `.claude/settings.json` lá com:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "mcp__Supabase__execute_sql",
-      "mcp__Supabase__list_tables",
-      "mcp__Supabase__list_projects",
-      "mcp__Supabase__query_logs"
-    ]
-  }
-}
-```
-
-## O que fica de fora, de propósito
-
-`get_publishable_keys` (devolve chave), `create_project`, `pause_project`,
-`restore_project`, `deploy_edge_function` e o ciclo de branches
-(`create` / `merge` / `reset` / `delete`). Caro ou irreversível continua pedindo
-confirmação — é a última barreira antes de um estrago silencioso.
-
-## Ainda pergunta, mesmo com a regra no lugar
-
-Sintoma: sessão na nuvem, allowlist commitada no `main`, e mesmo assim aparece
-"Permitir que Claude usar Execute SQL (Supabase)?" a cada chamada.
-
-Percorra na ordem — a primeira que casar é a sua.
-
-**1. A sessão é anterior à allowlist.** As permissões são lidas **quando a
-sessão abre**. Uma sessão aberta antes do commit da regra nunca a enxerga, por
-mais `git pull` que você dê dentro dela. É a causa mais comum.
-→ Abra uma sessão nova. A antiga só se resolve pelo modo (item 4).
-
-**2. A sessão tem mais de um repositório.** Documentado: uma sessão com vários
-repositórios começa *acima* dos clones e, de cada `.claude/settings.json`,
-carrega só os plugins e marketplaces declarados — **não as regras de
-permissão**. Sessão de repositório único lê tudo.
-→ Use sessão de um repositório só, ou resolva pelo modo (item 4).
-
-**3. O nome da ferramenta não bate.** A regra casa pelo identificador
-(`mcp__Supabase__execute_sql`), não pelo rótulo da caixa de diálogo
-("Execute SQL (Supabase)"). Servidor MCP registrado com outro nome → outra
-regra.
-→ Confira o `project_id`/nome do servidor no JSON que a caixa mostra.
-
-**4. O modo de permissão não cobre MCP.** `acceptEdits` ("Aceitar edições", o
-rótulo no rodapé) auto-aprova edição de arquivo e **não** ferramentas MCP.
-
-| Modo | Roda sem perguntar |
-| --- | --- |
-| `default` (Manual) | só leitura |
-| `acceptEdits` | leitura + edição de arquivo — **MCP continua perguntando** |
-| `auto` | tudo, com verificação de segurança em segundo plano |
-| `dontAsk` | leitura + ferramentas pré-aprovadas; o resto é **negado**, não perguntado |
-| `bypassPermissions` | tudo, sem verificação |
-
-→ Na nuvem o modo se escolhe no **dropdown da sessão**, ao criar a tarefa e com
-ela em curso. É a única alavanca que muda uma sessão **já aberta**.
-
-### Por que este repo não fixa um modo no settings.json
-
-`permissions.defaultMode` aceita valor em `.claude/settings.json`, mas:
-
-- `auto` e `bypassPermissions` **são ignorados** nesse arquivo por decisão do
-  produto (a sessão cai para Manual) — não adianta tentar.
-- `dontAsk` funcionaria e zeraria os prompts, mas **nega** tudo que não estiver
-  na allowlist: `Edit`, `Write`, e qualquer `Bash` fora da lista parariam de
-  funcionar sem sequer perguntar. Trocaria um incômodo por um travamento
-  silencioso.
-
-Por isso a divisão: **allowlist no repositório** (durável, versionada,
-auditável) + **modo escolhido na sessão** (contextual, reversível). É o mesmo
-desenho de `sudoers` + flag da invocação: política no arquivo, postura no
-momento da chamada.
+**Vale a partir da próxima sessão**, porque a permissão é lida no boot.
 
 ## Sintaxe, para quando você editar à mão
 
