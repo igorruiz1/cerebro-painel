@@ -613,9 +613,31 @@ aquele servidor expõe de fato. O plugin, por exemplo, não tem `list_projects` 
 regra correspondente nasce morta. É de propósito: regra morta não custa nada, e
 regra faltando custa exatamente o prompt que o script existe para eliminar.
 
-**Ponto aberto:** o script só acrescenta, nunca poda. Quem rodou a versão antiga
-ficou com 14 regras `mcp__Supabase__*` inúteis no arquivo de usuário. São inertes;
-um `--podar` resolveria e ainda não existe.
+### Podar regra órfã
+
+O script só acrescentava, nunca podava. Quem rodou a versão que escrevia o nome
+da nuvem ficou com 14 regras `mcp__Supabase__*` inertes no arquivo de usuário.
+
+```bash
+node scripts/permissoes-usuario.mjs --podar --conferir   # lista o que sairia
+node scripts/permissoes-usuario.mjs --podar              # acrescenta e poda
+```
+
+Sem `--podar` o script apenas **avisa** que há regra de servidor inexistente e
+segue sem tocar nela. Remover permissão é decisão de quem roda, não efeito
+colateral de instalar.
+
+O critério é estreito de propósito: só sai o servidor que **não** foi descoberto
+agora **e** cujas regras no arquivo são todas ferramentas da política do repo.
+Regra posta à mão para outro servidor nunca entra na conta, mesmo que compartilhe
+nome de ferramenta com o Supabase.
+
+Serve para as duas fontes de órfã: a versão antiga do script, e o conector
+reinstalado cujo UUID mudou.
+
+Medido em 18/09/2026: arquivo de usuário saiu de 42 regras para 28 — as 14 mortas
+foram embora, as 28 vivas ficaram, `agentPushNotifEnabled` preservado, backup
+carimbado, segunda rodada não escreve nada.
 
 ## Sintaxe, para quando você editar à mão
 
