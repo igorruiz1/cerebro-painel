@@ -847,7 +847,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v55";
+const VER="v56";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1910,11 +1910,22 @@ function rAgora(){
   document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
-  /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24. */
-  document.getElementById("estouro").innerHTML=resto>0
+  /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24.
+     v56 (20/09/2026): sao DOIS tetos diferentes e agora cada um se anuncia sozinho.
+     TETO (cliente, =5) corta a LISTA desta tela e sempre teve aviso.
+     teto_tela (banco, =7) corta a CAMADA hoje pelo limite de atencao declarado em
+     kpi.meta_num de painel.fila_abertura_n, e ate a v55 cortava CALADO: acima_do_teto
+     era estruturalmente impossivel de acender, porque a camada hoje era definida pelo
+     proprio teto e posicao, contada dentro da camada, nunca passava dele. Medido em
+     20/09: 0 cards marcados com a tela em 13 de teto 13. Agora sao 6 com tela 7. */
+  const acima=Number((c&&c.acima_do_teto)||0);
+  document.getElementById("estouro").innerHTML=(resto>0
     ? `<div class="estouro">Mostrando <b>${mostra.length} de ${vis.length}</b> itens que exigem você hoje.
         O teto é de exibição, não de existência.
-        <button onclick="verTudo()">ver os ${resto} restantes</button></div>` : "";
+        <button onclick="verTudo()">ver os ${resto} restantes</button></div>` : "")
+   +(acima>0
+    ? `<div class="estouro"><b>${acima}</b> ${acima>1?"cards estão":"card está"} em segundo plano porque HOJE encheu em <b>${c.teto_tela}</b>, que é o limite de atenção — não porque ${acima>1?"sejam":"seja"} menos urgente${acima>1?"s":""}. A capacidade de trabalho medida é <b>${c.teto_wip}</b> por Lei de Little.
+        <button onclick="verDepois()">ver quais</button></div>` : "");
   const dep=D.depois||[];
   document.getElementById("fila2").innerHTML=dep.length
     ? dep.filter(passa).map(cardFila).join("")
