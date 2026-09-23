@@ -847,7 +847,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v56";
+const VER="v57";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1060,7 +1060,7 @@ const SIN={
   numero_do_card_venceu:["O CARD AFIRMA UM NÚMERO QUE NÃO VALE MAIS","o número está na vitrine do card e a fonte devolve outro"],
   fixture_vermelha :["A FIXTURE DO BANCO TEM CASO VERMELHO","a suíte de regressão do motor falhou na última rodada — isto é o motor mentindo"],
   ponteiro_de_arquivo_quebrado:["O BANCO APONTA PARA UM ARQUIVO QUE NÃO ESTÁ LÁ","mover pasta no Drive quebra o ponteiro do banco e nada levanta exceção"],
-  achado_descartado_em_silencio:["ACHADO ALTO JOGADO FORA SEM VIRAR NADA","a auditoria viu, um gatilho descartou, e ninguém ficou sabendo"],
+  achado_alto_persistente:["ACHADO ALTO QUE VOLTA TODO DIA SEM DONO","a auditoria repete o mesmo achado ALTO há 3 dias ou mais: ele mora em v_achado_aberto e não vira card; trate ou aceite por escrito"],
   skill_sem_prova_de_superficie:["SKILL QUE NENHUMA SUPERFÍCIE PROVOU TER","o runtime manda carregar skill pelo destino e nenhuma superfície registrou que as tem — conector já media isso, skill não media"]
 };
 /* v50: SIN era um mapa FECHADO e `ordem` so listava as chaves dele — sinal novo no banco
