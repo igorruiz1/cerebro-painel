@@ -230,6 +230,16 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px;font-weight:400;text-tr
 .hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 60%);border-left-color:var(--red)}
 .hero .t{font-size:21px;font-weight:600;letter-spacing:-.3px}
 .hero .s{font-size:13.5px;color:var(--ink2);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* v58 (t623): A FAIXA DOS CINCO SEGUNDOS. Seis numeros no topo, cada um com sparkline, banda,
+   estado ESCRITO (a leitura sobrevive sem cor) e quem move o numero. O resto do heroi desce
+   um nivel, dentro de "mais numeros", e continua existindo. */
+.faixa5{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.f5{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:10px;padding:8px 10px;min-width:0}
+.f5.mal{border-left-color:var(--red)}.f5.bem{border-left-color:var(--grn)}
+.f5 .r{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f5 .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.f5 .e{font-size:10.5px;color:var(--ink2);margin-top:2px}.f5 .q{font-size:10.5px;color:var(--dim)}
+.hero details.abaixo{margin-top:8px}.hero details.abaixo summary{cursor:pointer;font-size:12px;color:var(--mut)}
 .hero .s b{color:var(--warn)}
 
 /* ---------- CARD ---------- */
@@ -756,6 +766,7 @@ section.sec.on{display:block}
   
 
   <div class="pane on" id="p-agora">
+    <div id="faixa5"></div>
     <div id="hero"></div>
     <div id="correcoes"></div>
     <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
@@ -847,7 +858,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v57";
+const VER="v58";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1891,19 +1902,23 @@ function rAgora(){
   const filtrando=F.frente||F.origem||F.q||F.nat;
   const tot=vis.length+(D.depois||[]).filter(passa).length;
   const c=D.cont||{};
-  document.getElementById("hero").innerHTML=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div class="hero" style="margin-bottom:8px"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}<div class="hero ${tot||D.cor.length?"alert":""}">
+  rFaixa5();
+  const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}`;
+  document.getElementById("hero").innerHTML=`<div class="hero ${tot||D.cor.length?"alert":""}">
     <div class="t">${tot?tot+" precisa"+(tot>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje")
       :(filtrando?"nada neste filtro"
         /* v45: a v44 passou a AVISAR que a carga falhou, mas o heroi continuou escrevendo
            "nada precisa de voce hoje" logo abaixo do aviso vermelho — duas frases opostas na
            mesma tela, e a mentira em corpo 28. Sem dado confiavel o heroi nao afirma nada. */
         :(CARGAINCOMPLETA?"não sei o que precisa de você — a carga falhou":"nada precisa de você hoje"))} ${sparkKPI("carga.igor_n",64,20)}</div>
-    <div class="s">${D.cor.length?`<span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span>`:""}
+    ${D.cor.length?`<div class="s"><span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span></div>`:""}
+    <details class="abaixo"><summary>mais números do caixa e da fila</summary>${_folego}
+    <div class="s">
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
       ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}${sparkKPI("fila.wip_sobrecarga_x",48,16)}</span>`:""}
-      <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></div>`;
+      <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></details></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
@@ -2622,6 +2637,42 @@ const SERIE_SECAO={
   "m9":"medicao.nao_planejado_pct",
     "placarsim":"contexto.custo_n1",   /* v33: o bloco MAQUINA passa a dizer QUANTO CUSTA a propria abertura, ao lado do que ela      entrega. painel.carga_abertura_kb ja e medido por medir_kpi e nunca aparecia na tela:      o painel media o proprio peso e guardava para si. Meta 80 KB, hoje 19,6. */   "automed":"painel.carga_abertura_kb",   "achados":"motor.achados_alto"
 };
+/* v58 (t623) — A FAIXA DOS CINCO SEGUNDOS. Referencia: Stephen Few, Information Dashboard
+   Design (o teste dos 5 segundos) e Tufte (sparkline com banda). Seis numeros da camada
+   mae/freio, lidos de D.se, que ja vem no snapshot da abertura: nenhuma consulta nova.
+   Tres regras que o card 623 exigiu e o teste de fumaca cobra:
+   (1) entre 5 e 7 numeros acima da dobra, contando o "N precisam de voce" do heroi;
+   (2) o estado vai ESCRITO ("fora do normal", "fora da meta"), a cor so repete o texto,
+       entao a leitura sobrevive em escala de cinza (regua 18);
+   (3) cada numero diz quem o move (regua 7).
+   Vermelho continua significando FORA DO NORMAL (banda p10-p90, v29), nunca so abaixo da meta. */
+const FAIXA5=[
+  {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d",  quem:"você"},
+  {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs", quem:"você"},
+  {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs", quem:"você"},
+  {k:"fila.wip_sobrecarga_x",     r:"Fila acima do teto",           u:"x",  quem:"você"},
+  {k:"carga.igor_pct",            r:"Carga no seu nome",            u:"pct",quem:"a máquina"},
+  {k:"entrega.output_sem_ack",    r:"Esperando sua leitura",        u:"n",  quem:"você"}];
+function fmt5(v,u){
+  if(v==null||isNaN(+v))return "—"; v=+v;
+  const n=x=>x.toLocaleString("pt-BR",{maximumFractionDigits:1});
+  return u==="rs"?rs(v):u==="pct"?n(v)+"%":u==="x"?n(v)+"x":u==="d"?n(v)+" d":n(v);}
+function rFaixa5(){
+  const el=document.getElementById("faixa5"); if(!el)return;
+  const tiles=FAIXA5.map(t=>{
+    const r=(D.se||[]).find(x=>x.chave===t.k);
+    if(!r||!r.serie||!r.serie.length)
+      return `<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
+        <div class="e">sem série no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
+    const ult=+r.serie[r.serie.length-1], meta=r.meta_num==null?null:+r.meta_num;
+    const naMeta=meta==null?null:(r.direcao==="maior_melhor"?ult>=meta:ult<=meta);
+    const fora=r.situacao_banda==="fora_banda";
+    const banda=fora?"⚠ fora do normal":r.situacao_banda==="normal"?"normal":"sem banda ainda";
+    const mt=meta==null?"sem meta":naMeta?"na meta":`fora da meta (${r.direcao==="maior_melhor"?"≥":"≤"} ${fmt5(meta,t.u)})`;
+    return `<div class="f5 ${fora?"mal":(naMeta?"bem":"")}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
+      <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>
+      <div class="e">${banda} · ${mt}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
+  el.innerHTML=`<div class="faixa5" role="group" aria-label="os seis números do dia">${tiles.join("")}</div>`;}
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
   if(!r||!r.serie||r.serie.length<2)return "";

@@ -273,3 +273,39 @@ test('os small multiples desenham so com render() e todos no mesmo teto de eixo'
   expect(r.alturas[0]>r.alturas[1], 'pico 4 tem de desenhar mais alto que pico 1: escala unica').toBe(true);
   expect(Math.abs(r.alturas[0]/r.alturas[1]-4)<0.35, 'a razao das alturas segue a razao dos valores').toBe(true);
 });
+
+/* CLASSE DE DEFEITO 6 · v58 (t623): A PRIMEIRA DOBRA VIRA PAREDE DE NUMERO.
+   Antes da faixa o heroi punha cerca de 12 numeros acima da dobra, e o teste dos 5 segundos
+   (Few) falha com mais de 7. O invariante: a faixa desenha entre 5 e 7 numeros, cada um diz
+   o estado POR ESCRITO (a leitura sobrevive sem cor, regua 18) e diz quem move (regua 7);
+   o resto do heroi continua existindo, um nivel abaixo, dentro de "mais numeros". */
+test('a faixa dos 5 segundos: 5 a 7 numeros, estado escrito, quem move, resto um nivel abaixo', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const s=(chave,serie,meta,dir,banda)=>({chave,serie,meta_num:meta,direcao:dir,p10:1,p90:2,situacao_banda:banda});
+    D.se=[s("caixa.sobrevida_dias",[20,15,11],90,"maior_melhor","normal"),
+          s("caixa.entrada_realizada_30d",[500,0],19700,"maior_melhor","normal"),
+          s("caixa.decisao_parada_rs",[1,2],0,"menor_melhor","fora_banda"),
+          s("fila.wip_sobrecarga_x",[3.6],1,"menor_melhor","sem_banda"),
+          s("carga.igor_pct",[76.6,76.6],50,"menor_melhor","fora_banda")];
+    D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:17023,queima_dia_base:700};
+    let err=null; try{ rAgora(); }catch(e){ err=String(e); }
+    const t=[...document.querySelectorAll('#faixa5 .f5')];
+    return {err, n:t.length,
+      semEstado:t.filter(x=>!/normal|sem banda|sem série/.test(x.querySelector('.e').textContent)).length,
+      semQuem:t.filter(x=>!x.querySelector('.q').textContent.includes('quem move')).length,
+      foraEscrito:t.find(x=>x.dataset.chave==='carga.igor_pct').querySelector('.e').textContent,
+      faltando:t.find(x=>x.dataset.chave==='entrega.output_sem_ack').querySelector('.e').textContent,
+      folegoAbaixo:!!document.querySelector('#hero details.abaixo') &&
+        document.querySelector('#hero details.abaixo').textContent.includes('folego de caixa')};
+  });
+  expect(r.err, 'rAgora() derrubou o script').toBe(null);
+  expect(r.n>=5 && r.n<=7, `numeros na faixa: ${r.n}`).toBe(true);
+  expect(r.semEstado, 'numero sem estado escrito').toBe(0);
+  expect(r.semQuem, 'numero sem quem move').toBe(0);
+  expect(r.foraEscrito, 'fora do normal e fora da meta vao por escrito').toContain('fora do normal');
+  expect(r.foraEscrito).toContain('fora da meta');
+  expect(r.faltando, 'serie ausente se declara, nao some').toContain('sem série');
+  expect(r.folegoAbaixo, 'o folego de caixa continua existindo um nivel abaixo').toBe(true);
+});
