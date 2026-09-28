@@ -309,3 +309,51 @@ test('a faixa dos 5 segundos: 5 a 7 numeros, estado escrito, quem move, resto um
   expect(r.faltando, 'serie ausente se declara, nao some').toContain('sem série');
   expect(r.folegoAbaixo, 'o folego de caixa continua existindo um nivel abaixo').toBe(true);
 });
+
+/* CLASSE DE DEFEITO 7 · v59: NORMAL VIRA BOM. A banda p10-p90 aprende o patamar ruim: numero
+   fora da meta ha semanas fica "normal" e a tela pintava de verde. Medido em 28/09/2026: os seis
+   numeros da faixa fora da meta, os seis verdes. O invariante: fora da meta NUNCA sai verde, nem
+   na borda do card nem na sparkline, e a persistencia vai por escrito. */
+test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const s=(chave,serie,meta,dir,banda,p10,p90)=>({chave,serie,meta_num:meta,direcao:dir,p10,p90,situacao_banda:banda});
+    D.se=[s("caixa.sobrevida_dias",[9,9,9,9,9,9,9,9,9],90,"maior_melhor","normal",9,16),
+          s("carga.igor_pct",[40,42,41,40,39,41,40,42,41],50,"menor_melhor","normal",39,42)];
+    D.rw={dias_sobrevida_pior:9,dias_sobrevida:9,caixa_hoje:1,queima_dia_base:1};
+    let err=null; try{ rAgora(); }catch(e){ err=String(e); }
+    const t=k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`);
+    const cor=k=>(t(k).querySelector('.spk path[stroke]')||{getAttribute:()=>null}).getAttribute('stroke');
+    return {err,
+      foraClasse:t("caixa.sobrevida_dias").className, foraCor:cor("caixa.sobrevida_dias"),
+      foraTexto:t("caixa.sobrevida_dias").querySelector('.e').textContent,
+      naMetaClasse:t("carga.igor_pct").className, naMetaCor:cor("carga.igor_pct")};
+  });
+  expect(r.err, 'rAgora() derrubou o script').toBe(null);
+  expect(r.foraClasse, 'fora da meta dentro da banda').not.toContain('bem');
+  expect(r.foraClasse).toContain('atn');
+  expect(r.foraCor, 'sparkline fora da meta nao pode ser verde').not.toBe('#30a46c');
+  expect(r.foraTexto, 'a persistencia vai por escrito').toMatch(/fora da meta há \d+\+? d/);
+  expect(r.naMetaClasse, 'na meta continua verde').toContain('bem');
+  expect(r.naMetaCor).toBe('#30a46c');
+});
+
+test('o selo de saude diz quantas fontes falham, e fica verde quando todas voltam', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    SAUDE={n:24,e:0}; rSaude([]); const verde=document.getElementById('saude').textContent;
+    const cls=document.getElementById('saude').className;
+    SAUDE={n:24,e:3}; rSaude(['m9 — x','mo — y','frs — z']); const verm=document.getElementById('saude').textContent;
+    return {verde, cls, verm, cls2:document.getElementById('saude').className};
+  });
+  expect(r.verde).toBe('fontes 24/24');
+  expect(r.cls).toContain('bem');
+  expect(r.verm).toBe('3 fontes falhando');
+  expect(r.cls2).toContain('mal');
+  /* o selo mora na barra do topo: no celular ele nao pode empurrar o botao de menu para fora */
+  await page.setViewportSize({width:320,height:700});
+  await revelarCasca(page);
+  const w = await page.evaluate(()=>({W:document.documentElement.clientWidth,SW:document.documentElement.scrollWidth}));
+  expect(w.SW, 'rolagem horizontal a 320px com o selo aceso').toBe(w.W);
+});

@@ -657,6 +657,17 @@ section.sec.on{display:block}
   border-radius:20px;padding:4px 11px;font-size:12px;cursor:pointer}
 .ordb.on{background:var(--raise);border-color:var(--acc);color:var(--ink)}
 .ivfr{font-size:10.5px;color:var(--mut);border:1px solid var(--line2);border-radius:4px;padding:0 5px}
+/* v59 — faixa pela meta e selo de saude */
+.f5.atn{border-left-color:var(--yel)}
+.f5 .blt{position:relative;height:4px;margin:6px 0 4px;background:var(--line);border-radius:2px}
+.f5 .blt i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--yel);opacity:.6}
+.f5 .blt i.ok{background:var(--grn)}
+.f5 .blt b{position:absolute;top:-4px;width:2px;height:12px;background:var(--ink);transform:translateX(-1px)}
+.saude{font-size:11px;padding:2px 8px;border-radius:99px;margin-left:8px;white-space:nowrap;border:1px solid var(--line)}
+.saude:empty{display:none}
+.saude.bem{color:var(--grn);border-color:var(--grn)}
+.saude.mal{color:var(--red);border-color:var(--red)}
+@media (max-width:420px){.saude{max-width:74px;overflow:hidden;text-overflow:ellipsis;margin-left:5px;padding:2px 6px}}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -715,7 +726,7 @@ section.sec.on{display:block}
 <div id="app" class="hidden">
 <div class="top">
   <div class="topin">
-    <h1>CÉREBRO IGOR</h1><span class="ver" id="selo-ver">—</span>
+    <h1>CÉREBRO IGOR</h1><span class="ver" id="selo-ver">—</span><span class="saude" id="saude" role="status"></span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
@@ -858,7 +869,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v58";
+const VER="v59";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1521,7 +1532,7 @@ async function carregar(ehRetentativa){
      contra 8s de teto. Margem de 1.350x, e a carga deixa de depender de quanto o banco esta
      ocupado. Fonte nova entra como LINHA em painel_snapshot_fonte, nunca editando funcao.
      O preco e honesto e esta na tela: o dado tem IDADE, e a idade aparece. */
-  let dados={}, GERADO=null, IDADE=null;
+  let dados={}, GERADO=null, IDADE=null; SAUDE=null;
   const rc=await comTeto(sb.rpc("painel_carga"), LIMITE_RECARGA, "painel_carga")
     .then(x=>{ if(x&&x.error){FALHAS.push("painel_carga — "+x.error.message); return null;} return (x&&x.data)||null; })
     .catch(e=>{ FALHAS.push("painel_carga — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":(e&&e.message)||"erro")); return null; });
@@ -1529,6 +1540,7 @@ async function carregar(ehRetentativa){
     dados  = rc.dados||{};
     GERADO = rc.gerado_em||null;
     IDADE  = (typeof rc.idade_s==="number")?rc.idade_s:null;
+    SAUDE  = {n:Object.keys(dados).length, e:Object.keys(rc.erros||{}).length};
     Object.keys(rc.erros||{}).forEach(k=>FALHAS.push(k+" — "+rc.erros[k]));
     /* poka-yoke: chave que o painel LE e o snapshot nao TEM vira falha declarada, nunca
        tela silenciosa. Foi assim que a v44 descobriu que vazio e falha sao coisas diferentes. */
@@ -1584,7 +1596,20 @@ async function carregar(ehRetentativa){
   if(FALHAS.length && !ehRetentativa) setTimeout(()=>carregar(true), 4000);}
 /* v44: a tela DIZ quando veio incompleta, e diz o que faltou. Antes, falha de carga saia
    como "nada precisa de voce hoje" — a unica frase do painel que nao pode ser inventada. */
+/* v59 — SELO DE SAUDE (padrao status page do SRE). A faixa vermelha so existia quando algo
+   quebrava; o verde nunca aparecia, entao "sem faixa" era indistinguivel de "faixa escondida".
+   Agora o topo sempre diz: fontes entregando / total. Mesma carga, nenhuma consulta nova. */
+let SAUDE=null;
+function rSaude(falhas){
+  const el=document.getElementById("saude"); if(!el) return;
+  const nf=(falhas||[]).length;
+  if(!SAUDE){el.className="saude mal";el.textContent=nf?nf+" falha"+(nf>1?"s":""):"";return;}
+  const ok=SAUDE.n-SAUDE.e;
+  el.className="saude "+(nf?"mal":"bem");
+  el.textContent=nf?(SAUDE.e?SAUDE.e+" fonte"+(SAUDE.e>1?"s":"")+" falhando":nf+" falha"+(nf>1?"s":"")):"fontes "+ok+"/"+SAUDE.n;
+  el.title=nf?falhas.join(" · "):"todas as fontes do painel voltaram na última montagem";}
 function avisaFalha(falhas){
+  rSaude(falhas);
   const el=document.getElementById("falhou"); if(!el) return;
   const houve=Array.isArray(falhas)&&falhas.length>0;
   CARGAINCOMPLETA=houve;
@@ -2597,8 +2622,13 @@ function spark(serie,meta,dir,w,h,p10,p90){
   const last=s[s.length-1];
   const foraBanda = temBanda ? (dir==="maior_melhor" ? last<+p10 : last>+p90) : null;
   const okMeta = meta==null?null:(dir==="maior_melhor"?last>=meta:last<=meta);
-  const estado = foraBanda!=null ? (foraBanda?"anomalia":"normal") : (okMeta==null?"neutro":(okMeta?"normal":"anomalia"));
-  const col = estado==="neutro"?"#8b98ae":estado==="normal"?"#30a46c":"#e5484d";
+  /* v59 (28/09/2026) — NORMAL NAO E BOM. A banda p10-p90 so diz se o numero mudou de patamar;
+     numero ruim ha semanas vira o proprio normal e saia VERDE. Em 28/09 os seis numeros da faixa
+     estavam fora da meta e os seis pintados de verde. Regra nova, na linha do bullet graph do Few:
+     verde so NA META; fora da meta e ambar; vermelho continua reservado a FORA DO NORMAL. */
+  const estado = foraBanda ? "anomalia" : okMeta===false ? "atencao" : okMeta===true ? "normal"
+               : (foraBanda===false ? "normal" : "neutro");
+  const col = estado==="neutro"?"#8b98ae":estado==="normal"?"#30a46c":estado==="atencao"?"#f5a623":"#e5484d";
   const yb1=temBanda?Y(+p90):0, yb2=temBanda?Y(+p10):0;
   const banda = temBanda ? `<rect x="0" y="${Math.min(yb1,yb2).toFixed(1)}" width="${w}" height="${Math.max(1,Math.abs(yb2-yb1)).toFixed(1)}" fill="#8b98ae" opacity=".16"/>` : "";
   const rot = temBanda ? `série de ${s.length} pontos, faixa normal de ${(+p10).toLocaleString("pt-BR")} a ${(+p90).toLocaleString("pt-BR")}, ${foraBanda?"fora do normal":"dentro do normal"}`
@@ -2665,13 +2695,22 @@ function rFaixa5(){
       return `<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
         <div class="e">sem série no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
     const ult=+r.serie[r.serie.length-1], meta=r.meta_num==null?null:+r.meta_num;
-    const naMeta=meta==null?null:(r.direcao==="maior_melhor"?ult>=meta:ult<=meta);
+    const ok=v=>r.direcao==="maior_melhor"?v>=meta:v<=meta;
+    const naMeta=meta==null?null:ok(ult);
     const fora=r.situacao_banda==="fora_banda";
-    const banda=fora?"⚠ fora do normal":r.situacao_banda==="normal"?"normal":"sem banda ainda";
-    const mt=meta==null?"sem meta":naMeta?"na meta":`fora da meta (${r.direcao==="maior_melhor"?"≥":"≤"} ${fmt5(meta,t.u)})`;
-    return `<div class="f5 ${fora?"mal":(naMeta?"bem":"")}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
-      <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>
-      <div class="e">${banda} · ${mt}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
+    /* v59: ha quantos dias seguidos o numero esta fora da meta. E a persistencia que a banda
+       esconde: 22 dias fora vira "normal" para a banda e continua sendo o problema. */
+    let dias=0; if(meta!=null){for(let i=r.serie.length-1;i>=0&&!ok(+r.serie[i]);i--)dias++;}
+    const ha=dias>1?` há ${dias}${dias>=r.serie.length?"+":""} d`:"";
+    const banda=fora?"⚠ fora do normal":r.situacao_banda==="normal"?"patamar normal":"sem banda ainda";
+    const mt=meta==null?"sem meta":naMeta?"na meta":`fora da meta${ha} (${r.direcao==="maior_melhor"?"≥":"≤"} ${fmt5(meta,t.u)})`;
+    /* bullet graph (Few): barra do valor e risco da meta na mesma escala */
+    const top=Math.max(Math.abs(ult),Math.abs(meta||0),Math.abs(+r.p90||0))*1.1||1;
+    const pc=x=>Math.max(0,Math.min(100,x/top*100)).toFixed(1);
+    const blt=meta==null?"":`<div class="blt" aria-hidden="true"><i class="${naMeta?"ok":"no"}" style="width:${pc(ult)}%"></i><b style="left:${pc(meta)}%"></b></div>`;
+    return `<div class="f5 ${fora?"mal":(naMeta?"bem":(meta!=null?"atn":""))}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
+      <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>${blt}
+      <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
   el.innerHTML=`<div class="faixa5" role="group" aria-label="os seis números do dia">${tiles.join("")}</div>`;}
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
