@@ -357,3 +357,67 @@ test('o selo de saude diz quantas fontes falham, e fica verde quando todas volta
   const w = await page.evaluate(()=>({W:document.documentElement.clientWidth,SW:document.documentElement.scrollWidth}));
   expect(w.SW, 'rolagem horizontal a 320px com o selo aceso').toBe(w.W);
 });
+
+/* CLASSE DE DEFEITO 8 · v60: A MESMA CARGA PEDIDA POR TRES DONOS. getSession e os eventos de
+   onAuthStateChange (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED) chamavam carregar() cada um:
+   tres downloads de 155 kB no mesmo segundo, medido em 28/09/2026 (tres painel_ping as 21:11:43).
+   No EDGE as tres estouram o teto juntas e a tela fica com o dado de horas antes.
+   O invariante: a abertura com sessao salva e todos os eventos de auth que o supabase-js
+   dispara nela geram UMA chamada a painel_carga, e TOKEN_REFRESHED no meio do uso nenhuma. */
+const DUBLE_AUTH = DUBLE_CONTA
+  .replace("auth:{getSession:()=>new Promise(()=>{}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},",
+    `auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:"u"}}}}),
+      onAuthStateChange:(cb)=>{window.__auth=cb; const s={user:{id:"u"}};
+        cb("INITIAL_SESSION",s); cb("SIGNED_IN",s);
+        return {data:{subscription:{unsubscribe(){}}}};}},`)
+  .replace(`if(n==="painel_carga"){`, `if(n==="painel_carga"){ if(window.__segura) return new Promise(()=>{});`);
+
+async function abrirComSessao(page, segura){
+  const erros=[];
+  page.on("pageerror",e=>erros.push(String(e)));
+  await page.addInitScript(s=>{ window.__segura=s; }, !!segura);
+  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_AUTH}));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="—");
+  await page.waitForTimeout(300);
+  return erros;
+}
+
+test("abertura com sessao salva e eventos de auth geram UMA carga, e token renovado nenhuma", async ({page})=>{
+  const erros = await abrirComSessao(page, true);   /* carga pendurada: simula o EDGE */
+  const r1 = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  await page.evaluate(()=>{ carregar(); carregar(); });   /* toque no ↻ com a carga no ar */
+  const r2 = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  await page.evaluate(()=>window.__auth("TOKEN_REFRESHED",{user:{id:"u"}}));
+  const r3 = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  expect(erros, "erro de script").toEqual([]);
+  expect(r1, "painel_carga na abertura com INITIAL_SESSION e SIGNED_IN disparados").toBe(1);
+  expect(r2, "carregar() com uma carga no ar pega carona, nao abre outra requisicao").toBe(1);
+  expect(r3, "TOKEN_REFRESHED no meio do uso nao recarrega a tela").toBe(1);
+});
+
+/* CLASSE DE DEFEITO 9 · v60: A TELA CONGELADA QUE PARECE VIVA. Sem gatilho de retorno, o iPhone
+   trazia a pagina do segundo plano com a carga de horas antes. Medido em 28/09/2026: sete cards
+   decididos as 19:12 seguiram na tela do Igor, cuja pagina era das 18:34.
+   O invariante: voltar ao app depois de VOLTA_MS recarrega; voltar logo nao; e voltar com texto
+   nao enviado num card NUNCA redesenha por cima dele. */
+test("voltar ao app depois de um minuto recarrega, e nunca por cima de texto nao enviado", async ({page})=>{
+  const erros = await abrirComSessao(page, false);
+  const volta = ()=>page.evaluate(()=>{
+    Object.defineProperty(document,"visibilityState",{value:"visible",configurable:true});
+    document.dispatchEvent(new Event("visibilitychange"));
+    return new Promise(r=>setTimeout(()=>r(window.__n.rpc.painel_carga||0),200));});
+  const n0 = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  const logo = await volta();
+  await page.evaluate(()=>{ CARGA=Date.now()-VOLTA_MS-1000; });
+  const depois = await volta();
+  await page.evaluate(()=>{ CARGA=Date.now()-VOLTA_MS-1000;
+    const t=document.createElement("textarea"); t.value="o que fica valendo: pago 27/09";
+    document.getElementById("app").appendChild(t); });
+  const comRascunho = await volta();
+  expect(erros, "erro de script").toEqual([]);
+  expect(n0, "abertura").toBe(1);
+  expect(logo, "voltar em menos de um minuto nao recarrega").toBe(n0);
+  expect(depois, "voltar depois de um minuto recarrega").toBe(n0+1);
+  expect(comRascunho, "com texto nao enviado a tela nao e redesenhada").toBe(n0+1);
+});
