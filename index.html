@@ -690,6 +690,12 @@ section.sec.on{display:block}
  .maisbar,.filtros{order:3;flex:0 0 100%}
  .deg{display:none}
 }
+/* v61: a 320 px, com o selo de saude aceso, o botao da gaveta empurrava o topo 22 px para fora
+   da tela no Linux da CI (fonte mais larga que a do Windows). Abaixo de 360 px a identidade sai
+   do topo e fica so o selo da versao; ate 640 px ela encolhe com reticencias em vez de empurrar
+   os botoes (a 361-390 px a folga medida era zero). O topo e navegacao, nao conteudo. */
+@media(max-width:640px){h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:360px){h1{display:none}}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
