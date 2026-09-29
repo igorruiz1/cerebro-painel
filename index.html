@@ -869,7 +869,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v59";
+const VER="v60";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1508,7 +1508,19 @@ function rMovimento(){
 }
 
 /* ---------- carga ---------- */
-async function carregar(ehRetentativa){
+/* v60 — CARGA UNICA EM VOO. Medido em 28/09/2026: tres painel_ping no MESMO segundo (21:11:43).
+   A abertura chamava carregar() por getSession E por onAuthStateChange, que dispara em
+   INITIAL_SESSION, SIGNED_IN e TOKEN_REFRESHED: tres downloads de 155 kB em paralelo. No 4G
+   ninguem ve; no EDGE do celular (o "E" do print do Igor) as tres estouram os 15s juntas, e a
+   v44 — corretamente — mantem na tela o dado ANTERIOR com "1 falha". O Igor via os mesmos
+   sete cards de horas antes, com o banco ja mostrando outros. Chamada nova enquanto uma carga
+   esta no ar pega CARONA na que ja esta indo; nunca abre segunda requisicao. */
+let EMVOO=null;
+function carregar(ehRetentativa){
+  if(EMVOO) return EMVOO;
+  EMVOO=carregarAgora(ehRetentativa).finally(()=>{EMVOO=null;});
+  return EMVOO;}
+async function carregarAgora(ehRetentativa){
   msg(ehRetentativa?"carga incompleta — tentando de novo…":"carregando…",null,1200);
   /* v44: ate aqui q() devolvia [] tanto para "nao ha nada" quanto para "a consulta falhou".
      Medido em 16/09/2026: v_painel_fila voltou vazia numa rajada de 20 requisicoes
@@ -2905,6 +2917,31 @@ F.frente=pref("frente")||null;F.origem=pref("origem")||null;
 sb.auth.getSession().then(({data})=>{
   if(data.session){document.getElementById("app").classList.remove("hidden");carregar();}
   else document.getElementById("login").classList.remove("hidden");});
-sb.auth.onAuthStateChange((_e,s)=>{if(s){document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");carregar();}});
+/* v60: so o LOGIN de verdade carrega por aqui. Antes, qualquer evento com sessao chamava
+   carregar(): INITIAL_SESSION duplicava a abertura e TOKEN_REFRESHED (cerca de 1x por hora)
+   redesenhava a tela no meio do uso, apagando o que o Igor digitava em "o que fica valendo".
+   A abertura com sessao ja salva e da getSession acima; a volta ao app e do visibilitychange. */
+sb.auth.onAuthStateChange((ev,s)=>{
+  const lg=document.getElementById("login");
+  if(ev!=="SIGNED_IN"||!s||lg.classList.contains("hidden")) return;
+  lg.classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");carregar();});
+
+/* v60 — A VOLTA AO APP ATUALIZA. Nao havia gatilho nenhum de retorno: o iPhone traz a pagina do
+   segundo plano congelada, e a tela mostrava a carga de horas antes como se fosse de agora.
+   Medido em 28/09/2026: sete cards decididos as 19:12 continuaram na tela do Igor porque a
+   pagina era a das 18:34. Voltou depois de VOLTA_MS, ou a ultima carga falhou: carrega de novo.
+   Com texto nao enviado num card ou modal aberto, NAO redesenha — avisa, e o botao fica com ele. */
+const VOLTA_MS=60000;
+function rascunhoAberto(){
+  if(document.getElementById("modal").classList.contains("on")) return true;
+  return [...document.querySelectorAll("#app textarea")].some(t=>t.value.trim().length>0);}
+function aoVoltar(){
+  if(document.visibilityState!=="visible") return;
+  if(document.getElementById("app").classList.contains("hidden")) return;
+  if(Date.now()-CARGA<VOLTA_MS && !CARGAINCOMPLETA) return;
+  if(rascunhoAberto()){ msg("você voltou com texto não enviado — toque ↻ para atualizar",null,4000); return; }
+  carregar();}
+document.addEventListener("visibilitychange",aoVoltar);
+window.addEventListener("pageshow",e=>{ if(e.persisted) aoVoltar(); });
 </script></body></html>
