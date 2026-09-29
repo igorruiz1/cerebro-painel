@@ -421,3 +421,118 @@ test("voltar ao app depois de um minuto recarrega, e nunca por cima de texto nao
   expect(depois, "voltar depois de um minuto recarrega").toBe(n0+1);
   expect(comRascunho, "com texto nao enviado a tela nao e redesenhada").toBe(n0+1);
 });
+
+/* CLASSE DE DEFEITO 10 · v61: DECIDIR EXIGIA ESCREVER. Medido em 29/09/2026: a bandeja tinha
+   10 itens, 9 PRONTO, e o unico caminho de resposta na fila era digitar "o que fica valendo".
+   O invariante: sobre o card focado por J/K, A aceita a recomendacao (DECISAO) ou abre os 4 atos
+   do PRONTO, 1 a 4 escolhem o ato, S adia 2 dias, R recusa com motivo OPCIONAL; nada disso digita,
+   e cada ato chega ao banco pela porta certa (escolher, agir ou painel_responder). */
+const DUBLE_ARGS = DUBLE_CONTA.replace("rpc:(n)=>{window.__n.rpc[n]=(window.__n.rpc[n]||0)+1;",
+  "rpc:(n,a)=>{window.__n.rpc[n]=(window.__n.rpc[n]||0)+1;(window.__n.args=window.__n.args||[]).push([n,a]);");
+
+async function abrirComArgs(page){
+  const erros=[];
+  page.on("pageerror",e=>erros.push(String(e)));
+  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_ARGS}));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="—");
+  await revelarCasca(page);
+  return erros;
+}
+/* desenha a fila com um PRONTO, uma DECISAO com opcao recomendada e um card fora da bandeja */
+const MONTA_FILA = ()=>{
+  D.fila=[
+    {origem:"tarefa",ref:"1405",titulo:"Revisar e enviar o RS-2026-002",nivel:1,acoes:[{verbo:"repactuar",campo:"date",label:"nova data"}]},
+    {origem:"tarefa",ref:"999",titulo:"Achou o material no galpao?",nivel:1,acoes:[]},
+    {origem:"fluxo",ref:"32",titulo:"PRONAMPE sem baixa",nivel:2,acoes:[{verbo:"pago",label:"paguei"}]}];
+  D.band=[{tipo:"PRONTO",item_id:1405},{tipo:"DECISAO",item_id:999}];
+  D.op=[{origem:"tarefa",ref:"999",opcoes:[{label:"Achou o material",recomendada:true},{label:"Nao achou"}]}];
+  D.cor=[]; D.depois=[]; D.cont={}; foco=-1; window.__n.args=[];
+  rAgora();
+  return [...document.querySelectorAll("#fila1 .card")].map(c=>c.dataset.r);
+};
+const FOCA = (page,ref)=>page.evaluate(r=>focar(cards().findIndex(c=>c.dataset.r===r)), ref);
+const ENVIA = page=>page.evaluate(async()=>{ await enviarPendente(); return window.__n.args; });
+
+test("A, S e R decidem o card focado sem digitar, cada um pela porta certa", async ({page})=>{
+  const erros = await abrirComArgs(page);
+  const refs = await page.evaluate(MONTA_FILA);
+  expect(refs, "os tres cards desenhados").toEqual(expect.arrayContaining(["1405","999","32"]));
+
+  /* PRONTO: A abre os 4 atos, 2 escolhe "enviado" */
+  await FOCA(page,"1405");
+  await page.keyboard.press("a");
+  expect(await page.evaluate(()=>!!document.querySelector('#fila1 .card[data-r="1405"] .qpr.on')), "A abre os atos do PRONTO").toBe(true);
+  await page.keyboard.press("2");
+  let args = await ENVIA(page);
+  expect(args.find(x=>x[0]==="painel_responder"), "o ato 2 e enviado, pela porta definer")
+    .toEqual(["painel_responder",{p_tipo:"PRONTO",p_id:1405,p_ato:"enviado",p_nota:null}]);
+
+  /* DECISAO com opcao recomendada: A escolhe a recomendada */
+  await page.evaluate(MONTA_FILA);
+  await FOCA(page,"999");
+  await page.keyboard.press("a");
+  args = await ENVIA(page);
+  expect(args.find(x=>x[0]==="escolher"), "A escolhe a opcao marcada recomendada")
+    .toEqual(["escolher",{p_ref:"999",p_opcao:"Achou o material"}]);
+
+  /* S: adia 2 dias pelo agir, com a data calculada na tela */
+  await page.evaluate(MONTA_FILA);
+  await FOCA(page,"1405");
+  await page.keyboard.press("s");
+  args = await ENVIA(page);
+  const esperado = await page.evaluate(()=>{const d=new Date();d.setDate(d.getDate()+2);return ivData(d);});
+  expect(args.find(x=>x[0]==="agir"), "S repactua para daqui a 2 dias")
+    .toEqual(["agir",{p_origem:"tarefa",p_ref:"1405",p_verbo:"repactuar",p_valor:esperado}]);
+
+  /* R: recusa com motivo vazio, sem recarregar a pagina */
+  await page.evaluate(MONTA_FILA);
+  await FOCA(page,"1405");
+  await page.keyboard.press("r");
+  expect(await page.evaluate(()=>document.getElementById("modal").classList.contains("on")), "R abre a recusa").toBe(true);
+  await page.evaluate(()=>confirmarModal());
+  args = await ENVIA(page);
+  expect(args.find(x=>x[0]==="painel_responder"), "recusar PRONTO devolve a peca, motivo opcional")
+    .toEqual(["painel_responder",{p_tipo:"PRONTO",p_id:1405,p_ato:"refazer",p_nota:null}]);
+  const cargasR = await page.evaluate(()=>window.__n.args.filter(x=>x[0]==="painel_carga"&&!x[1]).length);
+  expect(cargasR, "R com card focado nao recarrega a pagina inteira").toBe(0);
+
+  /* card fora da bandeja: A nao grava nada; sem foco, R volta a ser recarregar */
+  await page.evaluate(MONTA_FILA);
+  await FOCA(page,"32");
+  await page.keyboard.press("a");
+  expect(await page.evaluate(()=>PEND), "A sem recomendacao nao agenda gravacao").toBe(null);
+  await page.keyboard.press("Escape");
+  const antes = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  await page.keyboard.press("r");
+  const depois = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  expect(depois, "sem card focado, R recarrega como antes").toBe(antes+1);
+  expect(erros, "erro de script").toEqual([]);
+});
+
+/* CLASSE DE DEFEITO 11 · v61: O TOPO FIXO COMIA A TELA. Medido em 29/09/2026: 161 px no computador
+   (identidade 46, abas 47, filtros 67). O invariante: com a gaveta fechada o topo cabe em 64 px no
+   celular e no computador largo; filtro ativo com a gaveta fechada aparece como contador no botao,
+   porque lista filtrada sem aviso e dado escondido. */
+for (const largura of [390, 1280]) {
+  test(`o topo cabe em 64 px a ${largura}px com a gaveta fechada, e filtro ativo se declara`, async ({page})=>{
+    await page.setViewportSize({width:largura, height:880});
+    const erros = await abrirComArgs(page);
+    const r = await page.evaluate(()=>{
+      const h=()=>Math.round(document.querySelector(".top").getBoundingClientRect().height);
+      const fechado=h(); gavetaFiltros(true); const aberto=h();
+      const visivel=getComputedStyle(document.getElementById("filtros")).display!=="none";
+      gavetaFiltros(false); F.frente="11-renda-alt"; montaFiltros();
+      const n=document.getElementById("gavN");
+      return {fechado,aberto,visivel,cont:n.textContent,mostra:getComputedStyle(n).display!=="none",
+              W:document.documentElement.clientWidth,SW:document.documentElement.scrollWidth};
+    });
+    expect(erros, "erro de script").toEqual([]);
+    expect(r.fechado, "altura do topo com a gaveta fechada").toBeLessThanOrEqual(64);
+    expect(r.visivel, "a gaveta aberta mostra busca e filtros").toBe(true);
+    expect(r.aberto, "abrir a gaveta aumenta o topo").toBeGreaterThan(r.fechado);
+    expect(r.mostra, "filtro ativo com a gaveta fechada aparece no botao").toBe(true);
+    expect(r.cont).toBe("1");
+    expect(r.SW, "rolagem horizontal").toBe(r.W);
+  });
+}

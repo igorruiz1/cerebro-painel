@@ -668,6 +668,28 @@ section.sec.on{display:block}
 .saude.bem{color:var(--grn);border-color:var(--grn)}
 .saude.mal{color:var(--red);border-color:var(--red)}
 @media (max-width:420px){.saude{max-width:74px;overflow:hidden;text-overflow:ellipsis;margin-left:5px;padding:2px 6px}}
+/* ---------- v61 ONDA 1: decidir sem digitar, filtros em gaveta, topo em uma linha ---------- */
+.qrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.qk{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
+ padding:8px 12px;font-size:13px;min-height:40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.qk:hover{border-color:var(--acc)}
+.qk.pri{border-color:var(--acc);background:#1b2a49;color:#fff}
+.qk.neg{color:var(--bad)}
+.qk kbd{font-family:inherit;font-size:10px;font-weight:600;line-height:1;color:var(--mut);border:1px solid var(--line2);border-radius:4px;padding:2px 5px}
+.qpr{display:none;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px;padding:10px;border:1px dashed var(--line2);border-radius:10px}
+.qpr.on{display:flex}
+.qprl{font-size:12px;color:var(--mut);width:100%}
+.btgav .fn{margin-left:4px;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--acc);color:#fff}
+.filtros.on:not(.gav){display:none}
+@media(hover:none){.qk kbd{display:none}}
+@media(min-width:1100px){
+ .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center}
+ .topin{flex:1 1 auto;max-width:none;margin:0;padding:8px 18px;flex-wrap:nowrap}
+ .tabs{order:2;flex:0 0 auto;max-width:none;margin:0;padding:0 18px 0 0}
+ .tab{padding:14px 12px 12px}
+ .maisbar,.filtros{order:3;flex:0 0 100%}
+ .deg{display:none}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -729,6 +751,7 @@ section.sec.on{display:block}
     <h1>CÉREBRO IGOR</h1><span class="ver" id="selo-ver">—</span><span class="saude" id="saude" role="status"></span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
+    <button class="btn btgav" id="btGav" onclick="gavetaFiltros()" title="buscar e filtrar (/)" aria-label="buscar e filtrar" aria-expanded="false" aria-controls="filtros">⌕<span class="fn" id="gavN" style="display:none"></span></button>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
     <button class="btn some" onclick="abrirSenha()" title="definir senha">senha</button>
     <button class="btn some" onclick="sair()">sair</button>
@@ -869,7 +892,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v60";
+const VER="v61";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -896,7 +919,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1339,6 +1362,12 @@ document.addEventListener("keydown",e=>{
   if(k==="j"){e.preventDefault();focar(foco+1);}
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
+  /* v61: A, S e R agem no card focado; sem foco nao fazem nada (R sem foco segue recarregando) */
+  else if((k==="a"||k==="s"||k==="r")&&cardFocado()){const c=cardFocado();e.preventDefault();
+    (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
+  /* v61: com os 4 atos do PRONTO abertos, 1 a 4 escolhem o ato em vez de trocar de aba */
+  else if(k>="1"&&k<="4"&&cardFocado()&&cardFocado().querySelector(".qpr.on")){e.preventDefault();
+    const b=cardFocado().querySelectorAll(".qpr.on .qk")[+k-1]; if(b) b.click();}
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
   /* v46: o atalho parou em "4" quando as abas ja eram 6. Le a contagem real, nao um numero
      escrito a mao, que e o mesmo defeito da grade de 5 colunas corrigida no CSS. */
@@ -1566,7 +1595,7 @@ async function carregarAgora(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1581,7 +1610,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1725,11 +1754,24 @@ function montaFiltros(){
       ${esc(n.replace(/^\d+\s/,""))}<span class="c">${cn[n]}</span></button>`).join("")
       ||'<span style="color:var(--dim);font-size:12px">sem natureza classificada nesta stack</span>';
   document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q||F.nat)?"inline-flex":"none";
-  const nAt=(F.frente?1:0)+(F.origem?1:0)+(F.nat?1:0),fn=document.getElementById("fnAtivos");
+  marcaGaveta();const nAt=(F.frente?1:0)+(F.origem?1:0)+(F.nat?1:0),fn=document.getElementById("fnAtivos");
   if(fn){fn.textContent=nAt;fn.style.display=nAt?"inline-block":"none";}
   if(!montaFiltros._init){montaFiltros._init=1;
     let ab=null;try{ab=localStorage.getItem("fchips")}catch(e){}
     if(ab==="1")toggleChips();}}
+/* v61: busca e filtros saem do topo fixo para uma GAVETA. O topo comia 161 px no computador
+   (46 identidade, 47 abas, 67 filtros), medido por Playwright em 29/09/2026. Filtro ativo
+   aparece como contador no botao, entao gaveta fechada nunca esconde que a lista esta filtrada. */
+function gavetaFiltros(forca){
+  const f=document.getElementById("filtros"),b=document.getElementById("btGav"); if(!f) return;
+  const abre=(forca===undefined)?!f.classList.contains("gav"):!!forca;
+  f.classList.toggle("gav",abre); if(b){b.classList.toggle("on",abre);b.setAttribute("aria-expanded",abre?"true":"false");}
+  try{localStorage.setItem("gavfil",abre?"1":"0")}catch(e){}
+  requestAnimationFrame(mediTopo);}
+function marcaGaveta(){
+  const n=(F.frente?1:0)+(F.origem?1:0)+(F.nat?1:0)+(((document.getElementById("q")||{}).value||"").trim()?1:0);
+  const el=document.getElementById("gavN"); if(!el) return;
+  el.textContent=n?String(n):""; el.style.display=n?"inline-block":"none";}
 function toggleChips(){
   const c=document.getElementById("fchips"),b=document.getElementById("btFil");
   if(!c||!b)return;
@@ -1786,7 +1828,7 @@ function fecharModal(){document.getElementById("modal").classList.remove("on");p
 async function confirmarModal(){
   const el=document.getElementById("mval");
   const v=el?el.value.trim():null;
-  if(pendente&&pendente.campo&&!v){msg("Preencha antes de confirmar.","bad");return;}
+  if(pendente&&pendente.campo&&!v&&!pendente.opcional){msg("Preencha antes de confirmar.","bad");return;}
   /* v41: agir() recusa motivo de arquivamento com menos de 5 caracteres, e a recusa chegava
      como erro generico depois da ida ao banco. A regra e do banco; a tela so para de deixar
      voce descobrir isso pelo caminho longo. */
@@ -1827,7 +1869,7 @@ function cardFila(it){
   const acts=(it.acoes||[]).filter(a=>a.verbo!=="deliberar");
   const k=uid(it.origem+it.ref);
   const p=partes(it.titulo_completo||it.titulo);
-  return `<div class="card n${it.nivel}" id="c-${k}">
+  return `<div class="card n${it.nivel}" id="c-${k}" data-o="${esc(it.origem)}" data-r="${esc(it.ref)}">
    <div class="meta" style="margin-bottom:6px">
      <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
      ${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}
@@ -1839,6 +1881,7 @@ function cardFila(it){
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${opcoesFila(it)}
+   ${rapidos(it)}
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor — "+promessaResposta()),"vio","p-"+k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
@@ -1867,6 +1910,67 @@ function opcoesFila(it){
     `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" onclick="faEscolher('${esc(it.origem)}','${esc(it.ref)}','${escAttr(x.label)}','c-${k}')">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
     +`</ul>`+(o.escolha?`<div class="ivesc">escolhido: <b>${esc(o.escolha)}</b></div>`:"");
 }
+/* ---------- v61 ONDA 1: DECIDIR SEM DIGITAR (t1454, doc 1201 secao 3.2) ----------
+   Medido em 29/09/2026: a bandeja tinha 10 itens, 9 deles PRONTO, e o unico caminho para
+   responder era escrever em "o que fica valendo". A = aceitar, S = adiar 2 dias, R = recusar
+   (motivo opcional), sobre o card focado com J/K. No PRONTO o A abre os 4 atos do
+   responder_pronto (feito, enviado, refazer, descartar): voce declara o que de fato
+   aconteceu, porque uma tecla so marcando "enviado" falsificaria o funil (LC-14).
+   O tipo vem da v_bandeja_presidente pela chave band do snapshot. PRONTO e DECISAO gravam
+   por painel_responder(), porta definer com is_dono(): o painel so tem SELECT em tarefa, e
+   responder_pronto chamado direto daqui dava permission denied. */
+function tipoBand(it){
+  if(!it||it.origem!=="tarefa") return null;
+  const b=(D.band||[]).find(x=>String(x.item_id)===String(it.ref));
+  return b?b.tipo:null;}
+function recOpcao(it){
+  const o=(D.op||[]).find(x=>x.origem===it.origem&&String(x.ref)===String(it.ref));
+  if(!o||!Array.isArray(o.opcoes)) return null;
+  const r=o.opcoes.find(x=>x.recomendada); return r?r.label:null;}
+function podeAdiar(it){ return !!it&&(it.acoes||[]).some(a=>a.verbo==="repactuar"); }
+function achaIt(origem,ref){ return (D.fila||[]).find(x=>x.origem===origem&&String(x.ref)===String(ref)); }
+const ATOS_PRONTO=[["feito","feito"],["enviado","enviei"],["refazer","refazer"],["descartar","descartar"]];
+function rapidos(it){
+  const k=uid(it.origem+it.ref), t=tipoBand(it), rec=recOpcao(it);
+  const O=escAttr(it.origem), R=escAttr(String(it.ref)), bs=[];
+  if(rec) bs.push(`<button class="qk pri" onclick="qAceitar('${O}','${R}')">aceitar recomendação <kbd>A</kbd></button>`);
+  else if(t==="PRONTO") bs.push(`<button class="qk pri" onclick="qAceitar('${O}','${R}')" aria-expanded="false" aria-controls="qp-${k}">aceitar <kbd>A</kbd></button>`);
+  if(podeAdiar(it)) bs.push(`<button class="qk" onclick="qAdiar('${O}','${R}')">adiar 2 dias <kbd>S</kbd></button>`);
+  if(t==="PRONTO"||t==="DECISAO") bs.push(`<button class="qk neg" onclick="qRecusar('${O}','${R}')">recusar <kbd>R</kbd></button>`);
+  if(!bs.length) return "";
+  const pr = t==="PRONTO"
+    ? `<div class="qpr" id="qp-${k}"><span class="qprl">o que aconteceu com a peça?</span>`+ATOS_PRONTO.map(([a,l],i)=>
+        `<button class="qk" onclick="qPronto('${R}','${a}','c-${k}')">${l} <kbd>${i+1}</kbd></button>`).join("")+`</div>`
+    : "";
+  return `<div class="qrow">${bs.join("")}</div>${pr}`;}
+function qAceitar(origem,ref){
+  const it=achaIt(origem,ref); if(!it) return;
+  const k=uid(origem+ref), rec=recOpcao(it);
+  if(rec) return faEscolher(origem,ref,rec,"c-"+k);
+  if(tipoBand(it)==="PRONTO"){
+    const p=document.getElementById("qp-"+k); if(!p) return;
+    const abre=!p.classList.contains("on"); p.classList.toggle("on",abre);
+    const b=document.querySelector(`#c-${k} .qrow .qk.pri`); if(b) b.setAttribute("aria-expanded",abre?"true":"false");
+    return;}
+  msg("este card não tem recomendação para aceitar com uma tecla: escreva o que fica valendo",null,3500);}
+function qAdiar(origem,ref){
+  const it=achaIt(origem,ref);
+  if(!podeAdiar(it)){ msg("o banco não aceita novo prazo neste card",null,3000); return; }
+  const d=new Date(); d.setDate(d.getDate()+2);
+  agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:String(ref),p_verbo:"repactuar",p_valor:ivData(d)}),
+          "novo prazo em "+ref, document.getElementById("c-"+uid(origem+ref)));}
+function qPronto(ref,ato,idel){
+  agendar(()=>sb.rpc("painel_responder",{p_tipo:"PRONTO",p_id:Number(ref),p_ato:ato,p_nota:null}),
+          ato+" em "+ref, document.getElementById(idel));}
+function qRecusar(origem,ref){
+  const it=achaIt(origem,ref), t=tipoBand(it);
+  if(t!=="PRONTO"&&t!=="DECISAO"){ msg("recusar vale para peça pronta ou decisão da bandeja",null,3000); return; }
+  const el=document.getElementById("c-"+uid(origem+ref));
+  pendente={ph:"motivo (opcional)",opcional:true};
+  abrirModal("Recusar",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — ${t==="PRONTO"?"a peça volta para eu refazer":"a decisão sai marcada como recusada"}`,"texto",
+    v=>agendar(()=>sb.rpc("painel_responder",{p_tipo:t,p_id:Number(ref),p_ato:t==="PRONTO"?"refazer":"recusado",p_nota:v||null}),
+                "recusado em "+ref, el), "recusar");}
+function cardFocado(){ const c=cards()[foco]; return (foco>=0&&c&&c.dataset.o)?c:null; }
 function faEscolher(origem,ref,opcao,idel){
   /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
      marcada recomendada, gravando seguiu ou divergiu. A tela nao julga adesao. */
@@ -2105,7 +2209,7 @@ async function recarregarFila(){
      a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
      Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
      e rele. As outras 15 continuam por conta do cron de 5 min. */
-  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN"];
+  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band"];
   try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s"); }
   catch(e){ if(ehTeto(e))throw e; }
   const rc=await comTeto(sb.rpc("painel_carga",{p_chaves:VIVAS}), LIMITE_RECARGA, "15s")
@@ -2117,6 +2221,7 @@ async function recarregarFila(){
   if(d.nat)  D.nat=d.nat;
   if(d.op)   D.op=d.op;
   if(d.semi) D.semi=d.semi;
+  if(d.band) D.band=d.band;
   if(d.wip)  D.wip=d.wip[0]||null;
   if(d.sentN&&d.sentN[0]){const n=document.getElementById("n-sent");
     if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
@@ -2906,14 +3011,15 @@ function rAcervo(){
 
 /* ---------- atalhos ---------- */
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){fecharModal();return;}
+  if(e.key==="Escape"){fecharModal();if(foco>=0){cards().forEach(x=>x.style.outline="");foco=-1;}return;}
   if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
   if(e.key==="/"){e.preventDefault();const q=document.getElementById("q");
-    if(q&&document.getElementById("filtros").classList.contains("on"))q.focus();}
-  if(e.key==="r"&&!e.metaKey&&!e.ctrlKey)carregar();});
+    if(q&&document.getElementById("filtros").classList.contains("on")){gavetaFiltros(true);q.focus();}}
+  if(e.key==="r"&&!e.metaKey&&!e.ctrlKey&&!cardFocado())carregar();});
 
 /* ---------- arranque ---------- */
 F.frente=pref("frente")||null;F.origem=pref("origem")||null;
+try{ if(localStorage.getItem("gavfil")==="1") gavetaFiltros(true); }catch(e){}
 sb.auth.getSession().then(({data})=>{
   if(data.session){document.getElementById("app").classList.remove("hidden");carregar();}
   else document.getElementById("login").classList.remove("hidden");});
