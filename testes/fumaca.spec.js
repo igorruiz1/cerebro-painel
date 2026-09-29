@@ -514,13 +514,16 @@ test("A, S e R decidem o card focado sem digitar, cada um pela porta certa", asy
    (identidade 46, abas 47, filtros 67). O invariante: com a gaveta fechada o topo cabe em 64 px no
    celular e no computador largo; filtro ativo com a gaveta fechada aparece como contador no botao,
    porque lista filtrada sem aviso e dado escondido. */
-for (const largura of [320, 390, 1280]) {
+for (const largura of [320, 390, 1100, 1280]) {
   test(`o topo cabe em 64 px a ${largura}px com a gaveta fechada, e filtro ativo se declara`, async ({page})=>{
     await page.setViewportSize({width:largura, height:880});
     const erros = await abrirComArgs(page);
     const r = await page.evaluate(()=>{
       /* o pior caso do topo: selo de saude aceso com o texto mais longo */
       SAUDE={n:25,e:3}; rSaude(["m9 — x","mo — y","frs — z"]);
+      /* fonte 1,5 px mais larga por letra: a CI (Linux) desenha mais largo que o Windows, e um topo
+         que so cabe com a fonte certa quebra na maquina de outro. Mede-se o pior caso. */
+      document.body.style.letterSpacing="1.5px";
       const h=()=>Math.round(document.querySelector(".top").getBoundingClientRect().height);
       const fechado=h(); gavetaFiltros(true); const aberto=h();
       const visivel=getComputedStyle(document.getElementById("filtros")).display!=="none";

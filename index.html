@@ -696,6 +696,17 @@ section.sec.on{display:block}
    os botoes (a 361-390 px a folga medida era zero). O topo e navegacao, nao conteudo. */
 @media(max-width:640px){h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}}
 @media(max-width:360px){h1{display:none}}
+/* v61: a 1280 px a linha unica QUEBRAVA na fonte do Linux (93 px na CI) com o selo de saude aceso.
+   Linha que so cabe com a fonte certa e fragil. Agora, no computador, senha e sair vao para o menu
+   (como no celular) e a identidade encolhe com reticencias: o topo nao quebra com fonte nenhuma. */
+@media(min-width:1100px){
+ .topin{flex:1 1 0;min-width:0}
+ h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+ .top .btn.some{display:none}
+ .btmais{display:inline-flex}
+ .maisbar{display:none;gap:8px;padding:0 18px 10px;justify-content:flex-end}
+ .maisbar.on{display:flex}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
