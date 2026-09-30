@@ -682,7 +682,7 @@ section.sec.on{display:block}
 .btgav .fn{margin-left:4px;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--acc);color:#fff}
 .filtros.on:not(.gav){display:none}
 @media(hover:none){.qk kbd{display:none}}
-@media(min-width:1100px){
+@media(min-width:641px){
  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center}
  .topin{flex:1 1 auto;max-width:none;margin:0;padding:8px 18px;flex-wrap:nowrap}
  .tabs{order:2;flex:0 0 auto;max-width:none;margin:0;padding:0 18px 0 0}
@@ -699,7 +699,7 @@ section.sec.on{display:block}
 /* v61: a 1280 px a linha unica QUEBRAVA na fonte do Linux (93 px na CI) com o selo de saude aceso.
    Linha que so cabe com a fonte certa e fragil. Agora, no computador, senha e sair vao para o menu
    (como no celular) e a identidade encolhe com reticencias: o topo nao quebra com fonte nenhuma. */
-@media(min-width:1100px){
+@media(min-width:641px){
  .topin{flex:1 1 0;min-width:0}
  h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
  .top .btn.some{display:none}
@@ -707,6 +707,20 @@ section.sec.on{display:block}
  .maisbar{display:none;gap:8px;padding:0 18px 10px;justify-content:flex-end}
  .maisbar.on{display:flex}
 }
+/* ---------- v62 ONDA 2: sub-abas e teto na faixa ---------- */
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.sub{background:var(--card2);color:var(--mut);border:1px solid var(--line2);border-radius:99px;
+ padding:6px 14px;font-size:12.5px;min-height:34px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.sub:hover{border-color:var(--acc)}
+.sub.on{color:#fff;border-color:var(--acc);background:#1b2a49}
+.sub[hidden]{display:none}
+.sub .n{font-size:10.5px;padding:1px 6px;border-radius:10px;background:var(--raise);color:var(--mut)}
+.sub .n:empty{display:none}
+.sub .n.hot{background:#3a1d1f;color:var(--bad)}
+.sub .n.warn{background:#3a3320;color:var(--warn)}
+.f5 .v .teto{font-size:.62em;color:var(--mut);margin-left:1px;font-weight:500}
+/* contador vazio nao desenha pilula; no celular a linha segue reservada pela altura minima */
+.tab .n:empty{background:none;padding:0;margin-left:0}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -779,12 +793,9 @@ section.sec.on{display:block}
     <button class="btn" onclick="sair()">sair</button>
   </div>
   <div class="tabs" id="tabs">
-    <button class="tab on" data-p="agora"><span class="tl">AGORA</span><span class="n" id="n-agora"></span></button>
-    <button class="tab" data-p="sentinela"><span class="tl">SENTINELA</span><span class="n" id="n-sent"></span></button>
-    <button class="tab" data-p="leituras"><span class="tl">LEITURAS</span><span class="n" id="n-le"></span></button>
-    <button class="tab" data-p="panorama"><span class="tl">PANORAMA</span><span class="n" id="n-cmd"></span></button>
-    <button class="tab" data-p="maquina"><span class="tl">MÁQUINA</span><span class="n" id="n-mo"></span></button>
-    <button class="tab" data-p="tudo"><span class="tl">TUDO</span><span class="n" id="n-tudo"></span></button>
+    <button class="tab on" data-g="decidir"><span class="tl">DECIDIR</span><span class="n" id="n-g-decidir"></span></button>
+    <button class="tab" data-g="acompanhar"><span class="tl">ACOMPANHAR</span><span class="n" id="n-g-acompanhar"></span></button>
+    <button class="tab" data-g="maquina"><span class="tl">MÁQUINA</span><span class="n" id="n-g-maquina"></span></button>
   </div>
   <div class="filtros on" id="filtros">
     <div class="filtbar">
@@ -816,6 +827,14 @@ section.sec.on{display:block}
 <div id="falhou"><b>Carga incompleta.</b><span id="falhoutxt"></span><button onclick="carregar()">tentar de novo</button><small id="falhoudet"></small></div>
   
 
+  <nav class="subnav" id="subnav" aria-label="seções da aba">
+    <button class="sub on" data-p="agora" data-g="decidir">Hoje<span class="n" id="n-agora"></span></button>
+    <button class="sub" data-p="leituras" data-g="decidir">Leituras<span class="n" id="n-le"></span></button>
+    <button class="sub" data-p="panorama" data-g="acompanhar" hidden>Panorama<span class="n" id="n-cmd"></span></button>
+    <button class="sub" data-p="tudo" data-g="acompanhar" hidden>Tudo<span class="n" id="n-tudo"></span></button>
+    <button class="sub" data-p="maquina" data-g="maquina" hidden>Máquina<span class="n" id="n-mo"></span></button>
+    <button class="sub" data-p="sentinela" data-g="maquina" hidden>Sentinela<span class="n" id="n-sent"></span></button>
+  </nav>
   <div class="pane on" id="p-agora">
     <div id="faixa5"></div>
     <div id="hero"></div>
@@ -909,7 +928,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v61";
+const VER="v62";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -936,7 +955,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1268,6 +1287,11 @@ function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smoot
 /* Antes: a abertura baixava 647 KB de 19 views, inclusive o acervo de 754 linhas que ficava
    atras de uma aba fechada. Agora a abertura leva 5 views enxutas e o resto entra ao abrir. */
 let ABA="agora"; let CARGA=Date.now();
+/* v62 ONDA 2 (doc 1201 secao 3.2, marca do Igor em 30/09/2026): tres abas. Sentinela vai para
+   MAQUINA (alarme do sistema; o que exige ato dele ja chega na fila) e Tudo para ACOMPANHAR
+   (inventario, consulta). Os seis paineis nao mudaram: so a navegacao se agrupa. */
+const GRUPO_DE={agora:"decidir",leituras:"decidir",panorama:"acompanhar",tudo:"acompanhar",maquina:"maquina",sentinela:"maquina"};
+const ULT={decidir:"agora",acompanhar:"panorama",maquina:"maquina"};
 const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0,movimento:0,sentinela:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
 const SECOES={
@@ -1338,7 +1362,9 @@ async function carregarSecao(id,forcar){
 }
 async function abrir(nome){
   ABA=nome;
-  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.p===nome));
+  const grupo=GRUPO_DE[nome]||"decidir"; ULT[grupo]=nome;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.g===grupo));
+  document.querySelectorAll("#subnav .sub").forEach(x=>{x.hidden=x.dataset.g!==grupo;x.classList.toggle("on",x.dataset.p===nome);});
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("on"));
   const pane=document.getElementById("p-"+nome); if(pane)pane.classList.add("on");
   document.getElementById("filtros").classList.toggle("on",nome==="agora");
@@ -1360,7 +1386,17 @@ async function carregarAba(nome,forcar){
     LAZY.sentinela=1; SECQUANDO.sentinela=Date.now(); rSentinela();}
   if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(ULT[b.dataset.g]));
+document.querySelectorAll("#subnav .sub").forEach(b=>b.onclick=()=>abrir(b.dataset.p));
+/* v62: a aba do grupo repete o contador que importa nela. Espelho, nunca segundo calculo:
+   quem escreve o numero continua sendo o dono dele (n-agora, n-cmd, n-sent). */
+(function(){
+  const par=[["n-agora","n-g-decidir"],["n-cmd","n-g-acompanhar"],["n-sent","n-g-maquina"]];
+  const copia=()=>par.forEach(([de,para])=>{const a=document.getElementById(de),b=document.getElementById(para);
+    if(a&&b){b.textContent=a.textContent;b.className=a.className||"n";}});
+  const mo=new MutationObserver(copia);
+  par.forEach(([de])=>{const a=document.getElementById(de);if(a)mo.observe(a,{childList:true,characterData:true,subtree:true,attributes:true});});
+  copia();})();
 
 /* Teclado no computador. No celular nada muda: o alvo continua de polegar. */
 let foco=-1;
@@ -1612,7 +1648,7 @@ async function carregarAgora(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1627,7 +1663,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -2075,7 +2111,7 @@ function rAgora(){
       <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
-      ${D.wip?`<span>·</span><span title="teto de trabalho em andamento: 7 cards com prazo dentro de 48h">janela <b style="color:${D.wip.excedente>0?"var(--bad)":"var(--ok)"}">${D.wip.ativos_ate_48h}/${D.wip.teto}</b>${D.wip.excedente>0?" (represe "+D.wip.excedente+")":""}${sparkKPI("fila.wip_sobrecarga_x",48,16)}</span>`:""}
+      
       <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></details></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
@@ -2226,7 +2262,7 @@ async function recarregarFila(){
      a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
      Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
      e rele. As outras 15 continuam por conta do cron de 5 min. */
-  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band"];
+  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg"];
   try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s"); }
   catch(e){ if(ehTeto(e))throw e; }
   const rc=await comTeto(sb.rpc("painel_carga",{p_chaves:VIVAS}), LIMITE_RECARGA, "15s")
@@ -2239,6 +2275,7 @@ async function recarregarFila(){
   if(d.op)   D.op=d.op;
   if(d.semi) D.semi=d.semi;
   if(d.band) D.band=d.band;
+  if(d.garg) D.garg=d.garg;
   if(d.wip)  D.wip=d.wip[0]||null;
   if(d.sentN&&d.sentN[0]){const n=document.getElementById("n-sent");
     if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
@@ -2512,7 +2549,7 @@ function rHero(){
       ${par>0?`<span class="hc"><b>${rs(par)}</b> parados por uma palavra</span>`:""}
       ${nivel?`<span class="hc" onclick="irAba('evolucao')">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}</span>`:""}
     </div></div>`;}
-function irAba(p){const t=document.querySelector('.tab[data-p="'+p+'"]'); if(t)t.click();
+function irAba(p){abrir(p);
   window.scrollTo({top:0,behavior:"smooth"});}
 function rInsTop(){
   const I=(D.ins||[]).slice(0,3);
@@ -2731,7 +2768,7 @@ function rSmallMult(){
     }).join("")+`</div>`;}
 
 function irParaFrente(slug){F.frente=slug;F.origem=null;F.q="";
-  document.getElementById("q").value="";document.querySelector('.tab[data-p="agora"]').click();
+  document.getElementById("q").value="";abrir("agora");
   montaFiltros();rAgora();msg("filtrado por "+slug,null,2200);}
 
 /* ---------- EVOLUÇÃO ---------- */
@@ -2814,8 +2851,13 @@ const FAIXA5=[
   {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d",  quem:"você"},
   {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs", quem:"você"},
   {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs", quem:"você"},
-  {k:"fila.wip_sobrecarga_x",     r:"Fila acima do teto",           u:"x",  quem:"você"},
-  {k:"carga.igor_pct",            r:"Carga no seu nome",            u:"pct",quem:"a máquina"},
+  /* v62: os dois tetos, lado a lado (marca do Igor em 30/09/2026). A fila ativa e o mesmo numero
+     do alarme de carga (v_wip_igor); a bandeja usa o MESMO recorte do gate pode_produzir
+     (TOTAL de v_gargalo_presidente contra kpi painel.fila_abertura_n), senao a tela mostraria
+     um numero e o banco bloquearia por outro. Saiu "Carga no seu nome": era a proporcao que
+     o alarme deixou de usar em 29/09 porque contava o preparo do executor como carga dele. */
+  {k:"fila.wip_ativo_48h",        r:"Fila ativa / teto",            teto:"wip",   quem:"você"},
+  {k:"bandeja.teto",              r:"Bandeja / teto",               teto:"banda", quem:"você"},
   {k:"entrega.output_sem_ack",    r:"Esperando sua leitura",        u:"n",  quem:"você"}];
 function fmt5(v,u){
   if(v==null||isNaN(+v))return "—"; v=+v;
@@ -2824,6 +2866,7 @@ function fmt5(v,u){
 function rFaixa5(){
   const el=document.getElementById("faixa5"); if(!el)return;
   const tiles=FAIXA5.map(t=>{
+    if(t.teto) return tetoTile(t);
     const r=(D.se||[]).find(x=>x.chave===t.k);
     if(!r||!r.serie||!r.serie.length)
       return `<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
@@ -2846,6 +2889,27 @@ function rFaixa5(){
       <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>${blt}
       <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
   el.innerHTML=`<div class="faixa5" role="group" aria-label="os seis números do dia">${tiles.join("")}</div>`;}
+function tetoTile(t){
+  const sem=`<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
+    <div class="e">sem dado no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
+  let v,teto,est,extra="";
+  if(t.teto==="wip"){
+    const w=D.wip; if(!w||w.teto==null||w.ativos_ate_48h==null) return sem;
+    v=+w.ativos_ate_48h; teto=+w.teto;
+    est=v>teto?`acima do teto em ${v-teto}: represe o excedente`:`dentro do teto, folga de ${teto-v}`;
+  }else{
+    const gs=D.garg||[], tot=gs.find(x=>x.tipo==="TOTAL"), ag=gs.find(x=>x.tipo==="AGENDADO");
+    if(!tot||tot.teto==null) return sem;
+    v=+tot.itens; teto=+tot.teto;
+    est=v>teto?"acima do teto: peça pronta nova bloqueada":v===teto?"no teto: peça pronta nova bloqueada":`abaixo do teto, folga de ${teto-v}`;
+    if(ag&&+ag.itens) extra=` · ${ag.itens} agendado${+ag.itens===1?"":"s"} à parte`;
+  }
+  const cls=v>teto?"mal":(v===teto?"atn":"bem");
+  const top=Math.max(v,teto)*1.1||1, pc=x=>Math.max(0,Math.min(100,x/top*100)).toFixed(1);
+  return `<div class="f5 ${cls}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
+    <div class="v">${v}<span class="teto">/${teto}</span>${t.teto==="wip"?sparkKPI(t.k,56,18):""}</div>
+    <div class="blt" aria-hidden="true"><i class="${v<teto?"ok":"no"}" style="width:${pc(v)}%"></i><b style="left:${pc(teto)}%"></b></div>
+    <div class="e">${est}${extra}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;}
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
   if(!r||!r.serie||r.serie.length<2)return "";

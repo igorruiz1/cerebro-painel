@@ -49,15 +49,26 @@ test('o selo do cabecalho e o VER do script sao o mesmo numero', async ({page})=
   expect(selo, 'selo do cabecalho').toBe(ver);
 });
 
+/* v62: a aba e um GRUPO e a sub-aba abre o painel. O invariante ficou em dois degraus: toda
+   sub-aba abre um painel que existe e pertence a um grupo com aba; todo painel tem sub-aba;
+   toda aba tem pelo menos uma sub-aba. */
 test('toda aba tem o painel que ela abre, e todo painel tem aba', async ({page})=>{
   await abrir(page);
   const r = await page.evaluate(()=>{
-    const abas=[...document.querySelectorAll('.tab')].map(t=>t.dataset.p);
+    const grupos=[...document.querySelectorAll('.tab')].map(t=>t.dataset.g);
+    const subs=[...document.querySelectorAll('#subnav .sub')].map(s=>({p:s.dataset.p,g:s.dataset.g}));
     const panes=[...document.querySelectorAll('.pane')].map(p=>p.id.replace(/^p-/,''));
-    return {semPane:abas.filter(a=>!panes.includes(a)), semAba:panes.filter(p=>!abas.includes(p))};
+    return {semPane:subs.filter(s=>!panes.includes(s.p)).map(s=>s.p),
+            semAba:panes.filter(p=>!subs.some(s=>s.p===p)),
+            grupoSemAba:subs.filter(s=>!grupos.includes(s.g)).map(s=>s.p),
+            abaVazia:grupos.filter(g=>!subs.some(s=>s.g===g)),
+            grupoIndefinido:grupos.filter(g=>!g)};
   });
-  expect(r.semPane, 'aba sem painel correspondente').toEqual([]);
+  expect(r.semPane, 'sub-aba sem painel correspondente').toEqual([]);
   expect(r.semAba,  'painel sem aba que o abra').toEqual([]);
+  expect(r.grupoSemAba, 'sub-aba de grupo sem aba').toEqual([]);
+  expect(r.abaVazia, 'aba sem nenhum painel').toEqual([]);
+  expect(r.grupoIndefinido, 'aba sem grupo declarado').toEqual([]);
 });
 
 test('o atalho de teclado alcanca TODAS as abas, nao um numero escrito a mao', async ({page})=>{
@@ -65,8 +76,9 @@ test('o atalho de teclado alcanca TODAS as abas, nao um numero escrito a mao', a
   const n = await page.evaluate(()=>document.querySelectorAll('.tab').length);
   for(let i=1;i<=n;i++){
     await page.keyboard.press(String(i));
-    const ativa = await page.evaluate(()=>document.querySelector('.tab.on')?.dataset.p);
-    const esperada = await page.evaluate(i=>document.querySelectorAll('.tab')[i-1].dataset.p, i);
+    const ativa = await page.evaluate(()=>document.querySelector('.tab.on')?.dataset.g);
+    const esperada = await page.evaluate(i=>document.querySelectorAll('.tab')[i-1].dataset.g, i);
+    expect(esperada, 'a aba declara o grupo').toBeTruthy();
     expect(ativa, `tecla ${i} de ${n}`).toBe(esperada);
   }
 });
@@ -287,15 +299,16 @@ test('a faixa dos 5 segundos: 5 a 7 numeros, estado escrito, quem move, resto um
     D.se=[s("caixa.sobrevida_dias",[20,15,11],90,"maior_melhor","normal"),
           s("caixa.entrada_realizada_30d",[500,0],19700,"maior_melhor","normal"),
           s("caixa.decisao_parada_rs",[1,2],0,"menor_melhor","fora_banda"),
-          s("fila.wip_sobrecarga_x",[3.6],1,"menor_melhor","sem_banda"),
-          s("carga.igor_pct",[76.6,76.6],50,"menor_melhor","fora_banda")];
+          ];
+    D.wip={ativos_ate_48h:23,teto:14,excedente:9};
+    D.garg=[{tipo:"TOTAL",itens:5,teto:5},{tipo:"AGENDADO",itens:6,teto:5}];
     D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:17023,queima_dia_base:700};
     let err=null; try{ rAgora(); }catch(e){ err=String(e); }
     const t=[...document.querySelectorAll('#faixa5 .f5')];
     return {err, n:t.length,
-      semEstado:t.filter(x=>!/normal|sem banda|sem série/.test(x.querySelector('.e').textContent)).length,
+      semEstado:t.filter(x=>!/normal|sem banda|sem série|teto|sem dado/.test(x.querySelector('.e').textContent)).length,
       semQuem:t.filter(x=>!x.querySelector('.q').textContent.includes('quem move')).length,
-      foraEscrito:t.find(x=>x.dataset.chave==='carga.igor_pct').querySelector('.e').textContent,
+      foraEscrito:t.find(x=>x.dataset.chave==='caixa.decisao_parada_rs').querySelector('.e').textContent,
       faltando:t.find(x=>x.dataset.chave==='entrega.output_sem_ack').querySelector('.e').textContent,
       folegoAbaixo:!!document.querySelector('#hero details.abaixo') &&
         document.querySelector('#hero details.abaixo').textContent.includes('folego de caixa')};
@@ -320,7 +333,7 @@ test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async 
   const r = await page.evaluate(()=>{
     const s=(chave,serie,meta,dir,banda,p10,p90)=>({chave,serie,meta_num:meta,direcao:dir,p10,p90,situacao_banda:banda});
     D.se=[s("caixa.sobrevida_dias",[9,9,9,9,9,9,9,9,9],90,"maior_melhor","normal",9,16),
-          s("carga.igor_pct",[40,42,41,40,39,41,40,42,41],50,"menor_melhor","normal",39,42)];
+          s("entrega.output_sem_ack",[40,42,41,40,39,41,40,42,41],50,"menor_melhor","normal",39,42)];
     D.rw={dias_sobrevida_pior:9,dias_sobrevida:9,caixa_hoje:1,queima_dia_base:1};
     let err=null; try{ rAgora(); }catch(e){ err=String(e); }
     const t=k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`);
@@ -328,7 +341,7 @@ test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async 
     return {err,
       foraClasse:t("caixa.sobrevida_dias").className, foraCor:cor("caixa.sobrevida_dias"),
       foraTexto:t("caixa.sobrevida_dias").querySelector('.e').textContent,
-      naMetaClasse:t("carga.igor_pct").className, naMetaCor:cor("carga.igor_pct")};
+      naMetaClasse:t("entrega.output_sem_ack").className, naMetaCor:cor("entrega.output_sem_ack")};
   });
   expect(r.err, 'rAgora() derrubou o script').toBe(null);
   expect(r.foraClasse, 'fora da meta dentro da banda').not.toContain('bem');
@@ -514,7 +527,7 @@ test("A, S e R decidem o card focado sem digitar, cada um pela porta certa", asy
    (identidade 46, abas 47, filtros 67). O invariante: com a gaveta fechada o topo cabe em 64 px no
    celular e no computador largo; filtro ativo com a gaveta fechada aparece como contador no botao,
    porque lista filtrada sem aviso e dado escondido. */
-for (const largura of [320, 390, 1100, 1280]) {
+for (const largura of [320, 390, 700, 1024, 1100, 1280]) {
   test(`o topo cabe em 64 px a ${largura}px com a gaveta fechada, e filtro ativo se declara`, async ({page})=>{
     await page.setViewportSize({width:largura, height:880});
     const erros = await abrirComArgs(page);
@@ -541,3 +554,56 @@ for (const largura of [320, 390, 1100, 1280]) {
     expect(r.SW, "rolagem horizontal").toBe(r.W);
   });
 }
+
+/* CLASSE DE DEFEITO 12 · v62: SEIS DESTINOS DISPUTANDO O OLHO, E O TETO QUE A TELA NAO MOSTRAVA.
+   Plano de 29/09 (doc 1201, secao 3.2): tres abas, e o teto de WIP desenhado na faixa. Medido em
+   30/09/2026: a bandeja estava 5 de 5 (o gate ja bloqueava peca pronta nova) e a tela nao dizia.
+   O invariante: cada aba leva aos seus paineis em no maximo dois toques, a sub-aba mostra so o
+   grupo da aba, a aba repete o contador do painel dono, e o teto da bandeja na faixa e o MESMO
+   recorte que o banco usa para bloquear (TOTAL do gargalo, agendado a parte). */
+test('tres abas levam aos seis paineis, e o teto da faixa e o numero que bloqueia', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(async()=>{
+    const out={};
+    for(const tab of document.querySelectorAll('.tab')){
+      tab.click(); await new Promise(r=>setTimeout(r,20));
+      const vis=[...document.querySelectorAll('#subnav .sub')].filter(s=>!s.hidden);
+      out[tab.dataset.g]={visiveis:vis.map(s=>s.dataset.p), todasDoGrupo:vis.every(s=>s.dataset.g===tab.dataset.g), paineis:[]};
+      for(const s of vis){ s.click(); await new Promise(r=>setTimeout(r,20));
+        out[tab.dataset.g].paineis.push(document.querySelector('.pane.on')?.id);}
+    }
+    document.getElementById('n-sent').textContent='3';
+    await new Promise(r=>setTimeout(r,20));
+    const espelho=document.getElementById('n-g-maquina').textContent;
+    D.wip={ativos_ate_48h:23,teto:14,excedente:9};
+    D.garg=[{tipo:'DECISAO',itens:2,teto:5},{tipo:'PRONTO',itens:3,teto:5},{tipo:'TOTAL',itens:5,teto:5},{tipo:'AGENDADO',itens:6,teto:5}];
+    D.cor=[]; D.fila=[]; D.depois=[]; D.cont={}; rAgora();
+    const tile=k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`);
+    return {out, espelho,
+      band:{v:tile('bandeja.teto').querySelector('.v').textContent, e:tile('bandeja.teto').querySelector('.e').textContent, c:tile('bandeja.teto').className,
+            barraVerde:!!tile('bandeja.teto').querySelector('.blt i.ok')},
+      wip:{v:tile('fila.wip_ativo_48h').querySelector('.v').textContent, e:tile('fila.wip_ativo_48h').querySelector('.e').textContent, c:tile('fila.wip_ativo_48h').className},
+      janelaNoHeroi:document.getElementById('hero').textContent.includes('janela'),
+      pilula:(()=>{const n=document.getElementById('n-g-acompanhar'); n.textContent=''; n.className='n';
+        return getComputedStyle(n).backgroundColor;})()};
+  });
+  expect(erros, 'erro de script').toEqual([]);
+  expect(Object.keys(r.out).length, 'tres abas').toBe(3);
+  for(const [g,x] of Object.entries(r.out)){
+    expect(x.todasDoGrupo, `a aba ${g} mostra so as sub-abas dela`).toBe(true);
+    expect(x.paineis, `cada sub-aba de ${g} abre o proprio painel`).toEqual(x.visiveis.map(p=>'p-'+p));
+  }
+  expect(r.out.maquina.visiveis, 'sentinela mora em maquina').toContain('sentinela');
+  expect(r.out.acompanhar.visiveis, 'tudo mora em acompanhar').toContain('tudo');
+  expect(r.espelho, 'a aba repete o contador do painel dono').toBe('3');
+  expect(r.band.v, 'bandeja usa o TOTAL do gargalo, nao a bandeja inteira').toMatch(/^5\/5/);
+  expect(r.band.e, 'no teto o bloqueio vai por escrito').toContain('bloqueada');
+  expect(r.band.e, 'o agendado aparece a parte').toContain('6 agendados');
+  expect(r.wip.v).toMatch(/^23\/14/);
+  expect(r.wip.c, 'acima do teto sai vermelho').toContain('mal');
+  expect(r.band.barraVerde, 'no teto a barra nao sai verde: o gate ja bloqueia').toBe(false);
+  expect(r.pilula, 'aba sem contador nao desenha pilula vazia').toBe('rgba(0, 0, 0, 0)');
+  expect(r.janelaNoHeroi, 'o mesmo numero nao se repete no heroi').toBe(false);
+});
