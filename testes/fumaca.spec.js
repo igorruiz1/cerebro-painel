@@ -607,3 +607,30 @@ test('tres abas levam aos seis paineis, e o teto da faixa e o numero que bloquei
   expect(r.pilula, 'aba sem contador nao desenha pilula vazia').toBe('rgba(0, 0, 0, 0)');
   expect(r.janelaNoHeroi, 'o mesmo numero nao se repete no heroi').toBe(false);
 });
+
+/* CLASSE DE DEFEITO 4 · v63: numero que parece completo e nao e. A sobrevida so soma recebivel
+   com valor E data; em 30/09/2026 tres entradas ficavam fora (Conenge sem valor, R$ 37 mil sem
+   data) e a tela nao dizia. Pior: o unico aviso que existia (fontes_de_caixa_sem_valor) contava
+   uma linha CANCELADA. O teste afirma os dois lados: com entrada fora, a faixa diz quantas e por
+   que; sem entrada fora, nenhuma faixa. */
+test('a sobrevida avisa quantas entradas ficaram fora da conta, e cala quando nao ha', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const base={dias_sobrevida:14,dias_sobrevida_pior:8,caixa_hoje:14813.27,queima_dia_base:1038.32,
+      saida_firme_30d:25725.49,saida_incerta_30d:14628.36,entrada_provavel_30d:7500,lacuna:"completo"};
+    const el=document.getElementById('runway');
+    D.rw={...base,entradas_fora_n:3,entradas_sem_valor_n:1,entradas_sem_data_rs:"37000.000"};
+    let err=null; try{ rRunway(); }catch(e){ err=String(e); }
+    const com=el?el.textContent:null;
+    D.rw={...base,entradas_fora_n:0,entradas_sem_valor_n:0,entradas_sem_data_rs:"0"};
+    try{ rRunway(); }catch(e){ err=err||String(e); }
+    return {err, existe:!!el, com, sem:el?el.textContent:null};
+  });
+  expect(r.err,  'rRunway() derrubou o script').toBe(null);
+  expect(r.existe, 'o cartao #runway existe na pagina').toBe(true);
+  expect(r.com).toContain('3 entradas a receber fora desta conta');
+  expect(r.com).toContain('1 sem valor');
+  expect(r.com).toContain('2 sem data');
+  expect(r.sem).not.toContain('fora desta conta');
+});
