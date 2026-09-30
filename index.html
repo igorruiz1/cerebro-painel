@@ -928,7 +928,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v62";
+const VER="v63";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2097,7 +2097,7 @@ function rAgora(){
   const tot=vis.length+(D.depois||[]).filter(passa).length;
   const c=D.cont||{};
   rFaixa5();
-  const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div></div>`:""}`;
+  const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div>${foraDaConta(D.rw)?`<div class="s">⚠ ${foraDaConta(D.rw)}</div>`:""}</div>`:""}`;
   document.getElementById("hero").innerHTML=`<div class="hero ${tot||D.cor.length?"alert":""}">
     <div class="t">${tot?tot+" precisa"+(tot>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje")
       :(filtrando?"nada neste filtro"
@@ -2493,7 +2493,18 @@ function rRunway(){
     <div class="rs">${sub}</div>
     <div class="rbar"><i style="width:${largP}%;background:var(--${dP!=null&&dP<=30?"red":dP<=90?"yel":"grn"})"></i></div>
     ${parcial?`<div class="rl">⚠ ${esc(r.lacuna)}</div>`:""}
+    ${foraDaConta(r)?`<div class="rl">⚠ ${foraDaConta(r)}</div>`:""}
   </div>`;}
+/* v63 (s682, P2 aprovada 30/09/2026): entrada sem valor ou sem data NAO entra na sobrevida.
+   Sem este aviso o numero parece completo e e menor do que a realidade. Fonte: v_runway.entradas_fora_n. */
+function foraDaConta(r){
+  const n=+(r&&r.entradas_fora_n)||0; if(!n) return "";
+  const sv=+r.entradas_sem_valor_n||0, sd=n-sv, rsd=Number(r.entradas_sem_data_rs)||0;
+  const partes=[];
+  if(sv) partes.push(sv+" sem valor");
+  if(sd) partes.push(sd+" sem data"+(rsd?" ("+rs(rsd)+")":""));
+  return `${n} entrada${n>1?"s":""} a receber fora desta conta: ${partes.join(", ")}. A sobrevida real pode ser maior.`;
+}
 /* ---------- v23: FRESCOR DO DADO + ORCAMENTO DE ALERTAS ----------
    Duas perguntas que o painel nunca respondia e que vem antes de todas as outras:
    (1) os numeros desta tela sao de quando?  (2) quantos alarmes ela esta acendendo hoje?
