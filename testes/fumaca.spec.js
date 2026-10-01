@@ -634,3 +634,29 @@ test('a sobrevida avisa quantas entradas ficaram fora da conta, e cala quando na
   expect(r.com).toContain('2 sem data');
   expect(r.sem).not.toContain('fora desta conta');
 });
+
+/* v64 · t618: com histerese, o card vermelho cujo dia de hoje ja voltou para a meta esta em
+   RECUPERACAO. Ele nao pode dizer "vigiar" como se fosse aviso novo, e o card dentro da meta
+   com so a janela longa fora continua dizendo "vigiar". Mata a classe: rotulo que contradiz a cor. */
+test('card vermelho com hoje dentro diz que esta em recuperacao, e nao "vigiar"', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const k=(chave,situacao,hoje,longa)=>({chave,dimensao:"motor",rotulo:chave,unidade:"num",direcao:"menor_melhor",
+      meta_num:0,valor:0,serie:[1,1,0],situacao,tendencia:"melhorou",fora_da_meta:hoje,janela_longa_fora:longa,p10:0,p90:1});
+    D.ev=[k("a.recuperando","fora",false,true),k("b.vigiar","dentro",false,true),k("c.fora","fora",true,true)];
+    D.mat=[];D.loop=[];
+    let err=null; try{ rEvolucao(); }catch(e){ err=String(e); }
+    const card=c=>[...document.querySelectorAll('#kpis .kpi')].find(e=>e.querySelector('.k').textContent===c);
+    return {err, rec:card("a.recuperando").textContent, recCls:card("a.recuperando").className,
+      vig:card("b.vigiar").textContent, fora:card("c.fora").textContent,
+      legenda:document.querySelector('#kpis p.s').textContent};
+  });
+  expect(r.err, 'rEvolucao() derrubou o script').toBe(null);
+  expect(r.recCls, 'recuperacao continua vermelha').toContain('fora');
+  expect(r.rec).toContain('segue vermelho até a média de 7 dias voltar');
+  expect(r.rec).not.toContain('vigiar');
+  expect(r.vig).toContain('janela longa fora: vigiar');
+  expect(r.fora).not.toContain('segue vermelho');
+  expect(r.legenda).toContain('um dia bom sozinho não apaga');
+});
