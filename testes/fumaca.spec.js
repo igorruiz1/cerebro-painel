@@ -810,3 +810,89 @@ test('modo foco mostra um card por vez, anda com os botoes e sai com Esc', async
   expect(r.foco, 'Esc sai do foco').toBe(false);
   expect(r.depois).toBe(3);
 });
+
+/* v67 · onda 3 do plano de 01/10/2026 (doc 1507). Classes de defeito:
+   (a) proposta enviada tratada como receita, ou proposta vencida que ninguem ve;
+   (b) previsao de caixa que nunca e conferida contra o realizado;
+   (c) rotina gastando o orcamento de falha em silencio;
+   (d) criterio de tempo por decisao sem sensor. */
+test('o funil separa aberto de aceito, calcula conversao e acusa validade vencida', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.fun=[
+      {codigo:'PC-1',cliente:'A',valor:45000,estado:'aceita',dias_desde_envio:30,validade_vencida:false,dias_aceite_ate_receber:0},
+      {codigo:'PC-2',cliente:'B',valor:19452,estado:'aceita',dias_desde_envio:30,validade_vencida:false,dias_aceite_ate_receber:4},
+      {codigo:'PC-3',cliente:'C',valor:15000,estado:'perdida',dias_desde_envio:30,validade_vencida:false,dias_aceite_ate_receber:null},
+      {codigo:'PC-4',cliente:'Verde',valor:910000,estado:'aberta',dias_desde_envio:23,validade_vencida:true,dias_aceite_ate_receber:null}];
+    let err=null; try{ rFunil(); }catch(e){ err=String(e); }
+    const t=document.getElementById('funil').textContent;
+    const venc=!!document.querySelector('#funil .funi.venc');
+    D.fun=[]; rFunil(); const vazio=document.getElementById('funil').textContent;
+    return {err,t,venc,vazio};
+  });
+  expect(r.err, 'rFunil() derrubou o script').toBe(null);
+  expect(r.t).toContain('1 em aberto');
+  expect(r.t, 'conversao = aceitas / decididas').toContain('conversão 67%');
+  expect(r.t, 'mediana do aceite ao recebimento').toContain('2 dias');
+  expect(r.t, 'proposta nao e contrato, por escrito').toContain('não entra no caixa');
+  expect(r.venc, 'validade vencida marcada').toBe(true);
+  expect(r.vazio).toContain('sem proposta registrada');
+});
+
+test('o caixa das 13 semanas diz o erro da previsao, ou quando comeca a medir', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.c13=[{semana:1,inicio:"2026-09-28",saldo_base:100,saldo_pior:50}]; D.c13i=[];
+    D.c13e=[]; rCaixa13(); const antes=document.getElementById('caixa13').textContent;
+    D.c13e=[{erro_pct:12.5},{erro_pct:7.5}]; rCaixa13(); const depois=document.getElementById('caixa13').textContent;
+    return {antes,depois};
+  });
+  expect(r.antes).toContain('começa a medir');
+  expect(r.depois).toContain('Erro da previsão da semana: 10%');
+});
+
+test('o orcamento de falha lista toda rotina e acende quem estourou', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.eb=[{nome:'r1',slo_pct:95,cumprimento_pct:80,falhas_7d:3,orcamento_falhas_7d:1,consumo_pct:300,veredito_budget:'ESTOUROU'},
+          {nome:'r2',slo_pct:95,cumprimento_pct:100,falhas_7d:0,orcamento_falhas_7d:1,consumo_pct:0,veredito_budget:'DENTRO DO ORCAMENTO'}];
+    let err=null; try{ rOrcamento(); }catch(e){ err=String(e); }
+    const rows=[...document.querySelectorAll('#orcamento tr')];
+    return {err, n:rows.length, estourou:document.querySelectorAll('#orcamento tr.estourou').length,
+      aviso:document.getElementById('s-rotinas').textContent.includes('só avisa')};
+  });
+  expect(r.err).toBe(null);
+  expect(r.n, 'cabecalho + uma linha por rotina').toBe(3);
+  expect(r.estourou).toBe(1);
+  expect(r.aviso, 'a decisao de so avisar esta escrita na tela').toBe(true);
+});
+
+test('o tempo por decisao sai do foco ate o ato, so quando o ato e possivel, e diz o modo', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const it={origem:'tarefa',ref:'7',nivel:1,titulo:'x',titulo_completo:'x',recomendacao:'y',
+      acoes:[{verbo:'repactuar',label:'nova data'}]};
+    D.fila=[it]; D.min=[]; D.cap={minutos_dia:120}; rAgora();
+    const chamadas=[]; const rpcOrig=sb.rpc;
+    sb.rpc=(nome,args)=>{ if(nome==='painel_medir_decisao') chamadas.push(args); return new Promise(()=>{}); };
+    focar(0);
+    const s=medirDecisao('tarefa','7','s');
+    const semRec=medirDecisao('tarefa','7','a');
+    modoFoco(true); focar(0);
+    const s2=medirDecisao('tarefa','7','s');
+    modoFoco(false); sb.rpc=rpcOrig;
+    let viaTecla=null; const fo=fAto; fAto=k=>{viaTecla=k;}; focar(0);
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'s'})); fAto=fo;
+    return {chamadas, s, semRec, s2, viaTecla};
+  });
+  expect(r.chamadas.length, 'adiar possivel mede; aceitar sem recomendacao nao mede').toBe(2);
+  expect(r.semRec).toBe(null);
+  expect(r.s.p_modo).toBe('lista');
+  expect(r.s2.p_modo).toBe('foco');
+  expect(r.s.p_ms).toBeGreaterThanOrEqual(0);
+  expect(r.viaTecla, 'a tecla passa pelo mesmo caminho do botao').toBe('s');
+});
