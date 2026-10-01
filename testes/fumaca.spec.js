@@ -660,3 +660,72 @@ test('card vermelho com hoje dentro diz que esta em recuperacao, e nao "vigiar"'
   expect(r.fora).not.toContain('segue vermelho');
   expect(r.legenda).toContain('um dia bom sozinho não apaga');
 });
+
+/* v65 · onda 1 do plano de 01/10/2026: CAIXA DAS 13 SEMANAS. A classe que mata: previsao de caixa
+   que so enxerga uma janela de 30 dias e esconde o buraco das semanas seguintes. O invariante:
+   13 colunas, a semana mais apertada marcada e igual ao menor saldo do banco, a primeira semana
+   negativa dita por escrito, as entradas incertas listadas da maior para a menor, e falta de
+   dado declarada em vez de secao vazia. */
+test('o caixa das 13 semanas desenha 13 colunas e diz por escrito quando fica negativo', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const ini=i=>{const d=new Date(Date.UTC(2026,8,28+7*(i-1)));return d.toISOString().slice(0,10);};
+    const base=[15301,13276,5104,-2674,9455,-3277,-4253,-7548,-3867,-15005,-17504,-20575,-1000];
+    D.c13=base.map((v,i)=>({semana:i+1,inicio:ini(i+1),saldo_base:v,saldo_pior:v-20000}));
+    D.c13i=[{natureza:"receber",status:"incerto",valor_igor:7500,data_venc:"2026-10-02",descricao:"CPA2 parcela 3"},
+            {natureza:"receber",status:"incerto",valor_igor:25000,data_venc:"2026-10-20",descricao:"Missao habite-se"},
+            {natureza:"pagar",status:"incerto",valor_igor:9999,data_venc:"2026-10-02",descricao:"saida nao entra na lista"}];
+    let err=null; try{ rCaixa13(); }catch(e){ err=String(e); }
+    const el=document.getElementById('caixa13');
+    const cols=[...el.querySelectorAll('.c13c')];
+    const min=el.querySelector('.c13c.min');
+    const itens=[...el.querySelectorAll('.c13i')].map(x=>x.textContent);
+    D.c13=[]; let vazio=null; try{ rCaixa13(); vazio=el.textContent; }catch(e){ err=err||String(e); }
+    return {err, n:cols.length, minSemana:min&&min.dataset.semana, negs:el.querySelectorAll('.c13c.neg').length,
+      titulo:cols.length?null:null, itens, vazio, texto:null};
+  });
+  expect(r.err, 'rCaixa13() derrubou o script').toBe(null);
+  expect(r.n, 'uma coluna por semana').toBe(13);
+  expect(r.minSemana, 'a semana mais apertada e a do menor saldo').toBe('12');
+  expect(r.itens.length, 'so entradas incertas na lista').toBe(2);
+  expect(r.itens[0], 'a maior entrada incerta vem primeiro').toContain('Missao habite-se');
+  expect(r.vazio, 'sem dado se declara').toContain('sem dado no snapshot');
+});
+
+test('o caixa das 13 semanas escreve a primeira semana negativa no titulo', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const t = await page.evaluate(()=>{
+    D.c13=[{semana:1,inicio:"2026-09-28",saldo_base:100,saldo_pior:50},{semana:2,inicio:"2026-10-05",saldo_base:-10,saldo_pior:-60}];
+    D.c13i=[]; rCaixa13(); return document.querySelector('#caixa13 .c13t').textContent;
+  });
+  expect(t).toContain('negativo na semana de 05/10');
+});
+
+/* v65 · no celular a decisao sobe: a faixa mostra 3 numeros e um botao abre os outros; no
+   computador os 7 aparecem e o botao some. A classe que mata: numero de topo empurrando a
+   primeira decisao para baixo da dobra. */
+for (const [largura, visiveis, botao] of [[390,3,true],[1280,7,false]]) {
+  test(`a faixa mostra ${visiveis} numeros a ${largura}px e o botao abre o resto`, async ({page})=>{
+    await page.setViewportSize({width:largura, height:844});
+    await abrir(page);
+    await revelarCasca(page);
+    const r = await page.evaluate(()=>{
+      D.se=[]; D.wip={ativos_ate_48h:21,teto:18,excedente:3}; D.garg=[{tipo:"TOTAL",itens:5,teto:5}];
+      D.rw={dias_sobrevida_pior:8,dias_sobrevida:32,caixa_hoje:14813,queima_dia_base:461};
+      rAgora();
+      const vis=()=>[...document.querySelectorAll('#faixa5 .f5')].filter(e=>getComputedStyle(e).display!=='none').length;
+      const b=document.querySelector('#faixa5 .f5mais');
+      const antes=vis(), mostraBotao=!!b&&getComputedStyle(b).display!=='none';
+      if(mostraBotao) b.click();
+      return {total:document.querySelectorAll('#faixa5 .f5').length, antes, mostraBotao, depois:vis(),
+        W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+    });
+    expect(r.total, 'a faixa tem 7 numeros').toBe(7);
+    expect(r.antes, 'numeros visiveis antes do toque').toBe(visiveis);
+    expect(r.mostraBotao, 'botao de abrir o resto').toBe(botao);
+    if (botao) expect(r.depois, 'o botao abre os 7').toBe(7);
+    expect(r.SW, 'rolagem horizontal').toBe(r.W);
+  });
+}
