@@ -928,7 +928,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v63";
+const VER="v64";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2984,7 +2984,7 @@ function rEvolucao(){
   const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
   document.getElementById("kpis").innerHTML=
-   `<p class="s" style="margin:0 0 10px">Vermelho exige DUAS janelas: a métrica só alarma se estourou a meta hoje E na média da janela longa. Um dia ruim sozinho não pinta de vermelho.</p>`
+   `<p class="s" style="margin:0 0 10px">Vermelho exige DUAS janelas: a métrica só alarma se estourou a meta hoje E na média da janela longa. Um dia ruim sozinho não pinta de vermelho, e um dia bom sozinho não apaga: o vermelho só sai quando a média de 7 dias volta para a meta.</p>`
    +Object.keys(por)
     .sort((a,b)=>(ordem.indexOf(a)<0?99:ordem.indexOf(a))-(ordem.indexOf(b)<0?99:ordem.indexOf(b))).map(d=>
     `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${por[d].length} indicador(es)</span></h2>
@@ -2996,8 +2996,12 @@ function rEvolucao(){
       /* v53 · DUAS JANELAS (t618). O banco já decide o vermelho pelas duas janelas;
          aqui a regra fica VISÍVEL, que é o que faltava: quando só uma das janelas
          estourou, o card diz qual, em vez de ficar cinza sem explicação. */
+      /* v64 · HISTERESE (t618, s690). O banco passou a manter o vermelho ate a media de 7 dias
+         voltar. Card vermelho com o dia de hoje dentro e RECUPERACAO, nao alarme novo: diz isso. */
       const jan=(k.fora_da_meta===true&&k.janela_longa_fora===false)
         ? '<span class="tag">hoje fora, janela longa dentro: não é alarme</span>'
+        : (k.situacao==="fora"&&k.fora_da_meta===false&&k.janela_longa_fora===true)
+        ? '<span class="tag">hoje dentro, segue vermelho até a média de 7 dias voltar</span>'
         : (k.fora_da_meta===false&&k.janela_longa_fora===true)
         ? '<span class="tag">janela longa fora: vigiar</span>' : '';
       const v=k.valor==null?`<div class="n nd">indeterminado</div>`:`<div class="n">${nfmt(k.valor,k.unidade)}</div>`;
