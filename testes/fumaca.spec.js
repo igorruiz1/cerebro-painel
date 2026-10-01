@@ -729,3 +729,84 @@ for (const [largura, visiveis, botao] of [[390,3,true],[1280,7,false]]) {
     expect(r.SW, 'rolagem horizontal').toBe(r.W);
   });
 }
+
+/* v66 · onda 2 do plano de 01/10/2026 (doc 1507). Tres classes de defeito:
+   (a) dono escrito a mao em todo numero ("quem move: voce" em tudo nao diz nada);
+   (b) fila do dia maior que o tempo do dia sem aviso;
+   (c) triagem que exige rolar a lista: o modo foco mostra UM card e age pelo mesmo caminho de A e S. */
+const fsV66 = require('fs');
+const pathV66 = require('path');
+const CARD = (ref, ttl) => ({origem:'tarefa', ref:String(ref), nivel:1, acoes:[], titulo:ttl, titulo_completo:ttl, recomendacao:'Faça.'});
+
+test('o dono de cada numero vem do banco, e nenhum "quem move" esta escrito a mao', async ({page})=>{
+  const fonte = fsV66.readFileSync(pathV66.resolve(__dirname,'..','index.html'),'utf8');
+  expect((fonte.match(/quem:"você"/g)||[]).length, 'dono escrito a mao no codigo').toBe(0);
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.kdono=[{chave:'caixa.sobrevida_dias',dono:'igor'},{chave:'motor.slo_rotina_pct',dono:'claude'}];
+    const k=(chave)=>({chave,dimensao:"caixa",rotulo:chave,unidade:"num",direcao:"maior_melhor",meta_num:1,valor:1,serie:[1],situacao:"dentro",tendencia:"estavel",p10:0,p90:1});
+    D.ev=[k('caixa.sobrevida_dias'),k('motor.slo_rotina_pct'),k('sem.dono')]; D.mat=[]; D.loop=[];
+    let err=null; try{ rEvolucao(); }catch(e){ err=String(e); }
+    const t=c=>[...document.querySelectorAll('#kpis .kpi')].find(e=>e.querySelector('.k').textContent===c).textContent;
+    return {err, igor:t('caixa.sobrevida_dias'), maq:t('motor.slo_rotina_pct'), sem:t('sem.dono')};
+  });
+  expect(r.err).toBe(null);
+  expect(r.igor).toContain('quem move: você');
+  expect(r.maq).toContain('quem move: a máquina');
+  expect(r.sem, 'sem dono se declara').toContain('sem dono no banco');
+});
+
+test('o dia avisa quando a fila de hoje passa do tempo declarado', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(([c1,c2,c3])=>{
+    D.fila=[c1,c2,c3]; D.min=[{id:1,minutos_estimados:90},{id:2,minutos_estimados:60}];
+    D.cap={minutos_dia:120};
+    let err=null; try{ rAgora(); }catch(e){ err=String(e); }
+    const passa=document.getElementById('h-fila1').textContent;
+    const tag=document.querySelector('#fila1 .tag.min')?document.querySelector('#fila1 .tag.min').textContent:null;
+    D.cap={minutos_dia:300}; rAgora(); const cabe=document.getElementById('h-fila1').textContent;
+    return {err, passa, tag, cabe};
+  }, [CARD(1,'um'),CARD(2,'dois'),CARD(3,'tres sem estimativa')]);
+  expect(r.err, 'rAgora() derrubou o script').toBe(null);
+  expect(r.tag, 'o card mostra os minutos').toContain('~90 min');
+  expect(r.passa, 'passou do tempo: avisa por escrito').toContain('passa 60 min');
+  expect(r.passa, 'card sem estimativa se declara').toContain('1 sem estimativa');
+  expect(r.cabe).toContain('180 de 300 min');
+  expect(r.cabe).not.toContain('passa');
+});
+
+test('modo foco mostra um card por vez, anda com os botoes e sai com Esc', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(([c1,c2,c3])=>{
+    D.fila=[c1,c2,c3]; D.min=[]; D.cap={minutos_dia:120};
+    rAgora();
+    const vis=()=>[...document.querySelectorAll('#fila1 .card')].filter(e=>getComputedStyle(e).display!=='none').length;
+    const antes=vis();
+    modoFoco(true);
+    const um=vis(), cont=document.querySelector('#fbar .fc').textContent;
+    const topo=Math.round(document.querySelector('#fila1 .card.atual').getBoundingClientRect().top);
+    document.querySelectorAll('#fbar button')[1].click();
+    const cont2=document.querySelector('#fbar .fc').textContent;
+    const faixaVisivel=getComputedStyle(document.getElementById('faixa5')).display!=='none';
+    /* o gesto usa o MESMO caminho da tecla: troca qAceitar/qAdiar por espias */
+    const chamadas=[]; const oA=qAceitar, oS=qAdiar;
+    qAceitar=(o,r)=>chamadas.push('a:'+r); qAdiar=(o,r)=>chamadas.push('s:'+r);
+    gestoFoco(120); gestoFoco(-120); gestoFoco(30);
+    qAceitar=oA; qAdiar=oS;
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));
+    return {antes, um, cont, cont2, topo, faixaVisivel, chamadas, depois:vis(), foco:document.body.classList.contains('foco')};
+  }, [CARD(1,'um'),CARD(2,'dois'),CARD(3,'tres')]);
+  expect(r.antes).toBe(3);
+  expect(r.um, 'modo foco: um card na tela').toBe(1);
+  expect(r.cont).toBe('1 de 3');
+  expect(r.cont2, 'o botao proximo anda').toBe('2 de 3');
+  expect(r.faixaVisivel, 'a faixa sai da frente no foco').toBe(false);
+  expect(r.topo, 'no celular o card do foco fica no alto da tela').toBeLessThanOrEqual(260);
+  expect(r.chamadas, 'direita aceita, esquerda adia, toque curto nao faz nada').toEqual(['a:2','s:2']);
+  expect(r.foco, 'Esc sai do foco').toBe(false);
+  expect(r.depois).toBe(3);
+});

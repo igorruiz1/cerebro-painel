@@ -744,6 +744,18 @@ section.sec.on{display:block}
   #faixa5 .f5 .q{display:none}
   .f5mais{display:block;width:100%;margin:0 0 10px;padding:6px;background:none;border:1px solid var(--line2);border-radius:8px;color:var(--mut);font-size:12px}
 }
+/* v66 · placar com dono, minutos, modo foco */
+.tag.dono{margin-top:4px;display:inline-block}
+.tag.min{color:var(--mut)}
+.tempo.passa{color:var(--red);font-weight:600}
+.bfoco{margin-left:8px;font-size:12px;padding:3px 10px;border-radius:8px;border:1px solid var(--line2);background:none;color:var(--ink2);vertical-align:middle;cursor:pointer}
+#fbar .fbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--bg);padding:8px 0;margin-bottom:8px;border-bottom:1px solid var(--line)}
+#fbar .fc{font-size:13px;color:var(--mut);margin-right:4px}
+#fbar button{font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer}
+#fbar button.ok{border-color:var(--grn)}
+body.foco #faixa5,body.foco #hero,body.foco #correcoes,body.foco #fila2,body.foco #estouro,body.foco #p-agora > h2:not(#h-fila1){display:none}
+body.foco #fila1 .card:not(.atual){display:none}
+body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -862,7 +874,7 @@ section.sec.on{display:block}
     <div id="faixa5"></div>
     <div id="hero"></div>
     <div id="correcoes"></div>
-    <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fila1"></div>
+    <h2 id="h-fila1">PRECISA DE VOCÊ HOJE</h2><div id="fbar"></div><div id="fila1"></div>
     <h2>DEPOIS <span class="s">— não hoje, mas não esqueça</span></h2><div id="fila2"></div>
     <div id="estouro"></div>
   </div>
@@ -951,7 +963,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v65";
+const VER="v66";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -978,7 +990,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1426,7 +1438,8 @@ function cards(){return [...document.querySelectorAll("#fila1 .card")];}
 function focar(i){
   const c=cards(); if(!c.length)return;
   foco=Math.max(0,Math.min(i,c.length-1));
-  c.forEach((x,j)=>x.style.outline=j===foco?"2px solid var(--acc)":"");
+  c.forEach((x,j)=>{x.style.outline=j===foco?"2px solid var(--acc)":"";x.classList.toggle("atual",j===foco);});
+  rFbar();
   c[foco].scrollIntoView({behavior:"smooth",block:"center"});
 }
 document.addEventListener("keydown",e=>{
@@ -1434,7 +1447,9 @@ document.addEventListener("keydown",e=>{
   if(t==="INPUT"||t==="TEXTAREA"){ if(e.key==="Escape")e.target.blur(); return; }
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const k=e.key.toLowerCase();
-  if(k==="j"){e.preventDefault();focar(foco+1);}
+  if(k==="f"){e.preventDefault();modoFoco();}
+  else if(k==="escape"&&document.body.classList.contains("foco")){e.preventDefault();modoFoco(false);}
+  else if(k==="j"){e.preventDefault();focar(foco+1);}
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   /* v61: A, S e R agem no card focado; sem foco nao fazem nada (R sem foco segue recarregando) */
@@ -1670,7 +1685,7 @@ async function carregarAgora(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1685,7 +1700,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1952,6 +1967,7 @@ function cardFila(it){
      ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
      ${it.parado_txt?`<span>${esc(it.parado_txt)}</span>`:(it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:"")}
      ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
+     ${minDe(it)!=null?`<span class="tag min">~${minDe(it)} min</span>`:""}
    </div>
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
@@ -2045,6 +2061,60 @@ function qRecusar(origem,ref){
   abrirModal("Recusar",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — ${t==="PRONTO"?"a peça volta para eu refazer":"a decisão sai marcada como recusada"}`,"texto",
     v=>agendar(()=>sb.rpc("painel_responder",{p_tipo:t,p_id:Number(ref),p_ato:t==="PRONTO"?"refazer":"recusado",p_nota:v||null}),
                 "recusado em "+ref, el), "recusar");}
+/* v66 (s692, onda 2 do plano de 01/10/2026, doc 1507).
+   (a) EOS Scorecard: ate 15 numeros na tela, cada um com DONO lido do banco (kpi.dono). O
+       "quem move: voce" escrito a mao em todos os numeros nao dizia nada.
+   (b) Sunsama: cada card diz quantos minutos custa e o dia avisa quando passa do tempo que o
+       Igor declarou (parametro_motor igor.minutos_fila_dia). Card sem estimativa conta 30 min
+       e se declara, nunca some da conta.
+   (c) Superhuman: modo foco, um card por vez; no celular, arrastar para a direita aceita a
+       recomendacao e para a esquerda adia 2 dias, pelo MESMO caminho de A e S, com desfazer. */
+const MIN_PADRAO=30, LIM_GESTO=90;
+function donoDe(chave){const k=(D.kdono||[]).find(x=>x.chave===chave)||(D.ev||[]).find(x=>x.chave===chave);return k&&k.dono?k.dono:null;}
+function quemMove(chave){const d=donoDe(chave);return d==="igor"?"você":d==="claude"?"a máquina":"sem dono no banco";}
+function minDe(it){ if(!it||it.origem!=="tarefa") return null;
+  const m=(D.min||[]).find(x=>String(x.id)===String(it.ref)); return m&&m.minutos_estimados!=null?+m.minutos_estimados:null;}
+function tempoTxt(lista){
+  if(!lista||!lista.length) return "";
+  let soma=0,sem=0; lista.forEach(it=>{const m=minDe(it); if(m==null){soma+=MIN_PADRAO;sem++;} else soma+=m;});
+  const cap=D.cap&&D.cap.minutos_dia!=null?+D.cap.minutos_dia:null;
+  const est=sem?` (${sem} sem estimativa, contado${sem>1?"s":""} a ${MIN_PADRAO} min)`:"";
+  if(cap==null) return ` <span class="s tempo">· ~${soma} min${est}</span>`;
+  return soma>cap
+    ? ` <span class="s tempo passa">· ~${soma} min para ${cap} disponíveis: passa ${soma-cap} min${est}</span>`
+    : ` <span class="s tempo">· ~${soma} de ${cap} min${est}</span>`;}
+function modoFoco(on){
+  const ligar=on===undefined?!document.body.classList.contains("foco"):!!on;
+  if(ligar&&!cards().length) return;
+  document.body.classList.toggle("foco",ligar);
+  if(ligar){ focar(foco>=0?foco:0); window.scrollTo(0,0); }
+  else { cards().forEach(x=>{x.classList.remove("atual");x.style.outline="";}); rFbar(); }}
+function rFbar(){
+  const el=document.getElementById("fbar"); if(!el) return;
+  const c=cards();
+  el.innerHTML=document.body.classList.contains("foco")&&c.length?`<div class="fbar" role="toolbar" aria-label="modo foco">
+    <span class="fc">${foco+1} de ${c.length}</span>
+    <button type="button" onclick="focar(foco-1)" aria-label="card anterior">‹</button>
+    <button type="button" onclick="focar(foco+1)" aria-label="próximo card">›</button>
+    <button type="button" class="ok" onclick="fAto('a')">aceitar <span class="kbd">A</span></button>
+    <button type="button" onclick="fAto('s')">adiar 2 dias <span class="kbd">S</span></button>
+    <button type="button" onclick="fAto('r')">recusar <span class="kbd">R</span></button>
+    <button type="button" onclick="modoFoco(false)">sair <span class="kbd">Esc</span></button></div>`:"";}
+function fAto(k){const c=cardFocado(); if(!c) return; (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
+function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO){fAto("s");return "s";} return null; }
+(function(){
+  let x0=null,y0=null,el=null;
+  document.addEventListener("touchstart",e=>{
+    if(!document.body.classList.contains("foco")) return;
+    const t=e.target; if(!t.closest||t.closest("textarea,button,select,input,a")) return;
+    const c=t.closest("#fila1 .card.atual"); if(!c) return;
+    el=c; x0=e.touches[0].clientX; y0=e.touches[0].clientY;},{passive:true});
+  document.addEventListener("touchmove",e=>{
+    if(!el) return; const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
+    if(Math.abs(dy)>Math.abs(dx)) return; el.style.transform=`translateX(${dx}px)`;},{passive:true});
+  document.addEventListener("touchend",e=>{
+    if(!el) return; const dx=e.changedTouches[0].clientX-x0, c=el; el=null; c.style.transform=""; gestoFoco(dx);},{passive:true});
+})();
 function cardFocado(){ const c=cards()[foco]; return (foco>=0&&c&&c.dataset.o)?c:null; }
 function faEscolher(origem,ref,opcao,idel){
   /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
@@ -2138,9 +2208,11 @@ function rAgora(){
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
-  document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"");
+  document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"")
+    +tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" onclick="modoFoco()">modo foco <span class="kbd">F</span></button>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
+  if(document.body.classList.contains("foco")){ const n=cards().length; if(n) focar(Math.max(0,Math.min(foco,n-1))); else modoFoco(false); }
   /* O teto e de EXIBICAO e se anuncia. Corte silencioso foi o defeito da v24.
      v56 (20/09/2026): sao DOIS tetos diferentes e agora cada um se anuncia sozinho.
      TETO (cliente, =5) corta a LISTA desta tela e sempre teve aviso.
@@ -2920,18 +2992,18 @@ const SERIE_SECAO={
    (3) cada numero diz quem o move (regua 7).
    Vermelho continua significando FORA DO NORMAL (banda p10-p90, v29), nunca so abaixo da meta. */
 const FAIXA5=[
-  {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d",  quem:"você"},
-  {k:"caixa.menor_saldo_13s",     r:"Pior saldo, 13 semanas",     u:"rs", quem:"você"},
-  {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs", quem:"você"},
-  {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs", quem:"você"},
+  {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d"},
+  {k:"caixa.menor_saldo_13s",     r:"Pior saldo, 13 semanas",     u:"rs"},
+  {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs"},
+  {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs"},
   /* v62: os dois tetos, lado a lado (marca do Igor em 30/09/2026). A fila ativa e o mesmo numero
      do alarme de carga (v_wip_igor); a bandeja usa o MESMO recorte do gate pode_produzir
      (TOTAL de v_gargalo_presidente contra kpi painel.fila_abertura_n), senao a tela mostraria
      um numero e o banco bloquearia por outro. Saiu "Carga no seu nome": era a proporcao que
      o alarme deixou de usar em 29/09 porque contava o preparo do executor como carga dele. */
-  {k:"fila.wip_ativo_48h",        r:"Fila ativa / teto",            teto:"wip",   quem:"você"},
-  {k:"bandeja.teto",              r:"Bandeja / teto",               teto:"banda", quem:"você"},
-  {k:"entrega.output_sem_ack",    r:"Esperando sua leitura",        u:"n",  quem:"você"}];
+  {k:"fila.wip_ativo_48h",        r:"Fila ativa / teto",            teto:"wip"},
+  {k:"bandeja.teto",              r:"Bandeja / teto",               teto:"banda", kd:"painel.fila_abertura_n"},
+  {k:"entrega.output_sem_ack",    r:"Esperando sua leitura",        u:"n"}];
 function fmt5(v,u){
   if(v==null||isNaN(+v))return "—"; v=+v;
   const n=x=>x.toLocaleString("pt-BR",{maximumFractionDigits:1});
@@ -2943,7 +3015,7 @@ function rFaixa5(){
     const r=(D.se||[]).find(x=>x.chave===t.k);
     if(!r||!r.serie||!r.serie.length)
       return `<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
-        <div class="e">sem série no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
+        <div class="e">sem série no snapshot</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;
     const ult=+r.serie[r.serie.length-1], meta=r.meta_num==null?null:+r.meta_num;
     const ok=v=>r.direcao==="maior_melhor"?v>=meta:v<=meta;
     const naMeta=meta==null?null:ok(ult);
@@ -2960,12 +3032,12 @@ function rFaixa5(){
     const blt=meta==null?"":`<div class="blt" aria-hidden="true"><i class="${naMeta?"ok":"no"}" style="width:${pc(ult)}%"></i><b style="left:${pc(meta)}%"></b></div>`;
     return `<div class="f5 ${fora?"mal":(naMeta?"bem":(meta!=null?"atn":""))}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
       <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>${blt}
-      <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
+      <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;});
   el.innerHTML=`<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
     `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os outros ${Math.max(0,tiles.length-3)} números</button>`;}
 function tetoTile(t){
   const sem=`<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
-    <div class="e">sem dado no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
+    <div class="e">sem dado no snapshot</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;
   let v,teto,est,extra="";
   if(t.teto==="wip"){
     const w=D.wip; if(!w||w.teto==null||w.ativos_ate_48h==null) return sem;
@@ -2983,7 +3055,7 @@ function tetoTile(t){
   return `<div class="f5 ${cls}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
     <div class="v">${v}<span class="teto">/${teto}</span>${t.teto==="wip"?sparkKPI(t.k,56,18):""}</div>
     <div class="blt" aria-hidden="true"><i class="${v<teto?"ok":"no"}" style="width:${pc(v)}%"></i><b style="left:${pc(teto)}%"></b></div>
-    <div class="e">${est}${extra}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;}
+    <div class="e">${est}${extra}</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;}
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
   if(!r||!r.serie||r.serie.length<2)return "";
@@ -3047,7 +3119,7 @@ function rEvolucao(){
   const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
   document.getElementById("kpis").innerHTML=
-   `<p class="s" style="margin:0 0 10px">Vermelho exige DUAS janelas: a métrica só alarma se estourou a meta hoje E na média da janela longa. Um dia ruim sozinho não pinta de vermelho, e um dia bom sozinho não apaga: o vermelho só sai quando a média de 7 dias volta para a meta.</p>`
+   `<p class="s" style="margin:0 0 10px">Vermelho exige DUAS janelas: a métrica só alarma se estourou a meta hoje E na média da janela longa. O placar tem até 15 números, cada um com dono (EOS Scorecard); os outros continuam medidos e só sobem quando estouram. Um dia ruim sozinho não pinta de vermelho, e um dia bom sozinho não apaga: o vermelho só sai quando a média de 7 dias volta para a meta.</p>`
    +Object.keys(por)
     .sort((a,b)=>(ordem.indexOf(a)<0?99:ordem.indexOf(a))-(ordem.indexOf(b)<0?99:ordem.indexOf(b))).map(d=>
     `<h2>${esc((DIMR[d]||d).toUpperCase())} <span class="s">— ${por[d].length} indicador(es)</span></h2>
@@ -3070,7 +3142,7 @@ function rEvolucao(){
       const v=k.valor==null?`<div class="n nd">indeterminado</div>`:`<div class="n">${nfmt(k.valor,k.unidade)}</div>`;
       return `<div class="kpi ${cls}" title="${esc(k.definicao_pt||"")}">
         <div class="k">${esc(k.chave)}</div><div class="r">${esc(k.rotulo)}</div>${v}
-        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}${jan}</span>
+        <div class="foot"><span class="m">${k.meta_num==null?"sem meta":"meta "+(k.direcao==="maior_melhor"?"≥ ":"≤ ")+nfmt(k.meta_num,k.unidade)}<br>${t}${jan}<br><span class="tag dono">quem move: ${esc(quemMove(k.chave))}</span></span>
         ${spark(k.serie,k.meta_num,k.direcao,98,34,k.p10,k.p90)}</div></div>`}).join("")}</div>`).join("");
 }
 function verLoop(r){const L=D.loop.find(l=>l.rodada===r);if(!L)return;
