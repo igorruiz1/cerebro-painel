@@ -721,6 +721,29 @@ section.sec.on{display:block}
 .f5 .v .teto{font-size:.62em;color:var(--mut);margin-left:1px;font-weight:500}
 /* contador vazio nao desenha pilula; no celular a linha segue reservada pela altura minima */
 .tab .n:empty{background:none;padding:0;margin-left:0}
+/* v65 · caixa das 13 semanas e faixa recolhida no celular */
+.c13{background:var(--card);border:1px solid var(--line2);border-left:3px solid var(--grn);border-radius:12px;padding:14px 16px;margin:10px 0}
+.c13.crit{border-left-color:var(--red)}
+.c13t{font-size:17px;font-weight:600}
+.c13s{font-size:13px;color:var(--mut);margin:4px 0 10px}
+.c13g{display:flex;gap:3px;align-items:stretch}
+.c13c{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch}
+.c13c .p{display:flex;align-items:flex-end;border-bottom:1px solid var(--line2)}
+.c13c .n{display:flex;align-items:flex-start}
+.c13c i{display:block;width:100%;background:var(--grn);border-radius:2px}
+.c13c.neg i{background:var(--red)}
+.c13c.min i{outline:2px solid var(--ink);outline-offset:1px}
+.c13c span{font-size:10px;color:var(--dim);text-align:center;margin-top:3px;overflow:hidden;white-space:nowrap}
+.c13l{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.c13lt{font-size:12px;color:var(--mut);margin-bottom:4px}
+.c13i{font-size:13px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c13i span{color:var(--dim);margin:0 4px}
+.f5mais{display:none}
+@media (max-width:640px){
+  #faixa5:not(.f5todos) .f5:nth-child(n+4){display:none}
+  #faixa5 .f5 .q{display:none}
+  .f5mais{display:block;width:100%;margin:0 0 10px;padding:6px;background:none;border:1px solid var(--line2);border-radius:8px;color:var(--mut);font-size:12px}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -861,7 +884,7 @@ section.sec.on{display:block}
   
 <div class="pane" id="p-panorama">
   <div class="secnav" id="nav-panorama"></div>
-  <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
+  <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="caixa13"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
   <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
   <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
@@ -928,7 +951,7 @@ section.sec.on{display:block}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v64";
+const VER="v65";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -955,7 +978,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1264,7 +1287,6 @@ function ivEnviar(ref,verbo,valor,label,pref){
   agendar(()=>sb.rpc("agir",{p_origem:"tarefa",p_ref:String(ref),p_verbo:verbo,p_valor:valor}),
           label+" em "+ref, el);
 }
-function ivFeita(ref){ ivEnviar(ref,"feita",null,"feita"); }
 function ivAdiar(ref,dias,pref){ const d=new Date(); d.setDate(d.getDate()+dias);
   ivEnviar(ref,"repactuar",ivData(d),"novo prazo",pref); }
 /* v39: a opcao entra como VALOR, nao como frase. O banco compara com a opcao marcada
@@ -1648,7 +1670,7 @@ async function carregarAgora(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1663,7 +1685,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -2438,7 +2460,7 @@ async function marcarLote(){
   await recarregarFila();}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rDelta(); rRunway(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
+function rDash(){ rDelta(); rRunway(); rCaixa13(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -2495,6 +2517,45 @@ function rRunway(){
     ${parcial?`<div class="rl">⚠ ${esc(r.lacuna)}</div>`:""}
     ${foraDaConta(r)?`<div class="rl">⚠ ${foraDaConta(r)}</div>`:""}
   </div>`;}
+/* v65 (s690, onda 1 do plano de 01/10/2026, doc 1507): CAIXA DAS PROXIMAS 13 SEMANAS.
+   Referencia: 13-week cash flow, o padrao de tesouraria de empresa com caixa curto. A janela
+   unica de 30 dias escondia o buraco das semanas 5 a 13 ate ele cair dentro dela. Uma coluna
+   por semana, o saldo de fim de semana no caso base, o risco do pior caso por escrito, e a
+   lista das entradas incertas que decidem o resultado. Fonte: v_caixa_13_semanas e
+   v_caixa_13_itens, mesma regua da v_runway (participacao do Igor, receita bruta nunca entra). */
+function ddmm(d){const p=String(d||"").slice(0,10).split("-");return p.length===3?p[2]+"/"+p[1]:"—";}
+function rCaixa13(){
+  const el=document.getElementById("caixa13"); if(!el) return;
+  const s=(D.c13||[]).slice().sort((a,b)=>a.semana-b.semana);
+  if(!s.length){ el.innerHTML='<div class="c13"><div class="c13t">Caixa das próximas 13 semanas</div><div class="c13s">sem dado no snapshot: a previsão não chegou.</div></div>'; return; }
+  const base=s.map(x=>+x.saldo_base), pior=s.map(x=>+x.saldo_pior);
+  const iMin=base.indexOf(Math.min(...base));
+  const iNeg=base.findIndex(v=>v<0), iPiorNeg=pior.findIndex(v=>v<0);
+  const maxPos=Math.max(0,...base), maxNeg=Math.max(0,...base.map(v=>-v));
+  const tot=(maxPos+maxNeg)||1, hPos=Math.round(96*maxPos/tot), hNeg=96-hPos;
+  const titulo = iNeg>=0
+    ? `O caixa fica negativo na semana de <b>${ddmm(s[iNeg].inicio)}</b>`
+    : `Menor saldo: <b>${rs(base[iMin])}</b> na semana de ${ddmm(s[iMin].inicio)}`;
+  const risco = iPiorNeg>=0
+    ? `Sem as entradas incertas, o saldo fica negativo na semana de <b>${ddmm(s[iPiorNeg].inicio)}</b>.`
+    : "Mesmo sem as entradas incertas, o saldo não fica negativo.";
+  const cols=s.map((x,i)=>{
+    const v=base[i], neg=v<0, h=neg?Math.round(hNeg*(-v)/(maxNeg||1)):Math.round(hPos*v/(maxPos||1));
+    const tip=`semana de ${ddmm(x.inicio)}: ${rs(v)} no caso base, ${rs(pior[i])} sem as entradas incertas`;
+    return `<div class="c13c${neg?" neg":""}${i===iMin?" min":""}" title="${esc(tip)}" data-semana="${x.semana}">
+      <div class="p" style="height:${hPos}px">${neg?"":`<i style="height:${h}px"></i>`}</div>
+      <div class="n" style="height:${hNeg}px">${neg?`<i style="height:${h}px"></i>`:""}</div>
+      <span>${ddmm(x.inicio)}</span></div>`;}).join("");
+  const inc=(D.c13i||[]).filter(x=>x.natureza==="receber"&&x.status==="incerto")
+    .sort((a,b)=>(+b.valor_igor)-(+a.valor_igor)).slice(0,5);
+  const lista=inc.length?`<div class="c13l"><div class="c13lt">Entradas incertas que decidem o caixa</div>${inc.map(x=>
+    `<div class="c13i"><b>${rs(+x.valor_igor)}</b> <span>${ddmm(x.data_venc)}</span> ${esc(x.descricao||"")}</div>`).join("")}</div>`:"";
+  el.innerHTML=`<div class="c13${iNeg>=0?" crit":""}">
+    <div class="c13t">${titulo}</div>
+    <div class="c13s">Saldo no fim de cada semana, caso base: entradas firmes e incertas, saídas firmes e seu custo de vida. ${risco}</div>
+    <div class="c13g" role="img" aria-label="saldo semanal das próximas 13 semanas">${cols}</div>
+    ${lista}</div>`;
+}
 /* v63 (s682, P2 aprovada 30/09/2026): entrada sem valor ou sem data NAO entra na sobrevida.
    Sem este aviso o numero parece completo e e menor do que a realidade. Fonte: v_runway.entradas_fora_n. */
 function foraDaConta(r){
@@ -2860,6 +2921,7 @@ const SERIE_SECAO={
    Vermelho continua significando FORA DO NORMAL (banda p10-p90, v29), nunca so abaixo da meta. */
 const FAIXA5=[
   {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d",  quem:"você"},
+  {k:"caixa.menor_saldo_13s",     r:"Pior saldo, 13 semanas",     u:"rs", quem:"você"},
   {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs", quem:"você"},
   {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs", quem:"você"},
   /* v62: os dois tetos, lado a lado (marca do Igor em 30/09/2026). A fila ativa e o mesmo numero
@@ -2899,7 +2961,8 @@ function rFaixa5(){
     return `<div class="f5 ${fora?"mal":(naMeta?"bem":(meta!=null?"atn":""))}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
       <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>${blt}
       <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;});
-  el.innerHTML=`<div class="faixa5" role="group" aria-label="os seis números do dia">${tiles.join("")}</div>`;}
+  el.innerHTML=`<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
+    `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os outros ${Math.max(0,tiles.length-3)} números</button>`;}
 function tetoTile(t){
   const sem=`<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
     <div class="e">sem dado no snapshot</div><div class="q">quem move: ${esc(t.quem)}</div></div>`;
