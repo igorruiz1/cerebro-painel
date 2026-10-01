@@ -756,6 +756,13 @@ section.sec.on{display:block}
 body.foco #faixa5,body.foco #hero,body.foco #correcoes,body.foco #fila2,body.foco #estouro,body.foco #p-agora > h2:not(#h-fila1){display:none}
 body.foco #fila1 .card:not(.atual){display:none}
 body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
+/* v67 · funil, erro da previsao, orcamento de falha */
+.fun{background:var(--card);border:1px solid var(--line2);border-left:3px solid var(--acc);border-radius:12px;padding:14px 16px;margin:10px 0}
+.funi{font-size:13px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.funi span{color:var(--dim);margin:0 4px}
+.funi.venc b{color:var(--red)}
+#orcamento tr.estourou td{color:var(--red);font-weight:600}
+#orcamento tr.queimando td{color:var(--yel)}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -896,7 +903,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
   
 <div class="pane" id="p-panorama">
   <div class="secnav" id="nav-panorama"></div>
-  <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="caixa13"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
+  <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="caixa13"></div><div id="funil"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
   <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
   <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
@@ -906,7 +913,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
   <section class="sec" id="s-movimento"><h2>O ENVELHECIMENTO DA FILA <span class="s">o único gráfico do kanban que age sobre trabalho ainda salvável; o resto é autópsia</span></h2><div class="g4" id="mov-kpi"></div><div id="mov-aging"></div><h2>A REPRESA DE PRAZO <span class="s">quantos cards vencem no mesmo dia, e de quem eles são</span></h2><div id="mov-represa"></div><div class="foot"><b>Como ler.</b> A régua é o percentil 85 do tempo de ciclo do que já fechou: item acima dele aparece <b>antes</b> de vencer, não depois. Na represa, o teto desenhado é 8 por dia útil — acima disso o dia vira um bloco de vencidos de uma vez só.</div></section>
   <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
   <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
-  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
+  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>ORÇAMENTO DE FALHA <span class="s">quanto cada rotina pode falhar por semana antes de acender (Google SRE); só avisa, nenhuma é pausada sozinha</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="orcamento"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
   <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
 </div>
 
@@ -963,7 +970,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v66";
+const VER="v67";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -990,7 +997,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1433,11 +1440,11 @@ document.querySelectorAll("#subnav .sub").forEach(b=>b.onclick=()=>abrir(b.datas
   copia();})();
 
 /* Teclado no computador. No celular nada muda: o alvo continua de polegar. */
-let foco=-1;
+let foco=-1, FOCO_T0=null;
 function cards(){return [...document.querySelectorAll("#fila1 .card")];}
 function focar(i){
   const c=cards(); if(!c.length)return;
-  foco=Math.max(0,Math.min(i,c.length-1));
+  foco=Math.max(0,Math.min(i,c.length-1)); FOCO_T0=Date.now();
   c.forEach((x,j)=>{x.style.outline=j===foco?"2px solid var(--acc)":"";x.classList.toggle("atual",j===foco);});
   rFbar();
   c[foco].scrollIntoView({behavior:"smooth",block:"center"});
@@ -1453,8 +1460,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   /* v61: A, S e R agem no card focado; sem foco nao fazem nada (R sem foco segue recarregando) */
-  else if((k==="a"||k==="s"||k==="r")&&cardFocado()){const c=cardFocado();e.preventDefault();
-    (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
+  else if((k==="a"||k==="s"||k==="r")&&cardFocado()){e.preventDefault(); fAto(k);}
   /* v61: com os 4 atos do PRONTO abertos, 1 a 4 escolhem o ato em vez de trocar de aba */
   else if(k>="1"&&k<="4"&&cardFocado()&&cardFocado().querySelector(".qpr.on")){e.preventDefault();
     const b=cardFocado().querySelectorAll(".qpr.on .qk")[+k-1]; if(b) b.click();}
@@ -1685,7 +1691,7 @@ async function carregarAgora(ehRetentativa){
   const fila=g("fila"),cont=g("cont"),cor=g("cor"),fresc=g("fresc"),rw=g("rw"),se=g("se"),
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
-        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono");
+        rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono"),fun=g("fun"),c13e=g("c13e"),eb=g("eb");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1700,7 +1706,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1778,7 +1784,7 @@ function recarregarNovo(){
    v_placar) SEMPRE veio na abertura: o defeito era de chamada, nao de banco. Medido em
    16/09/2026. A classe do defeito — secao cujo titulo existe e cujo corpo depende de outra
    secao ter sido aberta antes — morre no smoke test "A ESCADA desenha os 5 degraus". */
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rEvolucao();rMotor();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rEvolucao();rMotor();rOrcamento();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
@@ -2100,7 +2106,7 @@ function rFbar(){
     <button type="button" onclick="fAto('s')">adiar 2 dias <span class="kbd">S</span></button>
     <button type="button" onclick="fAto('r')">recusar <span class="kbd">R</span></button>
     <button type="button" onclick="modoFoco(false)">sair <span class="kbd">Esc</span></button></div>`:"";}
-function fAto(k){const c=cardFocado(); if(!c) return; (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
+function fAto(k){const c=cardFocado(); if(!c) return; medirDecisao(c.dataset.o,c.dataset.r,k); (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
 function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO){fAto("s");return "s";} return null; }
 (function(){
   let x0=null,y0=null,el=null;
@@ -2115,6 +2121,52 @@ function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO
   document.addEventListener("touchend",e=>{
     if(!el) return; const dx=e.changedTouches[0].clientX-x0, c=el; el=null; c.style.transform=""; gestoFoco(dx);},{passive:true});
 })();
+/* v67 (s693, onda 3 do plano de 01/10/2026, doc 1507).
+   (a) FUNIL DE RECEITA (Balanced Scorecard, perspectiva do cliente): v_proposta_funil. Proposta
+       enviada nao e contrato (LC-14): o valor em aberto aparece separado do que foi aceito.
+   (b) PREVISTO x REALIZADO (pratica do 13-week cash flow): toda segunda a previsao e fotografada e
+       comparada com o caixa da foto seguinte (v_caixa_previsao_erro).
+   (c) ORCAMENTO DE FALHA por rotina (Google SRE): v_error_budget; so avisa (decisao de 01/10).
+   (d) TEMPO POR DECISAO: o relogio comeca ao focar o card e para no ato A, S ou R, so quando o
+       ato e possivel no card; vai para painel_decisao_tempo. Criterio da onda 2. */
+function medirDecisao(o,r,k){
+  if(FOCO_T0==null) return null;
+  const it=achaIt(o,r), t=tipoBand(it);
+  const pode = k==="a" ? (!!recOpcao(it)||t==="PRONTO") : k==="s" ? podeAdiar(it) : (t==="PRONTO"||t==="DECISAO");
+  if(!pode) return null;
+  const ms=Math.max(0,Date.now()-FOCO_T0); FOCO_T0=Date.now();
+  const a={p_origem:o,p_ref:String(r),p_ato:k,p_ms:Math.round(ms),p_modo:document.body.classList.contains("foco")?"foco":"lista"};
+  try{ const p=sb.rpc("painel_medir_decisao",a); if(p&&p.then) p.then(()=>{},()=>{}); }catch(e){}
+  return a;}
+function erroPrevisao(){
+  const e=D.c13e||[];
+  if(!e.length) return '<div class="c13s" style="margin-top:8px">Erro da previsão: começa a medir na segunda foto semanal (toda segunda, 06h).</div>';
+  const u=e.slice(0,4).map(x=>+x.erro_pct).filter(x=>!isNaN(x));
+  const m=u.length?u.reduce((a,b)=>a+b,0)/u.length:null;
+  return m==null?"":`<div class="c13s" style="margin-top:8px">Erro da previsão da semana: <b>${m.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</b> (média de ${u.length}; meta até 15%).</div>`;}
+function rFunil(){
+  const el=document.getElementById("funil"); if(!el) return;
+  const f=D.fun||[];
+  if(!f.length){ el.innerHTML='<div class="fun"><div class="c13t">Funil de receita</div><div class="c13s">sem proposta registrada no banco.</div></div>'; return; }
+  const ab=f.filter(x=>x.estado==="aberta"), ac=f.filter(x=>x.estado==="aceita"), pe=f.filter(x=>x.estado==="perdida");
+  const soma=l=>l.reduce((a,x)=>a+(+x.valor||0),0);
+  const conv=(ac.length+pe.length)?Math.round(100*ac.length/(ac.length+pe.length)):null;
+  const d=ac.map(x=>x.dias_aceite_ate_receber).filter(x=>x!=null).map(Number).sort((a,b)=>a-b);
+  const med=d.length?(d.length%2?d[(d.length-1)/2]:(d[d.length/2-1]+d[d.length/2])/2):null;
+  const linha=x=>`<div class="funi${x.validade_vencida?" venc":""}"><b>${x.valor!=null?rs(+x.valor):"sem valor"}</b> <span>${esc(x.codigo)}</span> ${esc(x.cliente)} <span class="s">· enviada há ${x.dias_desde_envio} dias${x.validade_vencida?" · validade vencida":""}</span></div>`;
+  el.innerHTML=`<div class="fun">
+    <div class="c13t">Funil de receita: <b>${ab.length}</b> em aberto (${rs(soma(ab))})</div>
+    <div class="c13s">Aceitas ${ac.length} (${rs(soma(ac))}) · perdidas ${pe.length} (${rs(soma(pe))}) · conversão ${conv==null?"sem base":conv+"%"} · do aceite ao primeiro recebimento ${med==null?"sem base":med+" dias"} (mediana). Proposta em aberto não é contrato e não entra no caixa.</div>
+    ${ab.length?`<div class="c13l"><div class="c13lt">Em aberto, da mais antiga para a mais nova</div>${ab.slice().sort((a,b)=>b.dias_desde_envio-a.dias_desde_envio).map(linha).join("")}</div>`:""}
+  </div>`;}
+function rOrcamento(){
+  const el=document.getElementById("orcamento"); if(!el) return;
+  const e=D.eb||[];
+  if(!e.length){ el.innerHTML='<tr><td>sem dado no snapshot</td></tr>'; return; }
+  el.innerHTML='<tr><th>rotina</th><th>meta</th><th>cumprimento 7d</th><th>falhas / limite</th><th>estado</th></tr>'+e.map(x=>{
+    const c=+x.consumo_pct||0, cls=c>=100?"estourou":c>=50?"queimando":"";
+    const est=c>=100?"estourou o limite":c>=50?"gastou metade do limite":String(x.veredito_budget||"").toLowerCase();
+    return `<tr class="${cls}"><td>${esc(x.nome)}</td><td>${x.slo_pct!=null?x.slo_pct+"%":"—"}</td><td>${x.cumprimento_pct!=null?x.cumprimento_pct+"%":"—"}</td><td>${x.falhas_7d??0} / ${x.orcamento_falhas_7d??"—"}</td><td>${esc(est)}</td></tr>`;}).join("");}
 function cardFocado(){ const c=cards()[foco]; return (foco>=0&&c&&c.dataset.o)?c:null; }
 function faEscolher(origem,ref,opcao,idel){
   /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
@@ -2532,7 +2584,7 @@ async function marcarLote(){
   await recarregarFila();}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rDelta(); rRunway(); rCaixa13(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
+function rDash(){ rDelta(); rRunway(); rCaixa13(); rFunil(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -2626,7 +2678,7 @@ function rCaixa13(){
     <div class="c13t">${titulo}</div>
     <div class="c13s">Saldo no fim de cada semana, caso base: entradas firmes e incertas, saídas firmes e seu custo de vida. ${risco}</div>
     <div class="c13g" role="img" aria-label="saldo semanal das próximas 13 semanas">${cols}</div>
-    ${lista}</div>`;
+    ${lista}${erroPrevisao()}</div>`;
 }
 /* v63 (s682, P2 aprovada 30/09/2026): entrada sem valor ou sem data NAO entra na sobrevida.
    Sem este aviso o numero parece completo e e menor do que a realidade. Fonte: v_runway.entradas_fora_n. */
