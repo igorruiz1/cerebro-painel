@@ -896,3 +896,165 @@ test('o tempo por decisao sai do foco ate o ato, so quando o ato e possivel, e d
   expect(r.s.p_ms).toBeGreaterThanOrEqual(0);
   expect(r.viaTecla, 'a tecla passa pelo mesmo caminho do botao').toBe('s');
 });
+
+/* v68 · f5, auditoria de 02/10/2026. Quatro classes de defeito:
+   (a) ordem so por peso: tarefa vencida ficava abaixo do corte atras de item que vence depois;
+   (b) o banco entrega a peca pronta e o card nao abre;
+   (c) a escada diz o degrau e cala o que trava;
+   (d) "ver depois" sem teto, com falha virando lista vazia. */
+test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico escrita no card', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const dia=n=>{const d=new Date(); d.setDate(d.getDate()+n); return ivData(d);};
+    const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',
+      nivel:3,acoes:[{verbo:'repactuar',campo:'date',label:'nova data'}],titulo:'item '+ref,titulo_completo:'item '+ref});
+    /* a camada hoje do banco, na ordem do peso: a demanda que vence em 3 dias vem primeiro */
+    D.fila=[it('demanda','Cliente-audios',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
+            it('tarefa','1517',4,70,dia(0)),it('tarefa','1424',5,70,dia(0))];
+    D.exp=[it('tarefa','1334',9,70,dia(-7),'depois')];   /* a EKOS que o peso deixou no segundo plano */
+    D.depois=[it('tarefa','1334',9,70,dia(-7),'depois'),it('tarefa','1600',12,60,dia(2),'depois')];
+    D.cont={depois:2}; D.cor=[]; D.min=[]; D.cap=null; semTeto=false;
+    let err=null; try{ rAgora(); marcaAbas(); }catch(e){ err=String(e); }
+    const cards=[...document.querySelectorAll('#fila1 .card')];
+    const tag=r=>{const c=document.querySelector(`#fila1 .card[data-r="${r}"] .tag.cs`); return c?c.textContent:null;};
+    const achou=!!achaIt('tarefa','1334');
+    const out={err, ordem:cards.map(c=>c.dataset.r), ekos:tag('1334'), hoje:tag('1545'),
+      cab:document.getElementById('h-fila1').textContent, estouro:document.getElementById('estouro').textContent,
+      fila2:[...document.querySelectorAll('#fila2 .card')].map(c=>c.dataset.r), aba:document.getElementById('n-agora').textContent,
+      achou};
+    D.exp=undefined; D.depois=[];
+    try{ rAgora(); out.semExp=[...document.querySelectorAll('#fila1 .card')].map(c=>c.dataset.r); }catch(e){ out.semExp=String(e); }
+    return out;
+  });
+  expect(r.err, 'rAgora() derrubou o script').toBe(null);
+  expect(r.ordem[0], 'a vencida ha 7 dias abre a fila').toBe('1334');
+  expect(r.ordem.slice(1,4), 'as que vencem hoje vem antes da demanda de daqui a 3 dias').toEqual(['1545','1517','1424']);
+  expect(r.ordem.length, 'o teto de 5 continua valendo').toBe(5);
+  expect(r.ordem.indexOf('Cliente-audios'), 'a demanda de peso maior que vence em 3 dias fica atras das que vencem').toBe(4);
+  expect(r.ordem, 'o item sem prazo cai abaixo do corte').not.toContain('32');
+  expect(r.ekos, 'a classe vai escrita no card').toBe('urgente · vencida há 7d');
+  expect(r.hoje).toBe('data fixa · vence hoje');
+  expect(r.cab, 'o cabecalho conta as classes').toContain('1 vencida · 3 vencem hoje');
+  expect(r.estouro, 'o corte se anuncia').toContain('5 de 6');
+  expect(r.fila2, 'a promovida sai do segundo plano, a futura fica').toEqual(['1600']);
+  expect(r.aba, 'o contador da aba conta a tarefa promovida').toBe('6');
+  expect(r.achou, 'A, S e R acham o card promovido').toBe(true);
+  expect(r.semExp, 'sem a chave exp a tela ordena o que tem, sem derrubar').toEqual(['1545','1517','1424','Cliente-audios','32']);
+});
+
+test('o card abre a peca pronta: Drive pelo id, caminho copiavel, e id forjado nao vira link', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    const base={origem:'tarefa',nivel:1,acoes:[],titulo:'Revisar peca',titulo_completo:'Revisar peca'};
+    const box=document.createElement('div'); document.body.appendChild(box);
+    const html=it=>{box.innerHTML=cardFila(it); return box;};
+    let err=null, a={}, b={}, c={}, d={};
+    try{
+      let x=html({...base,ref:'1',artefato_drive_id:'1AbC-dEf_ghIJkl23',artefato_path:'08-dabli/peca.pdf'});
+      const l=x.querySelector('.peca a');
+      a={href:l&&l.getAttribute('href'),alvo:l&&l.target,rel:l&&l.rel,txt:l&&l.textContent,
+         cam:x.querySelector('.pecap')&&x.querySelector('.pecap').textContent};
+      x=html({...base,ref:'2',artefato_path:'G:/Meu Drive/CEREBRO IGOR/08/peca v03.docx'});
+      b={link:!!x.querySelector('.peca a'),cam:x.querySelector('.pecap').textContent,copia:!!x.querySelector('.peca button')};
+      x=html({...base,ref:'3'}); c={peca:!!x.querySelector('.peca')};
+      x=html({...base,ref:'4',artefato_drive_id:'x" onmouseover="alert(1)'});
+      d={peca:!!x.querySelector('.peca'),onmouse:x.innerHTML.includes('onmouseover=')};
+    }catch(e){ err=String(e); }
+    return {err,a,b,c,d};
+  });
+  expect(r.err, 'cardFila derrubou').toBe(null);
+  expect(r.a.href, 'drive_id abre no Drive').toBe('https://drive.google.com/open?id=1AbC-dEf_ghIJkl23');
+  expect(r.a.alvo).toBe('_blank');
+  expect(r.a.rel).toContain('noopener');
+  expect(r.a.txt).toBe('abrir peça');
+  expect(r.a.cam, 'o caminho aparece junto').toBe('08-dabli/peca.pdf');
+  expect(r.b.link, 'so com caminho nao inventa link').toBe(false);
+  expect(r.b.cam).toBe('G:/Meu Drive/CEREBRO IGOR/08/peca v03.docx');
+  expect(r.b.copia, 'botao de copiar o caminho').toBe(true);
+  expect(r.c.peca, 'card sem peca nao desenha a linha').toBe(false);
+  expect(r.d.peca, 'id com forma errada e sem caminho: nada').toBe(false);
+  expect(r.d.onmouse, 'id forjado nao entra no HTML').toBe(false);
+});
+
+test('a escada diz o que trava o proximo degrau, com valor e quem move cada KPI', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    D.kdono=[{chave:'decisao.ratificacao_pct',dono:'igor'},{chave:'motor.slo_rotina_pct',dono:'claude'}];
+    const m=(dimensao,ordem,nivel,quais,falta)=>({dimensao,ordem,nivel,rotulo:dimensao,maior_serie:7,kpis_ativos:3,
+      kpis_com_alarme:1,quais_travam:quais,falta_para_o_proximo:falta});
+    D.mat=[m('contrato',1,3,'executor.aberturas_duplicadas_7d=10','TETO 3 POR RESULTADO'),
+           m('motor',4,3,'motor.slo_rotina_pct=92.3, motor.achados_alto=1','TETO 3 POR RESULTADO'),
+           m('fila_decisao',5,3,'decisao.ratificacao_pct=66.7','TETO 3 POR RESULTADO'),
+           m('memoria',2,5,null,'degrau 5')];
+    D.ev=[]; D.loop=[];
+    let err=null; try{ rEvolucao(); rHero(); }catch(e){ err=String(e); }
+    const t=document.getElementById('travas');
+    const k=c=>{const e=t.querySelector(`.travk[data-chave="${c}"]`); return e?e.textContent:null;};
+    const out={err, txt:t.textContent, n:t.querySelectorAll('.travk').length, dims:t.querySelectorAll('.travd').length,
+      rat:k('decisao.ratificacao_pct'), slo:k('motor.slo_rotina_pct'), dup:k('executor.aberturas_duplicadas_7d'),
+      linhaDim:document.getElementById('dims').textContent, heroi:document.getElementById('hero-dash').textContent};
+    D.mat=D.mat.map(x=>({...x,nivel:5,quais_travam:null})); rEvolucao(); out.cinco=t.textContent;
+    D.mat=[]; try{ rEvolucao(); }catch(e){ out.err=out.err||String(e); } out.vazio=t.innerHTML;
+    return out;
+  });
+  expect(r.err, 'rEvolucao() derrubou o script').toBe(null);
+  expect(r.txt).toContain('O que segura o degrau 4');
+  expect(r.txt).toContain('4 números fora da meta em 3 dimensões');
+  expect(r.n, 'um chip por KPI que trava').toBe(4);
+  expect(r.dims, 'so as dimensoes presas no menor degrau').toBe(3);
+  expect(r.rat).toContain('= 66.7');
+  expect(r.rat).toContain('quem move: você');
+  expect(r.slo).toContain('quem move: a máquina');
+  expect(r.dup, 'KPI sem dono se declara').toContain('sem dono no banco');
+  expect(r.linhaDim, 'a linha da dimensao diz a trava').toContain('trava: motor.slo_rotina_pct=92.3');
+  expect(r.heroi, 'o resumo diz quantos KPIs travam').toContain('4 KPIs travam o 4');
+  expect(r.cinco).toContain('nada trava');
+  expect(r.vazio, 'sem dado de maturidade nao inventa trava').toBe('');
+});
+
+test('ver depois tem teto, e falha nao vira "nada em segundo plano"', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(async()=>{
+    const orig=sb.from;
+    const it=ref=>({origem:'tarefa',ref,nivel:3,acoes:[],titulo:'d'+ref,titulo_completo:'d'+ref,camada_tela:'depois'});
+    D.fila=[]; D.exp=[]; D.cor=[]; D.min=[]; D.cap=null; D.cont={depois:2}; D.depois=[it('900')];
+    const fake=res=>()=>({select:()=>({eq:()=>res()})});
+    /* 1. erro do banco: mantem o anterior e declara */
+    sb.from=fake(()=>Promise.resolve({data:null,error:{message:'canceling statement due to statement timeout'}}));
+    const ok1=await verDepois();
+    const f1={ok:ok1, mantem:D.depois.map(x=>x.ref), txt:document.getElementById('fila2').textContent,
+      cards:document.querySelectorAll('#fila2 .card').length};
+    /* 2. teto estourado (a mesma rejeicao que comTeto produz) */
+    D.depois=[];
+    sb.from=fake(()=>Promise.reject(new Error('__TETO__v_painel_fila depois')));
+    const ok2=await verDepois();
+    const f2={ok:ok2, txt:document.getElementById('fila2').textContent};
+    /* 3. vazio de verdade: e resposta, nao falha */
+    D.cont={depois:0};
+    sb.from=fake(()=>Promise.resolve({data:[],error:null}));
+    const ok3=await verDepois();
+    const f3={ok:ok3, txt:document.getElementById('fila2').textContent};
+    /* 4. dois cliques seguidos: uma requisicao so */
+    let n=0; sb.from=fake(()=>{n++; return Promise.resolve({data:[it('901')],error:null});});
+    await Promise.all([verDepois(),verDepois()]);
+    const f4={n, refs:D.depois.map(x=>x.ref)};
+    sb.from=orig;
+    return {f1,f2,f3,f4};
+  });
+  expect(r.f1.ok).toBe(false);
+  expect(r.f1.mantem, 'a falha nao apaga o que ja estava na tela').toEqual(['900']);
+  expect(r.f1.cards).toBe(1);
+  expect(r.f1.txt).toContain('não carregou');
+  expect(r.f1.txt).toContain('tentar de novo');
+  expect(r.f2.ok).toBe(false);
+  expect(r.f2.txt, 'o teto se declara em segundos').toContain('sem resposta em 15s');
+  expect(r.f2.txt, 'falha nao vira vazio').not.toContain('nada em segundo plano');
+  expect(r.f3.ok).toBe(true);
+  expect(r.f3.txt, 'vazio de verdade continua sendo dito').toContain('nada em segundo plano');
+  expect(r.f3.txt).not.toContain('não carregou');
+  expect(r.f4.n, 'clique repetido pega carona').toBe(1);
+  expect(r.f4.refs).toEqual(['901']);
+});
