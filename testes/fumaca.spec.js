@@ -1058,3 +1058,176 @@ test('ver depois tem teto, e falha nao vira "nada em segundo plano"', async ({pa
   expect(r.f4.n, 'clique repetido pega carona').toBe(1);
   expect(r.f4.refs).toEqual(['901']);
 });
+
+/* v69 · t1561 · RESULTADO PF. Tres classes de defeito que a tela nova nao pode ter:
+   (a) mes sem extrato lancado lido como "resultado zero" (a pior frase de uma tela financeira);
+   (b) a fonte opcional acendendo "carga incompleta" antes de a linha existir no banco, ou o
+       contrario, a tela calando quando a chave nao veio;
+   (c) a tela nova empurrando o celular para a rolagem horizontal.
+   Os numeros abaixo sao FICTICIOS: o repo e publico e o dado PF do Igor nao entra em arquivo
+   versionado. A forma e a do snapshot "pf" (uma linha com meses, classes, pj e renda). */
+const PF_FIX = {mes_corrente:'2031-03',
+  meses:[
+    {mes:'2031-03',receita:null,despesa:null,resultado:null,saque_no_resultado:null,n_lanc:1},
+    {mes:'2031-02',receita:12345.67,despesa:-23456.78,resultado:-11111.11,saque_no_resultado:-1000,n_lanc:40,
+     financiamento:4200,fin_recebido:5000,fin_pago:-800,caixa_mes:-6911.11},
+    {mes:'2031-01',receita:30000,despesa:-20000.4,resultado:9999.6,saque_no_resultado:null,n_lanc:30,
+     financiamento:null,fin_recebido:null,fin_pago:null,caixa_mes:9999.6}],
+  classes:[
+    {mes:'2031-02',classe:'Classe A',gasto:9000,media3:6000,ord:1},
+    {mes:'2031-02',classe:'Classe B',gasto:5000,media3:0,ord:2},
+    {mes:'2031-02',classe:'Classe C',gasto:4000,media3:4100,ord:3},
+    {mes:'2031-02',classe:'Classe D',gasto:2500,media3:5000,ord:4},
+    {mes:'2031-02',classe:'Classe E',gasto:1200.5,media3:1000,ord:5},
+    {mes:'2031-01',classe:'Classe A',gasto:7000,media3:6500,ord:1},
+    {mes:'2031-01',classe:'Classe F com um nome comprido de proposito para testar a quebra de linha no celular',gasto:3000,media3:2000,ord:2}],
+  pj:[{frente:'01-frente-teste',classe:'Aquisicao de ativo',contraparte:'Fornecedor X',valor:-50000,n:1,de:'2030-05-01',ate:'2030-05-01'},
+      {frente:'02-frente-teste',classe:'Invest.',contraparte:'Fundo Y',valor:-1234.5,n:4,de:'2030-01-10',ate:'2030-12-20'}],
+  renda:[{id:1,tema:'Oportunidade de teste',esforco:'baixo',resultado:'alto',prioridade:'P1 · faz já',frente:'11-x',status:'validado'},
+         {id:2,tema:'Outra oportunidade',esforco:null,resultado:null,prioridade:'P4 · dormente',frente:null,status:'validado'}]};
+
+test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a media e rodape recolhido', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(fix=>{
+    const out={};
+    const sub=document.querySelector('#subnav .sub[data-p="pf"]');
+    out.sub={existe:!!sub, grupo:sub&&sub.dataset.g, painel:!!document.getElementById('p-pf')};
+    out.opc={opcional:CHAVES_OPCIONAIS.includes('pf'), obrigatoria:CHAVES_PAINEL.includes('pf')};
+    /* sem a chave: a tela DIZ que a fonte nao chegou */
+    D.pf=null; let err=null;
+    try{ render(); }catch(e){ err=String(e); }
+    out.semFonte=document.getElementById('pf-meses').textContent;
+    out.semFonteRod=document.getElementById('pf-rodape').innerHTML;
+    /* com a chave, desenhado so por render(), sem clique */
+    D.pf=JSON.parse(JSON.stringify(fix));
+    try{ render(); }catch(e){ err=err||String(e); }
+    out.err=err;
+    const c=[...document.querySelectorAll('#pf-meses .pfc')];
+    out.meses=c.map(x=>x.dataset.mes);
+    out.c0=c[0].textContent; out.c1=c[1].textContent; out.c2=c[2].textContent;
+    out.c1neg=c[1].classList.contains('neg'); out.c2neg=c[2].classList.contains('neg');
+    out.c0vazio=c[0].classList.contains('vazio');
+    out.sel=c.filter(x=>x.classList.contains('on')).map(x=>x.dataset.mes);
+    out.cab=document.getElementById('pf-h-classes').textContent;
+    out.nota=(document.querySelector('#pf-classes .pfnota')||{}).textContent||'';
+    const g=[...document.querySelectorAll('#pf-classes .pfg')];
+    out.classes=g.map(x=>x.dataset.classe);
+    out.var=g.map(x=>x.querySelector('.pfgv').textContent);
+    out.alta=g.map(x=>x.classList.contains('alta'));
+    out.larg=g.map(x=>parseFloat(x.querySelector('.pfbar i').style.width));
+    out.media=g.map(x=>{const m=x.querySelector('.pfbar .md'); return m?parseFloat(m.style.left):null;});
+    const det=document.querySelector('#pf-rodape details');
+    out.rod={existe:!!det, aberto:det&&det.open, txt:det&&det.textContent,
+             pj:document.querySelectorAll('#pf-rodape .pfpj').length, mr:document.querySelectorAll('#pf-rodape .pfmr').length};
+    /* tocar noutro mes troca o top 5; o rodape aberto continua aberto */
+    det.open=true;
+    document.querySelector('#pf-meses .pfc[data-mes="2031-01"]').click();
+    out.troca={cab:document.getElementById('pf-h-classes').textContent,
+      n:document.querySelectorAll('#pf-classes .pfg').length,
+      nota:!!document.querySelector('#pf-classes .pfnota'),
+      rodAberto:document.querySelector('#pf-rodape details').open};
+    PFMES=null;
+    /* v69b: payload antigo, sem os campos de financiamento, nao inventa linha */
+    D.pf=JSON.parse(JSON.stringify(fix));
+    D.pf.meses.forEach(m=>{delete m.financiamento; delete m.fin_recebido; delete m.fin_pago; delete m.caixa_mes;});
+    rPF(); out.antigo=document.querySelector('#pf-meses .pfc[data-mes="2031-02"]').textContent;
+    D.pf=JSON.parse(JSON.stringify(fix));
+    return out;
+  }, PF_FIX);
+  expect(r.err, 'render() derrubou o script').toBe(null);
+  expect(r.sub, 'Resultado PF e sub-aba de ACOMPANHAR com painel proprio').toEqual({existe:true, grupo:'acompanhar', painel:true});
+  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({opcional:false, obrigatoria:true});
+  expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
+  expect(r.semFonteRod, 'sem a chave nao desenha rodape vazio').toBe('');
+  expect(r.meses, 'o mes corrente e os dois anteriores, nesta ordem').toEqual(['2031-03','2031-02','2031-01']);
+  expect(r.c0).toContain('em curso');
+  expect(r.c0, 'mes sem extrato se declara').toContain('extrato ainda não lançado');
+  expect(r.c0, 'mes sem extrato nao vira resultado zero').not.toContain('R$ 0');
+  expect(r.c0vazio).toBe(true);
+  expect(r.c1, 'entradas em R$ com separador brasileiro').toContain('R$ 12.346');
+  expect(r.c1, 'saidas em valor positivo').toContain('R$ 23.457');
+  expect(r.c1, 'resultado negativo com sinal').toContain('-R$ 11.111');
+  expect(r.c1, 'o estado vai por escrito, nao so na cor').toContain('negativo');
+  expect(r.c1, 'o saque sem destino aparece').toContain('R$ 1.000 de saque sem destino');
+  expect(r.c1neg).toBe(true);
+  expect(r.c2).toContain('+R$ 10.000');
+  expect(r.c2).toContain('positivo');
+  expect(r.c2neg).toBe(false);
+  /* v69b · padrao DFC: o emprestimo nao e renda, tem linha propria, e o caixa soma as duas */
+  expect(r.c1, 'resultado operacional nomeado').toContain('resultado operacional');
+  expect(r.c1, 'financiamento em linha separada, com sinal').toMatch(/financiamento\s*\+R\$ 4\.200/);
+  expect(r.c1, 'o que entrou e o que saiu de financiamento').toContain('empréstimo recebido +R$ 5.000');
+  expect(r.c1).toContain('parcelas pagas -R$ 800');
+  expect(r.c1, 'caixa do mes = operacional + financiamento').toMatch(/caixa do mês\s*-R\$ 6\.911/);
+  expect(r.c2, 'mes sem emprestimo diz nenhum').toMatch(/financiamento\s*nenhum/);
+  expect(r.c2).toMatch(/caixa do mês\s*\+R\$ 10\.000/);
+  expect(r.antigo, 'payload sem os campos nao inventa a linha').not.toContain('financiamento');
+  expect(r.antigo).toContain('-R$ 11.111');
+  expect(r.sel, 'sem gasto no mes corrente o top 5 abre no mais recente que tem').toEqual(['2031-02']);
+  expect(r.nota, 'e diz por escrito que pulou o mes corrente').toContain('ainda sem gasto lançado');
+  expect(r.cab).toContain('FEVEREIRO');
+  expect(r.classes, 'top 5 na ordem do banco').toEqual(['Classe A','Classe B','Classe C','Classe D','Classe E']);
+  expect(r.var[0]).toBe('+50% acima da média de R$ 6.000');
+  expect(r.var[1], 'classe sem historico e nova, nao +infinito').toContain('novo');
+  expect(r.var[2]).toContain('na média');
+  expect(r.var[3]).toBe('-50% abaixo da média de R$ 5.000');
+  expect(r.alta, 'acima da media ou nova acende; na media e abaixo nao').toEqual([true,true,false,false,true]);
+  expect(r.larg[0], 'escala unica: a maior barra ocupa a trilha').toBeCloseTo(100,0);
+  expect(r.larg[3], 'e as outras seguem a razao dos valores').toBeCloseTo(27.8,0);
+  expect(r.media[0], 'o traco da media na mesma escala').toBeCloseTo(66.7,0);
+  expect(r.media[1], 'classe nova nao desenha traco de media').toBe(null);
+  expect(r.rod.existe).toBe(true);
+  expect(r.rod.aberto, 'o rodape nasce recolhido').toBe(false);
+  expect(r.rod.txt).toContain('Patrimônio nas PJs (2) e matriz de renda (2)');
+  expect(r.rod.txt, 'patrimonial nao e resultado, por escrito').toContain('não entra no resultado');
+  expect(r.rod.txt).toContain('Fornecedor X');
+  expect(r.rod.txt).toContain('-R$ 50.000');
+  expect(r.rod.txt).toContain('10/01/2030 a 20/12/2030');
+  expect(r.rod.txt).toContain('Oportunidade de teste');
+  expect(r.rod.txt, 'campo vazio da matriz se declara').toContain('esforço não medido');
+  expect(r.rod.pj).toBe(2);
+  expect(r.rod.mr).toBe(2);
+  expect(r.troca.cab, 'tocar no mes troca o top 5').toContain('JANEIRO');
+  expect(r.troca.n).toBe(2);
+  expect(r.troca.nota, 'escolha do Igor nao repete o aviso de mes pulado').toBe(false);
+  expect(r.troca.rodAberto, 'redesenhar nao fecha o rodape que ele abriu').toBe(true);
+});
+
+test('a carga sem a chave pf nao acende "carga incompleta"', async ({page})=>{
+  const erros = await abrirContando(page);
+  const r = await page.evaluate(()=>({aceso:document.getElementById('falhou').classList.contains('on'),
+    det:document.getElementById('falhoudet').textContent, txt:document.getElementById('pf-meses').textContent,
+    from:window.__n.from}));
+  expect(erros, 'erro de script durante a carga').toEqual([]);
+  expect(r.aceso, 'fonte opcional ausente nao e falha').toBe(false);
+  expect(r.det).not.toContain('pf');
+  expect(r.txt, 'mas a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
+  expect(r.from, 'Resultado PF nao consulta view direto').toEqual([]);
+});
+
+for (const largura of [390, 1280]) {
+  test(`Resultado PF cabe em ${largura}px sem rolagem horizontal, com fonte larga e rodape aberto`, async ({page})=>{
+    await page.setViewportSize({width:largura, height:900});
+    const erros = await abrir(page);
+    await revelarCasca(page);
+    await page.locator('.tab[data-g="acompanhar"]').click();
+    await page.locator('#subnav .sub[data-p="pf"]').click();
+    const r = await page.evaluate(fix=>{
+      D.pf=JSON.parse(JSON.stringify(fix)); render();
+      document.body.style.letterSpacing="1.5px";
+      document.querySelector('#pf-rodape details').open=true;
+      const W=document.documentElement.clientWidth;
+      const pane=document.getElementById('p-pf');
+      const fora=[...pane.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>W+1)
+        .map(e=>e.tagName+'.'+e.className);
+      const cols=new Set([...document.querySelectorAll('#pf-meses .pfc')].map(e=>Math.round(e.getBoundingClientRect().left))).size;
+      return {W, SW:document.documentElement.scrollWidth, fora, visivel:pane.classList.contains('on'), cols};
+    }, PF_FIX);
+    expect(erros, 'erro de script').toEqual([]);
+    expect(r.visivel, 'a sub-aba abre o painel').toBe(true);
+    expect(r.SW, 'rolagem horizontal').toBe(r.W);
+    expect(r.fora, 'elemento passando da borda').toEqual([]);
+    expect(r.cols, largura<640?'no celular os meses empilham':'no computador os tres meses lado a lado').toBe(largura<640?1:3);
+  });
+}
