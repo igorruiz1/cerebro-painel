@@ -1137,7 +1137,7 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   }, PF_FIX);
   expect(r.err, 'render() derrubou o script').toBe(null);
   expect(r.sub, 'Resultado PF e sub-aba de ACOMPANHAR com painel proprio').toEqual({existe:true, grupo:'acompanhar', painel:true});
-  expect(r.opc, 'pf e chave opcional, nao obrigatoria').toEqual({opcional:true, obrigatoria:false});
+  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({opcional:false, obrigatoria:true});
   expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
   expect(r.semFonteRod, 'sem a chave nao desenha rodape vazio').toBe('');
   expect(r.meses, 'o mes corrente e os dois anteriores, nesta ordem').toEqual(['2031-03','2031-02','2031-01']);

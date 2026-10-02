@@ -1081,7 +1081,7 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf"];
 /* v68 (f5, auditoria de 02/10/2026, achado 1): chave OPCIONAL. "exp" traz as tarefas do Igor
    vencidas ou vencendo hoje que o ranking so por peso deixou fora da camada hoje. Ela ainda nao
    existe em painel_snapshot_fonte desde 02/10/2026 (P3 aprovada pelo Igor, s734) e entrou em CHAVES_PAINEL.
@@ -1091,7 +1091,7 @@ const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9",
 /* v69 (t1561): "pf" e OPCIONAL pelo mesmo motivo: a tela Resultado PF nasce antes da linha em
    painel_snapshot_fonte (o INSERT espera o OK do Igor). Sem a chave a tela diz que a fonte nao
    chegou e a carga NAO acende "incompleta". Quando a linha entrar, "pf" passa para CHAVES_PAINEL. */
-const CHAVES_OPCIONAIS=["pf"];
+const CHAVES_OPCIONAIS=[];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
