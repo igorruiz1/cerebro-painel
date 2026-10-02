@@ -763,6 +763,24 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 .funi.venc b{color:var(--red)}
 #orcamento tr.estourou td{color:var(--red);font-weight:600}
 #orcamento tr.queimando td{color:var(--yel)}
+/* v68 · classe de servico, abrir peca, o que trava a escada, falha do segundo plano */
+.tag.cs1{color:var(--red);border-color:var(--red);font-weight:600}
+.tag.cs2{color:var(--yel);border-color:var(--yel);font-weight:600}
+.s.cls{color:var(--red);font-weight:600}
+.peca{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:-2px 0 8px;font-size:12.5px}
+.peca .pecaa{color:var(--acc);font-weight:600;text-decoration:underline}
+.peca .pecap{user-select:all;-webkit-user-select:all;background:var(--card);border:1px solid var(--line2);border-radius:6px;padding:2px 6px;color:var(--ink2);max-width:100%;overflow-wrap:anywhere}
+.trav{background:var(--card);border:1px solid var(--line2);border-left:3px solid var(--red);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.trav.ok{border-left-color:var(--grn)}
+.travt{font-size:14px;margin-bottom:4px}
+.travd{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;margin-top:8px}
+.travd .nm{font-weight:600;font-size:13px;flex:1 1 100%}
+.travk{font-size:12.5px;border:1px solid var(--line2);border-radius:8px;padding:3px 8px;overflow-wrap:anywhere}
+.travk i{color:var(--mut);font-style:normal}
+.dim .trv{flex:1 1 100%;font-size:12px;color:var(--red)}
+.empty.falha{border-color:var(--red);color:var(--red)}
+.trav .s{font-size:12.5px;color:var(--mut);line-height:1.45}
+.peca .lbl{display:inline;margin:0}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -912,7 +930,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
   <div class="secnav" id="nav-maquina"></div>
   <section class="sec" id="s-movimento"><h2>O ENVELHECIMENTO DA FILA <span class="s">o único gráfico do kanban que age sobre trabalho ainda salvável; o resto é autópsia</span></h2><div class="g4" id="mov-kpi"></div><div id="mov-aging"></div><h2>A REPRESA DE PRAZO <span class="s">quantos cards vencem no mesmo dia, e de quem eles são</span></h2><div id="mov-represa"></div><div class="foot"><b>Como ler.</b> A régua é o percentil 85 do tempo de ciclo do que já fechou: item acima dele aparece <b>antes</b> de vencer, não depois. Na represa, o teto desenhado é 8 por dia útil — acima disso o dia vira um bloco de vencidos de uma vez só.</div></section>
   <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
-  <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
+  <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="travas"></div><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
   <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>ORÇAMENTO DE FALHA <span class="s">quanto cada rotina pode falhar por semana antes de acender (Google SRE); só avisa, nenhuma é pausada sozinha</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="orcamento"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
   <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
 </div>
@@ -970,7 +988,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v67";
+const VER="v68";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -998,6 +1016,13 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
                      "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb"];
+/* v68 (f5, auditoria de 02/10/2026, achado 1): chave OPCIONAL. "exp" traz as tarefas do Igor
+   vencidas ou vencendo hoje que o ranking so por peso deixou fora da camada hoje. Ela ainda nao
+   existe em painel_snapshot_fonte: a proposta esta em f5_propostas.sql e depende do OK do Igor.
+   Enquanto nao existir, a falta dela NAO vira "carga incompleta": a tela funciona sem ela com o
+   que a fila de hoje e o segundo plano ja trazem. Quando a fonte entrar no banco, "exp" passa
+   para CHAVES_PAINEL e a falta volta a ser falha declarada. */
+const CHAVES_OPCIONAIS=["exp"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1692,6 +1717,7 @@ async function carregarAgora(ehRetentativa){
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
         rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono"),fun=g("fun"),c13e=g("c13e"),eb=g("eb");
+  const exp=g("exp");   /* v68: opcional, ver CHAVES_OPCIONAIS */
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1706,7 +1732,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1789,7 +1815,7 @@ function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
     e.textContent=n||"";e.className="n"+(n?(" "+cls):"");};
-  set("n-agora",(D.fila||[]).length,"hot");
+  set("n-agora",hojeLista().length,"hot");
   set("n-le",c.leituras,"warn");
 }
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
@@ -1822,6 +1848,7 @@ function universoFiltro(){
     if(vistos.has(c))return;vistos.add(c);U.push({origem:o.origem,ref:o.ref,frente:o.frente});};
   (D.fila||[]).forEach(poe);
   (D.depois||[]).forEach(poe);
+  (D.exp||[]).forEach(poe);
   (D.nat||[]).filter(n=>n.camada_tela==="hoje"||n.camada_tela==="depois").forEach(poe);
   return U;
 }
@@ -1973,9 +2000,11 @@ function cardFila(it){
      ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
      ${it.parado_txt?`<span>${esc(it.parado_txt)}</span>`:(it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:"")}
      ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
+     ${tagClasse(it)}
      ${minDe(it)!=null?`<span class="tag min">~${minDe(it)} min</span>`:""}
    </div>
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
+   ${pecaLink(it)}
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${opcoesFila(it)}
    ${rapidos(it)}
@@ -2025,7 +2054,9 @@ function recOpcao(it){
   if(!o||!Array.isArray(o.opcoes)) return null;
   const r=o.opcoes.find(x=>x.recomendada); return r?r.label:null;}
 function podeAdiar(it){ return !!it&&(it.acoes||[]).some(a=>a.verbo==="repactuar"); }
-function achaIt(origem,ref){ return (D.fila||[]).find(x=>x.origem===origem&&String(x.ref)===String(ref)); }
+/* v68: o card promovido por classe de servico mora em D.exp ou D.depois, nao em D.fila. Sem isto
+   A, S e R sobre ele nao achavam o card e respondiam "o banco nao aceita novo prazo". */
+function achaIt(origem,ref){ return [...(D.fila||[]),...(D.exp||[]),...(D.depois||[])].find(x=>x.origem===origem&&String(x.ref)===String(ref)); }
 const ATOS_PRONTO=[["feito","feito"],["enviado","enviei"],["refazer","refazer"],["descartar","descartar"]];
 function rapidos(it){
   const k=uid(it.origem+it.ref), t=tipoBand(it), rec=recOpcao(it);
@@ -2201,10 +2232,131 @@ function cardCorrecao(c){
    </div></div>`;}
 const TETO=5; let semTeto=false;
 function verTudo(){semTeto=true;rAgora();}
-async function verDepois(){
-  const q=sb.from("v_painel_fila").select("*").eq("camada_tela","depois");
-  const r=await q; D.depois=r.error?[]:r.data; rAgora();
+/* v68 (f5, achado 10 da auditoria de 02/10/2026): "ver depois" sem teto e com falha virando lista
+   vazia. Era r.error?[]:r.data, sem comTeto: a consulta direta a v_painel_fila corre sob o
+   statement_timeout de 8 s do papel authenticated, e quando falhava a tela escrevia "nada em
+   segundo plano" com itens no banco. E a confusao entre vazio e falha que a v44 corrigiu na carga.
+   Agora: teto de LIMITE_RECARGA, falha mantem o dado anterior e se declara com "tentar de novo",
+   e dois cliques seguidos pegam carona na mesma requisicao. */
+let DEPOIS_FALHA=null, DEPOIS_EMVOO=null;
+function verDepois(){
+  if(DEPOIS_EMVOO) return DEPOIS_EMVOO;
+  DEPOIS_EMVOO=(async()=>{
+    let r=null, falha=null;
+    try{ r=await comTeto(sb.from("v_painel_fila").select("*").eq("camada_tela","depois"), LIMITE_RECARGA, "v_painel_fila depois"); }
+    catch(e){ falha=ehTeto(e)?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":((e&&e.message)||"erro"); }
+    if(!falha&&r&&r.error) falha=r.error.message||"erro";
+    if(!falha&&(!r||!Array.isArray(r.data))) falha="resposta sem dados";
+    if(falha){ DEPOIS_FALHA=falha;
+      msg("O segundo plano não carregou ("+falha+"). A tela mantém o que já tinha: tente de novo.","bad",7000); }
+    else { DEPOIS_FALHA=null; D.depois=r.data; }
+    rAgora();
+    return !falha;
+  })().finally(()=>{DEPOIS_EMVOO=null;});
+  return DEPOIS_EMVOO;
 }
+function avisoDepois(){
+  return DEPOIS_FALHA?`<div class="empty falha">O segundo plano não carregou (${esc(DEPOIS_FALHA)}). Isto não quer dizer que ele esteja vazio.
+    <button class="link" onclick="verDepois()">tentar de novo</button></div>`:"";}
+
+/* v68 (f5, achado 1 da auditoria de 02/10/2026): CLASSES DE SERVICO do Kanban (David Anderson,
+   Kanban, 2010). Medido em 02/10/2026 13:38: a tela "hoje" mostrava 0 das 74 tarefas abertas do
+   Igor, a fatura EKOS vencida ha 7 dias estava na posicao 9 do segundo plano e a tarefa 535, que
+   vencia no dia, nem era carregada. As 15:18 do mesmo dia a camada hoje tinha 4 tarefas vencendo
+   hoje e, em PRIMEIRO, uma demanda que so vence em 05/10, porque ela pesa 75 e as tarefas 70.
+   Ordem so por peso mistura duas perguntas: quanto vale e quando vence.
+   A regra: item com prazo (tarefa, fluxo, demanda) vencido e classe URGENTE (expedite); vencendo
+   hoje e classe DATA FIXA (fixed date); o resto e PADRAO. A classe ordena primeiro e o peso
+   (posicao do banco) ordena dentro dela, entao o vencido nunca fica abaixo do corte de 5 atras de
+   um item que vence depois. O teto de 5 continua valendo e se anuncia como antes.
+   Tarefa do Igor vencida ou vencendo hoje que o banco deixou no segundo plano SOBE para hoje: vem
+   da chave opcional "exp" (proposta em f5_propostas.sql) ou do segundo plano ja carregado.
+   O dia e o do relogio do Igor (ivData local), nao o UTC do banco. */
+const ORIGENS_PRAZO=["tarefa","fluxo","demanda"];
+const chaveIt=it=>it.origem+"|"+String(it.ref);
+function diasAtraso(it){
+  if(!it||!it.data_ref||!ORIGENS_PRAZO.includes(it.origem)) return null;
+  const d=String(it.data_ref).slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  return Math.round((Date.parse(ivData(new Date())+"T00:00:00Z")-Date.parse(d+"T00:00:00Z"))/864e5);}
+function classeDe(it){
+  const a=diasAtraso(it); if(a==null||a<0) return null;
+  return a>0?{k:1,nome:"urgente",txt:"vencida há "+a+"d"}:{k:2,nome:"data fixa",txt:"vence hoje"};}
+function tagClasse(it){
+  const c=classeDe(it); if(!c) return "";
+  const sub=it.camada_tela&&it.camada_tela!=="hoje"?" Subiu do segundo plano para hoje.":"";
+  return `<span class="tag cs cs${c.k}" title="Classe de serviço (Kanban): ${c.nome}. Ordena antes do peso.${sub}">${c.nome} · ${c.txt}</span>`;}
+function ordenaClasse(l){
+  const pos=x=>typeof x.posicao==="number"?x.posicao:null;
+  return l.map((it,i)=>({it,i,k:(classeDe(it)||{k:3}).k})).sort((a,b)=>
+    (a.k-b.k) ||
+    ((pos(a.it)!=null&&pos(b.it)!=null)?pos(a.it)-pos(b.it):((+b.it.peso||0)-(+a.it.peso||0))) ||
+    (a.i-b.i)).map(x=>x.it);}
+/* a lista de HOJE: a camada hoje do banco mais as tarefas vencidas ou de hoje que ficaram fora */
+function hojeLista(){
+  const vistos=new Set((D.fila||[]).map(chaveIt)), extra=[];
+  [...(D.exp||[]),...(D.depois||[])].forEach(it=>{
+    if(!it||it.origem!=="tarefa"||!classeDe(it)) return;
+    const k=chaveIt(it); if(vistos.has(k)) return; vistos.add(k); extra.push(it);});
+  return ordenaClasse([...(D.fila||[]),...extra]);}
+function depoisFora(){
+  const h=new Set(hojeLista().map(chaveIt));
+  return (D.depois||[]).filter(x=>!h.has(chaveIt(x)));}
+function resumoClasse(l){
+  const v=l.filter(x=>(classeDe(x)||{}).k===1).length, h=l.filter(x=>(classeDe(x)||{}).k===2).length;
+  if(!v&&!h) return "";
+  return ` <span class="s cls">· ${[v?v+" vencida"+(v>1?"s":""):"",h?h+" vence"+(h>1?"m":"")+" hoje":""].filter(Boolean).join(" · ")}, na frente do peso</span>`;}
+
+/* v68 (f5, achado 7): O CARD NAO ABRIA A PECA PRONTA. v_painel_fila entrega artefato_drive_id e
+   artefato_path desde a v48 e o HTML tinha zero mencoes a "artefato": para ratificar uma peca o
+   Igor tinha de procura-la em outro lugar. Nielsen, "recognition rather than recall": a peca vai
+   junto da acao. Com drive_id abre no Drive; so com path, o caminho aparece selecionavel e com
+   botao de copiar. O id so vira link se tiver forma de id do Drive (defesa contra href forjado). */
+function pecaLink(it){
+  const id=it&&it.artefato_drive_id?String(it.artefato_drive_id).trim():"";
+  const p=it&&it.artefato_path?String(it.artefato_path).trim():"";
+  const okId=/^[A-Za-z0-9_-]{10,}$/.test(id);
+  if(!okId&&!p) return "";
+  const cam=p?`<code class="pecap">${esc(p)}</code><button type="button" class="link" onclick="copiaPeca(this)">copiar caminho</button>`:"";
+  return `<div class="peca">${okId?`<a class="pecaa" href="https://drive.google.com/open?id=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">abrir peça</a>`:`<span class="lbl">peça</span>`}${cam}</div>`;}
+function selecionaPeca(c){
+  if(!c) return; try{ const r=document.createRange(); r.selectNodeContents(c);
+    const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
+  msg("caminho selecionado: Ctrl+C copia",null,2500);}
+function copiaPeca(b){
+  const c=b&&b.parentNode?b.parentNode.querySelector(".pecap"):null; const t=c?c.textContent:"";
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(()=>msg("caminho copiado",null,1800),()=>selecionaPeca(c)); return; } }catch(e){}
+  selecionaPeca(c);}
+
+/* v68 (f5, achado 3): A ESCADA DIZIA "DEGRAU 3" E CALAVA O QUE TRAVA. v_simbiose_maturidade ja
+   entrega quais_travam e falta_para_o_proximo no snapshot "mat"; o painel ignorava os dois. Medido
+   em 02/10/2026: 4 dimensoes presas no 3 por 9 KPIs fora da meta. Teoria das Restricoes (Goldratt):
+   mostrar a restricao, nao a media. Cada KPI que trava aparece com o valor e com quem move (kpi.dono),
+   que e o portao que o Igor manda seguir para escolher o proximo passo. */
+function travasMat(){
+  const M=D.mat||[]; if(!M.length) return null;
+  const min=Math.min(...M.map(m=>m.nivel));
+  const presas=M.filter(m=>m.nivel===min).slice().sort((a,b)=>(a.ordem??99)-(b.ordem??99));
+  const kpis=[];
+  presas.forEach(m=>String(m.quais_travam||"").split(/,\s*/).filter(Boolean).forEach(x=>{
+    const i=x.indexOf("=");
+    kpis.push({dim:m.dimensao, chave:(i>0?x.slice(0,i):x).trim(), valor:i>0?x.slice(i+1).trim():null});}));
+  return {min, presas, kpis};}
+function rTravas(){
+  const el=document.getElementById("travas"); if(!el) return;
+  const t=travasMat();
+  if(!t){ el.innerHTML=""; return; }
+  if(t.min>=5){ el.innerHTML=`<div class="trav ok"><div class="travt">Todas as dimensões no degrau 5: nada trava a escada.</div></div>`; return; }
+  const nd=t.presas.filter(m=>t.kpis.some(k=>k.dim===m.dimensao)).length;
+  el.innerHTML=`<div class="trav"><div class="travt">O que segura o degrau ${t.min+1}: ${t.kpis.length
+      ?`<b>${t.kpis.length}</b> número${t.kpis.length>1?"s":""} fora da meta em <b>${nd}</b> dimens${nd>1?"ões":"ão"}`
+      :"o banco não listou KPI"}</div>
+    <div class="s">O degrau do sistema é o do elo mais fraco, e o elo só sobe quando o número sai do vermelho. Instrumentar mais não compra degrau.</div>
+    ${t.presas.map(m=>{const ks=t.kpis.filter(k=>k.dim===m.dimensao);
+      return `<div class="travd" data-dim="${esc(m.dimensao)}"><span class="nm">${esc(m.rotulo||m.dimensao)}</span>${ks.length
+        ?ks.map(k=>`<span class="travk" data-chave="${esc(k.chave)}"><code>${esc(k.chave)}</code>${k.valor!=null?` = <b>${esc(k.valor)}</b>`:""} <i>quem move: ${esc(quemMove(k.chave))}</i></span>`).join("")
+        :`<span class="s">${esc(m.falta_para_o_proximo||"o banco não disse o que falta")}</span>`}</div>`;}).join("")}
+  </div>`;}
 /* v26 - FILA VAZIA ACIONAVEL. Fila de hoje zerada nao e fim de assunto, e fim do
    assunto DE HOJE. Medido em 29/08/2026: 528 aberturas para 75 acoes em 14 dias
    (7 aberturas por acao), 60 itens em segundo plano e 36 tarefas do dono vencidas.
@@ -2231,14 +2383,15 @@ function vazioAgora(){
   return `<div class="empty vazio">${prox}${cx}<div class="vza">${dep}${le}</div></div>`;
 }
 function rAgora(){
-  const vis=(D.fila||[]).filter(passa);
+  const vis=hojeLista().filter(passa);
   const mostra=semTeto?vis:vis.slice(0,TETO);
   const resto=vis.length-mostra.length;
   const saldo=kv("caixa.saldo_30d"),parado=kv("caixa.decisao_parada_rs");
   /* v32: F.nat faltava aqui, entao filtrar por natureza nao mudava o rotulo.
      E o numero passa a somar o segundo plano, senao o chip diz 12 e o hero diz 2. */
   const filtrando=F.frente||F.origem||F.q||F.nat;
-  const tot=vis.length+(D.depois||[]).filter(passa).length;
+  const depRest=depoisFora();
+  const tot=vis.length+depRest.filter(passa).length;
   const c=D.cont||{};
   rFaixa5();
   const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div>${foraDaConta(D.rw)?`<div class="s">⚠ ${foraDaConta(D.rw)}</div>`:""}</div>`:""}`;
@@ -2261,7 +2414,7 @@ function rAgora(){
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
   document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"")
-    +tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" onclick="modoFoco()">modo foco <span class="kbd">F</span></button>':"");
+    +resumoClasse(vis)+tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" onclick="modoFoco()">modo foco <span class="kbd">F</span></button>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
   if(document.body.classList.contains("foco")){ const n=cards().length; if(n) focar(Math.max(0,Math.min(foco,n-1))); else modoFoco(false); }
@@ -2281,12 +2434,14 @@ function rAgora(){
    +(acima>0
     ? `<div class="estouro"><b>${acima}</b> ${acima>1?"cards estão":"card está"} em segundo plano porque HOJE encheu em <b>${c.teto_tela}</b>, que é o limite de atenção — não porque ${acima>1?"sejam":"seja"} menos urgente${acima>1?"s":""}. A capacidade de trabalho medida é <b>${c.teto_wip}</b> por Lei de Little.
         <button onclick="verDepois()">ver quais</button></div>` : "");
-  const dep=D.depois||[];
-  document.getElementById("fila2").innerHTML=dep.length
+  const dep=depRest;
+  document.getElementById("fila2").innerHTML=avisoDepois()+(dep.length
     ? dep.filter(passa).map(cardFila).join("")
+    : DEPOIS_FALHA ? ""
+    : (D.depois||[]).length ? `<div class="empty">nada mais em segundo plano: o que vencia subiu para hoje.</div>`
     : (c.depois ? `<div class="empty">${c.depois} item(ns) em segundo plano.
         <button class="link" onclick="verDepois()">carregar</button></div>`
-      : `<div class="empty">nada em segundo plano.</div>`);
+      : `<div class="empty">nada em segundo plano.</div>`));
   foco=-1;   /* reset sem desenhar: contorno so aparece quando o dono aperta J ou K */
 }
 /* ---------- v24 · O ESPELHO (P2) ---------- */
@@ -2408,7 +2563,7 @@ async function recarregarFila(){
      a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
      Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
      e rele. As outras 15 continuam por conta do cron de 5 min. */
-  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg"];
+  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg","exp"];
   try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s"); }
   catch(e){ if(ehTeto(e))throw e; }
   const rc=await comTeto(sb.rpc("painel_carga",{p_chaves:VIVAS}), LIMITE_RECARGA, "15s")
@@ -2422,6 +2577,7 @@ async function recarregarFila(){
   if(d.semi) D.semi=d.semi;
   if(d.band) D.band=d.band;
   if(d.garg) D.garg=d.garg;
+  if(d.exp)  D.exp=d.exp;
   if(d.wip)  D.wip=d.wip[0]||null;
   if(d.sentN&&d.sentN[0]){const n=document.getElementById("n-sent");
     if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
@@ -2743,7 +2899,7 @@ function rHero(){
       <span class="hc" onclick="irAba('agora')"><b>${n1}</b> na fila de hoje</span>
       ${cor?`<span class="hc" onclick="irAba('agora')"><b>${cor}</b> correção${cor>1?"ões":""} esperando</span>`:""}
       ${par>0?`<span class="hc"><b>${rs(par)}</b> parados por uma palavra</span>`:""}
-      ${nivel?`<span class="hc" onclick="irAba('evolucao')">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}</span>`:""}
+      ${nivel?`<span class="hc" onclick="irAba('evolucao')">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}${(()=>{const t=travasMat();const n=t?t.kpis.length:0;return n&&nivel<5?` · <b>${n}</b> KPI${n>1?"s":""} trava${n>1?"m":""} o ${nivel+1}`:"";})()}</span>`:""}
     </div></div>`;}
 function irAba(p){abrir(p);
   window.scrollTo({top:0,behavior:"smooth"});}
@@ -3167,7 +3323,8 @@ function rEvolucao(){
   document.getElementById("dims").innerHTML=(D.mat||[]).map(m=>{
     const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
     return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
-      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span></div>`}).join("");
+      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span>${m.quais_travam?`<span class="trv">trava: ${esc(m.quais_travam)}</span>`:""}</div>`}).join("");
+  rTravas();
   const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
   document.getElementById("kpis").innerHTML=
