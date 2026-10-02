@@ -781,6 +781,46 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 .empty.falha{border-color:var(--red);color:var(--red)}
 .trav .s{font-size:12.5px;color:var(--mut);line-height:1.45}
 .peca .lbl{display:inline;margin:0}
+/* v69 · RESULTADO PF: tres meses, top 5 de gasto e o rodape patrimonial recolhido */
+.pfm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:6px}
+.pfc{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--grn);border-radius:12px;
+ padding:11px 13px;text-align:left;color:var(--ink);cursor:pointer;min-width:0;font-size:inherit;
+ display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}
+.pfc.neg{border-left-color:var(--red)}
+.pfc.vazio{border-left-color:var(--line2)}
+.pfc.on{border-top-color:var(--acc);border-right-color:var(--acc);border-bottom-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.pfn{font-size:13.5px;font-weight:650;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.pfcur{font-size:10px;letter-spacing:1px;color:var(--acc);font-weight:600;text-transform:uppercase}
+.pfl{display:flex;justify-content:space-between;gap:4px 10px;font-size:12.5px;color:var(--mut);margin-top:5px;flex-wrap:wrap}
+.pfl b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.pfr b{font-size:15.5px}
+.pfc .pfr b{color:var(--ok)}
+.pfc.neg .pfr b{color:var(--bad)}
+.pfv{font-size:12.5px;color:var(--mut);margin-top:6px}
+.pfq{font-size:11px;color:var(--dim);margin-top:6px;overflow-wrap:anywhere}
+.pfnota{font-size:12px;color:var(--warn);margin:0 0 8px}
+.pfg{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin-bottom:6px;min-width:0}
+.pfgt{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.pfgt b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pfgn{overflow-wrap:anywhere;min-width:0}
+.pfbar{position:relative;height:8px;background:var(--card2);border-radius:4px;margin:7px 0 5px}
+.pfbar i{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:4px}
+.pfbar .md{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink2)}
+.pfg.alta .pfbar i{background:var(--red)}
+.pfg.baixa .pfbar i{background:var(--grn)}
+.pfgv{font-size:11.5px;color:var(--mut)}
+.pfg.alta .pfgv{color:var(--bad)}
+.pfrod{margin-top:24px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--card)}
+.pfrod summary{cursor:pointer;font-size:13px;color:var(--ink2);min-height:28px;display:list-item}
+.pfsub{font-size:10.5px;letter-spacing:1.2px;color:var(--dim);margin:14px 0 6px;font-weight:600}
+.pfsub span{letter-spacing:0;font-weight:400}
+.pfpj,.pfmr{font-size:12.5px;padding:7px 0;border-top:1px solid var(--line);overflow-wrap:anywhere;min-width:0}
+.pfpj{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px}
+.pfpj b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pfpj .pfq{flex:1 1 100%;margin-top:0}
+.pfmr .tag{margin-right:4px}
+.pfmr .pfq{display:block;margin-top:2px}
+@media(max-width:640px){.pfm{grid-template-columns:1fr;gap:8px}}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -892,6 +932,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
     <button class="sub" data-p="leituras" data-g="decidir">Leituras<span class="n" id="n-le"></span></button>
     <button class="sub" data-p="panorama" data-g="acompanhar" hidden>Panorama<span class="n" id="n-cmd"></span></button>
     <button class="sub" data-p="tudo" data-g="acompanhar" hidden>Tudo<span class="n" id="n-tudo"></span></button>
+    <button class="sub" data-p="pf" data-g="acompanhar" hidden>Resultado PF<span class="n" id="n-pf"></span></button>
     <button class="sub" data-p="maquina" data-g="maquina" hidden>Máquina<span class="n" id="n-mo"></span></button>
     <button class="sub" data-p="sentinela" data-g="maquina" hidden>Sentinela<span class="n" id="n-sent"></span></button>
   </nav>
@@ -946,6 +987,22 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
     <br><b>Fonte:</b> <code>v_inventario_resumo</code> e <code>v_inventario_frente</code>. Nada aqui é digitado.</div>
 </div>
 
+<div class="pane" id="p-pf">
+  <h2>RESULTADO PF <span class="s">o que entrou e saiu das suas contas pessoais: o mês corrente e os dois anteriores. Toque num mês para ver onde foi o dinheiro</span></h2>
+  <div id="pf-meses"></div>
+  <h2 id="pf-h-classes">ONDE FOI O DINHEIRO</h2>
+  <div id="pf-classes"></div>
+  <div id="pf-rodape"></div>
+  <div class="foot"><b>Por que esta tela existe.</b> O painel mostrava o caixa das empresas e o fôlego, e não mostrava
+    se o mês da pessoa física fechou no azul. Aqui é o <b>realizado</b>, lido do extrato: saque em espécie conta como
+    gasto (o dinheiro saiu e não tem destino), transferência entre contas, aplicação e resgate ficam fora, e o mês
+    corrente só tem número depois que o extrato do mês é lançado. A barra de cada classe é o gasto do mês; o traço é a
+    média dos três meses anteriores, na mesma escala para as cinco.
+    <br><b>Fonte:</b> <code>v_pf_realizado_mensal</code> e <code>v_pf_gasto_classe_mes</code> na tela;
+    <code>v_pf_patrimonial_pj</code> e <code>v_matriz_renda</code> no rodapé. Tudo pela chave <code>pf</code> do snapshot,
+    nenhuma consulta direta. Nada aqui é digitado.</div>
+</div>
+
 <div class="pane" id="p-sentinela">
   <div id="sent-topo"></div>
   <div id="sent-lista"></div>
@@ -988,7 +1045,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v68";
+const VER="v69";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1022,7 +1079,10 @@ const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9",
    Enquanto nao existir, a falta dela NAO vira "carga incompleta": a tela funciona sem ela com o
    que a fila de hoje e o segundo plano ja trazem. Quando a fonte entrar no banco, "exp" passa
    para CHAVES_PAINEL e a falta volta a ser falha declarada. */
-const CHAVES_OPCIONAIS=[];
+/* v69 (t1561): "pf" e OPCIONAL pelo mesmo motivo: a tela Resultado PF nasce antes da linha em
+   painel_snapshot_fonte (o INSERT espera o OK do Igor). Sem a chave a tela diz que a fonte nao
+   chegou e a carga NAO acende "incompleta". Quando a linha entrar, "pf" passa para CHAVES_PAINEL. */
+const CHAVES_OPCIONAIS=["pf"];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1356,7 +1416,7 @@ let ABA="agora"; let CARGA=Date.now();
 /* v62 ONDA 2 (doc 1201 secao 3.2, marca do Igor em 30/09/2026): tres abas. Sentinela vai para
    MAQUINA (alarme do sistema; o que exige ato dele ja chega na fila) e Tudo para ACOMPANHAR
    (inventario, consulta). Os seis paineis nao mudaram: so a navegacao se agrupa. */
-const GRUPO_DE={agora:"decidir",leituras:"decidir",panorama:"acompanhar",tudo:"acompanhar",maquina:"maquina",sentinela:"maquina"};
+const GRUPO_DE={agora:"decidir",leituras:"decidir",panorama:"acompanhar",tudo:"acompanhar",pf:"acompanhar",maquina:"maquina",sentinela:"maquina"};
 const ULT={decidir:"agora",acompanhar:"panorama",maquina:"maquina"};
 const LAZY={leituras:0,acervo:0,espelho:0,rotinas:0,tudo:0,movimento:0,sentinela:0};
 /* Cada superficie declara suas secoes e o que cada uma precisa buscar. */
@@ -1718,6 +1778,7 @@ async function carregarAgora(ehRetentativa){
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
         rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono"),fun=g("fun"),c13e=g("c13e"),eb=g("eb");
   const exp=g("exp");   /* v68: opcional, ver CHAVES_OPCIONAIS */
+  const pf=g("pf");     /* v69: opcional, ver CHAVES_OPCIONAIS */
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -1732,7 +1793,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), pf:U(pf,D.pf), depois:D.depois||[]};
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -1810,7 +1871,7 @@ function recarregarNovo(){
    v_placar) SEMPRE veio na abertura: o defeito era de chamada, nao de banco. Medido em
    16/09/2026. A classe do defeito — secao cujo titulo existe e cujo corpo depende de outra
    secao ter sido aberta antes — morre no smoke test "A ESCADA desenha os 5 degraus". */
-function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rEvolucao();rMotor();rOrcamento();rVarredura();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
+function render(){rFrescor();montaFiltros();rAgora();rDash();rComando();rPares();rEvolucao();rMotor();rOrcamento();rVarredura();rPF();marcaAbas();injetaSeries();requestAnimationFrame(mediTopo);}
 function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
@@ -2190,6 +2251,76 @@ function rFunil(){
     <div class="c13s">Aceitas ${ac.length} (${rs(soma(ac))}) · perdidas ${pe.length} (${rs(soma(pe))}) · conversão ${conv==null?"sem base":conv+"%"} · do aceite ao primeiro recebimento ${med==null?"sem base":med+" dias"} (mediana). Proposta em aberto não é contrato e não entra no caixa.</div>
     ${ab.length?`<div class="c13l"><div class="c13lt">Em aberto, da mais antiga para a mais nova</div>${ab.slice().sort((a,b)=>b.dias_desde_envio-a.dias_desde_envio).map(linha).join("")}</div>`:""}
   </div>`;}
+/* ---------- RESULTADO PF · v69 (t1561, 02/10/2026) ----------
+   Uma tela, tres perguntas: o mes fechou no azul? onde foi o dinheiro? o que existe de
+   patrimonio fora do resultado? O dado vem pronto do snapshot (chave "pf", opcional ate a
+   linha existir em painel_snapshot_fonte): a tela so formata. Mes sem extrato lancado diz que
+   esta sem extrato, nunca "resultado zero"; e o top 5 abre no mes mais recente que TEM gasto,
+   dizendo por escrito quando pulou o mes corrente. */
+let PFMES=null;   /* mes escolhido para o top 5; null = automatico */
+const pfMes=m=>{const [a,b]=String(m||"").split("-").map(Number); if(!a||!b) return String(m||"");
+  const n=new Date(a,b-1,1).toLocaleDateString("pt-BR",{month:"long"});
+  return n.charAt(0).toUpperCase()+n.slice(1)+(a!==new Date().getFullYear()?" de "+a:"");};
+const pfSn=v=>v==null?"—":(+v>0?"+":+v<0?"-":"")+rs(Math.abs(+v));
+const pfData=d=>d?String(d).slice(0,10).split("-").reverse().join("/"):"";
+function pfEscolhe(m){ PFMES=m; rPF(); }
+function rPF(){
+  const el=document.getElementById("pf-meses"), cl=document.getElementById("pf-classes"),
+        hc=document.getElementById("pf-h-classes"), rod=document.getElementById("pf-rodape");
+  if(!el||!cl||!hc||!rod) return;
+  const p=D.pf;
+  if(!p||!Array.isArray(p.meses)||!p.meses.length){
+    el.innerHTML='<div class="empty">A fonte <code>pf</code> ainda não está no snapshot. A tela passa a mostrar o resultado quando a linha entrar em <code>painel_snapshot_fonte</code>; até lá nada aqui é inventado.</div>';
+    hc.innerHTML="ONDE FOI O DINHEIRO"; cl.innerHTML=""; rod.innerHTML=""; return;
+  }
+  const meses=p.meses, cls=Array.isArray(p.classes)?p.classes:[];
+  const cur=p.mes_corrente||meses[0].mes;
+  const temGasto=m=>cls.some(x=>x.mes===m);
+  const auto=(meses.find(x=>temGasto(x.mes))||meses[0]).mes;
+  const sel=(PFMES&&meses.some(x=>x.mes===PFMES))?PFMES:auto;
+  el.innerHTML='<div class="pfm">'+meses.map(x=>{
+    const vazio=x.receita==null&&x.despesa==null;
+    const r=x.resultado==null?null:+x.resultado;
+    const est=r==null?"sem resultado":r<0?"negativo: saiu mais do que entrou":"positivo: entrou mais do que saiu";
+    const n=+x.n_lanc||0;
+    return '<button class="pfc'+(x.mes===sel?" on":"")+(vazio?" vazio":r<0?" neg":"")+'" data-mes="'+esc(x.mes)+'" onclick="pfEscolhe(this.dataset.mes)">'
+      +'<div class="pfn">'+esc(pfMes(x.mes))+(x.mes===cur?' <span class="pfcur">em curso</span>':"")+'</div>'
+      +(vazio
+        ? '<div class="pfv">extrato ainda não lançado</div><div class="pfq">'+n+' lançamento'+(n===1?"":"s")+' no mês, nenhum de entrada ou saída</div>'
+        : '<div class="pfl"><span>entradas</span><b>'+rs(+x.receita||0)+'</b></div>'
+         +'<div class="pfl"><span>saídas</span><b>'+rs(Math.abs(+x.despesa||0))+'</b></div>'
+         +'<div class="pfl pfr"><span>resultado</span><b>'+pfSn(r)+'</b></div>'
+         +'<div class="pfq">'+est+(x.saque_no_resultado?' · inclui '+rs(Math.abs(+x.saque_no_resultado))+' de saque sem destino':"")+' · '+n+' lançamentos</div>')
+      +'</button>';}).join("")+'</div>';
+  const top=cls.filter(x=>x.mes===sel).sort((a,b)=>(+a.ord||0)-(+b.ord||0)).slice(0,5);
+  hc.innerHTML='ONDE FOI O DINHEIRO · '+esc(pfMes(sel).toUpperCase())+' <span class="s">as 5 maiores classes de gasto contra a média dos 3 meses anteriores</span>';
+  const nota=(!PFMES&&sel!==cur&&!temGasto(cur))?'<div class="pfnota">'+esc(pfMes(cur))+' ainda sem gasto lançado; mostrando '+esc(pfMes(sel))+'.</div>':"";
+  if(!top.length){ cl.innerHTML=nota+'<div class="empty">Sem gasto classificado em '+esc(pfMes(sel))+'.</div>'; }
+  else{
+    const max=Math.max(1,...top.map(x=>Math.max(+x.gasto||0,+x.media3||0)));
+    cl.innerHTML=nota+top.map(x=>{
+      const g=+x.gasto||0, m=+x.media3||0, pct=m>0?Math.round(100*(g-m)/m):null;
+      const txt=m<=0?"novo: sem gasto nesta classe nos 3 meses anteriores"
+        :Math.abs(pct)<5?"na média dos 3 meses anteriores ("+rs(m)+")"
+        :(pct>0?"+":"")+pct+"% "+(pct>0?"acima":"abaixo")+" da média de "+rs(m);
+      const c=(m<=0||pct>=10)?" alta":(pct<=-10?" baixa":"");
+      return '<div class="pfg'+c+'" data-classe="'+esc(x.classe)+'"><div class="pfgt"><span class="pfgn">'+esc(x.classe)+'</span><b>'+rs(g)+'</b></div>'
+        +'<div class="pfbar"><i style="width:'+(100*g/max).toFixed(1)+'%"></i>'+(m>0?'<span class="md" style="left:'+(100*m/max).toFixed(1)+'%" title="média dos 3 meses anteriores"></span>':"")+'</div>'
+        +'<div class="pfgv">'+txt+'</div></div>';}).join("");
+  }
+  const pj=Array.isArray(p.pj)?p.pj:[], rd=Array.isArray(p.renda)?p.renda:[];
+  const aberto=!!(rod.querySelector("details")&&rod.querySelector("details").open);
+  rod.innerHTML='<details class="pfrod"'+(aberto?" open":"")+'><summary>Patrimônio nas PJs ('+pj.length+') e matriz de renda ('+rd.length+')</summary>'
+    +'<div class="pfsub">PATRIMÔNIO NAS PJs <span>dívida captada, ativo comprado e aporte. Movimento patrimonial: não entra no resultado acima.</span></div>'
+    +(pj.length?pj.map(x=>'<div class="pfpj"><span class="pfgn">'+esc(x.frente)+' · '+esc(x.classe)+'</span><b>'+pfSn(x.valor)+'</b>'
+        +'<span class="pfq">'+esc(x.contraparte||"sem contraparte")+' · '+(x.de===x.ate?pfData(x.de):pfData(x.de)+' a '+pfData(x.ate))+' · '+(+x.n||0)+' lanç.</span></div>').join("")
+      :'<div class="pfq">Nenhum movimento patrimonial registrado.</div>')
+    +'<div class="pfsub">MATRIZ DE RENDA <span>oportunidades de renda do acervo, por prioridade</span></div>'
+    +(rd.length?rd.map(x=>'<div class="pfmr"><span class="tag">'+esc(x.prioridade||"sem prioridade")+'</span>'+esc(x.tema)
+        +'<span class="pfq">'+esc(x.frente||"sem frente")+' · esforço '+esc(x.esforco||"não medido")+' · resultado '+esc(x.resultado||"não medido")+'</span></div>').join("")
+      :'<div class="pfq">Nenhuma oportunidade de renda aberta.</div>')
+    +'</details>';
+}
 function rOrcamento(){
   const el=document.getElementById("orcamento"); if(!el) return;
   const e=D.eb||[];
