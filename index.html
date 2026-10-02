@@ -820,6 +820,12 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 .pfpj .pfq{flex:1 1 100%;margin-top:0}
 .pfmr .tag{margin-right:4px}
 .pfmr .pfq{display:block;margin-top:2px}
+.pfl.pff b{color:var(--ink2)}
+.pffd{margin-top:2px}
+.pfl.pfx{border-top:1px solid var(--line);padding-top:5px;margin-top:6px}
+.pfl.pfx span{color:var(--ink2);font-weight:600}
+.pfl.pfx b{color:var(--ok)}
+.pfl.pfx.neg b{color:var(--bad)}
 @media(max-width:640px){.pfm{grid-template-columns:1fr;gap:8px}}
 </style></head><body>
 
@@ -998,7 +1004,10 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
     gasto (o dinheiro saiu e não tem destino), transferência entre contas, aplicação e resgate ficam fora, e o mês
     corrente só tem número depois que o extrato do mês é lançado. A barra de cada classe é o gasto do mês; o traço é a
     média dos três meses anteriores, na mesma escala para as cinco.
-    <br><b>Fonte:</b> <code>v_pf_realizado_mensal</code> e <code>v_pf_gasto_classe_mes</code> na tela;
+    <br><b>Padrão DFC.</b> Empréstimo recebido e parcela paga (classe <code>Emp.</code>) não são renda nem gasto de vida:
+    ficam na linha <b>financiamento</b>, fora do resultado operacional e fora do top 5. O <b>caixa do mês</b> soma
+    o operacional e o financiamento. Integralização de capital conta como gasto.
+    <br><b>Fonte:</b> <code>v_pf_resultado_dfc_mensal</code> e <code>v_pf_gasto_classe_mes</code> na tela;
     <code>v_pf_patrimonial_pj</code> e <code>v_matriz_renda</code> no rodapé. Tudo pela chave <code>pf</code> do snapshot,
     nenhuma consulta direta. Nada aqui é digitado.</div>
 </div>
@@ -2256,7 +2265,11 @@ function rFunil(){
    patrimonio fora do resultado? O dado vem pronto do snapshot (chave "pf", opcional ate a
    linha existir em painel_snapshot_fonte): a tela so formata. Mes sem extrato lancado diz que
    esta sem extrato, nunca "resultado zero"; e o top 5 abre no mes mais recente que TEM gasto,
-   dizendo por escrito quando pulou o mes corrente. */
+   dizendo por escrito quando pulou o mes corrente.
+   v69b (decisao do Igor, 02/10/2026): padrao DFC. Emprestimo recebido e parcela paga (classe Emp.)
+   nao sao renda nem gasto de vida: saem do resultado operacional e vao para a linha FINANCIAMENTO,
+   e o CAIXA DO MES soma as duas. Fonte: v_pf_resultado_dfc_mensal. Payload antigo, sem os campos
+   de financiamento, desenha so o operacional, sem inventar linha. */
 let PFMES=null;   /* mes escolhido para o top 5; null = automatico */
 const pfMes=m=>{const [a,b]=String(m||"").split("-").map(Number); if(!a||!b) return String(m||"");
   const n=new Date(a,b-1,1).toLocaleDateString("pt-BR",{month:"long"});
@@ -2279,17 +2292,24 @@ function rPF(){
   const auto=(meses.find(x=>temGasto(x.mes))||meses[0]).mes;
   const sel=(PFMES&&meses.some(x=>x.mes===PFMES))?PFMES:auto;
   el.innerHTML='<div class="pfm">'+meses.map(x=>{
-    const vazio=x.receita==null&&x.despesa==null;
+    const vazio=x.receita==null&&x.despesa==null&&x.financiamento==null;
     const r=x.resultado==null?null:+x.resultado;
-    const est=r==null?"sem resultado":r<0?"negativo: saiu mais do que entrou":"positivo: entrou mais do que saiu";
+    const est=r==null?"sem resultado operacional":r<0?"operacional negativo: o gasto passou a renda":"operacional positivo: a renda cobriu o gasto";
+    const fin="financiamento" in x;
     const n=+x.n_lanc||0;
     return '<button class="pfc'+(x.mes===sel?" on":"")+(vazio?" vazio":r<0?" neg":"")+'" data-mes="'+esc(x.mes)+'" onclick="pfEscolhe(this.dataset.mes)">'
       +'<div class="pfn">'+esc(pfMes(x.mes))+(x.mes===cur?' <span class="pfcur">em curso</span>':"")+'</div>'
       +(vazio
         ? '<div class="pfv">extrato ainda não lançado</div><div class="pfq">'+n+' lançamento'+(n===1?"":"s")+' no mês, nenhum de entrada ou saída</div>'
-        : '<div class="pfl"><span>entradas</span><b>'+rs(+x.receita||0)+'</b></div>'
-         +'<div class="pfl"><span>saídas</span><b>'+rs(Math.abs(+x.despesa||0))+'</b></div>'
-         +'<div class="pfl pfr"><span>resultado</span><b>'+pfSn(r)+'</b></div>'
+        : '<div class="pfl"><span>entradas operacionais</span><b>'+rs(+x.receita||0)+'</b></div>'
+         +'<div class="pfl"><span>saídas operacionais</span><b>'+rs(Math.abs(+x.despesa||0))+'</b></div>'
+         +'<div class="pfl pfr"><span>resultado operacional</span><b>'+pfSn(r)+'</b></div>'
+         +(fin
+           ? '<div class="pfl pff"><span>financiamento</span><b>'+(x.financiamento==null?"nenhum":pfSn(+x.financiamento))+'</b></div>'
+            +(x.financiamento!=null?'<div class="pfq pffd">'+[x.fin_recebido!=null?"empréstimo recebido "+pfSn(+x.fin_recebido):"",
+                x.fin_pago!=null?"parcelas pagas "+pfSn(+x.fin_pago):""].filter(Boolean).join(" · ")+'</div>':"")
+            +'<div class="pfl pfx'+((x.caixa_mes!=null?+x.caixa_mes:r)<0?" neg":"")+'"><span>caixa do mês</span><b>'+pfSn(x.caixa_mes!=null?+x.caixa_mes:r)+'</b></div>'
+           : "")
          +'<div class="pfq">'+est+(x.saque_no_resultado?' · inclui '+rs(Math.abs(+x.saque_no_resultado))+' de saque sem destino':"")+' · '+n+' lançamentos</div>')
       +'</button>';}).join("")+'</div>';
   const top=cls.filter(x=>x.mes===sel).sort((a,b)=>(+a.ord||0)-(+b.ord||0)).slice(0,5);

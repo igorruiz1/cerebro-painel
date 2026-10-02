@@ -1069,8 +1069,10 @@ test('ver depois tem teto, e falha nao vira "nada em segundo plano"', async ({pa
 const PF_FIX = {mes_corrente:'2031-03',
   meses:[
     {mes:'2031-03',receita:null,despesa:null,resultado:null,saque_no_resultado:null,n_lanc:1},
-    {mes:'2031-02',receita:12345.67,despesa:-23456.78,resultado:-11111.11,saque_no_resultado:-1000,n_lanc:40},
-    {mes:'2031-01',receita:30000,despesa:-20000.4,resultado:9999.6,saque_no_resultado:null,n_lanc:30}],
+    {mes:'2031-02',receita:12345.67,despesa:-23456.78,resultado:-11111.11,saque_no_resultado:-1000,n_lanc:40,
+     financiamento:4200,fin_recebido:5000,fin_pago:-800,caixa_mes:-6911.11},
+    {mes:'2031-01',receita:30000,despesa:-20000.4,resultado:9999.6,saque_no_resultado:null,n_lanc:30,
+     financiamento:null,fin_recebido:null,fin_pago:null,caixa_mes:9999.6}],
   classes:[
     {mes:'2031-02',classe:'Classe A',gasto:9000,media3:6000,ord:1},
     {mes:'2031-02',classe:'Classe B',gasto:5000,media3:0,ord:2},
@@ -1126,6 +1128,11 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
       nota:!!document.querySelector('#pf-classes .pfnota'),
       rodAberto:document.querySelector('#pf-rodape details').open};
     PFMES=null;
+    /* v69b: payload antigo, sem os campos de financiamento, nao inventa linha */
+    D.pf=JSON.parse(JSON.stringify(fix));
+    D.pf.meses.forEach(m=>{delete m.financiamento; delete m.fin_recebido; delete m.fin_pago; delete m.caixa_mes;});
+    rPF(); out.antigo=document.querySelector('#pf-meses .pfc[data-mes="2031-02"]').textContent;
+    D.pf=JSON.parse(JSON.stringify(fix));
     return out;
   }, PF_FIX);
   expect(r.err, 'render() derrubou o script').toBe(null);
@@ -1147,6 +1154,16 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   expect(r.c2).toContain('+R$ 10.000');
   expect(r.c2).toContain('positivo');
   expect(r.c2neg).toBe(false);
+  /* v69b · padrao DFC: o emprestimo nao e renda, tem linha propria, e o caixa soma as duas */
+  expect(r.c1, 'resultado operacional nomeado').toContain('resultado operacional');
+  expect(r.c1, 'financiamento em linha separada, com sinal').toMatch(/financiamento\s*\+R\$ 4\.200/);
+  expect(r.c1, 'o que entrou e o que saiu de financiamento').toContain('empréstimo recebido +R$ 5.000');
+  expect(r.c1).toContain('parcelas pagas -R$ 800');
+  expect(r.c1, 'caixa do mes = operacional + financiamento').toMatch(/caixa do mês\s*-R\$ 6\.911/);
+  expect(r.c2, 'mes sem emprestimo diz nenhum').toMatch(/financiamento\s*nenhum/);
+  expect(r.c2).toMatch(/caixa do mês\s*\+R\$ 10\.000/);
+  expect(r.antigo, 'payload sem os campos nao inventa a linha').not.toContain('financiamento');
+  expect(r.antigo).toContain('-R$ 11.111');
   expect(r.sel, 'sem gasto no mes corrente o top 5 abre no mais recente que tem').toEqual(['2031-02']);
   expect(r.nota, 'e diz por escrito que pulou o mes corrente').toContain('ainda sem gasto lançado');
   expect(r.cab).toContain('FEVEREIRO');
