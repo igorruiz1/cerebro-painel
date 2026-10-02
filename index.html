@@ -1015,14 +1015,14 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp"];
 /* v68 (f5, auditoria de 02/10/2026, achado 1): chave OPCIONAL. "exp" traz as tarefas do Igor
    vencidas ou vencendo hoje que o ranking so por peso deixou fora da camada hoje. Ela ainda nao
-   existe em painel_snapshot_fonte: a proposta esta em f5_propostas.sql e depende do OK do Igor.
+   existe em painel_snapshot_fonte desde 02/10/2026 (P3 aprovada pelo Igor, s734) e entrou em CHAVES_PAINEL.
    Enquanto nao existir, a falta dela NAO vira "carga incompleta": a tela funciona sem ela com o
    que a fila de hoje e o segundo plano ja trazem. Quando a fonte entrar no banco, "exp" passa
    para CHAVES_PAINEL e a falta volta a ser falha declarada. */
-const CHAVES_OPCIONAIS=["exp"];
+const CHAVES_OPCIONAIS=[];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
