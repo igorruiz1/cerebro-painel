@@ -10,7 +10,9 @@
      4. concluir sem prova escrita nao chama o banco (LC-14);
      5. frente e linha do caixa abrem algo, nunca sao beco;
      6. instrucao por voz (p3) so chega a inbox() depois de revisada e enviada, e a API do aparelho
-        recebe o audio e devolve texto para revisar, sem nada dela no fonte.
+        recebe o audio e devolve texto para revisar, sem nada dela no fonte;
+     7. resposta por evento (p4): o recibo diz o que o banco mediu do despertador, a resposta chega pelo
+        Realtime sem recarregar, e o fio do card para em 3 trocas em 7 dias.
    O cliente e dublado como no fumaca.spec.js: o defeito que se persegue vive na TELA. */
 const {test, expect} = require('@playwright/test');
 const path = require('path');
@@ -41,8 +43,9 @@ const DUBLE = `(()=>{
   window.__rpc=[];
   const q=r=>{const p=Promise.resolve({data:r,error:null});p.lte=()=>p;p.eq=()=>p;p.order=()=>p;p.limit=()=>p;return p;};
   window.supabase={createClient:()=>({
-    from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:[])}),
-    rpc:(n,a)=>{window.__rpc.push({n,a});return Promise.resolve({data:n==='painel_carga'?{dados,idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':null,error:null});},
+    from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[])}),
+    rpc:(n,a)=>{window.__rpc.push({n,a});return Promise.resolve({data:n==='painel_carga'?{dados,idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):null,error:null});},
+    channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),
           onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
           signInWithOtp:()=>Promise.resolve({error:null})}})};
@@ -358,5 +361,75 @@ test('pagina velha no cache oferece a versao nova; mesma versao nao mostra nada'
   const alt = await page.locator('#novaVersao').evaluate(e=>e.getBoundingClientRect().height);
   expect(alt).toBeGreaterThanOrEqual(44);
   await page.click('#micTopo');
-  await expect(page.locator('#vozMotor'), 'a tela de voz diz a versao em uso').toContainText('painel p3.2');
+  await expect(page.locator('#vozMotor'), 'a tela de voz diz a versao em uso').toContainText('painel p4');
+});
+
+/* p4 (03/10/2026): resposta por evento. Medido em 30 dias: p90 de 2,2 h no deliberar e 6,7 h na voz, porque
+   o despertador estava sem token e so a passagem fixa respondia. O painel nao pode prometer o que o banco
+   nao mediu: o recibo e a linha do topo saem de atendente_estado(). */
+const AGORA = ()=>new Date().toISOString();
+test('recibo honesto: com despertador ligado diz que acordou; sem token diz a passagem fixa', async ({page})=>{
+  await page.addInitScript(()=>{ window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined; });
+  await page.addInitScript(()=>{ window.__atd={despertador:'sem_token',pendentes:0,sessao_viva:false,proxima_varredura:'2026-10-03T11:58:00-04:00'}; });
+  await abrir(page);
+  await expect(page.locator('#atd')).toContainText('Sem despertador: próxima');
+  await expect(page.locator('#atd')).toHaveClass(/velho/);
+  await page.click('#micTopo');
+  await expect(page.locator('#vozDestino')).toContainText('próxima passagem');
+  await page.fill('#vozTxt','mandar a proposta revisada ao cliente');
+  await page.click('#folha .pri');
+  await page.evaluate(()=>enviar());
+  await expect(page.locator('#tmsg')).toContainText('Despertador desligado');
+  await page.evaluate(t=>{ window.__atd={despertador:'ligado',pendentes:1,sessao_viva:false,ultimo_despertar_em:t,http:null}; }, AGORA());
+  await page.click('#micTopo');
+  await page.fill('#vozTxt','reagendar a vistoria para quinta');
+  await page.click('#folha .pri');
+  await page.evaluate(()=>enviar());
+  await expect(page.locator('#tmsg')).toContainText('O atendente está acordado');
+  await expect(page.locator('#atd')).toContainText('Atendente acordado');
+  await expect(page.locator('#atd')).not.toHaveClass(/velho/);
+  await page.setViewportSize({width:390, height:820});
+  expect(await page.locator('#atd').evaluate(e=>e.getBoundingClientRect().height), 'linha do atendente cabe numa linha a 390 px').toBeLessThan(20);
+  await page.evaluate(()=>{ window.__atd={...window.__atd,ultimo_despertar_em:'2026-10-01T00:00:00Z',http:401}; return atendenteEstado(); });
+  await expect(page.locator('#atd'), 'POST recusado aparece, nao vira "acordado"').toContainText('HTTP 401');
+});
+
+test('resposta chega sozinha: evento do Realtime avisa e redesenha a conversa do card, sem recarregar a pagina', async ({page})=>{
+  await page.addInitScript(t=>{ window.__atd={despertador:'ligado',pendentes:1,sessao_viva:true,ultimo_despertar_em:t};
+    window.__tab={dialogo:[{id:9,pergunta:'Vale repactuar para sexta?',resposta:null,perguntado_em:t,respondido_em:null}]}; }, AGORA());
+  await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  await expect(page.locator('#conv')).toContainText('Vale repactuar para sexta?');
+  await expect(page.locator('#conv')).toContainText('o atendente está acordado');
+  const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+  await page.evaluate(t=>{
+    const linha={id:9,pergunta:'Vale repactuar para sexta?',resposta:'Sim: o fiscal so libera na quinta.',perguntado_em:t,respondido_em:t};
+    window.__tab.dialogo=[linha];
+    window.__rt.filter(h=>h.f.table==='dialogo').forEach(h=>{ h.cb({new:linha}); h.cb({new:linha}); });
+  }, AGORA());
+  await expect(page.locator('#tmsg')).toContainText('O atendente respondeu: Sim: o fiscal');
+  await expect(page.locator('#conv')).toContainText('Atendente: Sim: o fiscal so libera na quinta.');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'dados redesenhados pelo evento').toBeGreaterThan(cargas0);
+  /* resposta velha que reaparece numa reconexao nao vira aviso */
+  await page.evaluate(()=>{ toast('limpo',null,false); window.__rt.filter(h=>h.f.table==='comando').forEach(h=>h.cb({new:{id:3,texto:'[voz] x',status:'processado',resultado:'antiga',processado_em:'2026-09-01T00:00:00Z'}})); });
+  await page.waitForTimeout(100);
+  await expect(page.locator('#tmsg')).toHaveText('limpo');
+  /* verbo em card grava "painel: ..." em comando; o agir() ja recarrega, o evento nao pode recarregar de novo */
+  const cargas1 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+  await page.evaluate(()=>window.__rt.filter(h=>h.f.table==='comando').forEach(h=>h.cb({new:{id:4,texto:'painel: repactuar tarefa#2 2026-10-09',status:'processado',resultado:'aplicado por agir()',processado_em:new Date().toISOString()}})));
+  await page.waitForTimeout(1800);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'evento de agir() nao recarrega').toBe(cargas1);
+  await expect(page.locator('#tmsg')).toHaveText('limpo');
+});
+
+test('fio curto: 3 trocas em 7 dias no card desligam o "Quero uma recomendação"', async ({page})=>{
+  await page.addInitScript(t=>{ window.__tab={dialogo:[1,2,3].map(i=>({id:i,pergunta:'pergunta '+i,resposta:'resposta '+i,perguntado_em:t,respondido_em:t}))}; }, AGORA());
+  await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  await expect(page.locator('#conv')).toContainText('Fio cheio');
+  await expect(page.locator('#folha [data-verbo="deliberar"]')).toBeDisabled();
+  await page.evaluate(()=>escolher('deliberar'));
+  await expect(page.locator('#campo textarea'), 'nem por atalho abre o campo').toHaveCount(0);
+  await page.evaluate(()=>{ window.__tab.dialogo=[]; fecharFolha(); abrirFila(0); });
+  await expect(page.locator('#folha [data-verbo="deliberar"]')).toBeEnabled();
 });

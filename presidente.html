@@ -19,7 +19,9 @@
         13 semanas e o que mais melhora o caixa pela margem do Igor, e cada linha abre o card.
    Concluir pede prova escrita (LC-14, decisao do Igor em 02/10/2026): peca pronta nao fecha card.
    A telemetria da maquina mora no index.html (bastidor), aberto pelo rodape.
-   p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md. */
+   p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md.
+   p4 (03/10/2026): resposta por evento. O toque acorda o atendente na hora (rotina por API, no Max) e a
+   resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md. */
 :root{
  --bg:#0d1117; --sf:#121926; --card:#161d2b; --line:#2a3650; --line2:#1f2a3d; --chip:#24314a;
  --ink:#e9eef7; --ink2:#c3ccdb; --mut:#9aa6bb;
@@ -55,6 +57,7 @@ a{color:#7fb0ff}
 .topo h1{margin:0;font-size:20px;font-weight:700}
 .topo .sub{font-size:12px;color:var(--mut)}
 .topo .sub.velho{color:var(--warn)}
+#atd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ico{width:var(--tap);height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .busca{padding:12px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px}
@@ -160,6 +163,9 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .historico{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink2)}
 .historico li{display:flex;gap:10px}
 .historico .q{font-family:var(--mono);color:var(--mut);white-space:nowrap}
+.conv li>span:last-child{min-width:0;overflow-wrap:anywhere}
+.conv b{color:var(--ink);font-weight:600}
+.pri:disabled,.sec:disabled{opacity:.5;cursor:not-allowed}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:30;background:var(--chip);border:1px solid var(--line);border-radius:12px;
   padding:6px 6px 6px 14px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);font-size:14px}
 .toast button{min-height:44px;border-radius:9px;border:0;background:var(--acc);color:var(--accInk);font-weight:700;padding:0 14px}
@@ -239,7 +245,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
   <div class="col">
     <header class="topo">
-      <div class="tt"><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div></div>
+      <div class="tt"><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
       <button class="ico" id="micTopo" aria-label="Falar uma instrução" onclick="abrirVoz()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
@@ -315,7 +321,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const VERP="p3.2";
+const VERP="p4";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -633,12 +639,13 @@ function abrirCard(c,verbo){
     ${pecaHtml(c.peca)}
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.map(a=>botaoAcao(a,"sec")).join("")}</div>`:`<div class="vazio">O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor.</div>`}
     <div id="campo"></div>
+    <div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
     <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul></div>
     <button class="sec" onclick="fecharFolha()">Fechar</button>`);
-  historico(c);
+  historico(c); conversa(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
 }
-const botaoAcao=(a,cls)=>`<button class="${cls}" onclick="escolher('${esc(a.verbo)}')">${esc(a.rot)}</button>`;
+const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" onclick="escolher('${esc(a.verbo)}')">${esc(a.rot)}</button>`;
 /* Peca pronta junto da acao (mesma defesa do index.html: id so vira link com forma de id do Drive). */
 function pecaHtml(it){
   const id=it&&it.artefato_drive_id?String(it.artefato_drive_id).trim():"", p=it&&it.artefato_path?String(it.artefato_path).trim():"";
@@ -657,6 +664,7 @@ async function historico(c){
 }
 function escolher(verbo){
   const a=F&&F.acoes.find(x=>x.verbo===verbo); if(!a)return;
+  if(verbo==="deliberar"&&F.fioCheio){ toast(FIO_CHEIO,"bad",false,6000); return; }
   const campo=document.getElementById("campo");
   if(CONCLUIR.has(verbo)){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">O que aconteceu? Link, protocolo ou "e-mail do fiscal 08/10". Peça pronta não fecha o card: ela precisa ter saído e ter volta.</label>
@@ -714,13 +722,13 @@ async function enviar(){
     const {data,error}=await sb.rpc("inbox",{p_texto:VOZ_PREFIXO+p.voz});
     const txt=error?"Erro: "+error.message:String(data||"");
     if(error||txt.startsWith("RECUSADO")){ VOZ.rascunho=p.voz; toast(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220)+" O texto ficou guardado no microfone.","bad",false,9000); return; }
-    VOZ.rascunho=""; toast(/^ANOTADO/.test(txt)?"Anotado. O Claude pega na próxima rodada.":txt.slice(0,160),null,false,3500);
+    VOZ.rascunho=""; toast(/^ANOTADO/.test(txt)?await recibo("Anotado."):txt.slice(0,160),null,false,6000);
     return;
   }
   const {data,error}=await sb.rpc("agir",{p_origem:p.origem,p_ref:String(p.ref),p_verbo:p.verbo,p_valor:p.valor});
   const txt=error?"Erro: "+error.message:(typeof data==="string"?data:"feito");
   if(error||String(txt).startsWith("RECUSADO")){ toast(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",false,9000); return; }
-  toast("Gravado.",null,false,2500);
+  toast(p.verbo==="deliberar"?await recibo("Gravado."):"Gravado.",null,false,p.verbo==="deliberar"?6000:2500);
   await carregar(true);
 }
 
@@ -767,7 +775,7 @@ function abrirVoz(texto){
     <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>
     <textarea id="vozTxt" class="voz-txt" oninput="vozDigitou(this.value)" placeholder="Ex.: reagendar a vistoria da Conenge para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
     <div class="acoes voz-acoes"><button class="pri" onclick="vozEnviar()">Enviar ao Claude</button><button class="sec" onclick="vozLimpar()">Limpar</button></div>
-    <div class="mut">Entra como instrução pendente e o Claude pega na próxima rodada.${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
+    <div class="mut" id="vozDestino">${esc(destinoTxt())}${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
     <details class="voz-api"><summary>API de transcrição deste aparelho${api?" · ligada":""}</summary><div class="corpo">
       <div class="mut">Para quando a sua API existir. Fica guardada só neste aparelho, nunca no repositório. Sem chave, o painel manda o seu login e a API confere que é você.</div>
       <label for="vozUrl">Endereço</label>
@@ -776,7 +784,9 @@ function abrirVoz(texto){
       <input id="vozKey" type="password" autocomplete="off" placeholder="${api&&api.chave?"guardada · digite para trocar":"vazio usa o seu login"}">
       <div class="acoes"><button class="sec" onclick="vozSalvarApi()">Guardar neste aparelho</button>${api?'<button class="sec" onclick="vozEsquecerApi()">Esquecer a API</button>':""}</div>
       <div class="mut">Contrato: POST do áudio para o endereço; resposta {"texto": "…"}. Detalhes em docs/instrucao-por-audio.md.</div>
-    </div></details>`,"cheia");
+    </div></details>
+    <div class="bloco"><span class="rot">Suas últimas instruções</span><ul class="historico conv" id="vozResp"><li class="mut">carregando…</li></ul></div>`,"cheia");
+  respostasVoz();
 }
 function vozEstado(t,cls){ const e=vozEl("vozEstado"); if(!e)return; e.textContent=t||""; e.className="voz-estado"+(cls?" "+cls:""); }
 function vozUi(on){
@@ -884,12 +894,113 @@ function vozEsquecerApi(){
   abrirVoz(ta?ta.value:null); toast("API esquecida neste aparelho.",null,false,2500);
 }
 
+/* ---------- atendente por evento (p4, 03/10/2026) ----------
+   Antes: texto, voz e "Quero uma recomendacao" esperavam a passagem fixa do atendente-1 (6 por dia). Medido
+   em 30 dias: p90 de 2,2 h no deliberar e de 6,7 h no texto, ate 9,4 h a noite. Agora o INSERT em dialogo
+   ou comando acorda o atendente pela API da rotina (fn_acordar_atendente, cota do Max, sem chave paga) e a
+   resposta chega pelo Realtime, sem recarregar. O painel so diz o que o banco mede (atendente_estado):
+   nunca promete um despertar que nao houve. Fio curto por card: ate 3 trocas em 7 dias (decisao do Igor). */
+let ATD=null, RT=null, RT_OK=false, RT_T=null, RT_CARGA=false;
+const VISTOS=new Set(), FIO_MAX=3, FIO_DIAS=7;
+const FIO_CHEIO=`Fio cheio: ${FIO_MAX} trocas em ${FIO_DIAS} dias neste card. O próximo passo é numa sessão com o Claude.`;
+const hhmm=s=>{const d=new Date(s);return !s||isNaN(d)?"":pad(d.getHours())+"h"+pad(d.getMinutes());};
+const minDesde=s=>{const d=new Date(s);return !s||isNaN(d)?null:Math.max(0,Math.round((Date.now()-d)/6e4));};
+async function atendenteEstado(){
+  try{ const {data,error}=await sb.rpc("atendente_estado"); if(!error&&data&&!data.erro)ATD=data; }catch(e){}
+  atdUi(); return ATD;
+}
+/* acordado: o ultimo POST saiu ha menos de 3 min, ou a sessao bateu ponto nos ultimos 10 */
+const acordado=a=>!!a&&a.despertador==="ligado"&&(a.sessao_viva||(minDesde(a.ultimo_despertar_em)??99)<3);
+const httpRuim=a=>!!a&&a.http!=null&&(a.http<200||a.http>299);
+const proxTxt=a=>a&&a.proxima_varredura?hhmm(a.proxima_varredura):"";
+function atdTxt(a){
+  if(!a)return "";
+  /* cabe numa linha a 390 px: o detalhe longo fica no recibo e na tela de voz */
+  const prox=proxTxt(a)?": próxima "+proxTxt(a):"", esp=a.pendentes?" · "+a.pendentes+" esperando":"";
+  if(a.despertador!=="ligado")return "Sem despertador"+prox;
+  if(httpRuim(a))return "Despertador falhou (HTTP "+a.http+")"+prox;
+  if(acordado(a))return "Atendente acordado"+esp;
+  return "Atendente dormindo"+esp;
+}
+function atdUi(){ const el=document.getElementById("atd"); if(!el)return;
+  el.textContent=el.title=atdTxt(ATD); el.classList.toggle("velho",!!ATD&&(ATD.despertador!=="ligado"||httpRuim(ATD))); }
+const ligado=a=>!!a&&a.despertador==="ligado"&&!httpRuim(a);
+function destinoTxt(){
+  return ligado(ATD)?"Entra como instrução pendente e acorda o atendente na hora; a resposta aparece aqui sozinha."
+    :"Entra como instrução pendente e o atendente pega na próxima passagem"+(proxTxt(ATD)?" ("+proxTxt(ATD)+")":"")+".";
+}
+const esperaTxt=()=>acordado(ATD)?"aguardando: o atendente está acordado":"aguardando a próxima passagem"+(proxTxt(ATD)?" ("+proxTxt(ATD)+")":"");
+/* Recibo depois de gravar. O gatilho do INSERT ja tentou acordar dentro da mesma transacao; o estado diz se
+   acordou. Despertar suprimido ou que falhou e retomado pelo despertar_reconciliar (pg_cron, 5 min). */
+async function recibo(base){
+  const a=await atendenteEstado();
+  if(!a)return base+" O atendente pega na próxima passagem.";
+  if(ligado(a)&&acordado(a))return base+" O atendente está acordado; a resposta aparece aqui sozinha.";
+  if(ligado(a))return base+" O despertador não disparou agora; nova tentativa em até 5 min.";
+  return base+" Despertador desligado: entra na passagem das "+(proxTxt(a)||"próxima rodada")+".";
+}
+async function conversa(c){
+  const el=()=>document.getElementById("conv");
+  let r; try{ r=await sb.from("dialogo").select("id,pergunta,resposta,perguntado_em,respondido_em").eq("origem",c.origem).eq("ref",String(c.ref)).order("perguntado_em",{ascending:false}).limit(6); }catch(e){ r={error:e}; }
+  if(!el()||F!==c)return;
+  if(r.error||!r.data){el().innerHTML=`<li class="mut">Conversa indisponível agora.</li>`;return;}
+  const desde=Date.now()-FIO_DIAS*864e5;
+  c.fioCheio=r.data.filter(x=>new Date(x.perguntado_em)>desde).length>=FIO_MAX;
+  const b=document.querySelector('#folha [data-verbo="deliberar"]'); if(b)b.disabled=c.fioCheio;
+  const li=r.data.slice(0,FIO_MAX).reverse().map(x=>`<li><span class="q">${esc(ddmm(x.perguntado_em))}</span><span><b>Você:</b> ${esc(curto(x.pergunta,160))}<br>${x.respondido_em?`<b>Atendente:</b> ${esc(x.resposta||"")}`:`<span class="mut">${esc(esperaTxt())}</span>`}</span></li>`);
+  el().innerHTML=(li.length?li.join(""):`<li class="mut">Nenhuma troca neste card. "${esc(ROT.deliberar)}" abre uma.</li>`)+(c.fioCheio?`<li class="mut">${esc(FIO_CHEIO)}</li>`:"");
+}
+async function respostasVoz(){
+  const el=()=>document.getElementById("vozResp");
+  let r; try{ r=await sb.from("comando").select("id,texto,status,resultado,criado_em").eq("origem","painel").order("criado_em",{ascending:false}).limit(20); }catch(e){ r={error:e}; }
+  if(!el())return;
+  if(r.error||!r.data){el().innerHTML=`<li class="mut">Indisponível agora.</li>`;return;}
+  /* agir() tambem grava em comando ("painel: repactuar ..."), ja processado: nao e instrucao sua */
+  const li=r.data.filter(x=>!/^painel:/.test(x.texto||"")).slice(0,3).map(x=>`<li><span class="q">${esc(ddmm(x.criado_em))}</span><span>${esc(curto(String(x.texto||"").replace(/^\[voz\]\s*/,""),120))}<br>${x.status==="processado"?`<b>Atendente:</b> ${esc(x.resultado||"")}`:`<span class="mut">${esc(esperaTxt())}</span>`}</span></li>`);
+  el().innerHTML=li.length?li.join(""):`<li class="mut">Nenhuma instrução enviada ainda.</li>`;
+}
+/* Realtime: dialogo e comando estao na publicacao supabase_realtime; a RLS (is_dono) filtra quem recebe.
+   UPDATE nao traz a linha velha (replica identity padrao), entao o aviso sai uma vez por id e so para
+   resposta dos ultimos 10 min, para reconexao nao repetir aviso antigo. */
+function ouvirAtendente(){
+  if(RT||typeof sb.channel!=="function")return;
+  RT=sb.channel("atendente-presidente")
+    .on("postgres_changes",{event:"*",schema:"public",table:"dialogo"},p=>aoMudar("dialogo",p&&p.new||{}))
+    .on("postgres_changes",{event:"*",schema:"public",table:"comando"},p=>aoMudar("comando",p&&p.new||{}))
+    .subscribe(s=>{RT_OK=s==="SUBSCRIBED";});
+}
+/* So resposta do atendente remonta o painel. agir() tambem grava "painel: ..." em comando a cada verbo, e o
+   proprio agir() ja recarrega: remontar de novo pelo evento seria uma segunda carga por toque. */
+function aoMudar(tab,n){
+  if(tab==="comando"&&/^painel:/.test(n.texto||""))return;
+  const resp=tab==="dialogo"?(n.respondido_em?n.resposta:null):(n.status==="processado"?n.resultado:null);
+  const k=tab+":"+n.id, quando=tab==="dialogo"?n.respondido_em:n.processado_em;
+  const nova=!!resp&&!VISTOS.has(k)&&(minDesde(quando)??99)<10;
+  if(nova){ VISTOS.add(k); avisar("O atendente respondeu: "+curto(resp,160)); }
+  RT_CARGA=RT_CARGA||nova;
+  clearTimeout(RT_T); RT_T=setTimeout(atualizarDoEvento,1500);
+}
+/* o toast de desfazer tem prioridade: aviso espera ele sair */
+function avisar(t){ if(PEND){setTimeout(()=>avisar(t),6500);return;} toast(t,null,false,9000); }
+async function atualizarDoEvento(){
+  const carga=RT_CARGA; RT_CARGA=false;
+  await atendenteEstado();
+  if(F&&document.getElementById("conv"))conversa(F);
+  if(document.getElementById("vozResp"))respostasVoz();
+  if(carga&&!PEND)carregar(true);
+}
+/* Sem Realtime (rede ruim, iPhone suspendeu o socket), a tela confere o estado ao voltar e, so enquanto
+   houver item esperando, a cada minuto. Com Realtime de pe, nada roda por relogio. */
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&INICIADO)atendenteEstado(); });
+setInterval(()=>{ if(!INICIADO||RT_OK||document.hidden||!ATD||!ATD.pendentes)return;
+  const antes=ATD.pendentes; atendenteEstado().then(a=>{ if(a&&a.pendentes<antes){RT_CARGA=true;atualizarDoEvento();} }); },60000);
+
 /* ---------- partida ---------- */
 /* uma partida so: getSession e o evento SIGNED_IN chegam os dois na abertura com sessao salva,
    e sem a trava a carga corria duas vezes (medido em 02/10/2026) */
 let INICIADO=false;
 function iniciar(){ if(INICIADO)return; INICIADO=true;
-  document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");ir("hoje");carregar(); }
+  document.getElementById("login").classList.add("hidden");document.getElementById("app").classList.remove("hidden");ir("hoje");carregar();atendenteEstado();ouvirAtendente(); }
 sb.auth.getSession().then(({data})=>{
   if(data&&data.session)iniciar(); else document.getElementById("login").classList.remove("hidden");});
 sb.auth.onAuthStateChange((ev,s)=>{ if(ev==="SIGNED_IN"&&s)iniciar(); });
