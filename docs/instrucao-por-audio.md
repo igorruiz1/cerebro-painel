@@ -12,7 +12,9 @@ instruções do painel, com o prefixo `[voz] `, e o atendente pega na próxima r
    acordar o atendente na hora. **Hoje isso não acontece:** o token do despertador (no vault) está ausente,
    `webhook_disparo` mostra `token ausente ou placeholder`, e o despertador nunca disparou.
 3. **Rodada fixa.** Sem o despertador, quem lê a instrução é a rodada agendada do `atendente-1`, que roda
-   a cada 4 h. A instrução pode esperar até 4 h.
+   6 vezes por dia: 01h58, 03h58, 07h58, 11h58, 15h58 e 19h58 (horário de Cuiabá; medido em
+   `rotina_execucao` de 29/09 a 02/10). Não há rodada entre 19h58 e 01h58, então uma instrução enviada
+   à noite pode esperar cerca de 6 h.
 4. **Fechamento.** O atendente executa ou responde e fecha a linha com `comando_processar(id, resultado)`:
    `status = 'processado'` e o `resultado` escrito.
 
