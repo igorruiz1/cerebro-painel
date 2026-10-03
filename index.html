@@ -2978,10 +2978,10 @@ function rCaixa13(){
   const inc=(D.c13i||[]).filter(x=>x.natureza==="receber"&&x.status==="incerto")
     .sort((a,b)=>(+b.valor_igor)-(+a.valor_igor)).slice(0,5);
   const lista=inc.length?`<div class="c13l"><div class="c13lt">Entradas incertas que decidem o caixa</div>${inc.map(x=>
-    `<div class="c13i"><b>${rs(+x.valor_igor)}</b> <span>${ddmm(x.data_venc)}</span> ${esc(x.descricao||"")}</div>`).join("")}</div>`:"";
+    `<div class="c13i"><b>${rs(+x.valor_igor)}</b> <span>${ddmm(x.data_venc)}</span>${x.peso!=null?` <span>conta ${Math.round(+x.peso*100)}%</span>`:""} ${esc(x.descricao||"")}</div>`).join("")}</div>`:"";
   el.innerHTML=`<div class="c13${iNeg>=0?" crit":""}">
     <div class="c13t">${titulo}</div>
-    <div class="c13s">Saldo no fim de cada semana, caso base: entradas firmes e incertas, saídas firmes e seu custo de vida. ${risco}</div>
+    <div class="c13s">Saldo no fim de cada semana, caso base: entradas firmes, entradas incertas pela chance de cada uma, todas as saídas e seu custo de vida. ${risco}</div>
     <div class="c13g" role="img" aria-label="saldo semanal das próximas 13 semanas">${cols}</div>
     ${lista}${erroPrevisao()}</div>`;
 }

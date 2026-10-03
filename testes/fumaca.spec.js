@@ -668,7 +668,7 @@ test('o caixa das 13 semanas desenha 13 colunas e diz por escrito quando fica ne
     const base=[15301,13276,5104,-2674,9455,-3277,-4253,-7548,-3867,-15005,-17504,-20575,-1000];
     D.c13=base.map((v,i)=>({semana:i+1,inicio:ini(i+1),saldo_base:v,saldo_pior:v-20000}));
     D.c13i=[{natureza:"receber",status:"incerto",valor_igor:7500,data_venc:"2026-10-02",descricao:"CPA2 parcela 3"},
-            {natureza:"receber",status:"incerto",valor_igor:25000,data_venc:"2026-10-20",descricao:"Missao habite-se"},
+            {natureza:"receber",status:"incerto",valor_igor:25000,data_venc:"2026-10-20",descricao:"Missao habite-se",peso:0.5},
             {natureza:"pagar",status:"incerto",valor_igor:9999,data_venc:"2026-10-02",descricao:"saida nao entra na lista"}];
     let err=null; try{ rCaixa13(); }catch(e){ err=String(e); }
     const el=document.getElementById('caixa13');
@@ -684,6 +684,9 @@ test('o caixa das 13 semanas desenha 13 colunas e diz por escrito quando fica ne
   expect(r.minSemana, 'a semana mais apertada e a do menor saldo').toBe('12');
   expect(r.itens.length, 'so entradas incertas na lista').toBe(2);
   expect(r.itens[0], 'a maior entrada incerta vem primeiro').toContain('Missao habite-se');
+  /* s764 (02/10/2026): o caso base pondera cada entrada incerta pela chance; a lista diz o peso */
+  expect(r.itens[0], 'o peso da entrada incerta aparece').toContain('conta 50%');
+  expect(r.itens[1], 'sem peso no dado, nada inventado').not.toContain('conta');
   expect(r.vazio, 'sem dado se declara').toContain('sem dado no snapshot');
 });
 
