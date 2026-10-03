@@ -1243,3 +1243,19 @@ test('feita no bastidor abre o campo da prova e prova curta nao vai ao banco', a
   expect(r.args).toEqual([{p_origem:'tarefa',p_ref:'78',p_verbo:'feita',p_valor:'e-mail do fiscal 02/10'}]);
   expect(erros).toEqual([]);
 });
+
+/* s764 (02/10/2026): a secao ROTINAS le o dead-man pela porta do dono (rpc painel_cron_deadman), nao
+   pela view definer; a view so e lida se a porta falhar. */
+test('o dead-man das rotinas chega pela porta do dono, com a view so de reserva', async ({page})=>{
+  const erros = await abrirComArgs(page);
+  const r = await page.evaluate(async()=>{
+    window.__n.args=[]; window.__n.from=[];
+    const dm = await qDeadman();
+    return {rpc:window.__n.args.filter(a=>a[0]==='painel_cron_deadman').length,
+            view:window.__n.from.filter(v=>v==='v_cron_deadman').length, arr:Array.isArray(dm)};
+  });
+  expect(r.rpc, 'chama a porta do dono').toBe(1);
+  expect(r.arr, 'devolve lista').toBe(true);
+  expect(r.view, 'a view definer nao e lida quando a porta responde').toBe(0);
+  expect(erros).toEqual([]);
+});
