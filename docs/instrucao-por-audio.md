@@ -4,6 +4,21 @@ Botão de microfone no topo do `presidente.html` (p3, 02/10/2026). A instrução
 texto, você revisa e toca em Enviar. O texto entra pela `inbox()`, a mesma porta das outras
 instruções do painel, com o prefixo `[voz] `, e o atendente pega na próxima rodada.
 
+## Para onde a instrução vai (medido em 02/10/2026)
+
+1. **Enviar.** Depois dos 6 s para desfazer, `inbox(p_texto)` confere que é o dono (`is_dono()`) e grava
+   uma linha em `comando`: `origem = 'painel'`, `status = 'pendente'`, texto com o prefixo `[voz] `.
+2. **Gatilho.** O `INSERT` dispara `trg_comando_acorda_atendente`, que chama `fn_acordar_atendente()` para
+   acordar o atendente na hora. **Hoje isso não acontece:** o token do despertador (no vault) está ausente,
+   `webhook_disparo` mostra `token ausente ou placeholder`, e o despertador nunca disparou.
+3. **Rodada fixa.** Sem o despertador, quem lê a instrução é a rodada agendada do `atendente-1`, que roda
+   a cada 4 h. A instrução pode esperar até 4 h.
+4. **Fechamento.** O atendente executa ou responde e fecha a linha com `comando_processar(id, resultado)`:
+   `status = 'processado'` e o `resultado` escrito.
+
+A instrução falada é uma anotação na mesma fila das outras do painel. O atendente trata como ordem do
+dono e decide pela constituição, como qualquer outra.
+
 ## Por que a voz vira texto antes de chegar ao Claude
 
 A API do Claude não recebe áudio, só texto, imagem e PDF. Então a transcrição acontece antes:
