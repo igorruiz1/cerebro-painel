@@ -1259,3 +1259,14 @@ test('o dead-man das rotinas chega pela porta do dono, com a view so de reserva'
   expect(r.view, 'a view definer nao e lida quando a porta responde').toBe(0);
   expect(erros).toEqual([]);
 });
+
+/* s764 (02/10/2026): o presidente.html nunca pingou o banco porque nada no bastidor levava a ele.
+   O topo do bastidor tem a porta, e o atalho instalado (manifest) abre o presidente. */
+test('o bastidor leva ao presidente e o atalho instalado abre o presidente', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const href = await page.evaluate(()=>{const a=document.querySelector('.topin a[href="presidente.html"]');return a?a.getAttribute('href'):null;});
+  expect(href).toBe('presidente.html');
+  const man = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname,'..','manifest.json'),'utf8'));
+  expect(man.start_url).toBe('./presidente.html');
+});
