@@ -51,10 +51,13 @@ const DUBLE = `(()=>{
           signInWithOtp:()=>Promise.resolve({error:null})}})};
 })();`;
 
+/* v71 · R7: o supabase-js tem integrity (SRI); corpo dublado no lugar do arquivo seria recusado pelo
+   navegador. O duble entra antes da pagina (addInitScript) e a CDN e abortada, como no fumaca.spec.js. */
 async function abrir(page){
   const erros=[];
   page.on('pageerror',e=>erros.push(String(e)));
-  await page.route('**cdn.jsdelivr.net**', r=>r.fulfill({status:200,contentType:'application/javascript',body:DUBLE}));
+  await page.addInitScript(DUBLE);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
   await page.goto(PAGINA);
   await page.waitForFunction(()=>!!document.querySelector('#foco .tit') && !!document.querySelector('#kanban .item'));
   return erros;
@@ -432,4 +435,39 @@ test('fio curto: 3 trocas em 7 dias no card desligam o "Quero uma recomendação
   await expect(page.locator('#campo textarea'), 'nem por atalho abre o campo').toHaveCount(0);
   await page.evaluate(()=>{ window.__tab.dialogo=[]; fecharFolha(); abrirFila(0); });
   await expect(page.locator('#folha [data-verbo="deliberar"]')).toBeEnabled();
+});
+
+/* v71 · R7 (03/10/2026): texto do banco e texto, nunca marcacao, nem dentro de argumento JS de onclick.
+   esc() devolve a aspa como &#39;, que o navegador decodifica antes de rodar o onclick: o verbo hostil
+   abaixo escapava do argumento em escolher('...') e confirmar('...'). */
+test('texto hostil do banco aparece como texto e nao executa, nem no clique do verbo', async ({page})=>{
+  const X='<img src=x onerror="window.__xss=1">', V="x');window.__xss=2;//";
+  const corpo=DUBLE
+    .replace("titulo:'Card de exemplo',titulo_completo:'Card de exemplo'",`titulo:${JSON.stringify(X)},titulo_completo:${JSON.stringify(X)}`)
+    .replace("{label:'deliberar',verbo:'deliberar',campo:'text'}]",`{label:'deliberar',verbo:'deliberar',campo:'text'},{label:${JSON.stringify(X)},verbo:${JSON.stringify(V)},campo:'text'}]`);
+  expect(corpo, 'o duble hostil foi montado').toContain('window.__xss=2');
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(corpo);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  const r = await page.evaluate(async([V])=>{
+    const out={tit:document.querySelector('#foco .tit').textContent};
+    abrirFila(0);
+    const b=[...document.querySelectorAll('#folha button[data-verbo]')].find(x=>x.dataset.verbo===V);
+    out.rot=b&&b.textContent; b.click();
+    document.getElementById('cv').value='texto qualquer';
+    document.querySelector('#campo .pri').click();
+    await enviar();
+    out.agir=window.__rpc.filter(c=>c.n==='agir').map(c=>c.a.p_verbo);
+    await new Promise(r=>setTimeout(r,200));
+    out.imgs=document.querySelectorAll('img[onerror]').length; out.xss=window.__xss;
+    return out;
+  }, [V]);
+  expect(erros).toEqual([]);
+  expect(r.tit).toBe(X);
+  expect(r.rot, 'o rotulo hostil do botao e texto').toBe(X);
+  expect(r.agir, 'o verbo chega literal ao banco').toContain(V);
+  expect(r.imgs).toBe(0);
+  expect(r.xss).toBeUndefined();
 });

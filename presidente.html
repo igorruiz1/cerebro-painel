@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- v71 · R7 (03/10/2026): mesma politica do index.html, com uma diferenca medida: connect-src aceita
+     qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
+     aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
+     do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0d1117">
 <title>Cérebro Igor · Presidente</title>
 <link rel="manifest" href="manifest.json">
@@ -319,7 +324,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 <div id="veu" class="veu hidden" onclick="if(event.target===this)fecharFolha()"><div class="folha" id="folha" role="dialog" aria-modal="true" aria-labelledby="folhaTit"></div></div>
 <div id="toast" class="toast hidden" role="status"><span id="tmsg"></span><button id="tbtn" class="hidden" onclick="desfazer()">desfazer</button></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
 const VERP="p4";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
@@ -330,7 +335,13 @@ const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 const D={}; let INV=null, ARV=null, ABA="hoje", COL="semana", PEND=null, F=null;
 
+/* v71 · R7: texto do banco entra no HTML por esc() (texto e atributo entre aspas duplas), por escAttr()
+   quando e argumento JS entre aspas simples dentro de onclick (esc ali deixa a aspa voltar como &#39;,
+   que o navegador decodifica antes de rodar o JS), e por urlSegura() em href. Igual ao index.html. */
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const escAttr=s=>esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")
+  .replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"));
+const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(s)?s:"#";};
 const rs=v=>v==null||isNaN(+v)?"—":(+v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 const mil=v=>v==null||isNaN(+v)?"—":(Math.abs(+v)>=1000?"R$ "+((+v)/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":rs(v));
 const pad=n=>String(n).padStart(2,"0");
@@ -480,7 +491,7 @@ function renderHoje(){
       <div class="tit">${esc(f.titulo_completo||f.titulo)}</div>
       <div class="chips"><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
       ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque">${esc(curto(ri.texto,160))}</div>`:"";})()}
-      <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${esc(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
+      <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${escAttr(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",h.length<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f);
       return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t">${esc(f.titulo_completo||f.titulo)}<small>${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
@@ -536,7 +547,7 @@ function renderCaixa(){
   const base=s.map(x=>+x.saldo_base), iMin=base.length?base.indexOf(Math.min(...base)):-1;
   const s1=s[0];
   document.getElementById("caixaTopo").innerHTML=`<span class="mut">Se nada do que é incerto entrar, o caixa aguenta</span>
-    <span class="v ${d!=null&&d<30?"w":""}">${d==null?"—":plural(d,"dia","dias")}</span>
+    <span class="v ${d!=null&&d<30?"w":""}">${d==null?"—":esc(plural(d,"dia","dias"))}</span>
     <span class="mut">Meta: 90 dias.${iMin>=0?` Pior semana: a de ${ddmm(s[iMin].inicio)}, saldo de <span class="num">${rs(base[iMin])}</span>.`:""}${s1&&s1.sai_firme!=null?` Saem <span class="num">${rs(s1.sai_firme)}</span> nesta semana.`:""}</span>`;
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
@@ -548,7 +559,7 @@ function renderCaixa(){
   const fr=ARV.filter(a=>a.nivel===1&&+a.margem_30d>0).sort((a,b)=>b.margem_30d-a.margem_30d);
   el.innerHTML=fr.length?fr.map(a=>{
     const prox=INV.filter(t=>t.frente===a.no&&t.dono==="igor"&&t.status==="pendente").sort((x,y)=>String(x.prazo||"9").localeCompare(String(y.prazo||"9")))[0];
-    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${esc(a.no)}')`}"><span class="t">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}<small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
+    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${escAttr(a.no)}')`}"><span class="t">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}<small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
     :`<div class="vazio">Nenhuma frente com margem a receber em 30 dias.</div>`;
   const fora=ARV.filter(a=>a.nivel===1&&+a.margem_30d<=0&&+a.margem_total>0);
   if(fora.length)el.innerHTML+=`<div class="mut">Fora dos 30 dias: ${fora.map(a=>esc(nomeFrente(a.no))+" "+mil(a.margem_total)).join(" · ")}.</div>`;
@@ -561,8 +572,8 @@ function grafico13(s,base,iMin){
   const ticks=[...new Set([mn,0,mx].map(v=>Math.round(v/1000)*1000))];
   ticks.forEach(v=>{g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?"#9aa6bb":"#1f2a3d"}" stroke-width="1"/><text x="${pl-6}" y="${y(v)+4}" fill="#9aa6bb" font-size="14" text-anchor="end" font-family="ui-monospace,monospace">${k(v)} mil</text>`;});
   s.forEach((x,i)=>{const v=base[i],x0=pl+i*bw+3,top=v>=0?y(v):y(0),h=Math.max(1,Math.abs(y(v)-y(0)));
-    g+=`<rect class="sem" x="${x0}" y="${top}" width="${Math.max(2,bw-6)}" height="${h}" rx="3" fill="${v<0?"#ff8a8f":i===iMin?"#ffb547":"#5b9bff"}"><title>semana de ${ddmm(x.inicio)}: ${rs(v)}</title></rect>`;
-    if(i%3===0)g+=`<text x="${x0+(bw-6)/2}" y="${H-8}" fill="#9aa6bb" font-size="14" text-anchor="middle" font-family="ui-monospace,monospace">${ddmm(x.inicio)}</text>`;});
+    g+=`<rect class="sem" x="${x0}" y="${top}" width="${Math.max(2,bw-6)}" height="${h}" rx="3" fill="${v<0?"#ff8a8f":i===iMin?"#ffb547":"#5b9bff"}"><title>semana de ${esc(ddmm(x.inicio))}: ${rs(v)}</title></rect>`;
+    if(i%3===0)g+=`<text x="${x0+(bw-6)/2}" y="${H-8}" fill="#9aa6bb" font-size="14" text-anchor="middle" font-family="ui-monospace,monospace">${esc(ddmm(x.inicio))}</text>`;});
   return g+`</svg><span class="mut">Caso base. Vermelho: saldo negativo. Laranja: a semana mais apertada.</span>`;
 }
 
@@ -572,7 +583,7 @@ function renderFrentes(){
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const cont={};INV.forEach(t=>{if(t.status!=="feita")cont[t.frente]=(cont[t.frente]||0)+1;});
   const fr=ARV.filter(a=>a.nivel===1).sort((a,b)=>(+b.margem_30d)-(+a.margem_30d)||(cont[b.no]||0)-(cont[a.no]||0)).filter(a=>+a.margem_30d!==0||cont[a.no]);
-  el.innerHTML=fr.map(a=>`<button class="frente" onclick="abrirFrente('${esc(a.no)}')"><span class="t"><b>${esc(nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
+  el.innerHTML=fr.map(a=>`<button class="frente" onclick="abrirFrente('${escAttr(a.no)}')"><span class="t"><b>${esc(nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
 }
 function abrirFrente(slug){
   const a=(ARV||[]).find(x=>x.nivel===1&&x.no===slug)||{no:slug};
@@ -645,12 +656,12 @@ function abrirCard(c,verbo){
   historico(c); conversa(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
 }
-const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" onclick="escolher('${esc(a.verbo)}')">${esc(a.rot)}</button>`;
+const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" onclick="escolher('${escAttr(a.verbo)}')">${esc(a.rot)}</button>`;
 /* Peca pronta junto da acao (mesma defesa do index.html: id so vira link com forma de id do Drive). */
 function pecaHtml(it){
   const id=it&&it.artefato_drive_id?String(it.artefato_drive_id).trim():"", p=it&&it.artefato_path?String(it.artefato_path).trim():"";
   const okId=/^[A-Za-z0-9_-]{10,}$/.test(id); if(!okId&&!p)return "";
-  return `<div class="bloco"><span class="rot">Peça pronta</span><div class="peca">${okId?`<a href="https://drive.google.com/open?id=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">abrir no Drive</a>`:""}${p?`<code id="pecap">${esc(p)}</code><button type="button" onclick="copiar()">copiar caminho</button>`:""}</div></div>`;
+  return `<div class="bloco"><span class="rot">Peça pronta</span><div class="peca">${okId?`<a href="${esc(urlSegura("https://drive.google.com/open?id="+encodeURIComponent(id)))}" target="_blank" rel="noopener noreferrer">abrir no Drive</a>`:""}${p?`<code id="pecap">${esc(p)}</code><button type="button" onclick="copiar()">copiar caminho</button>`:""}</div></div>`;
 }
 function copiar(){const c=document.getElementById("pecap");if(!c)return;const t=c.textContent;
   const sel=()=>{try{const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}toast("Caminho selecionado.",null,false,2000);};
@@ -668,11 +679,11 @@ function escolher(verbo){
   const campo=document.getElementById("campo");
   if(CONCLUIR.has(verbo)){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">O que aconteceu? Link, protocolo ou "e-mail do fiscal 08/10". Peça pronta não fecha o card: ela precisa ter saído e ter volta.</label>
-      <textarea id="cv" rows="2"></textarea><button class="pri" onclick="confirmar('${verbo}',${PROVA_MIN},'Escreva a prova em pelo menos ${PROVA_MIN} letras.')">Concluir com esta prova</button></div>`;
+      <textarea id="cv" rows="2"></textarea><button class="pri" onclick="confirmar('${escAttr(verbo)}',${PROVA_MIN},'Escreva a prova em pelo menos ${PROVA_MIN} letras.')">Concluir com esta prova</button></div>`;
   }else if(verbo==="repactuar"||(a.campo==="date"||a.campo==="data")){
     const op=[["amanhã",somaDias(1)],["+3 dias",somaDias(3)],["próx. segunda",proxSegunda()],["+2 semanas",somaDias(14)]];
-    campo.innerHTML=`<div class="campo"><span class="mut">${esc(a.rot)}</span><div class="datas">${op.map(o=>`<button onclick="agir('${verbo}','${o[1]}','${esc(a.rot)} para ${diaCurto(o[1])}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div>
-      <label for="cv" class="mut">ou escolha o dia</label><input id="cv" type="date" min="${somaDias(0)}" value="${somaDias(7)}"><button class="sec" onclick="confirmar('${verbo}',10,'Escolha uma data.')">Usar esta data</button></div>`;
+    campo.innerHTML=`<div class="campo"><span class="mut">${esc(a.rot)}</span><div class="datas">${op.map(o=>`<button onclick="agir('${escAttr(verbo)}','${o[1]}','${escAttr(a.rot+" para "+diaCurto(o[1]))}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div>
+      <label for="cv" class="mut">ou escolha o dia</label><input id="cv" type="date" min="${somaDias(0)}" value="${somaDias(7)}"><button class="sec" onclick="confirmar('${escAttr(verbo)}',10,'Escolha uma data.')">Usar esta data</button></div>`;
   }else if(verbo==="arquivar"){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Por que largar? Uma linha basta: fica registrado que a decisão foi sua.</label><textarea id="cv" rows="2"></textarea>
       <button class="pri" onclick="confirmar('arquivar',5,'Diga o motivo em pelo menos 5 letras.')">Largar este card</button></div>`;
@@ -680,7 +691,7 @@ function escolher(verbo){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Com quem está a bola, e quando você cobra?</label><textarea id="cv" rows="2" placeholder="Ex.: fiscal da obra, cobrar em 2 dias"></textarea>
       <div class="datas">${[["em 2 dias",somaDias(2)],["próx. segunda",proxSegunda()],["em 1 semana",somaDias(7)]].map(o=>`<button onclick="confirmarEsperar('${o[1]}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div></div>`;
   }else if(a.campo){
-    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmar('${esc(verbo)}',1,'Escreva algo antes de enviar.')">Enviar</button></div>`;
+    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmar('${escAttr(verbo)}',1,'Escreva algo antes de enviar.')">Enviar</button></div>`;
   }else{ agir(verbo,null,a.rot); return; }
   const cv=document.getElementById("cv"); if(cv&&cv.tagName==="TEXTAREA")cv.focus();
 }
@@ -695,6 +706,7 @@ function confirmarEsperar(data){
   if(quem.length<3){toast("Diga com quem está a bola.","bad",false,3000);if(cv)cv.focus();return;}
   agir("esperar",data+"|"+quem,"Passou para "+curto(quem,30)+", cobrar "+diaCurto(data));
 }
+/* html confiavel: todo chamador monta a folha com esc()/escAttr() em cada valor do banco */
 function mostrarFolha(html,cls){VOZ.reabrir=false;vozParar(true);const f=document.getElementById("folha");f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
 function fecharFolha(){VOZ.reabrir=false;vozParar(true);document.getElementById("veu").classList.add("hidden");F=null;}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("veu").classList.contains("hidden"))fecharFolha();});

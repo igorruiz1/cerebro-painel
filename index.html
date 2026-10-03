@@ -1,5 +1,11 @@
 <!doctype html><html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- v71 · R7 (03/10/2026): a pagina so fala com a propria origem, o Supabase (REST e Realtime), a CDN do
+     supabase-js (versao fixa com integrity, la embaixo) e o Google Fonts. Script e estilo inline seguem
+     liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
+     fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
+     GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1100,7 +1106,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 </div>
 <div class="desf" id="desf"><span id="desfmsg"></span><button onclick="desfazer()">desfazer</button></div>
 <div class="log" id="log"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
@@ -1116,7 +1122,18 @@ let mostrarResto=false, pendente=null;          // estado de UI
 let CARGAINCOMPLETA=false;                      // v45: a ultima carga voltou completa?
 
 /* ---------- utilitários ---------- */
+/* v71 · R7: TODO texto que vem do banco (snapshot, view, rpc, erro do Supabase) entra no HTML por um
+   destes tres, conforme o CONTEXTO, e nunca cru — inclusive numero, que o banco pode mandar como texto:
+     esc(x)      texto ou valor de atributo entre aspas duplas;
+     escAttr(x)  argumento JS entre aspas simples dentro de atributo: onclick="f('${escAttr(x)}')".
+                 esc() ali NAO serve: a aspa vira &#39;, o navegador decodifica antes de rodar o JS e a
+                 aspa fecha o argumento. escAttr escapa para o JS e depois para o HTML, nessa ordem;
+     urlSegura(u) href/src: so https:// passa, o resto vira "#".
+   Marcacao montada aqui dentro com pedacos ja escapados leva o comentario "html confiavel". */
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const escAttr=s=>esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")
+  .replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"));
+const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(s)?s:"#";};
 const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{maximumFractionDigits:0});
 const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).toFixed(1)+"d":
   u==="min"?(+v).toFixed(0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
@@ -1260,15 +1277,15 @@ function grupoHTML(alvo,R,esc2){
     const r=(R.find(z=>z.frente===f))||{};
     const linhas=rs.map(x=>{
       const pz = x.prazo ? String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7) : "sem prazo";
-      const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span class="atr">+${x.atraso_dias}d</span>` : "";
-      const id = esc2(x.id);
+      const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span class="atr">+${esc2(x.atraso_dias)}d</span>` : "";
+      const id = esc2(x.id), idJs = "'"+escAttr(x.id)+"'";
       return `<div class="ivrow" id="iv-${id}">
         <div class="ivm">
           <code>${id}</code>
           ${execChip(x)}
           <span>${esc2(x.faixa)}</span>
           <span>${pz}${atr}</span>
-          <span${(x.parado_dias||0)>=14?' class="atr"':''}>parado ${x.parado_dias!=null?x.parado_dias:(x.idade_dias||0)}d</span>
+          <span${(x.parado_dias||0)>=14?' class="atr"':''}>parado ${esc2(x.parado_dias!=null?x.parado_dias:(x.idade_dias||0))}d</span>
           <span class="${x.no_painel?"na":"fo"}">${x.no_painel?"na fila":"fora da fila"}</span>
           ${TUDOORD!=="frente"?`<span class="ivfr">${esc2(x.frente)}</span>`:""}
           ${x.demanda_id?`<span class="ivproj">${esc2(x.demanda_id)}</span>`:""}
@@ -1279,7 +1296,7 @@ function grupoHTML(alvo,R,esc2){
              ${(x.opcoes||x.recomendacao||x.criterio_pronto)
                ? `<details class="ivd"><summary>o que pesa nesta decisão</summary>
                    ${x.opcoes&&x.opcoes.length?`<ul class="ivop">`+x.opcoes.map(o=>
-                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" onclick="ivEscolher(${id},'${escAttr(o.label)}')">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
+                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" onclick="ivEscolher(${idJs},'${escAttr(o.label)}')">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
                       +(x.escolha?`<div class="ivesc">escolhido: <b>${esc2(x.escolha)}</b></div>`:``):""}
                    ${x.recomendacao?`<div class="ivrec"><b>minha recomendação</b> ${esc2(x.recomendacao)}</div>`:""}
                    ${x.criterio_pronto?`<div class="ivcp"><b>pronto quando</b> ${esc2(x.criterio_pronto)}</div>`:""}
@@ -1289,7 +1306,7 @@ function grupoHTML(alvo,R,esc2){
         <div class="iva">${botoesIv(x,esc2)}</div>
       </div>`;}).join("");
     const sub = TUDOORD==="frente"
-      ? `${rs.length} nesta faixa · ${r.abertas||rs.length} abertas · ${r.suas||0} suas · ${r.invisiveis||0} fora da aba AGORA`
+      ? `${rs.length} nesta faixa · ${esc2(r.abertas||rs.length)} abertas · ${esc2(r.suas||0)} suas · ${esc2(r.invisiveis||0)} fora da aba AGORA`
       : `${rs.length} card${rs.length===1?"":"s"}`;
     return `<h2>${esc2(f)} <span class="s">${sub}</span></h2>
       <div class="ivwrap">${linhas}</div>`;
@@ -1371,12 +1388,12 @@ function rSentinela(){
       <div class="ivwrap">`+rs.map(x=>{
         const ac=sentAcoes(x);
         return `
-        <div class="ivrow sev${x.severidade}"${ac?` id="sv-${esc(x.ref)}"`:""}>
+        <div class="ivrow sev${esc(x.severidade)}"${ac?` id="sv-${esc(x.ref)}"`:""}>
           <div class="ivm">
-            <span class="sevb s${x.severidade}">${x.severidade===1?"hoje":x.severidade===2?"semana":"higiene"}</span>
+            <span class="sevb s${esc(x.severidade)}">${x.severidade===1?"hoje":x.severidade===2?"semana":"higiene"}</span>
             ${x.ref&&x.ref!==x.titulo?`<code>${esc(x.ref)}</code>`:""}
             ${x.frente?`<span class="ivfr">${esc(x.frente)}</span>`:""}
-            ${x.valor!=null?`<span class="${+x.valor<0?"atr":""}">${+x.valor<0?rs_(x.valor):x.valor+"x"}</span>`:""}
+            ${x.valor!=null?`<span class="${+x.valor<0?"atr":""}">${+x.valor<0?rs_(x.valor):esc(x.valor)+"x"}</span>`:""}
           </div>
           <div class="ivt tit">${esc(x.titulo)}</div>
           <div class="ivj">${esc(x.detalhe)}</div>
@@ -1407,16 +1424,16 @@ function execChip(x){
   return `<span class="ivnat ex-${x.executor_possivel}" title="${esc(e[1])}">${esc(e[0])}</span>`;
 }
 function botoesIv(x,esc2,pref){
-  const id=esc2(x.id);
+  const id="'"+escAttr(x.id)+"'";   /* argumento JS: o id vai entre aspas, nunca cru dentro do onclick */
   const P="'"+(pref||"iv-")+"'";
   const acoes=Array.isArray(x.acoes)?x.acoes:[];
   if(!acoes.length) return `<span class="ivsem">o banco não oferece ação para este card</span>`;
   const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
   const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
     const rot=esc2(a.rotulo||a.verbo);
-    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
+    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${escAttr(a.verbo)}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
     const campo=a.arg==="data"?"date":"texto"; /* feita sem arg tambem cai aqui: abre o campo da prova */
-    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${a.verbo}','${campo}','${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
+    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${escAttr(a.verbo)}','${campo}','${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
   });
   /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
   if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" onclick="ivAdiar(${id},7,${P})">+7d</button>`);
@@ -1448,7 +1465,6 @@ function ivEscolher(ref,opcao){
   const el=document.getElementById("iv-"+ref);
   agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}), "escolher em "+ref, el);
 }
-const escAttr=s=>String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
 /* LC-14: concluir pede uma linha de prova. O banco recusa feita com menos de 8 caracteres (agir_nucleo). */
 const PROVA_PH="prova: o que aconteceu, quando e por qual canal (ex.: e-mail do fiscal 02/10)";
 const PROVA_MSG="Concluir pede uma linha de prova com pelo menos 8 caracteres. Peça pronta não fecha card.";
@@ -1652,6 +1668,7 @@ const EMBUTIDO=(()=>{ try{
 })();
 
 /* ---------- autenticação ---------- */
+/* html confiavel: lm() recebe frase fixa com <b>; todo texto do Supabase entra por esc() no chamador */
 function lm(t,c){const p=document.getElementById("lmsg");p.innerHTML=t;
   p.style.color=c==="bad"?"var(--bad)":c==="ok"?"var(--ok)":"var(--mut)";}
 async function comSenha(){
@@ -1662,7 +1679,7 @@ async function comSenha(){
   if(!error){lm("Entrando…","ok");return;}
   lm(/Invalid login/i.test(error.message)
     ? "<b>E-mail ou senha não conferem.</b> Se ainda não criou senha, abra no computador e clique em <b>senha</b> no topo."
-    : ("Erro "+(error.status||"")+": "+error.message),"bad");}
+    : ("Erro "+esc(error.status||"")+": "+esc(error.message)),"bad");}
 async function entrar(){
   const e=document.getElementById("em").value.trim();
   if(!e){lm("Digite o e-mail primeiro.","bad");return;}
@@ -1673,7 +1690,7 @@ async function entrar(){
   if(!error){lm("Link enviado. Copie o <b>endereço</b> do link e cole no campo abaixo.","ok");return;}
   lm(error.status===429
     ? "<b>Limite de e-mails (429).</b> O provedor grátis bloqueia após poucos envios por hora. Use senha, ou espere ~1h."
-    : ("Erro "+(error.status||"")+": "+error.message),"bad");}
+    : ("Erro "+esc(error.status||"")+": "+esc(error.message)),"bad");}
 async function colarDoClipboard(){
   /* v25: o dono nao digita token. Ele copia o endereco no e-mail e clica uma vez. */
   const campo=document.getElementById("colado");
@@ -1692,7 +1709,7 @@ async function esqueciSenha(){
   if(!e){lm("Digite o e-mail primeiro.","bad");document.getElementById("em").focus();return;}
   lm("enviando…");
   const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
-  if(error){lm("Erro "+(error.status||"")+": "+error.message,"bad");return;}
+  if(error){lm("Erro "+esc(error.status||"")+": "+esc(error.message),"bad");return;}
   document.getElementById("alt").classList.remove("hidden");
   lm("Enviei o link de redefinição. No e-mail, copie o <b>endereço</b> do link e use o botão de colar abaixo. Depois de entrar, clique em <b>senha</b> no topo para definir a nova.","ok");
   const c=document.getElementById("colado"); if(c)c.scrollIntoView({block:"center"});}
@@ -1703,7 +1720,7 @@ async function colar(){
   const h=new URLSearchParams((u.hash||"").replace(/^#/,""));
   if(h.get("access_token")&&h.get("refresh_token")){
     const {error}=await sb.auth.setSession({access_token:h.get("access_token"),refresh_token:h.get("refresh_token")});
-    lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");return;}
+    lm(error?("Erro: "+esc(error.message)):"Entrando…",error?"bad":"ok");return;}
   const th=u.searchParams.get("token")||u.searchParams.get("token_hash")||h.get("token_hash");
   const tp=u.searchParams.get("type")||h.get("type")||"magiclink";
   if(!th){lm("Não achei o código nesse link. Copie o <b>endereço do link</b>, não o texto.","bad");return;}
@@ -1711,13 +1728,13 @@ async function colar(){
   if(!error){lm("Entrando…","ok");return;}
   lm(/expired|invalid/i.test(error.message)
     ?"<b>Link já usado ou expirado.</b> Peça outro e, no e-mail novo, copie o endereço sem clicar."
-    :("Erro: "+error.message),"bad");}
+    :("Erro: "+esc(error.message)),"bad");}
 async function codigo(){
   const e=document.getElementById("em").value.trim(),c=(document.getElementById("cod").value||"").trim();
   if(!e){lm("Preencha o e-mail primeiro.","bad");return;}
   if(c.length<6){lm("O código tem 6 dígitos.","bad");return;}
   const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
-  lm(error?("Erro: "+error.message):"Entrando…",error?"bad":"ok");}
+  lm(error?("Erro: "+esc(error.message)):"Entrando…",error?"bad":"ok");}
 async function sair(){await sb.auth.signOut();location.reload();}
 function abrirSenha(){document.getElementById("app").classList.add("hidden");
   document.getElementById("senha").classList.remove("hidden");window.scrollTo(0,0);}
@@ -1725,12 +1742,13 @@ function fecharSenha(){document.getElementById("senha").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");}
 async function salvarSenha(){
   const a=document.getElementById("np1").value,b=document.getElementById("np2").value,m=document.getElementById("smsg");
+  /* html confiavel: frases fixas; o erro do Supabase entra por esc() */
   const put=(t,c)=>{m.innerHTML=t;m.style.color=c==="bad"?"var(--bad)":c==="ok"?"var(--ok)":"var(--mut)";};
   if(a.length<8){put("A senha precisa de pelo menos 8 caracteres.","bad");return;}
   if(a!==b){put("As duas senhas não são iguais.","bad");return;}
   put("salvando…");
   const {error}=await sb.auth.updateUser({password:a});
-  if(error){put("Erro: "+error.message,"bad");return;}
+  if(error){put("Erro: "+esc(error.message),"bad");return;}
   document.getElementById("np1").value="";document.getElementById("np2").value="";
   put("<b>Senha salva.</b> Agora entre no celular com seu e-mail e esta senha.","ok");}
 
@@ -1988,16 +2006,16 @@ function montaFiltros(){
   const cf={},co={};
   U.forEach(it=>{const f=it.frente||"sem frente";cf[f]=(cf[f]||0)+1;co[it.origem]=(co[it.origem]||0)+1;});
   document.getElementById("chipsFrente").innerHTML=
-    Object.keys(cf).sort().map(f=>`<button class="chip ${F.frente===f?"on":""}" onclick="setFrente('${esc(f)}')">
+    Object.keys(cf).sort().map(f=>`<button class="chip ${F.frente===f?"on":""}" onclick="setFrente('${escAttr(f)}')">
       ${esc(f.replace(/^\d+-/,""))}<span class="c">${cf[f]}</span></button>`).join("");
   const rot={tarefa:"tarefas",demanda:"demandas",fluxo:"caixa",gargalo:"gargalos"};
   document.getElementById("chipsOrigem").innerHTML=
-    Object.keys(co).sort().map(o=>`<button class="chip ${F.origem===o?"on":""}" onclick="setOrigem('${esc(o)}')">
+    Object.keys(co).sort().map(o=>`<button class="chip ${F.origem===o?"on":""}" onclick="setOrigem('${escAttr(o)}')">
       ${esc(rot[o]||o)}<span class="c">${co[o]}</span></button>`).join("");
   const cn={};
   U.forEach(it=>{const n=natDe(it);if(n)cn[n]=(cn[n]||0)+1;});
   const en=document.getElementById("chipsNat");
-  if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip ${F.nat===n?"on":""}" onclick="setNat('${esc(n)}')">
+  if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip ${F.nat===n?"on":""}" onclick="setNat('${escAttr(n)}')">
       ${esc(n.replace(/^\d+\s/,""))}<span class="c">${cn[n]}</span></button>`).join("")
       ||'<span style="color:var(--dim);font-size:12px">sem natureza classificada nesta stack</span>';
   document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q||F.nat)?"inline-flex":"none";
@@ -2063,7 +2081,7 @@ function limparFiltros(){F={q:"",frente:null,origem:null,nat:null};document.getE
 /* ---------- MODAL ---------- */
 function abrirModal(tit,sub,campo,onOk,okLabel){
   document.getElementById("mtit").textContent=tit;
-  document.getElementById("msub").innerHTML=sub||"";
+  document.getElementById("msub").innerHTML=sub||"";   // html confiavel: todo chamador monta sub com esc()
   document.getElementById("mcampo").innerHTML=
     campo==="texto"?`<textarea id="mval" placeholder="${esc(pendente&&pendente.ph||"escreva a sua posição")}"></textarea>`:
     campo==="date"?`<input type="date" id="mval" value="${new Date(Date.now()+864e5*7).toISOString().slice(0,10)}">`:"";
@@ -2093,6 +2111,7 @@ function partes(txt){
   return {tags, texto:t||(txt||"")};
 }
 function bloco(lbl,txt,cls,id){
+  /* html confiavel: lbl e frase fixa (ou ja passou por esc no chamador); id e prefixo + uid(); txt passa por esc */
   if(!txt)return"";
   const longo=String(txt).length>150;
   return `<div class="txt ${cls||""}" id="${id}">
@@ -2116,13 +2135,14 @@ function cardFila(it){
   const acts=(it.acoes||[]).filter(a=>a.verbo!=="deliberar");
   const k=uid(it.origem+it.ref);
   const p=partes(it.titulo_completo||it.titulo);
-  return `<div class="card n${it.nivel}" id="c-${k}" data-o="${esc(it.origem)}" data-r="${esc(it.ref)}">
+  const O=escAttr(it.origem), R=escAttr(it.ref);
+  return `<div class="card n${esc(it.nivel)}" id="c-${k}" data-o="${esc(it.origem)}" data-r="${esc(it.ref)}">
    <div class="meta" style="margin-bottom:6px">
      <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
      ${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}
      ${it.frente?`<span class="tag f">${esc(it.frente.replace(/^\d+-/,""))}</span>`:""}
      ${it.valor_txt?`<span class="rs">${esc(it.valor_txt)}</span>`:""}
-     ${it.parado_txt?`<span>${esc(it.parado_txt)}</span>`:(it.dias_parado!=null?`<span>parado ${it.dias_parado}d</span>`:"")}
+     ${it.parado_txt?`<span>${esc(it.parado_txt)}</span>`:(it.dias_parado!=null?`<span>parado ${esc(it.dias_parado)}d</span>`:"")}
      ${it.forcar_decisao?`<span class="tag bad">decida</span>`:""}
      ${tagClasse(it)}
      ${minDe(it)!=null?`<span class="tag min">~${minDe(it)} min</span>`:""}
@@ -2135,14 +2155,14 @@ function cardFila(it){
    ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor — "+promessaResposta()),"vio","p-"+k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
-       onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')registrar('${esc(it.origem)}','${esc(it.ref)}','t-${k}')"></textarea>
+       onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')registrar('${O}','${R}','t-${k}')"></textarea>
      <div class="resplin">
-       <button class="prim" onclick="registrar('${esc(it.origem)}','${esc(it.ref)}','t-${k}')">registrar</button>
+       <button class="prim" onclick="registrar('${O}','${R}','t-${k}')">registrar</button>
        ${acts.length?`<button class="mais" onclick="toggleMenu('${k}')" aria-expanded="false">outras ações</button>`:""}
-       <button class="link" onclick="perguntar('${esc(it.origem)}','${esc(it.ref)}')">perguntar</button>
+       <button class="link" onclick="perguntar('${O}','${R}')">perguntar</button>
      </div>
      <div class="menu" id="m-${k}">
-       ${acts.map(a=>`<button class="sec" onclick="agir('${esc(it.origem)}','${esc(it.ref)}','${esc(a.verbo)}','${esc(a.campo||"")}','${esc(a.label)}')">${esc(a.label)}</button>`).join("")}
+       ${acts.map(a=>`<button class="sec" onclick="agir('${O}','${R}','${escAttr(a.verbo)}','${escAttr(a.campo||"")}','${escAttr(a.label)}')">${esc(a.label)}</button>`).join("")}
      </div>
    </div></div>`;}
 /* ---------- v48: A ESCOLHA CHEGA NA FILA DE HOJE ----------
@@ -2157,7 +2177,7 @@ function opcoesFila(it){
   if(!o||!Array.isArray(o.opcoes)||!o.opcoes.length) return "";
   const k=uid(it.origem+it.ref);
   return `<ul class="ivop">`+o.opcoes.map(x=>
-    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" onclick="faEscolher('${esc(it.origem)}','${esc(it.ref)}','${escAttr(x.label)}','c-${k}')">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
+    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" onclick="faEscolher('${escAttr(it.origem)}','${escAttr(it.ref)}','${escAttr(x.label)}','c-${k}')">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
     +`</ul>`+(o.escolha?`<div class="ivesc">escolhido: <b>${esc(o.escolha)}</b></div>`:"");
 }
 /* ---------- v61 ONDA 1: DECIDIR SEM DIGITAR (t1454, doc 1201 secao 3.2) ----------
@@ -2308,7 +2328,7 @@ function rFunil(){
   const conv=(ac.length+pe.length)?Math.round(100*ac.length/(ac.length+pe.length)):null;
   const d=ac.map(x=>x.dias_aceite_ate_receber).filter(x=>x!=null).map(Number).sort((a,b)=>a-b);
   const med=d.length?(d.length%2?d[(d.length-1)/2]:(d[d.length/2-1]+d[d.length/2])/2):null;
-  const linha=x=>`<div class="funi${x.validade_vencida?" venc":""}"><b>${x.valor!=null?rs(+x.valor):"sem valor"}</b> <span>${esc(x.codigo)}</span> ${esc(x.cliente)} <span class="s">· enviada há ${x.dias_desde_envio} dias${x.validade_vencida?" · validade vencida":""}</span></div>`;
+  const linha=x=>`<div class="funi${x.validade_vencida?" venc":""}"><b>${x.valor!=null?rs(+x.valor):"sem valor"}</b> <span>${esc(x.codigo)}</span> ${esc(x.cliente)} <span class="s">· enviada há ${esc(x.dias_desde_envio)} dias${x.validade_vencida?" · validade vencida":""}</span></div>`;
   el.innerHTML=`<div class="fun">
     <div class="c13t">Funil de receita: <b>${ab.length}</b> em aberto (${rs(soma(ab))})</div>
     <div class="c13s">Aceitas ${ac.length} (${rs(soma(ac))}) · perdidas ${pe.length} (${rs(soma(pe))}) · conversão ${conv==null?"sem base":conv+"%"} · do aceite ao primeiro recebimento ${med==null?"sem base":med+" dias"} (mediana). Proposta em aberto não é contrato e não entra no caixa.</div>
@@ -2402,7 +2422,7 @@ function rOrcamento(){
   el.innerHTML='<tr><th>rotina</th><th>meta</th><th>cumprimento 7d</th><th>falhas / limite</th><th>estado</th></tr>'+e.map(x=>{
     const c=+x.consumo_pct||0, cls=c>=100?"estourou":c>=50?"queimando":"";
     const est=c>=100?"estourou o limite":c>=50?"gastou metade do limite":String(x.veredito_budget||"").toLowerCase();
-    return `<tr class="${cls}"><td>${esc(x.nome)}</td><td>${x.slo_pct!=null?x.slo_pct+"%":"—"}</td><td>${x.cumprimento_pct!=null?x.cumprimento_pct+"%":"—"}</td><td>${x.falhas_7d??0} / ${x.orcamento_falhas_7d??"—"}</td><td>${esc(est)}</td></tr>`;}).join("");}
+    return `<tr class="${cls}"><td>${esc(x.nome)}</td><td>${x.slo_pct!=null?esc(x.slo_pct)+"%":"—"}</td><td>${x.cumprimento_pct!=null?esc(x.cumprimento_pct)+"%":"—"}</td><td>${esc(x.falhas_7d??0)} / ${esc(x.orcamento_falhas_7d??"—")}</td><td>${esc(est)}</td></tr>`;}).join("");}
 function cardFocado(){ const c=cards()[foco]; return (foco>=0&&c&&c.dataset.o)?c:null; }
 function faEscolher(origem,ref,opcao,idel){
   /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
@@ -2411,7 +2431,7 @@ function faEscolher(origem,ref,opcao,idel){
           "escolher em "+ref, document.getElementById(idel));
 }
 function cardCorrecao(c){
-  const k="cor"+c.dialogo_id;
+  const k="cor"+uid(c.dialogo_id);
   const p=partes(c.objeto_resumo);
   return `<div class="card cor">
    <div class="meta" style="margin-bottom:7px">
@@ -2422,7 +2442,7 @@ function cardCorrecao(c){
      ${c.objeto_prazo?`<span class="tag">prazo ${esc(c.objeto_prazo)}</span>`:""}
      ${c.objeto_situacao?`<span class="tag ${c.objeto_situacao==="feita"?"ok":""}">${esc(c.objeto_situacao)}</span>`:""}
      ${c.objeto_valor?`<span class="rs">${esc(c.objeto_valor)}</span>`:""}
-     <span>há ${c.dias_esperando}d</span>
+     <span>há ${esc(c.dias_esperando)}d</span>
    </div>
    <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
    ${c.objeto_pronto?`<div class="meta" style="margin:-2px 0 8px"><span class="tag">pronto quando</span>
@@ -2432,7 +2452,9 @@ function cardCorrecao(c){
    <div class="acts">
      ${(c.acoes||[]).map((a,i)=>{
        const cls=i===0?"prim":(a.rpc==="deliberar_correcao"?"prim vio":"sec");
-       return `<button class="${cls}" onclick="corrigir(${c.dialogo_id},'${esc(a.rpc)}',${a.arg===undefined?"null":a.arg},'${esc(a.campo||"")}','${esc(a.label)}','${esc(a.placeholder||"")}')">${esc(a.label)}</button>`;
+       /* dialogo_id e arg sao valores JS (numero, booleano): entram como JSON, escapado para o atributo */
+       const js=v=>esc(JSON.stringify(v===undefined?null:v));
+       return `<button class="${cls}" onclick="corrigir(${js(c.dialogo_id)},'${escAttr(a.rpc)}',${js(a.arg)},'${escAttr(a.campo||"")}','${escAttr(a.label)}','${escAttr(a.placeholder||"")}')">${esc(a.label)}</button>`;
      }).join("")}
    </div></div>`;}
 const TETO=5; let semTeto=false;
@@ -2522,7 +2544,7 @@ function pecaLink(it){
   const okId=/^[A-Za-z0-9_-]{10,}$/.test(id);
   if(!okId&&!p) return "";
   const cam=p?`<code class="pecap">${esc(p)}</code><button type="button" class="link" onclick="copiaPeca(this)">copiar caminho</button>`:"";
-  return `<div class="peca">${okId?`<a class="pecaa" href="https://drive.google.com/open?id=${encodeURIComponent(id)}" target="_blank" rel="noopener noreferrer">abrir peça</a>`:`<span class="lbl">peça</span>`}${cam}</div>`;}
+  return `<div class="peca">${okId?`<a class="pecaa" href="${esc(urlSegura("https://drive.google.com/open?id="+encodeURIComponent(id)))}" target="_blank" rel="noopener noreferrer">abrir peça</a>`:`<span class="lbl">peça</span>`}${cam}</div>`;}
 function selecionaPeca(c){
   if(!c) return; try{ const r=document.createRange(); r.selectNodeContents(c);
     const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
@@ -2580,10 +2602,10 @@ function vazioAgora(){
       <span>${esc(c.proximo_titulo)}</span>
       <span class="s">${esc(c.proximo_frente||"")}</span></div>`:"";
   const cx=(r&&r.dias_sobrevida!=null)?`<div class="vzl"><b>Caixa</b>
-      <span class="tag ${r.dias_sobrevida_pior<30?"bad":"ok"}">${r.dias_sobrevida} dias</span>
-      <span>${r.dias_sobrevida_pior} dias no pior caso</span></div>`:"";
-  const dep=c.depois?`<button class="link" onclick="verDepois()">ver os ${c.depois} em segundo plano</button>`:"";
-  const le=c.leituras?`<button class="link" onclick="irAba('leituras')">${c.leituras} esperando ciência</button>`:"";
+      <span class="tag ${r.dias_sobrevida_pior<30?"bad":"ok"}">${esc(r.dias_sobrevida)} dias</span>
+      <span>${esc(r.dias_sobrevida_pior)} dias no pior caso</span></div>`:"";
+  const dep=c.depois?`<button class="link" onclick="verDepois()">ver os ${esc(c.depois)} em segundo plano</button>`:"";
+  const le=c.leituras?`<button class="link" onclick="irAba('leituras')">${esc(c.leituras)} esperando ciência</button>`:"";
   /* o cabecalho da aba ja diz "nada precisa de voce hoje": repetir aqui era redundancia. */
   return `<div class="empty vazio">${prox}${cx}<div class="vza">${dep}${le}</div></div>`;
 }
@@ -2599,7 +2621,7 @@ function rAgora(){
   const tot=vis.length+depRest.filter(passa).length;
   const c=D.cont||{};
   rFaixa5();
-  const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${D.rw.dias_sobrevida_pior} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${D.rw.dias_sobrevida} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div>${foraDaConta(D.rw)?`<div class="s">⚠ ${foraDaConta(D.rw)}</div>`:""}</div>`:""}`;
+  const _folego=`${D.rw&&D.rw.dias_sobrevida_pior!=null?`<div style="margin:8px 0"><div class="t" style="font-size:24px;color:${D.rw.dias_sobrevida_pior<30?"var(--bad)":"var(--ok)"}">${esc(D.rw.dias_sobrevida_pior)} dias de folego de caixa no pior caso ${sparkKPI("caixa.sobrevida_dias",64,20)}</div><div class="s">${esc(D.rw.dias_sobrevida)} dias no cenario base. caixa hoje ${rs(Number(D.rw.caixa_hoje))}, queima ${rs(Number(D.rw.queima_dia_base))} por dia.</div>${foraDaConta(D.rw)?`<div class="s">⚠ ${foraDaConta(D.rw)}</div>`:""}</div>`:""}`;
   document.getElementById("hero").innerHTML=`<div class="hero ${tot||D.cor.length?"alert":""}">
     <div class="t">${tot?tot+" precisa"+(tot>1?"m":"")+" de você"+(filtrando?" neste filtro":" hoje")
       :(filtrando?"nada neste filtro"
@@ -2610,7 +2632,7 @@ function rAgora(){
     ${D.cor.length?`<div class="s"><span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span></div>`:""}
     <details class="abaixo"><summary>mais números do caixa e da fila</summary>${_folego}
     <div class="s">
-      <span>${c.depois??0} em segundo plano</span><span>·</span><span>${c.leituras??0} esperando ciência</span>
+      <span>${esc(c.depois??0)} em segundo plano</span><span>·</span><span>${esc(c.leituras??0)} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
       
@@ -2637,14 +2659,14 @@ function rAgora(){
         O teto é de exibição, não de existência.
         <button onclick="verTudo()">ver os ${resto} restantes</button></div>` : "")
    +(acima>0
-    ? `<div class="estouro"><b>${acima}</b> ${acima>1?"cards estão":"card está"} em segundo plano porque HOJE encheu em <b>${c.teto_tela}</b>, que é o limite de atenção — não porque ${acima>1?"sejam":"seja"} menos urgente${acima>1?"s":""}. A capacidade de trabalho medida é <b>${c.teto_wip}</b> por Lei de Little.
+    ? `<div class="estouro"><b>${acima}</b> ${acima>1?"cards estão":"card está"} em segundo plano porque HOJE encheu em <b>${esc(c.teto_tela)}</b>, que é o limite de atenção — não porque ${acima>1?"sejam":"seja"} menos urgente${acima>1?"s":""}. A capacidade de trabalho medida é <b>${esc(c.teto_wip)}</b> por Lei de Little.
         <button onclick="verDepois()">ver quais</button></div>` : "");
   const dep=depRest;
   document.getElementById("fila2").innerHTML=avisoDepois()+(dep.length
     ? dep.filter(passa).map(cardFila).join("")
     : DEPOIS_FALHA ? ""
     : (D.depois||[]).length ? `<div class="empty">nada mais em segundo plano: o que vencia subiu para hoje.</div>`
-    : (c.depois ? `<div class="empty">${c.depois} item(ns) em segundo plano.
+    : (c.depois ? `<div class="empty">${esc(c.depois)} item(ns) em segundo plano.
         <button class="link" onclick="verDepois()">carregar</button></div>`
       : `<div class="empty">nada em segundo plano.</div>`));
   foco=-1;   /* reset sem desenhar: contorno so aparece quando o dono aperta J ou K */
@@ -2656,9 +2678,9 @@ function rEspelho(){
   const cor = !P ? "" : /ALTA DEMAIS|BAIXA DEMAIS/.test(P.veredito) ? "bad"
                       : /AMOSTRA/.test(P.veredito) ? "med" : "ok";
   box.innerHTML = P ? `<div class="hero ${cor==="bad"?"alert":""}">
-      <div class="t">${P.taxa_ratificacao==null?"—":P.taxa_ratificacao+"%"} de ratificação</div>
-      <div class="s"><span>${P.ratificou} segui</span><span>·</span><span>${P.retificou} corrigi</span>
-        <span>·</span><span>${P.com_gabarito} de ${P.atos} atos com gabarito</span>
+      <div class="t">${P.taxa_ratificacao==null?"—":esc(P.taxa_ratificacao)+"%"} de ratificação</div>
+      <div class="s"><span>${esc(P.ratificou)} segui</span><span>·</span><span>${esc(P.retificou)} corrigi</span>
+        <span>·</span><span>${esc(P.com_gabarito)} de ${esc(P.atos)} atos com gabarito</span>
         <span>·</span><span class="tag ${cor}">${esc(P.veredito.split(" — ")[0])}</span></div>
       <div class="s" style="margin-top:6px">${esc((P.veredito.split(" — ")[1]||""))}</div></div>`
     : `<div class="empty">v_espelho_placar não retornou linhas.</div>`;
@@ -2678,7 +2700,7 @@ function rEspelho(){
       <div class="ttl">você <b>${esc(e.o_que_voce_fez)}</b>${
         e.o_que_eu_recomendei && e.o_que_eu_recomendei!==e.o_que_voce_fez
           ? ` · eu recomendei <b>${esc(e.o_que_eu_recomendei)}</b>` : ""}</div>
-      ${e.recomendacao?bloco("EU DIZIA",e.recomendacao,"","esp-"+e.id):""}
+      ${e.recomendacao?bloco("EU DIZIA",e.recomendacao,"","esp-"+uid(e.id)):""}
     </div>`;}).join("")
     : `<div class="empty">nenhum ato registrado ainda.</div>`;
 }
@@ -2709,9 +2731,9 @@ function rVarredura(){
   box.innerHTML=`<div class="card ${viva?"":"n1"}">
     <div class="meta" style="margin-bottom:6px">
       <span class="tag ${viva?"ok":"bad"}">${esc(V.veredito.split(" — ")[0])}</span>
-      <span>${V.fila_aguardando} na fila</span><span>·</span>
-      <span>${V.ja_viraram_tarefa} viraram tarefa</span>
-      ${V.falhas_48h?`<span>·</span><span class="tag bad">${V.falhas_48h} falha(s) em 48h</span>`:""}
+      <span>${esc(V.fila_aguardando)} na fila</span><span>·</span>
+      <span>${esc(V.ja_viraram_tarefa)} viraram tarefa</span>
+      ${V.falhas_48h?`<span>·</span><span class="tag bad">${esc(V.falhas_48h)} falha(s) em 48h</span>`:""}
       ${V.ultimo_ok?`<span>·</span><span>última boa ${esc(String(V.ultimo_ok).slice(0,16).replace("T"," "))}</span>`:""}</div>
     <div class="ttl">${esc(V.veredito.split(" — ")[1]||"a varredura está de pé")}</div>
     ${V.fila_aguardando?`<div class="s" style="margin-top:6px">Triar por SQL: <code>select * from v_dabli_triagem;</code></div>`:""}
@@ -2872,16 +2894,16 @@ function leUrgente(x){return x.dias===0||(x.dias_para_decurso??99)<=1;}
 function leRow(x){
   return `<div class="lerow${SEL.has(x.ref)?" sel":""}">
       <input type="checkbox" ${SEL.has(x.ref)?"checked":""} aria-label="marcar ${esc(x.ref)}"
-        onchange="leSel('${esc(x.ref)}',this)">
+        onchange="leSel('${escAttr(x.ref)}',this)">
       <div class="cor">
         <div class="t">${esc(x.titulo)}</div>
         <div class="m"><span class="mono">#${esc(x.ref)}</span><span>${esc(x.tipo||"")}</span>
           ${x.frente?`<span>${esc(String(x.frente).replace(/^\d+-/,""))}</span>`:""}
-          <span>${x.dias===0?"hoje":x.dias+"d"}</span>
-          <span>${x.dias_para_decurso>0?"decurso em "+x.dias_para_decurso+"d":"vence hoje por decurso"}</span></div>
+          <span>${x.dias===0?"hoje":esc(x.dias)+"d"}</span>
+          <span>${x.dias_para_decurso>0?"decurso em "+esc(x.dias_para_decurso)+"d":"vence hoje por decurso"}</span></div>
         ${x.veredito?`<div class="v">${esc(x.veredito)}</div>`:""}
         <div class="acoesle">
-          <button onclick="abreDelib('${esc(x.ref)}')" id="bd-${esc(x.ref)}">deliberar</button>
+          <button onclick="abreDelib('${escAttr(x.ref)}')" id="bd-${esc(x.ref)}">deliberar</button>
         </div>
         <div class="ledelib" id="ld-${esc(x.ref)}"></div>
       </div></div>`;}
@@ -2899,11 +2921,11 @@ function rLeituras(){
 function abreDelib(ref){
   const d=document.getElementById("ld-"+ref); if(!d)return;
   if(!d.innerHTML.trim()){
-    d.innerHTML=`<textarea id="dt-${ref}" rows="3"
+    d.innerHTML=`<textarea id="dt-${esc(ref)}" rows="3"
         placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
       <div class="acoesle">
-        <button class="prim" onclick="enviaDelib('${ref}')">registrar e marcar lida</button>
-        <button onclick="abreDelib('${ref}')">cancelar</button>
+        <button class="prim" onclick="enviaDelib('${escAttr(ref)}')">registrar e marcar lida</button>
+        <button onclick="abreDelib('${escAttr(ref)}')">cancelar</button>
       </div>`;}
   const abriu=!d.classList.contains("on");
   d.classList.toggle("on",abriu);
@@ -2948,7 +2970,8 @@ async function marcarLote(){
 /* ---------- COMANDO ---------- */
 function rDash(){ rDelta(); rRunway(); rCaixa13(); rFunil(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); }
 function rComando(){
-  const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
+  /* c vem do banco (contagem) e passa por esc; r e sub sao frases fixas com <b> (html confiavel) */
+  const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${esc(c)}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
 
   document.getElementById("insights").innerHTML=D.ins.length?D.ins.map((i,n)=>`
@@ -2971,9 +2994,9 @@ function rComando(){
       tot&&(M.na_mao_do_igor/tot)<0.8?"fora":"dentro","meta 80% — o resto é dívida minha");
   document.getElementById("semi").innerHTML=D.semi.length?
    `<tr><th>tarefa</th><th>o que eu entrego pronto</th><th class="right">prazo</th></tr>`+
-   D.semi.map(t=>`<tr><td class="mono">t${t.id}</td><td>${esc(t.automat_motivo||"")}
+   D.semi.map(t=>`<tr><td class="mono">t${esc(t.id)}</td><td>${esc(t.automat_motivo||"")}
      <div style="color:var(--dim);font-size:11.5px;margin-top:3px">${esc((t.descricao||"").replace(/\s+/g," ").slice(0,84))}…</div></td>
-     <td class="right" style="color:${t.prazo&&new Date(t.prazo)<new Date()?"var(--bad)":"var(--mut)"}">${t.prazo?t.prazo.slice(8,10)+"/"+t.prazo.slice(5,7):"—"}</td></tr>`).join("")
+     <td class="right" style="color:${t.prazo&&new Date(t.prazo)<new Date()?"var(--bad)":"var(--mut)"}">${t.prazo?esc(String(t.prazo).slice(8,10)+"/"+String(t.prazo).slice(5,7)):"—"}</td></tr>`).join("")
    :`<tr><td class="empty">nenhuma tarefa SEMI aberta.</td></tr>`;}
 
 
@@ -2989,11 +3012,11 @@ function rRunway(){
   const cls = dP==null?"":dP<=30?"crit":dP<=90?"warn":"";
   const colide = dP!=null ? new Date(Date.now()+dP*864e5).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : null;
   const t = dP==null ? "Sobrevida indeterminada"
-    : `<b>${dP}</b> dias de sobrevida no cenário pior`;
+    : `<b>${esc(dP)}</b> dias de sobrevida no cenário pior`;
   const sub = dP==null ? "Falta base para calcular a queima."
     : (dB==null
         ? `No cenário base a queima é negativa — o caixa <b>cresce</b>. A distância entre os dois cenários é o compromisso incerto de ${rs(r.saida_incerta_30d)} em 30 dias.`
-        : `Cenário base: ${dB} dias.`)
+        : `Cenário base: ${esc(dB)} dias.`)
       + ` Colide em <b>${colide}</b> se nada mudar. Caixa confirmado ${rs(r.caixa_hoje)} · sai ${rs(r.saida_firme_30d)} firme + ${rs(r.saida_incerta_30d)} incerto · entra ${rs(r.entrada_provavel_30d)} provável, em 30 dias.`;
   const largP = dP==null?0:Math.max(4,Math.min(100,dP/90*100));
   el.innerHTML=`<div class="runway ${cls}">
@@ -3028,7 +3051,7 @@ function rCaixa13(){
   const cols=s.map((x,i)=>{
     const v=base[i], neg=v<0, h=neg?Math.round(hNeg*(-v)/(maxNeg||1)):Math.round(hPos*v/(maxPos||1));
     const tip=`semana de ${ddmm(x.inicio)}: ${rs(v)} no caso base, ${rs(pior[i])} sem as entradas incertas`;
-    return `<div class="c13c${neg?" neg":""}${i===iMin?" min":""}" title="${esc(tip)}" data-semana="${x.semana}">
+    return `<div class="c13c${neg?" neg":""}${i===iMin?" min":""}" title="${esc(tip)}" data-semana="${esc(x.semana)}">
       <div class="p" style="height:${hPos}px">${neg?"":`<i style="height:${h}px"></i>`}</div>
       <div class="n" style="height:${hNeg}px">${neg?`<i style="height:${h}px"></i>`:""}</div>
       <span>${ddmm(x.inicio)}</span></div>`;}).join("");
@@ -3073,8 +3096,8 @@ function rFrescor(){
   el.innerHTML=`<div class="fresc ${cls}">
     <span class="dot"></span>
     <span aria-hidden="true">${sim}</span>
-    <span>números medidos <b>${quando}</b> · ${f.metricas_hoje} indicadores hoje
-      <span class="sep">·</span> rotinas no ponto <b>${f.no_ponto}/${f.rotinas_total}</b></span>
+    <span>números medidos <b>${quando}</b> · ${esc(f.metricas_hoje)} indicadores hoje
+      <span class="sep">·</span> rotinas no ponto <b>${esc(f.no_ponto)}/${esc(f.rotinas_total)}</b></span>
     ${f.aviso?`<span style="flex:1 1 100%"><b>${esc(f.aviso)}</b></span>`:""}
     <span class="orcam ${estourado?"estourado":""}" title="Acima de 3 alarmes por dia o problema é a régua, não os itens (Google SRE: um humano só reage com urgência algumas vezes ao dia).">${fora} fora da meta${estourado?" — régua frouxa, não crise":""}</span>
   </div>`;}
@@ -3207,7 +3230,7 @@ function rDelta(){
   const desde=d[0].desde||"";
   el.innerHTML=`<div class="delta-fx">
     <span class="delta-lb">desde a sua última visita (${esc(desde)})</span>
-    ${d.map(x=>`<span class="delta-pc"><b>${x.n}</b> ${esc(x.tipo)}</span>`).join("")}
+    ${d.map(x=>`<span class="delta-pc"><b>${esc(x.n)}</b> ${esc(x.tipo)}</span>`).join("")}
   </div>`;}
 
 /* ---------- v22: O PLACAR DA SIMBIOSE (v_placar) ----------
@@ -3243,8 +3266,8 @@ function rM9(){
     for(let col=1;col<=3;col++){
       const q=(lin-1)*3+col, z=zona(q), dentro=M.filter(m=>m.quadrante===q);
       h+=`<div class="cel ${z}"><span class="qn">${q}</span>`+
-         dentro.map(m=>`<span class="pt" onclick="irParaFrente('${esc(m.frente)}')"
-             title="${esc(m.frente)}${m.quadrante_anterior?` — veio do quadrante ${m.quadrante_anterior}`:""}">
+         dentro.map(m=>`<span class="pt" onclick="irParaFrente('${escAttr(m.frente)}')"
+             title="${esc(m.frente)}${m.quadrante_anterior?` — veio do quadrante ${esc(m.quadrante_anterior)}`:""}">
              ${seta(m.movimento)} ${esc(m.frente.replace(/^\d+-/,""))}</span>`).join("")+
          `<span class="zl">${dentro.length?"":rot[z]}</span></div>`;}}
   h+=`<div class="ax"></div><div class="ax">MENOS RESULTADO</div><div class="ax"></div><div class="ax">MAIS RESULTADO</div>`;
@@ -3268,9 +3291,9 @@ function rFrentes(){
                : meu/Math.max(tot,1) >= .5 ? ["igor","gargalo é seu"]
                : ["claude","gargalo é meu"];
     const wr=100*(f.a_receber||0)/teto, wp=100*(f.a_pagar||0)/teto; const dsem=f.dias_sem_tocar, mv=dsem==null?["","sem registro"]:dsem<=1?["ok","andou hoje"]:dsem<=3?["ok","andou ha "+dsem+"d"]:dsem<=7?["med","parada ha "+dsem+"d"]:["bad","parada ha "+dsem+"d"];
-    return `<div class="fcard ${esc(f.status)}" onclick="irParaFrente('${esc(f.slug)}')">
+    return `<div class="fcard ${esc(f.status)}" onclick="irParaFrente('${escAttr(f.slug)}')">
       <div class="fh"><span class="fn">${esc(f.slug.replace(/^\d+-/,""))}</span>
-        <span class="tag ${mv[0]}" title="status declarado: ${lb}">${ic} ${mv[1]}</span></div>
+        <span class="tag ${mv[0]}" title="status declarado: ${esc(lb)}">${ic} ${esc(mv[1])}</span></div>
       <div class="fbar">
         <span style="width:${wr.toFixed(1)}%;background:var(--bl)"></span>
         <span style="width:${wp.toFixed(1)}%;background:var(--rd)"></span></div>
@@ -3279,9 +3302,9 @@ function rFrentes(){
         <span style="color:${f.a_pagar>0?"var(--rd)":"var(--dim)"}">pagar ${f.a_pagar>0?rs(f.a_pagar):"—"}</span></div>
       <div class="fmeta">
         <span class="dono ${dono[0]}">${dono[1]}</span>
-        <span>${tot} item${tot===1?"":"s"}${meu?` · ${meu} na sua mão`:""}</span>
-        ${f.vencidas?`<span style="color:var(--bad);font-weight:600">${f.vencidas} vencida${f.vencidas>1?"s":""}</span>`:""}
-        <span style="margin-left:auto">${f.dias_sem_tocar}d sem tocar</span></div></div>`;}).join("")
+        <span>${esc(tot)} item${tot===1?"":"s"}${meu?` · ${esc(meu)} na sua mão`:""}</span>
+        ${f.vencidas?`<span style="color:var(--bad);font-weight:600">${esc(f.vencidas)} vencida${f.vencidas>1?"s":""}</span>`:""}
+        <span style="margin-left:auto">${esc(f.dias_sem_tocar)}d sem tocar</span></div></div>`;}).join("")
    + (parq.length?`<div class="fcard" style="border-left-color:var(--line);cursor:default;grid-column:1/-1">
         <div class="fmeta" style="margin-top:0"><span class="dono livre">parqueadas</span>
         <span>${parq.map(f=>esc(f.slug.replace(/^\d+-/,""))).join(" · ")}</span>
@@ -3306,12 +3329,12 @@ function rSmallMult(){
         const h=v/teto*H;
         return `<rect x="${(i*(bw+g)).toFixed(1)}" y="${(H-Math.max(h,v?1:0)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,v?1:0).toFixed(1)}" fill="${v?"var(--bl)":"var(--line2)"}"/>`;
       }).join("");
-      return `<div class="fcard ${esc(f.status||"")}" style="cursor:pointer" onclick="irParaFrente('${esc(f.slug)}')">
+      return `<div class="fcard ${esc(f.status||"")}" style="cursor:pointer" onclick="irParaFrente('${escAttr(f.slug)}')">
         <div class="fh"><span class="fn">${esc(String(f.slug).replace(/^\d+-/,""))}</span>
-          <span class="tag">${f.fechadas_periodo||0} fechados</span></div>
+          <span class="tag">${esc(f.fechadas_periodo||0)} fechados</span></div>
         <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img"
              aria-label="cards fechados por dia na frente ${esc(f.slug)}">${barras}</svg>
-        <div class="fmeta"><span style="color:var(--dim)">pico ${f.pico||0} no dia</span></div></div>`;
+        <div class="fmeta"><span style="color:var(--dim)">pico ${esc(f.pico||0)} no dia</span></div></div>`;
     }).join("")+`</div>`;}
 
 function irParaFrente(slug){F.frente=slug;F.origem=null;F.q="";
@@ -3454,7 +3477,7 @@ function tetoTile(t){
     if(!tot||tot.teto==null) return sem;
     v=+tot.itens; teto=+tot.teto;
     est=v>teto?"acima do teto: peça pronta nova bloqueada":v===teto?"no teto: peça pronta nova bloqueada":`abaixo do teto, folga de ${teto-v}`;
-    if(ag&&+ag.itens) extra=` · ${ag.itens} agendado${+ag.itens===1?"":"s"} à parte`;
+    if(ag&&+ag.itens) extra=` · ${esc(ag.itens)} agendado${+ag.itens===1?"":"s"} à parte`;
   }
   const cls=v>teto?"mal":(v===teto?"atn":"bem");
   const top=Math.max(v,teto)*1.1||1, pc=x=>Math.max(0,Math.min(100,x/top*100)).toFixed(1);
@@ -3521,7 +3544,7 @@ function rEvolucao(){
   document.getElementById("dims").innerHTML=(D.mat||[]).map(m=>{
     const b=[1,2,3,4,5].map(i=>`<s class="${i<=m.nivel?"f":(i===m.nivel+1?"w":"")}"></s>`).join("");
     return `<div class="dim"><span class="nm">${esc(m.rotulo)}</span><span class="bar">${b}</span>
-      <span class="ow">série ${m.maior_serie} dia(s) · ${m.kpis_ativos} KPI · ${m.kpis_com_alarme} alarme</span>${m.quais_travam?`<span class="trv">trava: ${esc(m.quais_travam)}</span>`:""}</div>`}).join("");
+      <span class="ow">série ${esc(m.maior_serie)} dia(s) · ${esc(m.kpis_ativos)} KPI · ${esc(m.kpis_com_alarme)} alarme</span>${m.quais_travam?`<span class="trv">trava: ${esc(m.quais_travam)}</span>`:""}</div>`}).join("");
   rTravas();
   const por={};D.ev.forEach(k=>{(por[k.dimensao]=por[k.dimensao]||[]).push(k)});
   const ordem=["caixa","medicao","fila_decisao","fluxo","motor","contrato","memoria","acervo","arquivo"];
@@ -3565,14 +3588,14 @@ function rMotor(){
     const p=r.estado==="no ponto"?"ok":(r.estado==="manual"||r.estado==="nova")?"":"bad";
     const u=r.ultimo_ponto?new Date(r.ultimo_ponto).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"—";
     return `<tr><td class="mono">${esc(r.nome)}</td><td><span class="tag ${p}">${esc(r.estado)}</span></td>
-      <td style="color:var(--mut)">${r.janela_horas?r.janela_horas+"h":"manual"}${r.hora_inicio!=null?" · "+r.hora_inicio+"h-"+r.hora_fim+"h":""}</td>
-      <td class="right" style="color:var(--mut)">${r.horas_uteis_sem_ponto??"—"}</td>
-      <td class="right">${r.pontos_7d}</td><td class="right" style="color:var(--mut)">${u}</td></tr>`}).join("");
+      <td style="color:var(--mut)">${r.janela_horas?esc(r.janela_horas)+"h":"manual"}${r.hora_inicio!=null?" · "+esc(r.hora_inicio)+"h-"+esc(r.hora_fim)+"h":""}</td>
+      <td class="right" style="color:var(--mut)">${esc(r.horas_uteis_sem_ponto??"—")}</td>
+      <td class="right">${esc(r.pontos_7d)}</td><td class="right" style="color:var(--mut)">${u}</td></tr>`}).join("");
   const ruins=D.mo.filter(r=>r.estado==="atrasada"||r.estado==="nunca");
   const nb=document.getElementById("n-mo");nb.textContent=ruins.length||"";nb.className="n"+(ruins.length?" hot":"");
   document.getElementById("achados").innerHTML=ruins.length?ruins.map(r=>
     `<div class="card n1"><div class="ttl">${esc(r.nome)} — ${esc(r.estado)}</div>
-     <div class="meta">janela ${r.janela_horas}h · ${r.horas_uteis_sem_ponto??"—"}h úteis sem ponto</div>
+     <div class="meta">janela ${esc(r.janela_horas)}h · ${esc(r.horas_uteis_sem_ponto??"—")}h úteis sem ponto</div>
      <div class="txt">Silêncio de rotina é alarme. Confira o log da tarefa agendada, não o banco.</div></div>`).join("")
     :`<div class="empty">nenhuma rotina atrasada. As marcadas <b>manual</b> ou <b>nova</b> não se vigiam por relógio, por desenho.</div>`;}
 
@@ -3600,8 +3623,8 @@ function rFaixas(){
   el.innerHTML='<tr><th>frente</th><th>faixa</th><th>gera caixa</th><th style="text-align:right">abertos</th><th style="text-align:right">vencidos</th><th></th></tr>'
    +f.map(x=>`<tr><td>${esc(x.nome||x.slug)}</td><td>${esc(x.faixa)}</td>
       <td>${x.gera_caixa?'<span class="tag ok">sim</span>':'<span class="tag">não</span>'}</td>
-      <td style="text-align:right">${x.cards_abertos}</td>
-      <td style="text-align:right"${x.vencidos>0?' class="fora"':''}>${x.vencidos}</td>
+      <td style="text-align:right">${esc(x.cards_abertos)}</td>
+      <td style="text-align:right"${x.vencidos>0?' class="fora"':''}>${esc(x.vencidos)}</td>
       <td>${x.alerta?`<span class="tag bad">${esc(x.alerta)}</span>`:""}</td></tr>`).join("");}
 function rDeadman(){
   const el=document.getElementById("deadman");if(!el)return;
@@ -3612,7 +3635,7 @@ function rDeadman(){
    +d.map(x=>{const morto=String(x.veredito||"").startsWith("MORTO");
      return `<tr><td>${esc(x.jobname)}</td><td style="color:var(--dim)">${esc(x.schedule)}</td>
       <td${morto?' class="fora"':''}>${dt(x.ultimo_sucesso)}</td><td>${dt(x.ultima_tentativa)}</td>
-      <td style="text-align:right">${x.falhas_45d}</td>
+      <td style="text-align:right">${esc(x.falhas_45d)}</td>
       <td>${morto?`<span class="tag bad">${esc(x.veredito)}</span>`:`<span class="tag ${x.veredito==="vivo"?"ok":""}">${esc(x.veredito)}</span>`}</td></tr>`;}).join("");}
 function rEsforco(){
   const el=document.getElementById("esforco");if(!el)return;
@@ -3622,7 +3645,7 @@ function rEsforco(){
   const cor=p==null?"var(--dim)":(p>=50?"var(--bad)":(p>=30?"var(--warn)":"var(--ok)"));
   el.innerHTML=`<div class="card" style="border-left-color:${cor}">
     <div style="font-size:26px;font-weight:700;color:${cor}">${p==null?"—":p.toLocaleString("pt-BR")+"%"}</div>
-    <div style="color:var(--mut);margin-top:4px">${e.sem_entrega} de ${e.fechadas_no_mes} cards fechados no mês não moveram caixa nem destravaram terceiro.</div>
+    <div style="color:var(--mut);margin-top:4px">${esc(e.sem_entrega)} de ${esc(e.fechadas_no_mes)} cards fechados no mês não moveram caixa nem destravaram terceiro.</div>
     <div style="color:var(--dim);font-size:12px;margin-top:6px">Card fechado por poda, fusão, falso alarme ou perda de objeto fica fora da conta: senão a medida puniria justamente a limpeza.</div></div>`;}
 
 /* ---------- ACERVO ---------- */
@@ -3636,9 +3659,9 @@ function rAcervo(){
     tile(D.ac.filter(a=>a.exposicoes>0).length,"já oferecidas pelo buscador")+
     tile(nunca.length+` <span style="font-size:14px;color:var(--mut)">(${Math.round(100*nunca.length/t)}%)</span>`,
       "nunca chegaram a ser oferecidas",nunca.length>t/2?"fora":"");
-  const linha=a=>`<tr><td class="mono">${a.id}</td><td>${esc(a.tema)}</td>
+  const linha=a=>`<tr><td class="mono">${esc(a.id)}</td><td>${esc(a.tema)}</td>
     <td style="color:var(--mut);font-size:12px">${esc((a.gatilho||"").slice(0,58))}</td>
-    <td class="right">${a.exposicoes}</td><td class="right">${a.usos}</td></tr>`;
+    <td class="right">${esc(a.exposicoes)}</td><td class="right">${esc(a.usos)}</td></tr>`;
   const cab=`<tr><th>id</th><th>lição</th><th>gatilho</th><th class="right">ofertas</th><th class="right">usos</th></tr>`;
   document.getElementById("actop").innerHTML=cab+
     D.ac.slice().sort((a,b)=>b.usos-a.usos||b.exposicoes-a.exposicoes).slice(0,12).map(linha).join("");
