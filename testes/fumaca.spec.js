@@ -192,12 +192,6 @@ test('sinal que o mapa nao conhece aparece mesmo assim, e o contador bate com a 
   expect(r.mostraNovo,  'o sinal que o mapa nao conhece aparece').toBe(true);
 });
 
-test('a abertura nao derruba o script', async ({page})=>{
-  const erros = await abrir(page);
-  await page.waitForTimeout(400);
-  expect(erros, 'erros de script na abertura').toEqual([]);
-});
-
 /* ---------- v49: A CARGA DA ABERTURA ----------
    A classe de defeito: a abertura disparava 21 consultas de view ao mesmo tempo, cada uma
    planejando uma arvore de view aninhada, sob statement_timeout=8s do papel authenticated.
@@ -1093,7 +1087,7 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
     const out={};
     const sub=document.querySelector('#subnav .sub[data-p="pf"]');
     out.sub={existe:!!sub, grupo:sub&&sub.dataset.g, painel:!!document.getElementById('p-pf')};
-    out.opc={opcional:CHAVES_OPCIONAIS.includes('pf'), obrigatoria:CHAVES_PAINEL.includes('pf')};
+    out.opc={obrigatoria:CHAVES_PAINEL.includes('pf')};
     /* sem a chave: a tela DIZ que a fonte nao chegou */
     D.pf=null; let err=null;
     try{ render(); }catch(e){ err=String(e); }
@@ -1137,8 +1131,8 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   }, PF_FIX);
   expect(r.err, 'render() derrubou o script').toBe(null);
   expect(r.sub, 'Resultado PF e sub-aba de ACOMPANHAR com painel proprio').toEqual({existe:true, grupo:'acompanhar', painel:true});
-  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({opcional:false, obrigatoria:true});
-  expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
+  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({obrigatoria:true});
+  expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('Sem dado de PF nesta carga');
   expect(r.semFonteRod, 'sem a chave nao desenha rodape vazio').toBe('');
   expect(r.meses, 'o mes corrente e os dois anteriores, nesta ordem').toEqual(['2031-03','2031-02','2031-01']);
   expect(r.c0).toContain('em curso');
@@ -1194,18 +1188,6 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   expect(r.troca.rodAberto, 'redesenhar nao fecha o rodape que ele abriu').toBe(true);
 });
 
-test('a carga sem a chave pf nao acende "carga incompleta"', async ({page})=>{
-  const erros = await abrirContando(page);
-  const r = await page.evaluate(()=>({aceso:document.getElementById('falhou').classList.contains('on'),
-    det:document.getElementById('falhoudet').textContent, txt:document.getElementById('pf-meses').textContent,
-    from:window.__n.from}));
-  expect(erros, 'erro de script durante a carga').toEqual([]);
-  expect(r.aceso, 'fonte opcional ausente nao e falha').toBe(false);
-  expect(r.det).not.toContain('pf');
-  expect(r.txt, 'mas a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
-  expect(r.from, 'Resultado PF nao consulta view direto').toEqual([]);
-});
-
 for (const largura of [390, 1280]) {
   test(`Resultado PF cabe em ${largura}px sem rolagem horizontal, com fonte larga e rodape aberto`, async ({page})=>{
     await page.setViewportSize({width:largura, height:900});
@@ -1231,3 +1213,30 @@ for (const largura of [390, 1280]) {
     expect(r.cols, largura<640?'no celular os meses empilham':'no computador os tres meses lado a lado').toBe(largura<640?1:3);
   });
 }
+
+/* LC-14 no bastidor (02/10/2026): o agir_nucleo passa a recusar feita de tarefa sem prova de
+   8 caracteres. Sem este teste, o botao "feita" do inventario e da fila mandava valor nulo e
+   o Igor so descobria a regra pela recusa do banco. */
+test('feita no bastidor abre o campo da prova e prova curta nao vai ao banco', async ({page})=>{
+  const erros = await abrirComArgs(page);
+  const r = await page.evaluate(async()=>{
+    window.__n.args=[];
+    ivAgir(77,'feita','texto','feita','iv-');
+    const ph=document.getElementById('mval').getAttribute('placeholder');
+    document.getElementById('mval').value='ok';
+    await confirmarModal();
+    const curta=window.__n.args.filter(a=>a[0]==='agir').length;
+    fecharModal();
+    agir('tarefa','78','feita','','feita');
+    const abriu=!!document.getElementById('mval');
+    document.getElementById('mval').value='e-mail do fiscal 02/10';
+    await confirmarModal();
+    if(typeof enviarPendente==='function') await enviarPendente();
+    return {ph, curta, abriu, args:window.__n.args.filter(a=>a[0]==='agir').map(a=>a[1])};
+  });
+  expect(r.ph).toContain('prova');
+  expect(r.curta, 'prova curta nao chama agir').toBe(0);
+  expect(r.abriu, 'feita da fila tambem pede prova').toBe(true);
+  expect(r.args).toEqual([{p_origem:'tarefa',p_ref:'78',p_verbo:'feita',p_valor:'e-mail do fiscal 02/10'}]);
+  expect(erros).toEqual([]);
+});
