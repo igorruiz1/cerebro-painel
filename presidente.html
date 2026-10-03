@@ -543,6 +543,8 @@ function buscar(v){
 /* As acoes vem do banco (fila: label/verbo/campo; inventario: rotulo/verbo/arg). Normalizo as duas. */
 const acoesFila=f=>(f.acoes||[]).filter(a=>a.verbo!=="escolher").map(a=>({verbo:a.verbo,rot:ROT[a.verbo]||a.label||a.verbo,campo:a.campo}));
 const acoesInv=t=>(t.acoes||[]).filter(a=>a.verbo!=="escolher").map(a=>({verbo:a.verbo,rot:ROT[a.verbo]||a.rotulo||a.verbo,campo:a.arg}));
+/* fila e inventario oferecem cardapios diferentes para o mesmo card; o detalhe mostra a uniao, sem repetir verbo */
+const juntar=(a,b)=>a.concat(b.filter(x=>!a.some(y=>y.verbo===x.verbo)));
 function acaoPrincipal(ac,col){
   const tem=v=>ac.find(a=>a.verbo===v);
   if(col==="esperando")return tem("cobrar")||tem("repactuar");
@@ -553,13 +555,13 @@ function abrirFila(i,verbo){
   const f=hojeLista()[i]; if(!f)return;
   const t=f.origem==="tarefa"?invDe(f.ref):null;
   abrirCard({origem:f.origem,ref:String(f.ref),titulo:f.titulo_completo||f.titulo,frente:f.frente,porque:f.porque_agora,
-    valor:f.valor_txt,rec:f.recomendacao,pronto:t&&t.criterio_pronto,peca:f,acoes:acoesFila(f),col:"hoje",min:minDe(f)},verbo);
+    valor:f.valor_txt,rec:f.recomendacao,pronto:t&&t.criterio_pronto,peca:f,acoes:t?juntar(acoesFila(f),acoesInv(t)):acoesFila(f),col:"hoje",min:minDe(f)},verbo);
 }
 function abrirInv(id){
   const t=invDe(id); if(!t)return;
   const f=(D.fila||[]).find(x=>x.origem==="tarefa"&&String(x.ref)===String(id));
   abrirCard({origem:"tarefa",ref:String(t.id),titulo:t.titulo||t.resumo,frente:t.frente,porque:f&&f.porque_agora,
-    valor:f&&f.valor_txt,rec:f&&f.recomendacao,pronto:t.criterio_pronto,peca:f,acoes:f?acoesFila(f):acoesInv(t),col:colunaDe(t)||"semana",idade:idadeTxt(t),min:minutos()[String(t.id)]});
+    valor:f&&f.valor_txt,rec:f&&f.recomendacao,pronto:t.criterio_pronto,peca:f,acoes:f?juntar(acoesFila(f),acoesInv(t)):acoesInv(t),col:colunaDe(t)||"semana",idade:idadeTxt(t),min:minutos()[String(t.id)]});
 }
 function abrirCard(c,verbo){
   F=c;

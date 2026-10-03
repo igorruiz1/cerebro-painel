@@ -1213,3 +1213,30 @@ for (const largura of [390, 1280]) {
     expect(r.cols, largura<640?'no celular os meses empilham':'no computador os tres meses lado a lado').toBe(largura<640?1:3);
   });
 }
+
+/* LC-14 no bastidor (02/10/2026): o agir_nucleo passa a recusar feita de tarefa sem prova de
+   8 caracteres. Sem este teste, o botao "feita" do inventario e da fila mandava valor nulo e
+   o Igor so descobria a regra pela recusa do banco. */
+test('feita no bastidor abre o campo da prova e prova curta nao vai ao banco', async ({page})=>{
+  const erros = await abrirComArgs(page);
+  const r = await page.evaluate(async()=>{
+    window.__n.args=[];
+    ivAgir(77,'feita','texto','feita','iv-');
+    const ph=document.getElementById('mval').getAttribute('placeholder');
+    document.getElementById('mval').value='ok';
+    await confirmarModal();
+    const curta=window.__n.args.filter(a=>a[0]==='agir').length;
+    fecharModal();
+    agir('tarefa','78','feita','','feita');
+    const abriu=!!document.getElementById('mval');
+    document.getElementById('mval').value='e-mail do fiscal 02/10';
+    await confirmarModal();
+    if(typeof enviarPendente==='function') await enviarPendente();
+    return {ph, curta, abriu, args:window.__n.args.filter(a=>a[0]==='agir').map(a=>a[1])};
+  });
+  expect(r.ph).toContain('prova');
+  expect(r.curta, 'prova curta nao chama agir').toBe(0);
+  expect(r.abriu, 'feita da fila tambem pede prova').toBe(true);
+  expect(r.args).toEqual([{p_origem:'tarefa',p_ref:'78',p_verbo:'feita',p_valor:'e-mail do fiscal 02/10'}]);
+  expect(erros).toEqual([]);
+});

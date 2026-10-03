@@ -1363,8 +1363,8 @@ function botoesIv(x,esc2,pref){
   const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
   const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
     const rot=esc2(a.rotulo||a.verbo);
-    if(a.arg==null) return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
-    const campo=a.arg==="data"?"date":"texto";
+    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${a.verbo}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
+    const campo=a.arg==="data"?"date":"texto"; /* feita sem arg tambem cai aqui: abre o campo da prova */
     return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${a.verbo}','${campo}','${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
   });
   /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
@@ -1398,10 +1398,16 @@ function ivEscolher(ref,opcao){
   agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}), "escolher em "+ref, el);
 }
 const escAttr=s=>String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+/* LC-14: concluir pede uma linha de prova. O banco recusa feita com menos de 8 caracteres (agir_nucleo). */
+const PROVA_PH="prova: o que aconteceu, quando e por qual canal (ex.: e-mail do fiscal 02/10)";
+const PROVA_MSG="Concluir pede uma linha de prova com pelo menos 8 caracteres. Peça pronta não fecha card.";
 function ivAgir(ref,verbo,campo,label,pref){
   pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
+              : verbo==="feita" ? PROVA_PH
+              : verbo==="esperar" ? "com quem está a bola (ex.: fiscal da obra); volta em 3 dias"
                                    : "o que fica valendo neste card",
-            min: verbo==="arquivar" ? 5 : 0};
+            min: verbo==="arquivar" ? 5 : verbo==="feita" ? 8 : 0,
+            minMsg: verbo==="feita" ? PROVA_MSG : null};
   abrirModal(label,`<span class="mono">tarefa ${esc(String(ref))}</span>`,campo,
              v=>ivEnviar(ref,verbo,v,label,pref), label);
 }
@@ -2017,7 +2023,7 @@ async function confirmarModal(){
      como erro generico depois da ida ao banco. A regra e do banco; a tela so para de deixar
      voce descobrir isso pelo caminho longo. */
   if(pendente&&pendente.min&&v&&v.length<pendente.min){
-    msg(`O banco exige pelo menos ${pendente.min} caracteres — matar um card sem dizer por quê apaga a prova da decisão.`,"bad");return;}
+    msg(pendente.minMsg||`O banco exige pelo menos ${pendente.min} caracteres — matar um card sem dizer por quê apaga a prova da decisão.`,"bad");return;}
   const fn=pendente&&pendente.fn;fecharModal();if(fn)await fn(v);}
 
 /* ---------- AGORA ---------- */
@@ -2763,8 +2769,9 @@ function agir(origem,ref,verbo,campo,label){
   const el=document.getElementById("c-"+uid(origem+ref));
   const go=v=>agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:v}),
                       label+" em "+ref,el);
-  if(!campo)return go(null);
-  pendente={ph:campo==="texto"?"o que fica valendo":null};
+  if(!campo&&!(verbo==="feita"&&origem==="tarefa"))return go(null);
+  if(!campo){campo="texto";pendente={ph:PROVA_PH,min:8,minMsg:PROVA_MSG};}
+  else pendente={ph:campo==="texto"?"o que fica valendo":null};
   abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>`,campo,go,label);}
 function perguntar(origem,ref){
   pendente={ph:"o que você quer saber, ou o que quer que eu faça"};
