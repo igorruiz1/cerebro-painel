@@ -441,7 +441,6 @@ section.sec.on{display:block}
 .desf.on{display:flex}
 .desf button{background:none;border:0;color:var(--acc);font-weight:650;font-size:14px;
  font-family:inherit;cursor:pointer;padding:4px}
-.card.saindo{opacity:.35;transition:opacity .18s}
 .automed{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.7}
 .automed b{color:var(--ink2);font-variant-numeric:tabular-nums}
 .automed .fora{color:var(--warn)}
@@ -970,7 +969,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
   <div class="secnav" id="nav-panorama"></div>
   <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="caixa13"></div><div id="funil"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
   <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
-  <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="ins-top" style="display:none"></div><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
+  <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
 
 <div class="pane" id="p-maquina">
@@ -1082,16 +1081,6 @@ const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
                      "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf"];
-/* v68 (f5, auditoria de 02/10/2026, achado 1): chave OPCIONAL. "exp" traz as tarefas do Igor
-   vencidas ou vencendo hoje que o ranking so por peso deixou fora da camada hoje. Ela ainda nao
-   existe em painel_snapshot_fonte desde 02/10/2026 (P3 aprovada pelo Igor, s734) e entrou em CHAVES_PAINEL.
-   Enquanto nao existir, a falta dela NAO vira "carga incompleta": a tela funciona sem ela com o
-   que a fila de hoje e o segundo plano ja trazem. Quando a fonte entrar no banco, "exp" passa
-   para CHAVES_PAINEL e a falta volta a ser falha declarada. */
-/* v69 (t1561): "pf" e OPCIONAL pelo mesmo motivo: a tela Resultado PF nasce antes da linha em
-   painel_snapshot_fonte (o INSERT espera o OK do Igor). Sem a chave a tela diz que a fonte nao
-   chegou e a carga NAO acende "incompleta". Quando a linha entrar, "pf" passa para CHAVES_PAINEL. */
-const CHAVES_OPCIONAIS=[];
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
@@ -1788,8 +1777,8 @@ async function carregarAgora(ehRetentativa){
         ev=g("ev"),ins=g("ins"),fr=g("fr"),m9=g("m9"),mat=g("mat"),au=g("au"),pls=g("pls"),
         dv=g("dv"),par=g("par"),mo=g("mo"),varr=g("varr"),nat=g("nat"),wip=g("wip"),
         rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono"),fun=g("fun"),c13e=g("c13e"),eb=g("eb");
-  const exp=g("exp");   /* v68: opcional, ver CHAVES_OPCIONAIS */
-  const pf=g("pf");     /* v69: opcional, ver CHAVES_OPCIONAIS */
+  const exp=g("exp");
+  const pf=g("pf");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -2285,7 +2274,7 @@ function rPF(){
   if(!el||!cl||!hc||!rod) return;
   const p=D.pf;
   if(!p||!Array.isArray(p.meses)||!p.meses.length){
-    el.innerHTML='<div class="empty">A fonte <code>pf</code> ainda não está no snapshot. A tela passa a mostrar o resultado quando a linha entrar em <code>painel_snapshot_fonte</code>; até lá nada aqui é inventado.</div>';
+    el.innerHTML='<div class="empty">Sem dado de PF nesta carga. Nada aqui é inventado: recarregue ou veja a rotina do snapshot.</div>';
     hc.innerHTML="ONDE FOI O DINHEIRO"; cl.innerHTML=""; rod.innerHTML=""; return;
   }
   const meses=p.meses, cls=Array.isArray(p.classes)?p.classes:[];
@@ -2893,7 +2882,7 @@ async function marcarLote(){
   await recarregarFila();}
 
 /* ---------- COMANDO ---------- */
-function rDash(){ rDelta(); rRunway(); rCaixa13(); rFunil(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); rInsTop(); }
+function rDash(){ rDelta(); rRunway(); rCaixa13(); rFunil(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); }
 function rComando(){
   const tile=(c,r,cls,sub)=>`<div class="kpi ${cls||""}"><div class="n">${c}</div>
     <div class="r" style="margin:9px 0 0">${r}${sub?`<br><span style="color:var(--dim)">${sub}</span>`:""}</div></div>`;
@@ -3052,21 +3041,10 @@ function rHero(){
       <span class="hc" onclick="irAba('agora')"><b>${n1}</b> na fila de hoje</span>
       ${cor?`<span class="hc" onclick="irAba('agora')"><b>${cor}</b> correção${cor>1?"ões":""} esperando</span>`:""}
       ${par>0?`<span class="hc"><b>${rs(par)}</b> parados por uma palavra</span>`:""}
-      ${nivel?`<span class="hc" onclick="irAba('evolucao')">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}${(()=>{const t=travasMat();const n=t?t.kpis.length:0;return n&&nivel<5?` · <b>${n}</b> KPI${n>1?"s":""} trava${n>1?"m":""} o ${nivel+1}`:"";})()}</span>`:""}
+      ${nivel?`<span class="hc">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}${(()=>{const t=travasMat();const n=t?t.kpis.length:0;return n&&nivel<5?` · <b>${n}</b> KPI${n>1?"s":""} trava${n>1?"m":""} o ${nivel+1}`:"";})()}</span>`:""}
     </div></div>`;}
 function irAba(p){abrir(p);
   window.scrollTo({top:0,behavior:"smooth"});}
-function rInsTop(){
-  const I=(D.ins||[]).slice(0,3);
-  const _t=document.getElementById("ins-top"); if(!_t)return;
-  _t.innerHTML=I.length?I.map(i=>`
-    <div class="card ${esc(i.nivel)}" style="cursor:pointer" onclick="irAba('comando')">
-      <div class="meta"><span class="tag ${i.nivel==="critico"?"bad":i.nivel==="alto"?"med":""}">${esc(i.nivel)}</span>
-        <span class="mono">${esc(i.area)}</span>
-        <span class="tag ${i.dono==="igor"?"vio":""}">${i.dono==="igor"?"seu":"meu"}</span></div>
-      <div class="ttl">${esc(i.insight)}</div></div>`).join("")
-    :`<div class="empty">nenhuma condição de alerta ativa.</div>`;}
-
 /* ---------- PLACAR: bullet chart (Stephen Few) — barra contra a propria meta ----------
    Uma escala por linha, nunca duas escalas no mesmo eixo. Numero direto no rotulo. */
 function rPlacar(){
@@ -3341,7 +3319,10 @@ const SERIE_SECAO={
   "varredura":"arquivo.ponteiro_orfao",
   "frescor":"memoria.lead_time_retomada_min",
   "m9":"medicao.nao_planejado_pct",
-    "placarsim":"contexto.custo_n1",   /* v33: o bloco MAQUINA passa a dizer QUANTO CUSTA a propria abertura, ao lado do que ela      entrega. painel.carga_abertura_kb ja e medido por medir_kpi e nunca aparecia na tela:      o painel media o proprio peso e guardava para si. Meta 80 KB, hoje 19,6. */   "automed":"painel.carga_abertura_kb",   "achados":"motor.achados_alto"
+  "placarsim":"contexto.custo_n1",
+  /* a abertura diz quanto custa ao lado do que entrega: painel.carga_abertura_kb, meta 80 KB */
+  "automed":"painel.carga_abertura_kb",
+  "achados":"motor.achados_alto"
 };
 /* v58 (t623) — A FAIXA DOS CINCO SEGUNDOS. Referencia: Stephen Few, Information Dashboard
    Design (o teste dos 5 segundos) e Tufte (sparkline com banda). Seis numeros da camada

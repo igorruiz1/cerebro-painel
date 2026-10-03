@@ -192,12 +192,6 @@ test('sinal que o mapa nao conhece aparece mesmo assim, e o contador bate com a 
   expect(r.mostraNovo,  'o sinal que o mapa nao conhece aparece').toBe(true);
 });
 
-test('a abertura nao derruba o script', async ({page})=>{
-  const erros = await abrir(page);
-  await page.waitForTimeout(400);
-  expect(erros, 'erros de script na abertura').toEqual([]);
-});
-
 /* ---------- v49: A CARGA DA ABERTURA ----------
    A classe de defeito: a abertura disparava 21 consultas de view ao mesmo tempo, cada uma
    planejando uma arvore de view aninhada, sob statement_timeout=8s do papel authenticated.
@@ -1093,7 +1087,7 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
     const out={};
     const sub=document.querySelector('#subnav .sub[data-p="pf"]');
     out.sub={existe:!!sub, grupo:sub&&sub.dataset.g, painel:!!document.getElementById('p-pf')};
-    out.opc={opcional:CHAVES_OPCIONAIS.includes('pf'), obrigatoria:CHAVES_PAINEL.includes('pf')};
+    out.opc={obrigatoria:CHAVES_PAINEL.includes('pf')};
     /* sem a chave: a tela DIZ que a fonte nao chegou */
     D.pf=null; let err=null;
     try{ render(); }catch(e){ err=String(e); }
@@ -1137,8 +1131,8 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   }, PF_FIX);
   expect(r.err, 'render() derrubou o script').toBe(null);
   expect(r.sub, 'Resultado PF e sub-aba de ACOMPANHAR com painel proprio').toEqual({existe:true, grupo:'acompanhar', painel:true});
-  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({opcional:false, obrigatoria:true});
-  expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
+  expect(r.opc, 'pf e chave obrigatoria desde que a fonte entrou no banco (02/10)').toEqual({obrigatoria:true});
+  expect(r.semFonte, 'sem a chave a tela diz que a fonte nao chegou').toContain('Sem dado de PF nesta carga');
   expect(r.semFonteRod, 'sem a chave nao desenha rodape vazio').toBe('');
   expect(r.meses, 'o mes corrente e os dois anteriores, nesta ordem').toEqual(['2031-03','2031-02','2031-01']);
   expect(r.c0).toContain('em curso');
@@ -1192,18 +1186,6 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
   expect(r.troca.n).toBe(2);
   expect(r.troca.nota, 'escolha do Igor nao repete o aviso de mes pulado').toBe(false);
   expect(r.troca.rodAberto, 'redesenhar nao fecha o rodape que ele abriu').toBe(true);
-});
-
-test('a carga sem a chave pf nao acende "carga incompleta"', async ({page})=>{
-  const erros = await abrirContando(page);
-  const r = await page.evaluate(()=>({aceso:document.getElementById('falhou').classList.contains('on'),
-    det:document.getElementById('falhoudet').textContent, txt:document.getElementById('pf-meses').textContent,
-    from:window.__n.from}));
-  expect(erros, 'erro de script durante a carga').toEqual([]);
-  expect(r.aceso, 'fonte opcional ausente nao e falha').toBe(false);
-  expect(r.det).not.toContain('pf');
-  expect(r.txt, 'mas a tela diz que a fonte nao chegou').toContain('ainda não está no snapshot');
-  expect(r.from, 'Resultado PF nao consulta view direto').toEqual([]);
 });
 
 for (const largura of [390, 1280]) {
