@@ -63,6 +63,7 @@ main{flex:1;padding:16px 16px 110px;display:flex;flex-direction:column;gap:18px;
 .pane{display:none;flex-direction:column;gap:18px}
 .pane.on{display:flex}
 h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
+#novaVersao{flex:none;min-height:var(--tap);padding:10px 16px}
 .aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px}
 .pilha{display:flex;flex-direction:column;gap:8px}
 
@@ -257,6 +258,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
     <main>
       <div id="falha" class="aviso hidden" role="alert"></div>
+      <button id="novaVersao" class="pri hidden" onclick="atualizarPainel()"></button>
 
       <section class="pane on" id="p-hoje" aria-label="Hoje">
         <p class="situacao" id="situacao">carregando…</p>
@@ -313,7 +315,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const VERP="p3.1";
+const VERP="p3.2";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -395,9 +397,23 @@ async function carregar(forcar){
   document.getElementById("frescoRail").textContent=f.textContent;
   render();
   garantirLazy();
+  checarVersao();
   /* o builder do supabase-js so dispara no then: sem ele o ping nunca saia */
   sb.rpc("painel_ping",{p_versao:VERP,p_origem:location.host||"local"}).then(()=>{},()=>{});
 }
+/* Versao nova: o GitHub Pages deixa o navegador guardar a pagina por ate 10 min. Medido em 02/10/2026:
+   o deploy da p3.1 terminou 23h22m56 e o iPhone abriu a p3 as 23h23m16, testou a versao velha e o
+   defeito "continuou". A pagina confere a propria versao no servidor, sem cache, a cada carga. */
+let NOVA=null;
+async function checarVersao(){
+  try{
+    const r=await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}); if(!r.ok)return;
+    const m=(await r.text()).match(/const VERP="([^"]+)"/); if(!m||m[1]===VERP)return;
+    NOVA=m[1]; const b=document.getElementById("novaVersao");
+    b.textContent="Painel novo ("+NOVA+") publicado. Toque para atualizar"; b.classList.remove("hidden");
+  }catch(e){}
+}
+function atualizarPainel(){ location.replace(location.pathname+"?v="+encodeURIComponent(NOVA||Date.now())); }
 let LAZY=null;
 function garantirLazy(){ if(!LAZY)LAZY=garantirLazy_().finally(()=>{LAZY=null;}); return LAZY; }
 async function garantirLazy_(){
@@ -731,7 +747,10 @@ const hostDe=u=>{try{return new URL(u).host;}catch(e){return u;}};
 const juntarVoz=(a,b)=>{a=String(a||"").trim();b=String(b||"").trim();return a&&b?a+" "+b:(a||b);};
 /* Cada frase reconhecida vem num resultado separado. O Chrome poe espaco no comeco da frase nova, o Safari
    do iPhone nao: somar cru colava "IgorQual" (print do Igor, 02/10/2026 23h16). Junta sempre com espaco. */
-const juntarFrases=(res,de)=>{const p=[];for(let i=de;i<res.length;i++){const t=String(res[i][0].transcript||"").trim();if(t)p.push(t);}return p.join(" ");};
+/* Rede de seguranca para o caso de o Safari colar frases DENTRO de um mesmo resultado: minuscula encostada
+   em maiuscula ("ouvindoAlô") ganha espaco. Exige duas minusculas antes, entao "iPhone" fica inteiro. */
+const descolar=t=>t.replace(/([a-zà-öø-ÿ]{2})([A-ZÀ-ÖØ-Þ])/g,"$1 $2");
+const juntarFrases=(res,de)=>{const p=[];for(let i=de;i<res.length;i++){const t=descolar(String(res[i][0].transcript||"").trim());if(t)p.push(t);}return p.join(" ");};
 const vozEl=id=>document.getElementById(id);
 
 function abrirVoz(texto){
@@ -742,7 +761,7 @@ function abrirVoz(texto){
   mostrarFolha(`
     <div class="voz-topo"><h3 id="folhaTit">Falar uma instrução</h3>
       <button class="ico" aria-label="Fechar" onclick="fecharFolha()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="voz-motor" id="vozMotor">${motor}</div>
+    <div class="voz-motor" id="vozMotor">${motor} · painel ${VERP}</div>
     <button class="voz-mic" id="vozMic" aria-pressed="false" onclick="vozAlternar()"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
     <div class="voz-estado" id="vozEstado" role="status" aria-live="polite">${m?"":"Use o microfone do teclado do celular no campo abaixo, ou ligue a sua API."}</div>
     <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>

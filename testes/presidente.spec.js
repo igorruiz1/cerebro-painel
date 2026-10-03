@@ -261,6 +261,17 @@ test('voz: limpar com o microfone aberto nao devolve o apagado, e frases do Safa
   expect(await page.evaluate(()=>window.__sr.ligado), 'abrir um card desliga o microfone').toBe(false);
 });
 
+/* Print de 02/10/2026 23h24 ("ouvindoAlô OlhaQual"): se o Safari colar frases dentro do MESMO resultado,
+   a juncao entre resultados nao basta. */
+test('voz: frases coladas dentro de um resultado ganham espaco, e iPhone fica inteiro', async ({page})=>{
+  await page.addInitScript(SR_DUBLE);
+  await abrir(page);
+  await page.click('#micTopo');
+  await page.click('#vozMic');
+  await page.evaluate(()=>window.__sr.falar('Oi tem alguém me ouvindoAlô OlhaQual é a programação no iPhone',true));
+  await expect(page.locator('#vozTxt')).toHaveValue('Oi tem alguém me ouvindo Alô Olha Qual é a programação no iPhone');
+});
+
 test('voz: fechar a tela desliga o microfone, e texto curto demais nao vai', async ({page})=>{
   await page.addInitScript(SR_DUBLE);
   await abrir(page);
@@ -332,4 +343,20 @@ test('voz pela API do aparelho: o audio vai para a URL guardada, o texto volta p
   expect(guardado).toEqual({url:'https://outra.exemplo/v1',chave:''});
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
   expect(fonte, 'nenhum endereco de API no fonte').not.toMatch(/fetch\(\s*["']https?:/);
+});
+
+/* Medido em 02/10/2026: o iPhone abriu a p3 20 s depois do deploy da p3.1 (cache de ate 10 min do Pages)
+   e o Igor testou a versao velha. A pagina confere a propria versao no servidor e oferece a nova. */
+test('pagina velha no cache oferece a versao nova; mesma versao nao mostra nada', async ({page})=>{
+  await abrir(page);
+  await expect(page.locator('#novaVersao')).toBeHidden();
+  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,text:async()=>'<script>const VERP="'+VERP+'";</script>'}); await checarVersao(); });
+  await expect(page.locator('#novaVersao'), 'mesma versao').toBeHidden();
+  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,text:async()=>'<script>const VERP="p9";</script>'}); await checarVersao(); });
+  await expect(page.locator('#novaVersao')).toBeVisible();
+  await expect(page.locator('#novaVersao')).toContainText('p9');
+  const alt = await page.locator('#novaVersao').evaluate(e=>e.getBoundingClientRect().height);
+  expect(alt).toBeGreaterThanOrEqual(44);
+  await page.click('#micTopo');
+  await expect(page.locator('#vozMotor'), 'a tela de voz diz a versao em uso').toContainText('painel p3.2');
 });
