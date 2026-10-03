@@ -313,7 +313,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const VERP="p3";
+const VERP="p3.1";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -671,8 +671,8 @@ function confirmarEsperar(data){
   if(quem.length<3){toast("Diga com quem está a bola.","bad",false,3000);if(cv)cv.focus();return;}
   agir("esperar",data+"|"+quem,"Passou para "+curto(quem,30)+", cobrar "+diaCurto(data));
 }
-function mostrarFolha(html,cls){const f=document.getElementById("folha");f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
-function fecharFolha(){vozParar(true);document.getElementById("veu").classList.add("hidden");F=null;}
+function mostrarFolha(html,cls){VOZ.reabrir=false;vozParar(true);const f=document.getElementById("folha");f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
+function fecharFolha(){VOZ.reabrir=false;vozParar(true);document.getElementById("veu").classList.add("hidden");F=null;}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("veu").classList.contains("hidden"))fecharFolha();});
 
 /* ---------- acoes: tudo passa por agir(), com 6 s para desfazer ---------- */
@@ -718,7 +718,7 @@ async function enviar(){
    tem 6 s para desfazer. URL e chave da API ficam so no localStorage deste aparelho, nunca no
    repositorio, que e publico. Contrato da API em docs/instrucao-por-audio.md. */
 const VOZ_PREFIXO="[voz] ", VOZ_CHAVE="cerebro.voz.api", VOZ_MAX_S=120, VOZ_MIN=3, VOZ_API_S=30;
-const VOZ={rascunho:"",rec:null,grav:null,ouvindo:false,base:"",t:null};
+const VOZ={rascunho:"",rec:null,grav:null,ouvindo:false,base:"",t:null,corte:0,vistos:0,reabrir:false};
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
 const VOZ_ERRO={"not-allowed":"O microfone está bloqueado para este site. Libere nas configurações do navegador.",
   "service-not-allowed":"Este modo do navegador não libera o reconhecimento de voz. Abra o painel no navegador ou use o ditado do teclado.",
@@ -729,6 +729,9 @@ function vozApi(){ try{const v=JSON.parse(localStorage.getItem(VOZ_CHAVE)||"null
 function vozMotor(){ if(vozApi()&&navigator.mediaDevices&&window.MediaRecorder)return "api"; return SR?"navegador":null; }
 const hostDe=u=>{try{return new URL(u).host;}catch(e){return u;}};
 const juntarVoz=(a,b)=>{a=String(a||"").trim();b=String(b||"").trim();return a&&b?a+" "+b:(a||b);};
+/* Cada frase reconhecida vem num resultado separado. O Chrome poe espaco no comeco da frase nova, o Safari
+   do iPhone nao: somar cru colava "IgorQual" (print do Igor, 02/10/2026 23h16). Junta sempre com espaco. */
+const juntarFrases=(res,de)=>{const p=[];for(let i=de;i<res.length;i++){const t=String(res[i][0].transcript||"").trim();if(t)p.push(t);}return p.join(" ");};
 const vozEl=id=>document.getElementById(id);
 
 function abrirVoz(texto){
@@ -743,7 +746,7 @@ function abrirVoz(texto){
     <button class="voz-mic" id="vozMic" aria-pressed="false" onclick="vozAlternar()"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
     <div class="voz-estado" id="vozEstado" role="status" aria-live="polite">${m?"":"Use o microfone do teclado do celular no campo abaixo, ou ligue a sua API."}</div>
     <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>
-    <textarea id="vozTxt" class="voz-txt" oninput="VOZ.rascunho=this.value" placeholder="Ex.: reagendar a vistoria da Conenge para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
+    <textarea id="vozTxt" class="voz-txt" oninput="vozDigitou(this.value)" placeholder="Ex.: reagendar a vistoria da Conenge para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
     <div class="acoes voz-acoes"><button class="pri" onclick="vozEnviar()">Enviar ao Claude</button><button class="sec" onclick="vozLimpar()">Limpar</button></div>
     <div class="mut">Entra como instrução pendente e o Claude pega na próxima rodada.${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
     <details class="voz-api"><summary>API de transcrição deste aparelho${api?" · ligada":""}</summary><div class="corpo">
@@ -766,23 +769,33 @@ function vozUi(on){
 }
 function vozEscrever(t){ VOZ.rascunho=t; const ta=vozEl("vozTxt"); if(ta)ta.value=t; }
 function vozAlternar(){ VOZ.ouvindo?vozParar(false):vozOuvir(); }
+/* Cancelar solta a sessao ANTES de aborta-la: o navegador ainda entrega resultado e fim da sessao velha
+   depois do abort, e os tratadores so escrevem se a sessao for a corrente. */
 function vozParar(cancelar){
   clearTimeout(VOZ.t);
-  if(VOZ.rec){ try{cancelar?VOZ.rec.abort():VOZ.rec.stop();}catch(e){} }
-  if(VOZ.grav){ VOZ.grav._cancelado=!!cancelar; try{VOZ.grav.stop();}catch(e){} }
-  if(cancelar){VOZ.rec=null;vozUi(false);}
+  const r=VOZ.rec, g=VOZ.grav;
+  if(cancelar){ VOZ.rec=null; VOZ.grav=null; vozUi(false); }
+  if(r){ try{cancelar?r.abort():r.stop();}catch(e){} }
+  if(g){ g._cancelado=!!cancelar; try{g.stop();}catch(e){} }
 }
+/* Limpar com o microfone aberto abre uma sessao nova. O reconhecimento guarda tudo o que ouviu desde o
+   toque no microfone, e limpar so a caixa fazia o texto apagado voltar na frase seguinte (print do Igor,
+   02/10/2026 23h16). Sessao nova nao tem o que devolver, em qualquer navegador e na API. */
+function vozReabrir(){ if(!VOZ.reabrir)return; VOZ.reabrir=false; if(vozEl("vozMic")&&!VOZ.rec&&!VOZ.grav)vozOuvir(); }
+/* Digitar com o microfone aberto: o texto digitado vira a base e o que ja foi ouvido nao volta por cima. */
+function vozDigitou(v){ VOZ.rascunho=v; if(VOZ.rec||VOZ.grav){ VOZ.base=v; VOZ.corte=VOZ.vistos; } }
 async function vozOuvir(){
-  const m=vozMotor(); if(!m)return;
+  const m=vozMotor(); if(!m)return; VOZ.reabrir=false;
   const ta=vozEl("vozTxt"); VOZ.base=ta?ta.value:VOZ.rascunho;
   if(m==="navegador"){
     const r=new SR(); r.lang="pt-BR"; r.continuous=true; r.interimResults=true;
     /* reconstroi de todos os resultados a cada evento: o mesmo texto em qualquer navegador */
-    r.onresult=e=>{ let t=""; for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript; vozEscrever(juntarVoz(VOZ.base,t)); };
-    r.onerror=e=>{ if(e.error!=="aborted")vozEstado(VOZ_ERRO[e.error]||("O reconhecimento parou ("+e.error+")."),"bad"); };
-    r.onend=()=>{ clearTimeout(VOZ.t); VOZ.rec=null; vozUi(false); const el=vozEl("vozEstado");
+    r.onresult=e=>{ if(VOZ.rec!==r)return; VOZ.vistos=e.results.length; vozEscrever(juntarVoz(VOZ.base,juntarFrases(e.results,VOZ.corte))); };
+    r.onerror=e=>{ if(VOZ.rec===r&&e.error!=="aborted")vozEstado(VOZ_ERRO[e.error]||("O reconhecimento parou ("+e.error+")."),"bad"); };
+    r.onend=()=>{ if(VOZ.rec!==r){ vozReabrir(); return; }
+      clearTimeout(VOZ.t); VOZ.rec=null; vozUi(false); const el=vozEl("vozEstado");
       if(el&&!el.classList.contains("bad"))vozEstado("Pronto. Corrija se precisar e toque em Enviar."); };
-    VOZ.rec=r;
+    VOZ.rec=r; VOZ.corte=0; VOZ.vistos=0;
     try{ r.start(); }catch(e){ VOZ.rec=null; vozEstado("Não consegui abrir o microfone: "+e.message,"bad"); return; }
     vozUi(true); vozEstado("Ouvindo… toque de novo para parar.");
   } else {
@@ -793,8 +806,9 @@ async function vozOuvir(){
     const g=new MediaRecorder(stream,tipo?{mimeType:tipo}:undefined), partes=[];
     g.ondataavailable=e=>{ if(e.data&&e.data.size)partes.push(e.data); };
     g.onstop=async()=>{
-      stream.getTracks().forEach(t=>t.stop()); VOZ.grav=null; vozUi(false);
-      if(g._cancelado)return;
+      stream.getTracks().forEach(t=>t.stop());
+      if(g._cancelado){ vozReabrir(); return; }
+      if(VOZ.grav===g){ VOZ.grav=null; vozUi(false); }
       const blob=new Blob(partes,{type:g.mimeType||tipo||"audio/webm"});
       if(!blob.size){ vozEstado("Não chegou áudio. Tente de novo.","bad"); return; }
       vozEstado("Transcrevendo…");
@@ -821,7 +835,12 @@ async function vozTranscrever(blob){
   }catch(e){ throw e.name==="AbortError"?new Error("passou de "+VOZ_API_S+" s"):e; }
   finally{ clearTimeout(t); }
 }
-function vozLimpar(){ vozEscrever(""); vozEstado(""); const ta=vozEl("vozTxt"); if(ta)ta.focus(); }
+function vozLimpar(){
+  const ouvia=VOZ.ouvindo;
+  vozParar(true); vozEscrever(""); VOZ.base="";
+  if(ouvia){ VOZ.reabrir=true; setTimeout(vozReabrir,1200); vozEstado("Limpo. Pode falar de novo."); return; }
+  vozEstado(""); const ta=vozEl("vozTxt"); if(ta)ta.focus();
+}
 function vozEnviar(){
   const ta=vozEl("vozTxt"), t=(ta?ta.value:VOZ.rascunho).trim();
   if(VOZ.ouvindo){ vozEstado("Pare o microfone antes de enviar, para não cortar a frase.","bad"); return; }
