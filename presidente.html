@@ -144,6 +144,7 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 .folha h3{margin:0;font-size:19px;line-height:1.3;text-wrap:balance}
 .folha>.sec{flex:none}
 .bloco{display:flex;flex-direction:column;gap:4px}
+.bloco .rot.w{color:var(--warn)}
 .bloco .rot{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
 .bloco p{margin:0;color:var(--ink2);overflow-wrap:anywhere}
 details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center}
@@ -304,7 +305,20 @@ const proxSegunda=()=>{const d=new Date();d.setDate(d.getDate()+((8-d.getDay())%
 const ddmm=s=>{const p=String(s||"").slice(0,10).split("-");return p.length===3?p[2]+"/"+p[1]:"";};
 const DIAS=["dom","seg","ter","qua","qui","sex","sáb"];
 const diaCurto=s=>{const d=new Date(String(s).slice(0,10)+"T12:00:00");return isNaN(d)?"":DIAS[d.getDay()]+" "+ddmm(s);};
-const nomeFrente=s=>{const a=(ARV||[]).find(x=>x.nivel===1&&x.no===s);return a&&a.rotulo?a.rotulo:String(s||"").replace(/^\d+-/,"").replace(/-/g," ");};
+const semNumero=t=>String(t||"").replace(/^\d+\s+/,"");
+const nomeFrente=s=>{const a=(ARV||[]).find(x=>x.nivel===1&&x.no===s);return a&&a.rotulo?semNumero(a.rotulo):String(s||"").replace(/^\d+-/,"").replace(/-/g," ");};
+/* Recomendacao com carimbo da maquina ("[atendente-1 16/09 04h] ...", "SUA DELIBERACAO (12/09 01:01): ...").
+   O banco nao data esse texto (rec_gerada_em vazio), entao a data sai do carimbo. Medido em 02/10/2026:
+   o foco mostrava como atual uma nota de 16/09. Nota com mais de 7 dias nao vai para o foco. */
+function recInfo(r){
+  let t=String(r||"").trim(), d=null, m;
+  if((m=t.match(/^\[[^\]]*?(\d{2})\/(\d{2})[^\]]*\]\s*/))){d=[m[1],m[2]];t=t.slice(m[0].length);}
+  else if((m=t.match(/^SUA DELIBERA[CÇ][AÃ]O \((\d{2})\/(\d{2})[^)]*\):\s*/i))){d=[m[1],m[2]];t=t.slice(m[0].length);}
+  if(!d)return {texto:t,data:null,dias:null,velha:false};
+  const h=new Date(); let dt=new Date(h.getFullYear(),+d[1]-1,+d[0]); if(dt>h)dt.setFullYear(dt.getFullYear()-1);
+  const dias=Math.floor((h-dt)/864e5);
+  return {texto:t,data:d[0]+"/"+d[1],dias,velha:dias>7};
+}
 const plural=(n,s1,s2)=>n+" "+(+n===1?s1:s2);
 const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes"};
 
@@ -403,7 +417,8 @@ function renderHoje(){
   const dias=rw.dias_sobrevida_pior;
   const fr=[];
   if(dias!=null)fr.push(`O caixa aguenta <b class="${dias<30?"w":""}">${esc(dias)} dias</b> no pior cenário.`);
-  fr.push(h.length?`Hoje ${h.length===1?"é":"são"} <b>${plural(h.length,"passo","passos")}</b>, cerca de <b>${(Math.round(soma/6)/10).toLocaleString("pt-BR")} h</b> das suas ${(Math.round(cap/6)/10).toLocaleString("pt-BR")} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.`:"Nada pede você hoje.");
+  const hh=m=>(Math.round(m/6)/10).toLocaleString("pt-BR"), passa=soma-cap;
+  fr.push(h.length?`Hoje ${h.length===1?"é":"são"} <b>${plural(h.length,"passo","passos")}</b>, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
   document.getElementById("situacao").innerHTML=fr.join(" ");
   const foco=document.getElementById("foco");
   if(!h.length){
@@ -415,7 +430,7 @@ function renderHoje(){
     foco.innerHTML=`<span class="eyebrow">Próximo passo${m?" · "+m+" min":""}</span>
       <div class="tit">${esc(f.titulo_completo||f.titulo)}</div>
       <div class="chips"><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
-      ${f.recomendacao?`<div class="porque">${esc(curto(f.recomendacao,160))}</div>`:""}
+      ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque">${esc(curto(ri.texto,160))}</div>`:"";})()}
       <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${esc(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",h.length<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f);
@@ -484,10 +499,10 @@ function renderCaixa(){
   const fr=ARV.filter(a=>a.nivel===1&&+a.margem_30d>0).sort((a,b)=>b.margem_30d-a.margem_30d);
   el.innerHTML=fr.length?fr.map(a=>{
     const prox=INV.filter(t=>t.frente===a.no&&t.dono==="igor"&&t.status==="pendente").sort((x,y)=>String(x.prazo||"9").localeCompare(String(y.prazo||"9")))[0];
-    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${esc(a.no)}')`}"><span class="t">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}<small>${esc(a.rotulo||nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
+    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${esc(a.no)}')`}"><span class="t">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}<small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
     :`<div class="vazio">Nenhuma frente com margem a receber em 30 dias.</div>`;
   const fora=ARV.filter(a=>a.nivel===1&&+a.margem_30d<=0&&+a.margem_total>0);
-  if(fora.length)el.innerHTML+=`<div class="mut">Fora dos 30 dias: ${fora.map(a=>esc(a.rotulo||nomeFrente(a.no))+" "+mil(a.margem_total)).join(" · ")}.</div>`;
+  if(fora.length)el.innerHTML+=`<div class="mut">Fora dos 30 dias: ${fora.map(a=>esc(nomeFrente(a.no))+" "+mil(a.margem_total)).join(" · ")}.</div>`;
 }
 function grafico13(s,base,iMin){
   const W=420,H=220,pl=58,pr=6,pt=14,pb=30;
@@ -508,13 +523,13 @@ function renderFrentes(){
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const cont={};INV.forEach(t=>{if(t.status!=="feita")cont[t.frente]=(cont[t.frente]||0)+1;});
   const fr=ARV.filter(a=>a.nivel===1).sort((a,b)=>(+b.margem_30d)-(+a.margem_30d)||(cont[b.no]||0)-(cont[a.no]||0)).filter(a=>+a.margem_30d!==0||cont[a.no]);
-  el.innerHTML=fr.map(a=>`<button class="frente" onclick="abrirFrente('${esc(a.no)}')"><span class="t"><b>${esc(a.rotulo||nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
+  el.innerHTML=fr.map(a=>`<button class="frente" onclick="abrirFrente('${esc(a.no)}')"><span class="t"><b>${esc(nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
 }
 function abrirFrente(slug){
   const a=(ARV||[]).find(x=>x.nivel===1&&x.no===slug)||{no:slug};
   const cs=(INV||[]).filter(t=>t.frente===slug&&t.status!=="feita").sort((x,y)=>(x.dono==="igor"?0:1)-(y.dono==="igor"?0:1)||String(x.prazo||"9").localeCompare(String(y.prazo||"9")));
   const seus=cs.filter(t=>t.dono==="igor"), exec=cs.length-seus.length;
-  mostrarFolha(`<h3 id="folhaTit">${esc(a.rotulo||nomeFrente(slug))}</h3>
+  mostrarFolha(`<h3 id="folhaTit">${esc(nomeFrente(slug))}</h3>
     <div class="chips"><span class="chip ${+a.margem_30d>0?"ok":""}">${+a.margem_30d>0?"margem 30 d "+mil(a.margem_30d):"sem margem em 30 d"}</span>${+a.margem_total>0?`<span class="chip">margem total ${mil(a.margem_total)}</span>`:""}<span class="chip">${plural(seus.length,"card seu","cards seus")}</span>${exec?`<span class="chip">${exec} do executor</span>`:""}</div>
     ${a.veredito?`<div class="bloco"><span class="rot">Situação</span><p>${esc(a.veredito)}</p></div>`:""}
     <div class="pilha">${seus.map(itemInv).join("")||`<div class="vazio">Nenhum card seu aberto nesta frente.</div>`}</div>
@@ -566,12 +581,12 @@ function abrirInv(id){
 function abrirCard(c,verbo){
   F=c;
   const pri=acaoPrincipal(c.acoes,c.col), resto=c.acoes.filter(a=>!pri||a.verbo!==pri.verbo);
-  const rec=c.rec?String(c.rec):"";
+  const ri=recInfo(c.rec), rec=ri.texto, recRot=ri.data?(ri.velha?`Nota de ${ri.data}, há ${ri.dias} dias: pode estar vencida`:`Nota do executor de ${ri.data}`):"O executor recomenda";
   mostrarFolha(`<h3 id="folhaTit">${esc(c.titulo)}</h3>
     <div class="chips"><span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}<span class="chip num">${c.origem==="tarefa"?"t":esc(c.origem)+" "}${esc(c.ref)}</span></div>
     ${c.porque?`<div class="bloco"><span class="rot">Por que agora</span><p>${esc(c.porque)}</p></div>`:""}
     <div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>
-    ${rec?`<div class="bloco"><span class="rot">O executor recomenda</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
+    ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
     ${pecaHtml(c.peca)}
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.map(a=>botaoAcao(a,"sec")).join("")}</div>`:`<div class="vazio">O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor.</div>`}
     <div id="campo"></div>
