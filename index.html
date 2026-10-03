@@ -1054,7 +1054,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v69";
+const VER="v70";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1615,7 +1615,9 @@ async function entrar(){
   const e=document.getElementById("em").value.trim();
   if(!e){lm("Digite o e-mail primeiro.","bad");return;}
   lm("enviando…");
-  const {error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});
+  /* v70 (02/10/2026): codigo por e-mail so para conta que ja existe. Sem isto, qualquer e-mail
+     virava usuario autenticado; somado as views SECURITY DEFINER, lia saldo PF. */
+  const {error}=await sb.auth.signInWithOtp({email:e,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
   if(!error){lm("Link enviado. Copie o <b>endereço</b> do link e cole no campo abaixo.","ok");return;}
   lm(error.status===429
     ? "<b>Limite de e-mails (429).</b> O provedor grátis bloqueia após poucos envios por hora. Use senha, ou espere ~1h."
