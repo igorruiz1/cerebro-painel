@@ -156,3 +156,27 @@ test('as quatro colunas da fila separam os cards do Igor e deixam o executor for
   expect(n).toEqual({semana:1,esperando:1,decidir:1,depois:1});
   await expect(page.locator('#filaRodape')).toContainText('1 card do executor');
 });
+
+/* Print real de 02/10/2026 22:45: o foco mostrava "[atendente-1 16/09 04h] Prematuro..." como se fosse
+   atual, a frase dizia "5,6 h das suas 2 h" sem alerta e a frente vinha "11 Renda Alternativa PF". */
+test('nota velha nao vai para o foco, carimbo vira rotulo, capacidade estourada alerta e frente sem numero', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    const f=D.fila[0];
+    f.recomendacao='[atendente-1 16/09 04h] Prematuro: setembro ainda nao fechou.';
+    D.min=[{id:2,minutos_estimados:300}];
+    ARV.find(a=>a.no==='11-renda-alt').rotulo='11 Renda Alternativa PF';
+    render();
+    const foco=document.getElementById('foco').textContent, sit=document.getElementById('situacao');
+    abrirFila(0);
+    const det=document.getElementById('folha').textContent;
+    return {foco, sit:sit.textContent, alerta:!!sit.querySelector('.w'), det};
+  });
+  expect(r.foco, 'nota de 16/09 fora do foco').not.toContain('Prematuro');
+  expect(r.foco, 'frente sem o numero do slug').toContain('Renda Alternativa PF');
+  expect(r.foco).not.toContain('11 Renda');
+  expect(r.sit, 'capacidade estourada diz quanto passa').toContain('Passa');
+  expect(r.alerta).toBe(true);
+  expect(r.det, 'no detalhe a nota aparece marcada como antiga').toContain('pode estar vencida');
+  expect(r.det, 'carimbo da maquina nao aparece cru').not.toContain('[atendente-1');
+});
