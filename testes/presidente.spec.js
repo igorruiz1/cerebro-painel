@@ -1,4 +1,4 @@
-/* SMOKE TEST DO FRONT STAGE DO PRESIDENTE · p2 (03/10/2026)
+/* SMOKE TEST DO FRONT STAGE DO PRESIDENTE · p2 (02/10/2026)
    O teste de uso do v69 no celular mediu 39 de 42 controles abaixo de 44 px e 5 de 7 abas
    escondidas atras de um grupo. O p1 corrigiu isso e mesmo assim o Igor marcou quatro dores
    (nao sei o que fazer, agir custa toque, linguagem de maquina, Frentes e Caixa sao becos).
