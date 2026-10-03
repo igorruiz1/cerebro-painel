@@ -8,7 +8,9 @@
         com o detalhe do card aberto tambem;
      3. verbo do banco nunca aparece cru na tela;
      4. concluir sem prova escrita nao chama o banco (LC-14);
-     5. frente e linha do caixa abrem algo, nunca sao beco.
+     5. frente e linha do caixa abrem algo, nunca sao beco;
+     6. instrucao por voz (p3) so chega a inbox() depois de revisada e enviada, e a API do aparelho
+        recebe o audio e devolve texto para revisar, sem nada dela no fonte.
    O cliente e dublado como no fumaca.spec.js: o defeito que se persegue vive na TELA. */
 const {test, expect} = require('@playwright/test');
 const path = require('path');
@@ -90,6 +92,13 @@ for (const largura of [360, 390, 1280]) {
     });
     expect(f.r, 'controles pequenos no detalhe do card').toEqual([]);
     expect(f.SW, 'rolagem horizontal com o detalhe aberto').toBe(f.W);
+    await page.evaluate(()=>{fecharFolha();abrirVoz();document.querySelector('#folha details').open=true;});
+    const v = await page.evaluate(()=>{
+      const r=[...document.querySelectorAll('#folha button,#folha input,#folha textarea,#folha summary')].filter(e=>{const b=e.getBoundingClientRect();return b.width>0&&(b.height<44||b.width<44);}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim());
+      return {r, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+    });
+    expect(v.r, 'controles pequenos na tela de voz').toEqual([]);
+    expect(v.SW, 'rolagem horizontal com a tela de voz aberta').toBe(v.W);
     expect(erros,'erros de script').toEqual([]);
   });
 }
@@ -179,4 +188,115 @@ test('nota velha nao vai para o foco, carimbo vira rotulo, capacidade estourada 
   expect(r.alerta).toBe(true);
   expect(r.det, 'no detalhe a nota aparece marcada como antiga').toContain('pode estar vencida');
   expect(r.det, 'carimbo da maquina nao aparece cru').not.toContain('[atendente-1');
+});
+
+/* p3: instrucao por voz. O reconhecimento do navegador e o gravador sao dublados: o que se cobra e que
+   nada vai ao banco sem revisar e enviar (decisao do Igor 02/10/2026), que desfazer devolve o texto, e
+   que a API do aparelho recebe o audio e o texto volta para a caixa de revisao. */
+const SR_DUBLE = ()=>{
+  window.webkitSpeechRecognition = class {
+    constructor(){ window.__sr=this; }
+    start(){ this.ligado=true; }
+    stop(){ this.ligado=false; this.onend&&this.onend(); }
+    abort(){ this.stop(); }
+    falar(t,final){ const r=Object.assign([{transcript:t}],{isFinal:final}); this.onresult&&this.onresult({resultIndex:0,results:[r]}); }
+  };
+  window.SpeechRecognition = window.webkitSpeechRecognition;
+};
+
+test('voz pelo navegador: o texto aparece para revisar, so Enviar grava na inbox, e desfazer devolve o texto', async ({page})=>{
+  await page.addInitScript(SR_DUBLE);
+  await abrir(page);
+  await page.click('#micTopo');
+  await expect(page.locator('#folhaTit')).toHaveText('Falar uma instrução');
+  await expect(page.locator('#vozMotor')).toContainText('grátis do navegador');
+  await page.click('#vozMic');
+  await expect(page.locator('#vozMic')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(()=>window.__sr.falar('reagendar a vistoria para quinta',false));
+  await expect(page.locator('#vozTxt')).toHaveValue('reagendar a vistoria para quinta');
+  await page.click('#vozMic');
+  await expect(page.locator('#vozMic')).toHaveAttribute('aria-pressed','false');
+  let inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox'));
+  expect(inbox, 'falar nao grava nada sozinho').toEqual([]);
+  await page.fill('#vozTxt','reagendar a vistoria da Conenge para quinta');
+  await page.click('#folha .pri');
+  await page.click('#tbtn');
+  await expect(page.locator('#vozTxt'), 'desfazer devolve o texto para corrigir').toHaveValue('reagendar a vistoria da Conenge para quinta');
+  inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox'));
+  expect(inbox, 'desfazer nao grava').toEqual([]);
+  await page.click('#folha .pri');
+  await page.evaluate(()=>enviar());
+  inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a));
+  expect(inbox).toEqual([{p_texto:'[voz] reagendar a vistoria da Conenge para quinta'}]);
+});
+
+test('voz: fechar a tela desliga o microfone, e texto curto demais nao vai', async ({page})=>{
+  await page.addInitScript(SR_DUBLE);
+  await abrir(page);
+  await page.evaluate(()=>abrirVoz(''));
+  await page.click('#vozMic');
+  await page.click('#folha .pri');
+  await expect(page.locator('#vozEstado')).toContainText('Pare o microfone');
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate(()=>window.__sr.ligado), 'microfone desligado ao fechar').toBe(false);
+  await page.click('#micTopo');
+  await page.fill('#vozTxt','ok');
+  await page.click('#folha .pri');
+  await expect(page.locator('#vozEstado')).toContainText('antes de enviar');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').length)).toBe(0);
+});
+
+test('voz sem reconhecimento e sem API: o botao desliga e o campo segue aceitando o ditado do teclado', async ({page})=>{
+  await page.addInitScript(()=>{ window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined; });
+  await abrir(page);
+  await page.click('#micTopo');
+  await expect(page.locator('#vozMic')).toBeDisabled();
+  await expect(page.locator('#vozEstado')).toContainText('microfone do teclado');
+  await page.fill('#vozTxt','mandar a proposta revisada ao cliente');
+  await page.click('#folha .pri');
+  await page.evaluate(()=>enviar());
+  const inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a.p_texto));
+  expect(inbox).toEqual(['[voz] mandar a proposta revisada ao cliente']);
+});
+
+test('voz pela API do aparelho: o audio vai para a URL guardada, o texto volta para revisar, e a chave nao viaja para outra URL', async ({page})=>{
+  await page.addInitScript(()=>{
+    window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined;
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}});
+    window.MediaRecorder = class {
+      static isTypeSupported(t){ return t==='audio/webm'; }
+      constructor(s,o){ this.mimeType=(o&&o.mimeType)||''; }
+      start(){}
+      stop(){ this.ondataavailable({data:new Blob(['RIFF'],{type:'audio/webm'})}); this.onstop(); }
+    };
+  });
+  const recebido=[];
+  await page.route('https://transcreve.exemplo/**', async r=>{
+    const q=r.request();
+    if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'POST'}});
+    recebido.push({m:q.method(), tipo:q.headers()['content-type'], auth:q.headers()['authorization'], n:(q.postDataBuffer()||Buffer.alloc(0)).length});
+    return r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({texto:'cobrar o laudo L1 na sexta'})});
+  });
+  await abrir(page);
+  await page.click('#micTopo');
+  await page.click('#folha summary');
+  await page.fill('#vozUrl','http://sem-tls.exemplo/x');
+  await page.click('text=Guardar neste aparelho');
+  expect(await page.evaluate(()=>localStorage.getItem('cerebro.voz.api')), 'http sem TLS e recusado').toBeNull();
+  await page.fill('#vozUrl','https://transcreve.exemplo/v1');
+  await page.fill('#vozKey','chave-de-teste');
+  await page.click('text=Guardar neste aparelho');
+  await expect(page.locator('#vozMotor')).toContainText('transcreve.exemplo');
+  await page.click('#vozMic');
+  await page.click('#vozMic');
+  await expect(page.locator('#vozTxt')).toHaveValue('cobrar o laudo L1 na sexta');
+  expect(recebido).toEqual([{m:'POST',tipo:'audio/webm',auth:'Bearer chave-de-teste',n:4}]);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').length), 'transcrever nao grava').toBe(0);
+  await page.click('#folha summary');
+  await page.fill('#vozUrl','https://outra.exemplo/v1');
+  await page.click('text=Guardar neste aparelho');
+  const guardado = await page.evaluate(()=>JSON.parse(localStorage.getItem('cerebro.voz.api')));
+  expect(guardado).toEqual({url:'https://outra.exemplo/v1',chave:''});
+  const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  expect(fonte, 'nenhum endereco de API no fonte').not.toMatch(/fetch\(\s*["']https?:/);
 });
