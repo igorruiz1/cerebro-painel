@@ -193,13 +193,20 @@ test('nota velha nao vai para o foco, carimbo vira rotulo, capacidade estourada 
 /* p3: instrucao por voz. O reconhecimento do navegador e o gravador sao dublados: o que se cobra e que
    nada vai ao banco sem revisar e enviar (decisao do Igor 02/10/2026), que desfazer devolve o texto, e
    que a API do aparelho recebe o audio e o texto volta para a caixa de revisao. */
+/* Dublado como o Safari do iPhone se comportou no print de 02/10/2026 23h16: cada frase e um resultado
+   novo sem espaco no comeco, a lista acumula a sessao inteira e o fim da sessao chega depois do abort. */
 const SR_DUBLE = ()=>{
+  window.__srs=[];
   window.webkitSpeechRecognition = class {
-    constructor(){ window.__sr=this; }
+    constructor(){ window.__sr=this; window.__srs.push(this); this.res=[]; }
     start(){ this.ligado=true; }
-    stop(){ this.ligado=false; this.onend&&this.onend(); }
+    stop(){ this.ligado=false; setTimeout(()=>this.onend&&this.onend(),0); }
     abort(){ this.stop(); }
-    falar(t,final){ const r=Object.assign([{transcript:t}],{isFinal:final}); this.onresult&&this.onresult({resultIndex:0,results:[r]}); }
+    falar(t,final){
+      const r=Object.assign([{transcript:t}],{isFinal:final}), u=this.res[this.res.length-1];
+      if(u&&!u.isFinal)this.res[this.res.length-1]=r; else this.res.push(r);
+      this.onresult&&this.onresult({resultIndex:0,results:this.res});
+    }
   };
   window.SpeechRecognition = window.webkitSpeechRecognition;
 };
@@ -228,6 +235,30 @@ test('voz pelo navegador: o texto aparece para revisar, so Enviar grava na inbox
   await page.evaluate(()=>enviar());
   inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a));
   expect(inbox).toEqual([{p_texto:'[voz] reagendar a vistoria da Conenge para quinta'}]);
+});
+
+/* Print do Igor, 02/10/2026 23h16: limpar com o microfone aberto e falar de novo trazia de volta o texto
+   apagado, e as frases vinham coladas ("IgorQual", "amanhãQual"). */
+test('voz: limpar com o microfone aberto nao devolve o apagado, e frases do Safari saem separadas', async ({page})=>{
+  await page.addInitScript(SR_DUBLE);
+  await abrir(page);
+  await page.click('#micTopo');
+  await page.click('#vozMic');
+  await page.evaluate(()=>{ window.__sr.falar('Meu nome é Igor',true); window.__sr.falar('Qual a programação de amanhã',true); });
+  await expect(page.locator('#vozTxt'), 'frases separadas por espaco').toHaveValue('Meu nome é Igor Qual a programação de amanhã');
+  const velho = await page.evaluateHandle(()=>window.__sr);
+  await page.click('#folha >> text=Limpar');
+  await expect(page.locator('#vozTxt')).toHaveValue('');
+  await expect.poll(()=>page.evaluate(()=>window.__srs.length), 'limpar abre sessao nova').toBe(2);
+  await expect(page.locator('#vozMic')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(v=>v.falar('resultado atrasado da sessao velha',true), velho);
+  await page.evaluate(()=>window.__sr.falar('A minha programação pra amanhã',true));
+  await expect(page.locator('#vozTxt'), 'nada do que foi limpo volta').toHaveValue('A minha programação pra amanhã');
+  await page.fill('#vozTxt','Qual a minha agenda');
+  await page.evaluate(()=>window.__sr.falar('amanhã cedo',true));
+  await expect(page.locator('#vozTxt'), 'o digitado fica e o ja ouvido nao volta por cima').toHaveValue('Qual a minha agenda amanhã cedo');
+  await page.evaluate(()=>abrirFila(0));
+  expect(await page.evaluate(()=>window.__sr.ligado), 'abrir um card desliga o microfone').toBe(false);
 });
 
 test('voz: fechar a tela desliga o microfone, e texto curto demais nao vai', async ({page})=>{
@@ -288,9 +319,11 @@ test('voz pela API do aparelho: o audio vai para a URL guardada, o texto volta p
   await page.click('text=Guardar neste aparelho');
   await expect(page.locator('#vozMotor')).toContainText('transcreve.exemplo');
   await page.click('#vozMic');
+  await page.click('#folha >> text=Limpar');
+  await expect(page.locator('#vozMic'), 'limpar recomeca a gravacao').toHaveAttribute('aria-pressed','true');
   await page.click('#vozMic');
   await expect(page.locator('#vozTxt')).toHaveValue('cobrar o laudo L1 na sexta');
-  expect(recebido).toEqual([{m:'POST',tipo:'audio/webm',auth:'Bearer chave-de-teste',n:4}]);
+  expect(recebido, 'a gravacao limpa nao foi transcrita').toEqual([{m:'POST',tipo:'audio/webm',auth:'Bearer chave-de-teste',n:4}]);
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').length), 'transcrever nao grava').toBe(0);
   await page.click('#folha summary');
   await page.fill('#vozUrl','https://outra.exemplo/v1');
