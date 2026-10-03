@@ -41,16 +41,44 @@ toque → agir()/inbox() grava (0 s) → gatilho do INSERT → fn_acordar_atende
   despertar, código HTTP que a API devolveu, sessão viva, pendentes e próxima passagem (de
   `proxima_passagem_rotina`, que lê `rotina.cron_utc`). O recibo nunca promete um despertar que não houve.
 - **`despertar_reconciliar()`** (pg_cron, a cada 5 min, só SQL, não gasta cota se não houver nada) pega o que o
-  gatilho perdeu: despertar suprimido porque havia sessão viva, ou POST que falhou. É o par "watch +
+  gatilho perdeu, 5 min depois do último despertar (eram 15; caiu depois da medida abaixo): despertar suprimido porque havia sessão viva, ou POST que falhou. É o par "watch +
   resync" dos controladores. **Só acorda por item que nenhuma sessão viu** (criado depois do último
   ponto do `atendente-1`). Item que o atendente viu e deixou pendente de propósito não re-acorda;
   sem essa guarda, cada pendência velha gastaria cota do Max a cada 15 min.
 - **Sem Realtime** (rede ruim, iPhone suspendeu o socket), a tela confere o estado ao voltar para o
   primeiro plano e, só enquanto houver item esperando, uma vez por minuto.
 
+## Medido em 03/10/2026, depois do token
+
+| Evento | Horário (Cuiabá) | Resultado |
+| --- | --- | --- |
+| Disparo de teste, sem item novo | 13h07m35s | HTTP 200; gate às 13h07m48s (13 s) deu PARE, como devia |
+| Deliberação real no t1545 | 16h05m51s | HTTP 200; gate às 16h06m03s (12 s); resposta às 16h07m03s: **73 s** do toque à resposta |
+
+Antes: p50 de 11 min e p90 de 2,2 h no deliberar. A partida da sessão na nuvem, que a doc oficial não
+publica, ficou em 12 a 13 s.
+
+**Dois defeitos achados no caminho, já corrigidos no banco:**
+
+1. **O gate matava o despertar.** `despachar()` responde PARE a qualquer EXECUCAO ok dos últimos 20 min
+   ("RE-FIRE do mesmo slot"), e `fn_acordar_atendente` grava exatamente uma, com artefato
+   `despertar-por-evento`, antes do POST. Toda sessão acordada pararia no gate. Agora essa linha não conta, e
+   item pendente criado depois da última passagem é trabalho novo, não re-fire. Provado numa transação
+   desfeita: passagem repetida sem nada novo dá PARE; instrução nova dá SIGA.
+2. **A rotina antiga não tinha dono.** Criada por MCP em 15/08 (`created_via: meta_mcp`), ela não aparece em
+   claude.ai/code/routines e não tem onde gerar token. Foi recriada pela interface como
+   **"Atendente + Executor · nativa v1"**, só com Supabase e Google Drive, sem repositório (cada repositório é
+   clonado a cada execução e atrasa a partida). O agente não edita agenda de rotina criada pela interface:
+   só o Igor muda os horários dela.
+
+**Transição até o aceite:** a rotina antiga segue com as 6 passagens fixas (`rotina.trigger_id` continua
+nela) e a nativa é o canal dos eventos (`webhook_disparo.routine_id`). O gate barra execução duplicada em
+menos de 20 min. Depois do aceite, o Igor põe 07h58 e 19h58 na nativa, a antiga é desligada e
+`rotina.trigger_id` e `rotina.cron_utc` passam para a nativa juntos.
+
 ## O que falta, e de quem é
 
-1. **Igor: colar o token da rotina.** Em claude.ai/code → Routines → "Atendente + Executor" → adicionar
+1. ~~**Igor: colar o token da rotina.**~~ Feito em 03/10 às 13h06, na rotina nativa. Em claude.ai/code → Routines → "Atendente + Executor" → adicionar
    gatilho por API → gerar o token (aparece uma vez). No Supabase: Vault → editar
    `ccr_token_atendente_1` → colar. O token nunca passa por chat nem por arquivo (LC-01).
    Conferência: a linha do topo do painel troca "sem despertador" por "dormindo, acorda no seu toque".
