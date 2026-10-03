@@ -18,7 +18,8 @@
      4. "Frentes e Caixa sao becos": frente abre a propria pagina com os cards; o Caixa mostra as
         13 semanas e o que mais melhora o caixa pela margem do Igor, e cada linha abre o card.
    Concluir pede prova escrita (LC-14, decisao do Igor em 02/10/2026): peca pronta nao fecha card.
-   A telemetria da maquina mora no index.html (bastidor), aberto pelo rodape. */
+   A telemetria da maquina mora no index.html (bastidor), aberto pelo rodape.
+   p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md. */
 :root{
  --bg:#0d1117; --sf:#121926; --card:#161d2b; --line:#2a3650; --line2:#1f2a3d; --chip:#24314a;
  --ink:#e9eef7; --ink2:#c3ccdb; --mut:#9aa6bb;
@@ -163,6 +164,28 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .toast button{min-height:44px;border-radius:9px;border:0;background:var(--acc);color:var(--accInk);font-weight:700;padding:0 14px}
 .toast.bad{border-color:var(--bad);color:var(--bad)}
 
+/* instrucao por voz: folha cheia no celular, painel lateral no desktop */
+.folha.cheia{max-height:none;height:100%;border-radius:0}
+.voz-topo{display:flex;align-items:center;gap:12px}
+.voz-topo h3{flex:1}
+.voz-motor{font-size:13px;color:var(--mut)}
+.voz-mic{align-self:center;flex-shrink:0;width:112px;height:112px;border-radius:50%;border:2px solid var(--acc);background:var(--card);color:var(--acc);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:600}
+.voz-mic[aria-pressed="true"]{background:var(--acc);color:var(--accInk)}
+.voz-mic:disabled{border-color:var(--line);color:var(--mut);cursor:not-allowed}
+.voz-estado{min-height:22px;text-align:center;font-size:14px;color:var(--ink2)}
+.voz-estado.bad{color:var(--bad)}
+.voz-txt{min-height:160px;flex:1;resize:vertical;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:12px 14px;font-size:16px;line-height:1.45}
+.voz-txt:focus{border-color:var(--acc)}
+.voz-acoes .sec{flex:0 0 96px}
+.voz-acoes .pri{white-space:nowrap;padding:0 12px}
+.voz-api{border-top:1px solid var(--line2);padding-top:6px}
+.voz-api .corpo{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.voz-api label{font-size:14px;color:var(--mut)}
+.voz-api input{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;min-width:0}
+.ico[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+@media (prefers-reduced-motion:no-preference){.voz-mic[aria-pressed="true"]{animation:pulsa 1.4s ease-in-out infinite}@keyframes pulsa{50%{box-shadow:0 0 0 10px rgba(91,155,255,.18)}}}
+
 @media (min-width:900px){
   .nav{display:none}
   .rail{display:flex;flex-direction:column;gap:6px;width:220px;flex-shrink:0;border-right:1px solid var(--line2);padding:24px 14px;background:#0f141d;position:sticky;top:0;height:100vh}
@@ -180,6 +203,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   .grade{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
   .veu{align-items:stretch;justify-content:flex-end}
   .folha{border-radius:0;max-height:none;height:100%;max-width:480px;border-left:1px solid var(--line)}
+  .folha.cheia{max-width:520px}
 }
 @media (prefers-reduced-motion:no-preference){.folha{animation:sobe .18s ease-out}@keyframes sobe{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}}
 </style>
@@ -215,6 +239,9 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   <div class="col">
     <header class="topo">
       <div class="tt"><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div></div>
+      <button class="ico" id="micTopo" aria-label="Falar uma instrução" onclick="abrirVoz()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
       <button class="ico" aria-label="Buscar card ou frente" onclick="alternarBusca()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       </button>
@@ -286,7 +313,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const VERP="p2";
+const VERP="p3";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -644,8 +671,8 @@ function confirmarEsperar(data){
   if(quem.length<3){toast("Diga com quem está a bola.","bad",false,3000);if(cv)cv.focus();return;}
   agir("esperar",data+"|"+quem,"Passou para "+curto(quem,30)+", cobrar "+diaCurto(data));
 }
-function mostrarFolha(html){document.getElementById("folha").innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
-function fecharFolha(){document.getElementById("veu").classList.add("hidden");F=null;}
+function mostrarFolha(html,cls){const f=document.getElementById("folha");f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
+function fecharFolha(){vozParar(true);document.getElementById("veu").classList.add("hidden");F=null;}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("veu").classList.contains("hidden"))fecharFolha();});
 
 /* ---------- acoes: tudo passa por agir(), com 6 s para desfazer ---------- */
@@ -661,15 +688,162 @@ function agir(verbo,valor,rot){
   PEND={origem:c.origem,ref:c.ref,verbo,valor,t:setTimeout(enviar,6000)};
   toast(rot+" · "+(c.origem==="tarefa"?"t":"")+c.ref,null,true);
 }
-function desfazer(){ if(!PEND)return; clearTimeout(PEND.t); PEND=null; toast("Desfeito. Nada foi gravado.",null,false,2600); }
+function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
+  if(p.voz){abrirVoz(p.voz);toast("Desfeito. O texto voltou para você corrigir.",null,false,3000);return;}
+  toast("Desfeito. Nada foi gravado.",null,false,2600); }
 async function enviar(){
   if(!PEND)return; const p=PEND; PEND=null; clearTimeout(p.t);
   toast("gravando…",null,false);
+  if(p.voz){
+    const {data,error}=await sb.rpc("inbox",{p_texto:VOZ_PREFIXO+p.voz});
+    const txt=error?"Erro: "+error.message:String(data||"");
+    if(error||txt.startsWith("RECUSADO")){ VOZ.rascunho=p.voz; toast(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220)+" O texto ficou guardado no microfone.","bad",false,9000); return; }
+    VOZ.rascunho=""; toast(/^ANOTADO/.test(txt)?"Anotado. O Claude pega na próxima rodada.":txt.slice(0,160),null,false,3500);
+    return;
+  }
   const {data,error}=await sb.rpc("agir",{p_origem:p.origem,p_ref:String(p.ref),p_verbo:p.verbo,p_valor:p.valor});
   const txt=error?"Erro: "+error.message:(typeof data==="string"?data:"feito");
   if(error||String(txt).startsWith("RECUSADO")){ toast(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",false,9000); return; }
   toast("Gravado.",null,false,2500);
   await carregar(true);
+}
+
+/* ---------- instrucao por voz (p3, 02/10/2026) ----------
+   A API do Claude nao recebe audio (so texto, imagem e PDF): a voz vira texto ANTES e o texto entra
+   pela inbox(), a mesma porta das outras instrucoes do painel, onde o atendente consome.
+   Motor, nesta ordem: (1) API de transcricao deste aparelho, se configurada: grava e manda o audio,
+   espera {texto}; (2) reconhecimento do navegador (Web Speech, gratis). Sem nenhum dos dois, o campo
+   continua aceitando o ditado do teclado do celular.
+   Sempre revisar (decisao do Igor 02/10/2026): nada vai ao banco sem o toque em Enviar, e o envio
+   tem 6 s para desfazer. URL e chave da API ficam so no localStorage deste aparelho, nunca no
+   repositorio, que e publico. Contrato da API em docs/instrucao-por-audio.md. */
+const VOZ_PREFIXO="[voz] ", VOZ_CHAVE="cerebro.voz.api", VOZ_MAX_S=120, VOZ_MIN=3, VOZ_API_S=30;
+const VOZ={rascunho:"",rec:null,grav:null,ouvindo:false,base:"",t:null};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+const VOZ_ERRO={"not-allowed":"O microfone está bloqueado para este site. Libere nas configurações do navegador.",
+  "service-not-allowed":"Este modo do navegador não libera o reconhecimento de voz. Abra o painel no navegador ou use o ditado do teclado.",
+  "no-speech":"Não ouvi nada. Toque e fale de novo.","audio-capture":"Nenhum microfone encontrado.",
+  "network":"O reconhecimento do navegador precisa de internet."};
+const MIC_SVG='<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function vozApi(){ try{const v=JSON.parse(localStorage.getItem(VOZ_CHAVE)||"null");return v&&v.url?v:null;}catch(e){return null;} }
+function vozMotor(){ if(vozApi()&&navigator.mediaDevices&&window.MediaRecorder)return "api"; return SR?"navegador":null; }
+const hostDe=u=>{try{return new URL(u).host;}catch(e){return u;}};
+const juntarVoz=(a,b)=>{a=String(a||"").trim();b=String(b||"").trim();return a&&b?a+" "+b:(a||b);};
+const vozEl=id=>document.getElementById(id);
+
+function abrirVoz(texto){
+  if(texto!=null)VOZ.rascunho=texto;
+  F=null;
+  const m=vozMotor(), api=vozApi();
+  const motor=m==="api"?"Transcrição pela sua API ("+esc(hostDe(api.url))+")":m==="navegador"?"Transcrição grátis do navegador":"Este navegador não transcreve voz";
+  mostrarFolha(`
+    <div class="voz-topo"><h3 id="folhaTit">Falar uma instrução</h3>
+      <button class="ico" aria-label="Fechar" onclick="fecharFolha()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="voz-motor" id="vozMotor">${motor}</div>
+    <button class="voz-mic" id="vozMic" aria-pressed="false" onclick="vozAlternar()"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
+    <div class="voz-estado" id="vozEstado" role="status" aria-live="polite">${m?"":"Use o microfone do teclado do celular no campo abaixo, ou ligue a sua API."}</div>
+    <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>
+    <textarea id="vozTxt" class="voz-txt" oninput="VOZ.rascunho=this.value" placeholder="Ex.: reagendar a vistoria da Conenge para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
+    <div class="acoes voz-acoes"><button class="pri" onclick="vozEnviar()">Enviar ao Claude</button><button class="sec" onclick="vozLimpar()">Limpar</button></div>
+    <div class="mut">Entra como instrução pendente e o Claude pega na próxima rodada.${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
+    <details class="voz-api"><summary>API de transcrição deste aparelho${api?" · ligada":""}</summary><div class="corpo">
+      <div class="mut">Para quando a sua API existir. Fica guardada só neste aparelho, nunca no repositório. Sem chave, o painel manda o seu login e a API confere que é você.</div>
+      <label for="vozUrl">Endereço</label>
+      <input id="vozUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://…" value="${esc(api?api.url:"")}">
+      <label for="vozKey">Chave (opcional)</label>
+      <input id="vozKey" type="password" autocomplete="off" placeholder="${api&&api.chave?"guardada · digite para trocar":"vazio usa o seu login"}">
+      <div class="acoes"><button class="sec" onclick="vozSalvarApi()">Guardar neste aparelho</button>${api?'<button class="sec" onclick="vozEsquecerApi()">Esquecer a API</button>':""}</div>
+      <div class="mut">Contrato: POST do áudio para o endereço; resposta {"texto": "…"}. Detalhes em docs/instrucao-por-audio.md.</div>
+    </div></details>`,"cheia");
+}
+function vozEstado(t,cls){ const e=vozEl("vozEstado"); if(!e)return; e.textContent=t||""; e.className="voz-estado"+(cls?" "+cls:""); }
+function vozUi(on){
+  VOZ.ouvindo=on;
+  const b=vozEl("vozMic"), s=vozEl("vozMicTxt"), topo=vozEl("micTopo");
+  if(b)b.setAttribute("aria-pressed",on?"true":"false");
+  if(s)s.textContent=on?"Parar":"Tocar e falar";
+  if(topo)topo.setAttribute("aria-pressed",on?"true":"false");
+}
+function vozEscrever(t){ VOZ.rascunho=t; const ta=vozEl("vozTxt"); if(ta)ta.value=t; }
+function vozAlternar(){ VOZ.ouvindo?vozParar(false):vozOuvir(); }
+function vozParar(cancelar){
+  clearTimeout(VOZ.t);
+  if(VOZ.rec){ try{cancelar?VOZ.rec.abort():VOZ.rec.stop();}catch(e){} }
+  if(VOZ.grav){ VOZ.grav._cancelado=!!cancelar; try{VOZ.grav.stop();}catch(e){} }
+  if(cancelar){VOZ.rec=null;vozUi(false);}
+}
+async function vozOuvir(){
+  const m=vozMotor(); if(!m)return;
+  const ta=vozEl("vozTxt"); VOZ.base=ta?ta.value:VOZ.rascunho;
+  if(m==="navegador"){
+    const r=new SR(); r.lang="pt-BR"; r.continuous=true; r.interimResults=true;
+    /* reconstroi de todos os resultados a cada evento: o mesmo texto em qualquer navegador */
+    r.onresult=e=>{ let t=""; for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript; vozEscrever(juntarVoz(VOZ.base,t)); };
+    r.onerror=e=>{ if(e.error!=="aborted")vozEstado(VOZ_ERRO[e.error]||("O reconhecimento parou ("+e.error+")."),"bad"); };
+    r.onend=()=>{ clearTimeout(VOZ.t); VOZ.rec=null; vozUi(false); const el=vozEl("vozEstado");
+      if(el&&!el.classList.contains("bad"))vozEstado("Pronto. Corrija se precisar e toque em Enviar."); };
+    VOZ.rec=r;
+    try{ r.start(); }catch(e){ VOZ.rec=null; vozEstado("Não consegui abrir o microfone: "+e.message,"bad"); return; }
+    vozUi(true); vozEstado("Ouvindo… toque de novo para parar.");
+  } else {
+    let stream;
+    try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ vozEstado(VOZ_ERRO["not-allowed"],"bad"); return; }
+    const tipo=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||"";
+    const g=new MediaRecorder(stream,tipo?{mimeType:tipo}:undefined), partes=[];
+    g.ondataavailable=e=>{ if(e.data&&e.data.size)partes.push(e.data); };
+    g.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop()); VOZ.grav=null; vozUi(false);
+      if(g._cancelado)return;
+      const blob=new Blob(partes,{type:g.mimeType||tipo||"audio/webm"});
+      if(!blob.size){ vozEstado("Não chegou áudio. Tente de novo.","bad"); return; }
+      vozEstado("Transcrevendo…");
+      try{ vozEscrever(juntarVoz(VOZ.base,await vozTranscrever(blob))); vozEstado("Pronto. Corrija se precisar e toque em Enviar."); }
+      catch(e){ vozEstado("A API não transcreveu: "+e.message+". Nada foi enviado.","bad"); }
+    };
+    VOZ.grav=g; g.start(); vozUi(true); vozEstado("Gravando… toque de novo para parar e transcrever.");
+  }
+  VOZ.t=setTimeout(()=>vozParar(false),VOZ_MAX_S*1000);
+}
+async function vozTranscrever(blob){
+  const api=vozApi(); if(!api)throw new Error("API não configurada");
+  let tok=api.chave;
+  if(!tok){ const {data}=await sb.auth.getSession(); tok=data&&data.session&&data.session.access_token; }
+  const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),VOZ_API_S*1000);
+  try{
+    const h={"Content-Type":blob.type||"application/octet-stream","X-Idioma":"pt-BR"}; if(tok)h.Authorization="Bearer "+tok;
+    const r=await fetch(api.url,{method:"POST",headers:h,body:blob,signal:ctl.signal});
+    let j=null; try{ j=await r.json(); }catch(e){}
+    if(!r.ok)throw new Error((j&&(j.erro||j.error))||("HTTP "+r.status));
+    const texto=j&&typeof j.texto==="string"?j.texto.trim():"";
+    if(!texto)throw new Error("a resposta veio sem o campo texto");
+    return texto;
+  }catch(e){ throw e.name==="AbortError"?new Error("passou de "+VOZ_API_S+" s"):e; }
+  finally{ clearTimeout(t); }
+}
+function vozLimpar(){ vozEscrever(""); vozEstado(""); const ta=vozEl("vozTxt"); if(ta)ta.focus(); }
+function vozEnviar(){
+  const ta=vozEl("vozTxt"), t=(ta?ta.value:VOZ.rascunho).trim();
+  if(VOZ.ouvindo){ vozEstado("Pare o microfone antes de enviar, para não cortar a frase.","bad"); return; }
+  if(t.length<VOZ_MIN){ vozEstado("Fale ou escreva a instrução antes de enviar.","bad"); if(ta)ta.focus(); return; }
+  if(PEND)enviar();
+  VOZ.rascunho=t; fecharFolha();
+  PEND={voz:t,t:setTimeout(enviar,6000)};
+  toast("Para o Claude · "+curto(t,40),null,true);
+}
+function vozSalvarApi(){
+  const u=vozEl("vozUrl").value.trim(), k=vozEl("vozKey").value.trim(), ant=vozApi(), txt=vozEl("vozTxt").value;
+  if(!u){ vozEsquecerApi(); return; }
+  if(!/^https:\/\//i.test(u)&&!/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(u)){ toast("O endereço precisa começar com https://","bad",false,3500); return; }
+  /* chave antiga so vale para o mesmo endereco: trocar a URL nunca leva a chave para outro servidor */
+  const chave=k||(ant&&ant.url===u?ant.chave:"")||"";
+  try{ localStorage.setItem(VOZ_CHAVE,JSON.stringify({url:u,chave})); }
+  catch(e){ toast("Este navegador não deixou guardar (modo privado?).","bad",false,4000); return; }
+  abrirVoz(txt); toast("API guardada só neste aparelho.",null,false,2500);
+}
+function vozEsquecerApi(){
+  const ta=vozEl("vozTxt"); try{ localStorage.removeItem(VOZ_CHAVE); }catch(e){}
+  abrirVoz(ta?ta.value:null); toast("API esquecida neste aparelho.",null,false,2500);
 }
 
 /* ---------- partida ---------- */
