@@ -2,19 +2,20 @@
 
 Botão de microfone no topo do `presidente.html` (p3, 02/10/2026). A instrução falada vira
 texto, você revisa e toca em Enviar. O texto entra pela `inbox()`, a mesma porta das outras
-instruções do painel, com o prefixo `[voz] `, e o atendente pega na próxima rodada.
+instruções do painel, com o prefixo `[voz] `. Desde a p4, o envio acorda o atendente na hora e a
+resposta aparece sozinha: ver `docs/resposta-por-evento.md`.
 
 ## Para onde a instrução vai (medido em 02/10/2026)
 
 1. **Enviar.** Depois dos 6 s para desfazer, `inbox(p_texto)` confere que é o dono (`is_dono()`) e grava
    uma linha em `comando`: `origem = 'painel'`, `status = 'pendente'`, texto com o prefixo `[voz] `.
 2. **Gatilho.** O `INSERT` dispara `trg_comando_acorda_atendente`, que chama `fn_acordar_atendente()` para
-   acordar o atendente na hora. **Hoje isso não acontece:** o token do despertador (no vault) está ausente,
-   `webhook_disparo` mostra `token ausente ou placeholder`, e o despertador nunca disparou.
-3. **Rodada fixa.** Sem o despertador, quem lê a instrução é a rodada agendada do `atendente-1`, que roda
-   6 vezes por dia: 01h58, 03h58, 07h58, 11h58, 15h58 e 19h58 (horário de Cuiabá; medido em
-   `rotina_execucao` de 29/09 a 02/10). Não há rodada entre 19h58 e 01h58, então uma instrução enviada
-   à noite pode esperar cerca de 6 h.
+   acordar o atendente na hora pela API da rotina (cota do Max). Em 03/10/2026 o token no vault ainda era
+   um placeholder, então o despertador nunca tinha disparado; a linha do topo do painel diz o estado medido
+   (`atendente_estado()`). O que o gatilho perder, `despertar_reconciliar()` retoma em até 5 min.
+3. **Passagem fixa.** Sem o despertador, quem lê a instrução é a passagem agendada do `atendente-1`, 6 vezes
+   por dia: 01h58, 03h58, 07h58, 11h58, 15h58 e 19h58 (horário de Cuiabá; medido em `rotina_execucao` de
+   29/09 a 02/10). Não há passagem entre 19h58 e 01h58: à noite a espera chegava a cerca de 6 h.
 4. **Fechamento.** O atendente executa ou responde e fecha a linha com `comando_processar(id, resultado)`:
    `status = 'processado'` e o `resultado` escrito.
 
