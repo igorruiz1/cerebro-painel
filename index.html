@@ -1464,6 +1464,12 @@ const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
   return comTeto(b, LIMITE_RECARGA, v)
     .then(r=>{ if(r&&r.error){avisaFalha([v+" — "+r.error.message]); return [];} return (r&&r.data)||[]; })
     .catch(e=>{ avisaFalha([v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":"erro")]); return []; });};
+/* s764 (02/10/2026): v_cron_deadman le o schema cron e por isso fica definer; o SELECT direto de
+   authenticated sai (advisor security_definer_view). O bastidor le pela porta do dono, painel_cron_deadman()
+   (gated por is_dono()). A view so fica de reserva ate o banco revogar o acesso direto. */
+const qDeadman=()=>comTeto(sb.rpc("painel_cron_deadman"), LIMITE_RECARGA, "painel_cron_deadman")
+  .then(r=>(r&&!r.error)?(r.data||[]):q_("v_cron_deadman"))
+  .catch(()=>q_("v_cron_deadman"));
 async function carregarSecao(id,forcar){
   if(id==="espelho"&&(forcar||!LAZY.espelho)){
     const [loop,esp,espP]=await Promise.all([q_("v_painel_rodada"),q_("v_espelho"),q_("v_espelho_placar")]);
@@ -1487,7 +1493,7 @@ async function carregarSecao(id,forcar){
   if(id==="frentes"&&(forcar||!LAZY.faixa)){
     D.faixa=await q_("v_faixa_frente");LAZY.faixa=1;SECQUANDO.frentes=Date.now();rFaixas();}
   if(id==="rotinas"&&(forcar||!LAZY.motor2)){
-    const [dm,es]=await Promise.all([q_("v_cron_deadman"),q_("v_esforco_sem_entrega")]);
+    const [dm,es]=await Promise.all([qDeadman(),q_("v_esforco_sem_entrega")]);
     D.dm=dm||[];D.es=(es&&es[0])||null;LAZY.motor2=1;rDeadman();rEsforco();}
 }
 async function abrir(nome){
