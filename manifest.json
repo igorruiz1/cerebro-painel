@@ -1,8 +1,8 @@
 {
   "name": "CÉREBRO IGOR",
   "short_name": "CÉREBRO",
-  "description": "Painel vivo da simbiose — fila, comando, evolução, motor e acervo.",
-  "start_url": "./",
+  "description": "Painel do presidente: o próximo passo, a fila, o caixa e as frentes. O bastidor da máquina fica a um toque.",
+  "start_url": "./presidente.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

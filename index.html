@@ -59,6 +59,9 @@ h1{font-size:12px;letter-spacing:3.4px;margin:0;color:var(--mut);font-weight:600
 .spacer{flex:1}
 .deg{font-size:11.5px;color:var(--mut);display:flex;gap:6px;align-items:center;white-space:nowrap}
 .deg b{color:var(--ok);font-size:14px}
+.pres{text-decoration:none;display:inline-flex;align-items:center}
+.pres .sm{display:none}
+@media (max-width:480px){.pres .lg{display:none}.pres .sm{display:inline}}
 .btn{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
  padding:7px 12px;font-size:12.5px;cursor:pointer;transition:border-color .12s,background .12s;
  min-height:34px;display:inline-flex;align-items:center;gap:6px}
@@ -888,6 +891,9 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
     <button class="btn btgav" id="btGav" onclick="gavetaFiltros()" title="buscar e filtrar (/)" aria-label="buscar e filtrar" aria-expanded="false" aria-controls="filtros">⌕<span class="fn" id="gavN" style="display:none"></span></button>
+    <!-- s764 (02/10/2026): o banco nunca recebeu ping do presidente.html: a raiz abre o bastidor e
+         nada aqui levava a ele. A porta para o front stage fica visivel no topo. -->
+    <a class="btn pres" href="presidente.html" title="abrir o front stage do presidente" aria-label="abrir o presidente"><span class="lg">presidente</span><span class="sm" aria-hidden="true">⌂</span></a>
     <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
     <button class="btn some" onclick="abrirSenha()" title="definir senha">senha</button>
     <button class="btn some" onclick="sair()">sair</button>
