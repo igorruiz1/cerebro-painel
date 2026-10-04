@@ -1125,7 +1125,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v73";
+const VER="v74";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2714,6 +2714,7 @@ function rAgora(){
     <div class="s">
       <span>${esc(c.depois??0)} em segundo plano</span><span>·</span><span>${esc(c.leituras??0)} esperando ciência</span>
       ${saldo!=null?`<span>·</span><span>saldo 30d <b style="color:${saldo<0?"var(--bad)":"var(--ok)"}">${rs(saldo)}</b></span>`:""}
+      ${maisCaixa()}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
       
       <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></details></div>`;
@@ -3503,9 +3504,11 @@ const SERIE_SECAO={
    (3) cada numero diz quem o move (regua 7).
    Vermelho continua significando FORA DO NORMAL (banda p10-p90, v29), nunca so abaixo da meta. */
 const FAIXA5=[
-  {k:"caixa.sobrevida_dias",      r:"Fôlego de caixa",              u:"d"},
-  {k:"caixa.menor_saldo_13s",     r:"Pior saldo, 13 semanas",     u:"rs"},
-  {k:"caixa.entrada_realizada_30d",r:"Entrou em 30 dias",           u:"rs"},
+  /* v74 · t1624 (decisao do Igor, fato 1239): UM numero-mae de caixa, a semana em que o saldo acumulado
+     fica negativo no cenario realista (v_caixa_13_semanas.saldo_base, a mesma serie do bloco de 13 semanas e
+     de v_norte_caixa_mes.semana_negativa). Folego, pior saldo e entrada de 30 dias ficam a um clique, em
+     "mais numeros do caixa e da fila". Eram 6 numeros de caixa ao mesmo tempo, e se contradiziam. */
+  {k:"caixa.semana_negativa",     r:"Caixa fica negativo",          mae:true, kd:"caixa.sobrevida_dias"},
   {k:"caixa.decisao_parada_rs",   r:"Parado sem sua palavra",      u:"rs"},
   /* v62: os dois tetos, lado a lado (marca do Igor em 30/09/2026). A fila ativa e o mesmo numero
      do alarme de carga (v_wip_igor); a bandeja usa o MESMO recorte do gate pode_produzir
@@ -3525,6 +3528,7 @@ function quemQ(t){ const c=t.kd||t.k; return donoDe(c)==="igor"?"":`<div class="
 function rFaixa5(){
   const el=document.getElementById("faixa5"); if(!el)return;
   const tiles=FAIXA5.map(t=>{
+    if(t.mae) return maeTile(t);
     if(t.teto) return tetoTile(t);
     const r=(D.se||[]).find(x=>x.chave===t.k);
     if(!r||!r.serie||!r.serie.length)
@@ -3550,6 +3554,24 @@ function rFaixa5(){
   el.innerHTML=`<div class="f5cab">quem move estes números: você, salvo onde o número diz outro dono</div>`+
     `<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
     `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os ${tiles.length} números do dia</button>`;}
+/* v74 · t1624: o que saiu da faixa continua a um clique, com o mesmo dado de antes */
+function maisCaixa(){
+  const ult=c=>{const r=(D.se||[]).find(x=>x.chave===c);return r&&r.serie&&r.serie.length?+r.serie[r.serie.length-1]:null;};
+  const s=(D.c13||[]).map(x=>+x.saldo_base), pior=s.length?Math.min(...s):ult("caixa.menor_saldo_13s"), ent=ult("caixa.entrada_realizada_30d");
+  return (pior!=null?`<span>·</span><span>pior saldo em 13 semanas <b>${rs(pior)}</b></span>`:"")
+        +(ent!=null?`<span>·</span><span>entrou em 30 dias <b>${rs(ent)}</b></span>`:"");}
+function maeTile(t){
+  const s=(D.c13||[]).slice().sort((a,b)=>a.semana-b.semana);
+  const dono=`data-dono="${esc(donoDe(t.kd)||"")}"`;
+  if(!s.length) return `<div class="f5" data-chave="${esc(t.k)}" ${dono}><div class="r">${esc(t.r)}</div><div class="v">—</div>
+    <div class="e">sem dado no snapshot: a previsão de 13 semanas não chegou</div>${quemQ(t)}</div>`;
+  const i=s.findIndex(x=>+x.saldo_base<0);
+  const dm=d=>{const p=String(d).slice(0,10).split("-");return p[2]+"/"+p[1];};
+  const v=i<0?"não fica":`semana de ${dm(s[i].inicio)}`;
+  const e=i<0?`o saldo acumulado não fica negativo em 13 semanas · cenário realista`
+             :`saldo acumulado de ${rs(+s[i].saldo_base)} nessa semana · cenário realista`;
+  return `<div class="f5 ${i<0?"bem":"mal"}" data-chave="${esc(t.k)}" ${dono}><div class="r" title="v_caixa_13_semanas.saldo_base">${esc(t.r)}</div>
+    <div class="v">${v}</div><div class="e">${e}</div>${quemQ(t)}</div>`;}
 function tetoTile(t){
   const sem=`<div class="f5" data-chave="${esc(t.k)}" data-dono="${esc(donoDe(t.kd||t.k)||"")}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
     <div class="e">sem dado no snapshot</div>${quemQ(t)}</div>`;
