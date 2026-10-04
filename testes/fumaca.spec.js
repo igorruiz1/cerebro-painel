@@ -684,12 +684,19 @@ test('o caixa das 13 semanas desenha 13 colunas e diz por escrito quando fica ne
     const cols=[...el.querySelectorAll('.c13c')];
     const min=el.querySelector('.c13c.min');
     const itens=[...el.querySelectorAll('.c13i')].map(x=>x.textContent);
+    const negs=el.querySelectorAll('.c13c.neg').length, titulo=el.querySelector('.c13t').textContent,
+          texto=el.querySelector('.c13s').textContent, crit=!!el.querySelector('.c13.crit');
     D.c13=[]; let vazio=null; try{ rCaixa13(); vazio=el.textContent; }catch(e){ err=err||String(e); }
-    return {err, n:cols.length, minSemana:min&&min.dataset.semana, negs:el.querySelectorAll('.c13c.neg').length,
-      titulo:cols.length?null:null, itens, vazio, texto:null};
+    return {err, n:cols.length, minSemana:min&&min.dataset.semana, negs, titulo, texto, crit, itens, vazio};
   });
   expect(r.err, 'rCaixa13() derrubou o script').toBe(null);
   expect(r.n, 'uma coluna por semana').toBe(13);
+  /* Este e o caso realista: a primeira semana negativa (4a) nao e a primeira nem a do menor saldo (12a), e o
+     saldo volta a positivo na 5a. O teste seguinte cobre so o caso minimo de duas semanas. */
+  expect(r.negs, 'toda semana com saldo negativo e marcada, e so elas').toBe(9);
+  expect(r.titulo, 'o titulo diz a PRIMEIRA semana negativa, nao a pior').toContain('negativo na semana de 19/10');
+  expect(r.texto, 'sem as incertas, o negativo chega ja na 1a semana').toContain('Sem as entradas incertas, o saldo fica negativo na semana de 28/09');
+  expect(r.crit, 'o cartao se marca critico').toBe(true);
   expect(r.minSemana, 'a semana mais apertada e a do menor saldo').toBe('12');
   expect(r.itens.length, 'so entradas incertas na lista').toBe(2);
   expect(r.itens[0], 'a maior entrada incerta vem primeiro').toContain('Missao habite-se');

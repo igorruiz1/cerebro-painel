@@ -2,7 +2,7 @@
 #
 # Por que existe: quatro versoes (v22, v26, v43, v45) cairam pela MESMA classe de defeito —
 # um numero escrito a mao que deixou de valer. Corrigimos a instancia tres vezes e a classe
-# nenhuma. Aqui a classe morre: a suite afirma o obvio antes de cada deploy, em ~3 segundos.
+# nenhuma. Aqui a classe morre: a suite afirma o obvio antes de cada deploy, em ~1 min de job (medido em 04/10/2026; ver CLAUDE.md).
 name: fumaça
 
 on:
