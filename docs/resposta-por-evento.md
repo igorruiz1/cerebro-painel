@@ -71,22 +71,50 @@ publica, ficou em 12 a 13 s.
    clonado a cada execução e atrasa a partida). O agente não edita agenda de rotina criada pela interface:
    só o Igor muda os horários dela.
 
-**Transição até o aceite:** a rotina antiga segue com as 6 passagens fixas (`rotina.trigger_id` continua
-nela) e a nativa é o canal dos eventos (`webhook_disparo.routine_id`). O gate barra execução duplicada em
-menos de 20 min. Depois do aceite, o Igor põe 07h58 e 19h58 na nativa, a antiga é desligada e
-`rotina.trigger_id` e `rotina.cron_utc` passam para a nativa juntos.
+**Transição até o aceite** (03/10 a 04/10): a rotina antiga seguiu com as 6 passagens e a nativa recebeu
+os eventos. O gate barra execução duplicada em menos de 20 min.
 
-## O que falta, e de quem é
+## Aceite fechado em 04/10/2026 (fato 1230)
 
-1. ~~**Igor: colar o token da rotina.**~~ Feito em 03/10 às 13h06, na rotina nativa. Em claude.ai/code → Routines → "Atendente + Executor" → adicionar
-   gatilho por API → gerar o token (aparece uma vez). No Supabase: Vault → editar
-   `ccr_token_atendente_1` → colar. O token nunca passa por chat nem por arquivo (LC-01).
-   Conferência: a linha do topo do painel troca "sem despertador" por "dormindo, acorda no seu toque".
-2. **Medir a partida da sessão.** A doc oficial não publica a latência de partida da rotina. Os 5 primeiros
-   despertares saem de `rotina_execucao` (`obs like 'despertar por evento:%'`) contra o `respondido_em`
-   ou o `processado_em`.
-3. **Depois do aceite:** cron da rotina para `58 11,23 * * *` (UTC, 07h58 e 19h58 em Cuiabá) **e**
-   `rotina.cron_utc` com o mesmo valor, juntos. Se só um mudar, a "próxima passagem" da tela mente.
+Critério do Igor: 5 despertares reais válidos com p90 até 10 min, mais prova.
+
+| # | Instrução | Do toque à resposta |
+| --- | --- | --- |
+| 1 | deliberação do Igor, t1545 (03/10) | 73 s |
+| 2 | deliberação do Igor (03/10) | 80 s |
+| 3 | deliberação do Igor, 06h41 (04/10) | 254 s |
+| 4 | recomendação pedida pelo Claude a pedido do Igor, dialogo 209 | 59 s |
+| 5 | anotação pedida pelo Claude a pedido do Igor, comando 499 | 42 s |
+
+Uma falha no caminho, corrigida: a anotação 495 foi respondida em 5 min, mas a sessão não conseguiu
+gravar. `update comando` pelo MCP deu timeout 5 vezes, e a resposta levou 41 min para aparecer no painel.
+
+## Agenda final (04/10/2026, fato 1231)
+
+O agente não edita a agenda de rotina criada pela interface: `update_trigger` é recusado na nativa. Edita a
+criada por agente. Ficou assim:
+
+- **Rotina antiga = agenda.** `58 11,23 * * *`, ou seja, 07h58 e 19h58 em Cuiabá. Ela segura o conector
+  Claude Code Remote, então a rede do check-in (passo 2.1) continua de pé. `rotina.trigger_id` aponta para
+  ela, com `janela_horas` 13: com 2 passagens o vão é de 12 h, e a janela antiga de 8 h daria ATRASADA falsa.
+- **Rotina nativa = canal de eventos.** `webhook_disparo.routine_id`. Ainda tem uma passagem às 09h20, que
+  só o Igor tira pela interface; ela custa um gate e PARE quando não há nada.
+- **Não dá alarme falso:** `v_ccr_divergente` não acusa ÓRFÃ para gatilho declarado em `webhook_disparo`,
+  nem PEDE APROVAÇÃO para rotina sem `permission_mode` (a interface não tem esse seletor).
+- **Teste diário:** `testar_despertador()` no `vigia_testes`, com 6 casos: gate PARE e SIGA, reconciliador
+  com item visto e com item não visto, estado sem token, canal de evento não órfão.
+
+## Regras que valem daqui em diante
+
+- **Escrita por função, nunca UPDATE cru.** Desde 04/10, UPDATE direto pelo MCP do Supabase às vezes trava
+  até o timeout e a escrita se perde em silêncio (t1592, trava 919). Chamada de função passa. O procedimento
+  do atendente (versão 11) escreve só por `comando_processar`, `tarefa_tentativa`, `tarefa_preparo_feito`,
+  `tarefa_concluir` e `tarefa_declarar_ambiente`.
+- **Instrução feita pelo Claude vai por `inbox()`, nunca por `deliberar()`.** O `deliberar()` grava a
+  recomendação do card como "SUA DELIBERAÇÃO" com `gerada_por = 'igor'`. Em 04/10 isso sobrescreveu a
+  recomendação do fluxo 276 com atribuição falsa; ela foi restaurada da `recomendacao_sombra`.
+- **Foto de rotinas só completa.** Uma foto parcial em `ccr_trigger_snapshot` (1 linha, 04/10 08h56) fez
+  todas as outras rotinas aparecerem como FANTASMA.
 
 ## O que NÃO é o caminho, para ninguém reabrir
 
