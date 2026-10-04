@@ -882,6 +882,17 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 .pfl.pfx b{color:var(--ok)}
 .pfl.pfx.neg b{color:var(--bad)}
 @media(max-width:640px){.pfm{grid-template-columns:1fr;gap:8px}}
+/* v73 · t1622: secao com falha mostra so o aviso; o conteudo velho some ate a consulta voltar */
+.secfalhou > :not(.naocarregou){display:none!important}
+.naocarregou{border-left-color:var(--rd)!important}
+.naocarregou button{margin-left:8px}
+/* v73 · t1625: no celular a faixa comeca recolhida (Few: o que nao leva a decisao sai da primeira tela) */
+.f5cab{font-size:11px;color:var(--dim);margin:0 0 6px}
+details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0}
+@media (max-width:640px){
+  #faixa5:not(.f5todos) .f5{display:none}
+  #faixa5:not(.f5todos) .f5cab{display:none}
+}
 </style></head><body>
 
 <!-- ===================== LOGIN ===================== -->
@@ -1038,7 +1049,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
   <section class="sec" id="s-movimento"><h2>O ENVELHECIMENTO DA FILA <span class="s">o único gráfico do kanban que age sobre trabalho ainda salvável; o resto é autópsia</span></h2><div class="g4" id="mov-kpi"></div><div id="mov-aging"></div><h2>A REPRESA DE PRAZO <span class="s">quantos cards vencem no mesmo dia, e de quem eles são</span></h2><div id="mov-represa"></div><div class="foot"><b>Como ler.</b> A régua é o percentil 85 do tempo de ciclo do que já fechou: item acima dele aparece <b>antes</b> de vencer, não depois. Na represa, o teto desenhado é 8 por dia útil — acima disso o dia vira um bloco de vencidos de uma vez só.</div></section>
   <section class="sec" id="s-espelho"><div id="loop"></div><h2>O ESPELHO <span class="s">o que você decidiu e o que aconteceu depois</span></h2><div id="espelho-placar"></div><div id="espelho"></div><div class="foot"><b>Por que esta tela existe.</b> O painel manda agir e nunca mostrava se agir adiantou: o laço não fechava. <b>Ratificou</b> = você seguiu a recomendação. <b>Retificou</b> = você corrigiu. Taxa alta demais é bajulação. Baixa demais é ruído, e o defeito é meu.<br><b>Régua:</b> laço OODA (John Boyd), incluindo <b>medir o resultado</b>.</div></section>
   <section class="sec" id="s-medida"><h2>OS PARES <span class="s">todo número de atividade com o número de resultado ao lado</span></h2><div id="pares"></div><div class="foot"><b>Por que em pares.</b> Andy Grove, <i>High Output Management</i>: todo indicador pode ser burlado, e a defesa não é escolher um melhor, é emparelhar.</div><h2>O PLACAR DA SIMBIOSE <span class="s">o mesmo dicionário pelo qual a auto-crítica de domingo te julga</span></h2><div id="placarsim"></div><h2>A ESCADA <span class="s">CMMI · o nível do sistema é o MENOR elo</span></h2><div id="travas"></div><div id="escada"></div><div class="card" style="border-left-color:var(--line)" id="dims"></div><div id="kpis"></div><div class="foot"><b>Como ler:</b> a linha é a série do indicador em dias distintos de medição; a tracejada é a meta. <b>Indeterminado não é zero</b>: indicador sem base mínima devolve vazio de propósito. Nada aqui é digitado, sai de <code>kpi</code> mais <code>medir_kpi()</code>.<br><b>Réguas:</b> CMMI · DORA · camada semântica · ISO 15489 · SRE do Google.</div></section>
-  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>ORÇAMENTO DE FALHA <span class="s">quanto cada rotina pode falhar por semana antes de acender (Google SRE); só avisa, nenhuma é pausada sozinha</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="orcamento"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
+  <section class="sec" id="s-rotinas"><h2>ROTINAS <span class="s">quem bate ponto sozinho</span></h2><div id="maq-carga"></div><div id="maq-retomada"></div><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="rotinas"></table></div><h2>ORÇAMENTO DE FALHA <span class="s">quanto cada rotina pode falhar por semana antes de acender (Google SRE); só avisa, nenhuma é pausada sozinha</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="orcamento"></table></div><h2>A VARREDURA DO DRIVE <span class="s">Dabli: arquivo novo vira item de fila</span></h2><div id="varredura"></div><h2>ACHADOS ABERTOS</h2><div id="achados"></div><h2>ROTINA VIVA OU MUDA <span class="s">o alerta não espera o erro: cobra o último SUCESSO dentro da janela</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="deadman"></table></div><h2>ESFORÇO SEM ENTREGA <span class="s">quanto do que foi fechado no mês não moveu caixa nem destravou terceiro</span></h2><div id="esforco"></div><h2>O PAINEL SE MEDINDO <span class="s">bastidor: mede sempre, ocupa uma linha</span></h2><div id="automed" class="automed"></div><div class="foot"><b>Ponto</b> é execução registrada, não resultado. O atraso conta em <b>horas operacionais</b>: as horas em que a rotina não deve rodar não contam. Rotina manual não se vigia por relógio.</div></section>
   <section class="sec" id="s-acervo"><h2>O ACERVO EM NÚMEROS</h2><div class="g4" id="acnum"></div><h2>AS QUE MAIS TRABALHAM <span class="s">por uso real</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="actop"></table></div><h2>OFERECIDAS E IGNORADAS <span class="s">chegaram na hora e não mudaram nada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="acign"></table></div></section>
 </div>
 
@@ -1114,7 +1125,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v72";
+const VER="v73";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1139,9 +1150,14 @@ const escAttr=s=>esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\
   .replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"));
 const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(s)?s:"#";};
 const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{maximumFractionDigits:0});
-const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).toFixed(1)+"d":
-  u==="min"?(+v).toFixed(0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
-  (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0)));
+/* v73 · t1623: numero na tela sai em pt-BR pelo Intl (virgula decimal, ponto de milhar). toFixed solta
+   "17.5d"; toFixed so serve para geometria de CSS e SVG, nunca para texto que o Igor le. */
+const NF1=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}),
+      NF0=new Intl.NumberFormat("pt-BR",{maximumFractionDigits:0});
+const dec=(v,c)=>(c?NF1:NF0).format(+v);
+const nfmt=(v,u)=>v==null?"—":u==="pct"?dec(v,1)+"%":u==="dias"?dec(v,1)+"d":
+  u==="min"?dec(v,0)+"min":u==="chars"?(+v).toLocaleString("pt-BR"):
+  (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):dec(v,Math.abs(v%1)>0?1:0)));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
 /* v49: o painel le um snapshot. Snapshot velho e pior que consulta lenta, porque MENTE calado.
@@ -1545,10 +1561,27 @@ async function abrirSecao(sup,id){
 }
 /* v44: as abas tinham o mesmo defeito da carga: erro virava lista vazia, e a aba dizia
    "nada nesta faixa" quando na verdade a consulta nao voltou. Agora o aviso vermelho sobe. */
+/* v73 · t1622: a falha continua devolvendo lista (ninguem quebra), mas MARCADA: __falha leva o motivo.
+   guarda() le a marca. Antes a lista vazia de falha era indistinguivel da lista vazia de verdade, e a
+   secao desenhava "0" e "nada aberto" (Movimento e Sentinela em 04/10/2026, auditoria s810). */
+const listaFalha=m=>{const a=[];a.__falha=m;return a;};
 const q_=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
   return comTeto(b, LIMITE_RECARGA, v)
-    .then(r=>{ if(r&&r.error){avisaFalha([v+" — "+r.error.message]); return [];} return (r&&r.data)||[]; })
-    .catch(e=>{ avisaFalha([v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":"erro")]); return []; });};
+    .then(r=>{ if(r&&r.error){const m=v+" — "+r.error.message;avisaFalha([m]); return listaFalha(m);} return (r&&r.data)||[]; })
+    .catch(e=>{ const m=v+" — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":"erro");
+      avisaFalha([m]); return listaFalha(m); });};
+/* Secao (ou aba) que recebeu falha esconde o conteudo velho, escreve o motivo e oferece tentar de novo,
+   e NAO marca LAZY: a proxima abertura busca de novo. Vazio de verdade passa direto e continua dito. */
+function guarda(contId,retry,...ls){
+  const f=ls.find(l=>l&&l.__falha), el=document.getElementById(contId);
+  if(!el) return !f;
+  let a=el.querySelector(":scope > .naocarregou");
+  if(!f){ el.classList.remove("secfalhou"); if(a)a.remove(); return true; }
+  el.classList.add("secfalhou");
+  if(!a){ a=document.createElement("div"); a.className="card naocarregou"; el.prepend(a); }
+  a.innerHTML=`<b>Esta parte não carregou.</b> <span class="mot">${esc(f.__falha)}</span> <button type="button">tentar de novo</button>`;
+  a.querySelector("button").onclick=()=>retry();
+  return false;}
 /* s764 (02/10/2026): v_cron_deadman le o schema cron e por isso fica definer; o SELECT direto de
    authenticated sai (advisor security_definer_view). O bastidor le pela porta do dono, painel_cron_deadman()
    (gated por is_dono()). A view so fica de reserva ate o banco revogar o acesso direto. */
@@ -1558,28 +1591,36 @@ const qDeadman=()=>comTeto(sb.rpc("painel_cron_deadman"), LIMITE_RECARGA, "paine
 async function carregarSecao(id,forcar){
   if(id==="espelho"&&(forcar||!LAZY.espelho)){
     const [loop,esp,espP]=await Promise.all([q_("v_painel_rodada"),q_("v_espelho"),q_("v_espelho_placar")]);
+    if(guarda("s-espelho",()=>recarregarSecao("maquina","espelho"),loop,esp,espP)){
     D.loop=loop||[];D.esp=esp||[];D.espP=(espP&&espP[0])||null;LAZY.espelho=1;
-    SECQUANDO.espelho=Date.now(); rEvolucao();rEspelho();}
+    SECQUANDO.espelho=Date.now(); rEvolucao();rEspelho();}}
   if(id==="rotinas"&&(forcar||!LAZY.rotinas)){
     const [_am,_se]=await Promise.all([q_("v_painel_automedicao"),(D.se&&D.se.length)?Promise.resolve(D.se):q_("v_painel_serie")]);
-    D.am=_am;D.se=(_se&&_se.length)?_se:(D.se||[]);LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();injetaSeries();}
+    if(guarda("s-rotinas",()=>recarregarSecao("maquina","rotinas"),_am,_se)){
+    D.am=_am;D.se=(_se&&_se.length)?_se:(D.se||[]);LAZY.rotinas=1;SECQUANDO.rotinas=Date.now();rAutoMedicao();injetaSeries();}}
   /* v37 · ONDA 2: a camada de MOVIMENTO. As views existiam desde agosto e nenhuma aba
      as consumia — o painel mostrava ESTADO e nao mostrava para onde a fila anda. */
   if(id==="movimento"&&(forcar||!LAZY.movimento)){
     const [ag,rp]=await Promise.all([q_("v_fila_aging"),q_("v_represa_prazo")]);
-    D.ag=ag||[];D.rp=rp||[];LAZY.movimento=1;SECQUANDO.movimento=Date.now();rMovimento();}
+    if(guarda("s-movimento",()=>recarregarSecao("maquina","movimento"),ag,rp)){
+    D.ag=ag||[];D.rp=rp||[];LAZY.movimento=1;SECQUANDO.movimento=Date.now();rMovimento();}}
   /* v47: a secao "Pares e escada" passa a ter carga propria. Nao busca nada (o dado vem na
      abertura), mas redesenha e carimba o frescor — antes ela nao existia neste roteador. */
   if(id==="medida"){ SECQUANDO.medida=SECQUANDO.medida||CARGA; rPares(); rEvolucao(); }
   if(id==="acervo"&&(forcar||!LAZY.acervo)){
-    D.ac=await q_("v_painel_acervo");LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}
+    const ac_=await q_("v_painel_acervo");
+    if(guarda("s-acervo",()=>recarregarSecao("maquina","acervo"),ac_)){
+    D.ac=ac_;LAZY.acervo=1;SECQUANDO.acervo=Date.now();rAcervo();}}
   /* v27: faixa por frente entra na secao FRENTES, e as duas medidas de motor na secao ROTINAS.
      Nenhuma das tres viaja na abertura: a regra da v25 e que a abertura leva so o que a abertura mostra. */
   if(id==="frentes"&&(forcar||!LAZY.faixa)){
-    D.faixa=await q_("v_faixa_frente");LAZY.faixa=1;SECQUANDO.frentes=Date.now();rFaixas();}
+    const fx_=await q_("v_faixa_frente");
+    if(guarda("faixas",()=>recarregarSecao("panorama","frentes"),fx_)){
+    D.faixa=fx_;LAZY.faixa=1;SECQUANDO.frentes=Date.now();rFaixas();}}
   if(id==="rotinas"&&(forcar||!LAZY.motor2)){
     const [dm,es]=await Promise.all([qDeadman(),q_("v_esforco_sem_entrega")]);
-    D.dm=dm||[];D.es=(es&&es[0])||null;LAZY.motor2=1;rDeadman();rEsforco();}
+    if(guarda("s-rotinas",()=>recarregarSecao("maquina","rotinas"),dm,es)){
+    D.dm=dm||[];D.es=(es&&es[0])||null;LAZY.motor2=1;rDeadman();rEsforco();}}
 }
 async function abrir(nome){
   ABA=nome;
@@ -1595,16 +1636,21 @@ async function abrir(nome){
 }
 async function carregarAba(nome,forcar){
   if(nome==="leituras"&&(forcar||!LAZY.leituras)){
-    LE=await q_("v_painel_leituras");LAZY.leituras=1;SEL.clear();rLeituras();}
+    const le_=await q_("v_painel_leituras");
+    if(guarda("p-leituras",()=>carregarAba("leituras",true),le_)){
+    LE=le_;LAZY.leituras=1;SEL.clear();rLeituras();}}
   if(nome==="tudo"&&(forcar||!LAZY.tudo)){
     const [rz,it]=await Promise.all([q_("v_inventario_resumo"),q_("v_inventario_frente")]);
-    D.invr=rz||[]; D.inv=it||[]; LAZY.tudo=1; SECQUANDO.tudo=Date.now(); rTudo();}
+    if(guarda("p-tudo",()=>carregarAba("tudo",true),rz,it)){
+    D.invr=rz||[]; D.inv=it||[]; LAZY.tudo=1; SECQUANDO.tudo=Date.now(); rTudo();}}
   /* v46: sinal e cardapio viajam JUNTOS. Carregar um sem o outro desenharia a aba ora com
      botao, ora sem, conforme a ordem de chegada — e a tela mentiria sobre o que o banco aceita. */
   if(nome==="sentinela"&&(forcar||!LAZY.sentinela)){
     const [sn,ac]=await Promise.all([q_("v_sentinela"),q_("v_acoes_inventario",b=>b.eq("origem","tarefa"))]);
+    if(guarda("p-sentinela",()=>carregarAba("sentinela",true),sn,ac)){
     D.sent=sn||[]; D.sentAc=mapaAcoes(ac);
     LAZY.sentinela=1; SECQUANDO.sentinela=Date.now(); rSentinela();}
+    else{ const n=document.getElementById("n-sent"); if(n) n.textContent="?"; }}
   if(SECOES[nome]){ montaSecnav(nome); await abrirSecao(nome,SECATIVA[nome]); }
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>abrir(ULT[b.dataset.g]));
@@ -1780,7 +1826,7 @@ function rMovimento(){
   const k=document.getElementById("mov-kpi");
   if(k) k.innerHTML=
     `<div class="kpi${acima?" fora":""}"><div class="k">ACIMA DO P85</div><div class="n">${acima}</div></div>
-     <div class="kpi"><div class="k">RÉGUA P85</div><div class="n">${p85==null?"—":p85.toFixed(1)+"d"}</div></div>
+     <div class="kpi"><div class="k">RÉGUA P85</div><div class="n">${p85==null?"—":dec(p85,1)+"d"}</div></div>
      <div class="kpi${velho>30?" fora":""}"><div class="k">O MAIS VELHO</div><div class="n">${Math.round(velho)}d</div></div>
      <div class="kpi${venc?" fora":""}"><div class="k">JÁ VENCIDAS</div><div class="n">${venc}</div></div>`;
 
@@ -2128,6 +2174,17 @@ function partes(txt){
   while((m=t.match(/^\[([^\]]{1,64})\]\s*/))){ tags.push(m[1]); t=t.slice(m[0].length); }
   return {tags, texto:t||(txt||"")};
 }
+/* v73 · t1625: o card mostra o estado VIGENTE. Troca com mais de 7 dias (perguntado_em "DD/MM HH:MI", sem ano)
+   desce para um historico recolhido: em 04/10 o card do fluxo 19 abria com uma resposta de agosto que
+   contradizia o estado de hoje. Nada some; so sai da primeira leitura. */
+function diasDesdeDDMM(t){ const m=/^(\d{2})\/(\d{2})/.exec(t||""); if(!m) return null;
+  const h=new Date(), d=new Date(h.getFullYear(), +m[2]-1, +m[1]); if(d>h) d.setFullYear(d.getFullYear()-1);
+  return Math.floor((h-d)/864e5); }
+function trocaVigente(it,k){
+  const txt=it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor — "+promessaResposta());
+  const dd=diasDesdeDDMM(it.perguntado_em);
+  if(dd==null||dd<=7||!it.ultima_resposta) return bloco("VOCÊ DISSE",txt,"vio","p-"+k);
+  return `<details class="hist"><summary>histórico: você disse em ${esc(String(it.perguntado_em).slice(0,5))}</summary>${bloco("VOCÊ DISSE",txt,"vio","p-"+k)}</details>`;}
 function bloco(lbl,txt,cls,id){
   /* html confiavel: lbl e frase fixa (ou ja passou por esc no chamador); id e prefixo + uid(); txt passa por esc */
   if(!txt)return"";
@@ -2173,7 +2230,7 @@ function cardFila(it){
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${opcoesFila(it)}
    ${rapidos(it)}
-   ${it.ultima_pergunta?bloco("VOCÊ DISSE",it.ultima_pergunta+(it.ultima_resposta?"\n\n↳ "+it.ultima_resposta:"\n\n↳ aguardando o executor — "+promessaResposta()),"vio","p-"+k):""}
+   ${it.ultima_pergunta?trocaVigente(it,k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
        onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')registrar('${O}','${R}','t-${k}')"></textarea>
@@ -2651,7 +2708,7 @@ function rAgora(){
         /* v45: a v44 passou a AVISAR que a carga falhou, mas o heroi continuou escrevendo
            "nada precisa de voce hoje" logo abaixo do aviso vermelho — duas frases opostas na
            mesma tela, e a mentira em corpo 28. Sem dado confiavel o heroi nao afirma nada. */
-        :(CARGAINCOMPLETA?"não sei o que precisa de você — a carga falhou":"nada precisa de você hoje"))} ${sparkKPI("carga.igor_n",64,20)}</div>
+        :(CARGAINCOMPLETA?"não sei o que precisa de você — a carga falhou":"nada precisa de você hoje"))}</div>
     ${D.cor.length?`<div class="s"><span class="tag vio">${D.cor.length} correção(ões) esperando sua palavra</span></div>`:""}
     <details class="abaixo"><summary>mais números do caixa e da fila</summary>${_folego}
     <div class="s">
@@ -3112,7 +3169,7 @@ function rFrescor(){
   const cls = f.estado==="FRESCO"?"ok":f.estado==="ATRASADO"?"late":"dead";
   const sim = f.estado==="FRESCO"?"●":f.estado==="ATRASADO"?"▲":"■";
   const h   = +f.horas_desde;
-  const quando = h<1 ? `há ${Math.round(h*60)} min` : h<24 ? `há ${h.toFixed(1)} h` : `há ${(h/24).toFixed(1)} dias`;
+  const quando = h<1 ? `há ${Math.round(h*60)} min` : h<24 ? `há ${dec(h,1)} h` : `há ${dec(h/24,1)} dias`;
   /* orcamento de alertas: conta os freios/maes FORA da meta que estao na tela */
   const fora=(D.ev||[]).filter(k=>k.bloco!=="bastidor"&&k.bloco!=="resumo"&&k.situacao==="fora").length;
   const estourado=fora>3;
@@ -3191,10 +3248,10 @@ function rPlacar(){
           temB?` · normal ${fmt(+extraP10)} a ${fmt(+extraP90)} · <b style="color:${foraB?"var(--rd)":"var(--bl)"}">${foraB?"fora do normal":"no normal"}</b>`:""}</span></div></div>`;};
 
   const fmtDe=k=>{const c=k.chave||"", r=k.rotulo||"";
-    if(/_pct$/.test(c)||/%/.test(r))            return v=>(+v).toFixed(0)+"%";
+    if(/_pct$/.test(c)||/%/.test(r))            return v=>dec(v,0)+"%";
     if(/_dias$/.test(c))                        return v=>(+v)+" d";
     if(/_min$/.test(c))                         return v=>(+v)+" min";
-    if(/_d$/.test(c))                           return v=>(+v).toFixed(1)+" d";
+    if(/_d$/.test(c))                           return v=>dec(v,1)+" d";
     if(/^caixa\./.test(c)&&!/sem_data/.test(c)) return rs;
     return v=>(+v).toLocaleString("pt-BR");};
   const dirDe=k=>k.direcao==="maior_melhor"?"maior":"menor";
@@ -3419,7 +3476,6 @@ function sparkKPI(chave,w,h){
    cada uma e a medida do proprio bloco. */
 const SERIE_SECAO={
   "runway":"caixa.sobrevida_dias",
-  "hero-dash":"carga.igor_n",
   "automacao":"carga.igor_pct",
   "rotinas":"motor.rotinas_no_ponto_pct",
   "deadman":"motor.slo_rotina_pct",
@@ -3427,12 +3483,15 @@ const SERIE_SECAO={
   "leituras":"entrega.output_sem_ack",
   "esforco":"medicao.zona_fuga_pct",
   "varredura":"arquivo.ponteiro_orfao",
-  "frescor":"memoria.lead_time_retomada_min",
   "m9":"medicao.nao_planejado_pct",
   "placarsim":"contexto.custo_n1",
   /* a abertura diz quanto custa ao lado do que entrega: painel.carga_abertura_kb, meta 80 KB */
   "automed":"painel.carga_abertura_kb",
-  "achados":"motor.achados_alto"
+  "achados":"motor.achados_alto",
+  /* v73 · t1625: metrica de maquina sai do topo do presidente (carga.igor_n no heroi, retomada no frescor)
+     e mora em Maquina > Rotinas, onde se age sobre ela */
+  "maq-carga":"carga.igor_n",
+  "maq-retomada":"memoria.lead_time_retomada_min"
 };
 /* v58 (t623) — A FAIXA DOS CINCO SEGUNDOS. Referencia: Stephen Few, Information Dashboard
    Design (o teste dos 5 segundos) e Tufte (sparkline com banda). Seis numeros da camada
@@ -3460,14 +3519,17 @@ function fmt5(v,u){
   if(v==null||isNaN(+v))return "—"; v=+v;
   const n=x=>x.toLocaleString("pt-BR",{maximumFractionDigits:1});
   return u==="rs"?rs(v):u==="pct"?n(v)+"%":u==="x"?n(v)+"x":u==="d"?n(v)+" d":n(v);}
+/* v73 · t1625: "quem move: voce" repetido nos 7 numeros nao dizia nada. O dono comum (voce) vai uma vez
+   no cabecalho; o numero so repete o dono quando ele e outro. data-dono guarda o dono de cada um. */
+function quemQ(t){ const c=t.kd||t.k; return donoDe(c)==="igor"?"":`<div class="q">quem move: ${esc(quemMove(c))}</div>`; }
 function rFaixa5(){
   const el=document.getElementById("faixa5"); if(!el)return;
   const tiles=FAIXA5.map(t=>{
     if(t.teto) return tetoTile(t);
     const r=(D.se||[]).find(x=>x.chave===t.k);
     if(!r||!r.serie||!r.serie.length)
-      return `<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
-        <div class="e">sem série no snapshot</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;
+      return `<div class="f5" data-chave="${esc(t.k)}" data-dono="${esc(donoDe(t.kd||t.k)||"")}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
+        <div class="e">sem série no snapshot</div>${quemQ(t)}</div>`;
     const ult=+r.serie[r.serie.length-1], meta=r.meta_num==null?null:+r.meta_num;
     const ok=v=>r.direcao==="maior_melhor"?v>=meta:v<=meta;
     const naMeta=meta==null?null:ok(ult);
@@ -3482,14 +3544,15 @@ function rFaixa5(){
     const top=Math.max(Math.abs(ult),Math.abs(meta||0),Math.abs(+r.p90||0))*1.1||1;
     const pc=x=>Math.max(0,Math.min(100,x/top*100)).toFixed(1);
     const blt=meta==null?"":`<div class="blt" aria-hidden="true"><i class="${naMeta?"ok":"no"}" style="width:${pc(ult)}%"></i><b style="left:${pc(meta)}%"></b></div>`;
-    return `<div class="f5 ${fora?"mal":(naMeta?"bem":(meta!=null?"atn":""))}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
+    return `<div class="f5 ${fora?"mal":(naMeta?"bem":(meta!=null?"atn":""))}" data-chave="${esc(t.k)}" data-dono="${esc(donoDe(t.kd||t.k)||"")}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
       <div class="v">${fmt5(ult,t.u)}${sparkKPI(t.k,56,18)}</div>${blt}
-      <div class="e">${mt} · ${banda}</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;});
-  el.innerHTML=`<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
-    `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os outros ${Math.max(0,tiles.length-3)} números</button>`;}
+      <div class="e">${mt} · ${banda}</div>${quemQ(t)}</div>`;});
+  el.innerHTML=`<div class="f5cab">quem move estes números: você, salvo onde o número diz outro dono</div>`+
+    `<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
+    `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os ${tiles.length} números do dia</button>`;}
 function tetoTile(t){
-  const sem=`<div class="f5" data-chave="${esc(t.k)}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
-    <div class="e">sem dado no snapshot</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;
+  const sem=`<div class="f5" data-chave="${esc(t.k)}" data-dono="${esc(donoDe(t.kd||t.k)||"")}"><div class="r">${esc(t.r)}</div><div class="v">—</div>
+    <div class="e">sem dado no snapshot</div>${quemQ(t)}</div>`;
   let v,teto,est,extra="";
   if(t.teto==="wip"){
     const w=D.wip; if(!w||w.teto==null||w.ativos_ate_48h==null) return sem;
@@ -3504,10 +3567,10 @@ function tetoTile(t){
   }
   const cls=v>teto?"mal":(v===teto?"atn":"bem");
   const top=Math.max(v,teto)*1.1||1, pc=x=>Math.max(0,Math.min(100,x/top*100)).toFixed(1);
-  return `<div class="f5 ${cls}" data-chave="${esc(t.k)}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
+  return `<div class="f5 ${cls}" data-chave="${esc(t.k)}" data-dono="${esc(donoDe(t.kd||t.k)||"")}"><div class="r" title="${esc(t.k)}">${esc(t.r)}</div>
     <div class="v">${v}<span class="teto">/${teto}</span>${t.teto==="wip"?sparkKPI(t.k,56,18):""}</div>
     <div class="blt" aria-hidden="true"><i class="${v<teto?"ok":"no"}" style="width:${pc(v)}%"></i><b style="left:${pc(teto)}%"></b></div>
-    <div class="e">${est}${extra}</div><div class="q">quem move: ${esc(quemMove(t.kd||t.k))}</div></div>`;}
+    <div class="e">${est}${extra}</div>${quemQ(t)}</div>`;}
 function faixaKPI(chave){
   const r=(D.se||[]).find(x=>x.chave===chave);
   if(!r||!r.serie||r.serie.length<2)return "";
