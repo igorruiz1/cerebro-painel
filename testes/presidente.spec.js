@@ -31,8 +31,12 @@ const DUBLE = `(()=>{
     {origem:'tarefa',ref:'5',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-conenge',titulo:'Segundo card',porque_agora:'vence em 2d',valor_txt:'R$ 3 mil',acoes:ac}];
   const sem=Array.from({length:13},(_,i)=>({semana:i+1,inicio:hoje,saldo_base:(i-4)*1000,saldo_pior:(i-6)*1000,sai_firme:500}));
   const dados={fila,exp:[],cont:[{depois:2}],rw:[{dias_sobrevida_pior:16,entrada_provavel_30d:1000,saida_firme_30d:500}],
-    se:[{chave:'fila.aging_p95_dias',serie:[30]}],cap:[{minutos_dia:120}],min:[{id:2,minutos_estimados:25}],fresc:[],
-    c13:sem,c13i:[{natureza:'receber',vencido:true,valor_igor:1400,descricao:'Laudo L1',data_venc:hoje,frente_slug:'11-renda-alt'}]};
+    se:[{chave:'fila.aging_p95_dias',serie:[30]}],cap:[{minutos_dia:120}],min:[{id:2,minutos_estimados:25}],
+    c13:sem,c13i:[{id:31,natureza:'receber',vencido:true,valor_igor:1400,descricao:'Laudo L1',data_venc:hoje,frente_slug:'11-renda-alt'}],
+    /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
+    fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
+    mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
+    eb:[{nome:'backup-cerebro',falhas_7d:0,orcamento_falhas_7d:1,veredito_budget:'DENTRO DO ORCAMENTO'}]};
   const inv=[{id:2,frente:'11-renda-alt',dono:'igor',status:'pendente',prazo:hoje,parado_dias:1,titulo:'Card de exemplo',criterio_pronto:'Fiscal confirma por e-mail',acoes:[{verbo:'feita',rotulo:'feita',arg:null}]},
     {id:3,frente:'20-conenge',dono:'igor',status:'aguardando_terceiro',prazo:hoje,parado_dias:0,titulo:'Item esperando',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'}]},
     {id:4,frente:'04-obra-Cliente',dono:'igor',status:'pendente',prazo:null,parado_dias:40,titulo:'Item para decidir',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'},{verbo:'arquivar',rotulo:'arquivar',arg:'texto'}]},
@@ -572,6 +576,9 @@ test('no presidente, RPC que nao volta vira erro visivel no teto, e o toast nao 
   await expect(page.locator('#tmsg'), 'estouro nao finge que nada gravou').toContainText('Nada foi confirmado');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
   await expect(page.locator('#toast')).toBeVisible();
+  /* p4.3: o ato abriu o proximo card de Hoje (auto-advance); o microfone fica atras da folha ate fechar */
+  await expect(page.locator('#veu')).toBeVisible();
+  await page.keyboard.press('Escape');
   await page.click('#micTopo');
   await page.fill('#vozTxt','cobrar o laudo L1 na sexta');
   await page.click('#folha .pri');
@@ -685,5 +692,192 @@ test('na folha, contexto que nao volta se declara no teto', async ({page})=>{
   await expect(page.locator('#desc')).toContainText('carregando');
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#desc')).toContainText('Contexto indisponível');
+  expect(erros).toEqual([]);
+});
+
+/* ---------- p4.3 (04/10/2026): onda 1 do benchmark, card t1635 ---------- */
+
+/* Linear Triage: todo card diz ha quanto tempo espera o Igor. Medido na carga real de 04/10/2026: a fila
+   traz dias_parado (dias inteiros, de atualizado_em::date) e nenhum timestamp; se atualizado_em vier, o selo
+   passa a horas. Card sem medida nenhuma mostra o selo assim mesmo, dizendo que falta a data. */
+test('todo card de Hoje e da Fila mostra ha quanto tempo espera voce', async ({page})=>{
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{
+    D.fila[0].dias_parado=9;
+    D.fila[1].atualizado_em=new Date(Date.now()-5*36e5).toISOString();
+    D.fila.push({origem:'demanda',ref:'dx',camada_tela:'hoje',posicao:3,teto_tela:5,frente:'20-conenge',titulo:'Sem medida',acoes:[]});
+    D.fila.push({origem:'tarefa',ref:'2b',camada_tela:'hoje',posicao:4,teto_tela:5,frente:'20-conenge',titulo:'Hoje mesmo',dias_parado:0,acoes:[]});
+    render(); ir('hoje');
+    const cards=[document.querySelector('#foco'),...document.querySelectorAll('#ordem button')];
+    const sel=cards.map(c=>{const e=c.querySelector('.espera');return e?{t:e.textContent,w:e.classList.contains('w')}:null;});
+    ir('fila');
+    const fila=[...document.querySelectorAll('#kanban .item')].map(i=>{const e=i.querySelector('.espera');return {tit:i.querySelector('.t').textContent,esp:e?e.textContent:null};});
+    return {n:hojeLista().length, sel, fila};
+  });
+  expect(r.sel.length, 'mediu todos os cards de Hoje').toBe(r.n);
+  expect(r.sel.filter(x=>!x), 'card de Hoje sem selo').toEqual([]);
+  expect(r.sel[0]).toEqual({t:'esperando você há 9 d', w:true});
+  expect(r.sel[1]).toEqual({t:'esperando você há 5 h', w:false});
+  expect(r.sel[2].t).toBe('esperando você (sem data de entrada)');
+  expect(r.sel[3].t).toBe('esperando você desde hoje');
+  expect(r.fila.length).toBeGreaterThanOrEqual(4);
+  expect(r.fila.filter(x=>!x.esp), 'card da Fila sem selo').toEqual([]);
+  expect(r.fila.find(x=>x.tit==='Item esperando').esp, 'bola com terceiro nao e "esperando voce"').toBe('com outra pessoa desde hoje');
+  expect(r.fila.find(x=>x.tit==='Item para decidir').esp).toBe('esperando você há 40 d');
+  /* tarefa da fila sem dias_parado usa o parado_dias do inventario */
+  const sem = await page.evaluate(()=>{ delete D.fila[0].dias_parado; render(); ir('hoje'); return document.querySelector('#foco .espera').textContent; });
+  expect(sem).toBe('esperando você há 1 d');
+  expect(erros).toEqual([]);
+});
+
+/* Superhuman: depois do ato o proximo card de Hoje ja esta aberto, sem recarregar e sem esperar o banco.
+   O relogio do ato e o mesmo painel_medir_decisao do index.html, com p_modo 'presidente'. */
+test('ato na folha abre o proximo card de Hoje em menos de 300 ms, sem recarregar, e mede a decisao', async ({page})=>{
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{
+    window.__marca=1;
+    const cargas=window.__rpc.filter(c=>c.n==='painel_carga').length;
+    abrirFila(0); escolher('repactuar');
+    const t0=performance.now();
+    document.querySelector('#campo .datas button').click();
+    const dt=performance.now()-t0;
+    return {dt, tit:document.getElementById('folhaTit').textContent, veu:!document.getElementById('veu').classList.contains('hidden'),
+      cargas:window.__rpc.filter(c=>c.n==='painel_carga').length-cargas, toast:document.getElementById('tmsg').textContent,
+      desfazer:!document.getElementById('tbtn').classList.contains('hidden'),
+      medida:window.__rpc.filter(c=>c.n==='painel_medir_decisao').map(c=>c.a)};
+  });
+  expect(r.veu, 'a folha seguinte esta aberta').toBe(true);
+  expect(r.tit, 'o proximo card de Hoje').toBe('Segundo card');
+  expect(r.dt, 'abre em ate 300 ms').toBeLessThan(300);
+  expect(r.cargas, 'sem recarregar').toBe(0);
+  expect(r.desfazer, 'o desfazer do ato continua na tela').toBe(true);
+  expect(r.toast).toContain('t2');
+  expect(r.medida.length).toBe(1);
+  expect(r.medida[0]).toMatchObject({p_origem:'tarefa',p_ref:'2',p_ato:'s',p_modo:'presidente'});
+  expect(Number.isInteger(r.medida[0].p_ms)).toBe(true);
+  /* ato no ultimo card: nada mais pede voce, a folha fecha; o primeiro ato e gravado, a pagina e a mesma */
+  await page.evaluate(()=>{ escolher('repactuar'); document.querySelector('#campo .datas button').click(); });
+  await expect(page.locator('#veu')).toBeHidden();
+  expect(await page.evaluate(()=>window.__marca), 'a pagina nao recarregou').toBe(1);
+  const agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a.p_ref));
+  expect(agir, 'o ato anterior gravou quando veio o seguinte').toEqual(['2']);
+  /* desfazer o ultimo devolve o card a volta */
+  await page.click('#tbtn');
+  await page.evaluate(()=>{ abrirFila(0); escolher('repactuar'); document.querySelector('#campo .datas button').click(); });
+  await expect(page.locator('#folhaTit')).toHaveText('Segundo card');
+  expect(erros).toEqual([]);
+});
+
+/* O resultado do ato anterior volta do banco com o ato seguinte ainda pendente: nao pode tirar da tela o
+   botao de desfazer do seguinte. */
+test('o "Gravado." do ato anterior nao cobre o desfazer do ato seguinte', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>{ abrirFila(0); escolher('repactuar'); document.querySelector('#campo .datas button').click(); });
+  await page.evaluate(()=>{ escolher('repactuar'); document.querySelector('#campo .datas button').click(); });
+  await page.waitForTimeout(200);
+  await expect(page.locator('#tbtn'), 'desfazer do segundo ato a vista').toBeVisible();
+  await expect(page.locator('#tmsg')).toContainText('t5');
+  expect(erros).toEqual([]);
+});
+
+test('teclado na folha: A ato principal, S nova data, R responder, e nada disso dentro de campo de texto', async ({page})=>{
+  const erros = await abrir(page);
+  await page.keyboard.press('s');
+  await expect(page.locator('#veu'), 'sem folha, S nao faz nada').toBeHidden();
+  await page.evaluate(()=>abrirFila(0));
+  await page.keyboard.press('Control+s');
+  await expect(page.locator('#campo')).toBeEmpty();
+  await page.keyboard.press('s');
+  await expect(page.locator('#campo .datas button')).toHaveCount(4);
+  await page.keyboard.press('r');
+  await expect(page.locator('#campo label')).toHaveText('Quero uma recomendação');
+  await expect(page.locator('#cv')).toBeFocused();
+  await page.keyboard.type('sra');
+  await expect(page.locator('#cv'), 'letra digitada no campo e texto, nao atalho').toHaveValue('sra');
+  await expect(page.locator('#campo label')).toHaveText('Quero uma recomendação');
+  await page.locator('#folhaTit').click();
+  await page.keyboard.press('a');
+  await expect(page.locator('#campo .pri')).toHaveText('Concluir com esta prova');
+  await expect(page.locator('#cv')).toHaveValue('');
+  /* card sem deliberar: R responde pela inbox, com o card no comeco do texto */
+  await page.evaluate(()=>{ fecharFolha(); D.fila[1].acoes=[{label:'feita',verbo:'feita'}]; abrirFila(1); });
+  await page.keyboard.press('r');
+  await expect(page.locator('#campo label')).toHaveText('Responder ao atendente sobre este card');
+  await page.fill('#cv','o fiscal ja aprovou');
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  const r = await page.evaluate(()=>({inbox:window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a.p_texto), agir:window.__rpc.filter(c=>c.n==='agir'),
+    medida:window.__rpc.filter(c=>c.n==='painel_medir_decisao').map(c=>c.a.p_ato)}));
+  expect(r.inbox).toEqual(['[resposta tarefa 5] o fiscal ja aprovou']);
+  expect(r.agir).toEqual([]);
+  expect(r.medida).toEqual(['r']);
+  expect(erros).toEqual([]);
+});
+
+/* Statuspage: um selo so no topo, agregando snapshot, rotinas e backup. Backup falho e degradado. */
+const saudeCom = async (page, dados)=>{
+  await page.addInitScript(d=>{ window.__dados=d; }, dados);
+  const erros = await abrir(page);
+  return {erros, txt:await page.locator('#saude').textContent(), cls:await page.locator('#saude').getAttribute('class')};
+};
+test('selo de saude: tudo em dia diz "sistema ok" e o ultimo backup', async ({page})=>{
+  const r = await saudeCom(page, {});
+  expect(r.txt).toBe('sistema ok');
+  expect(r.cls).toContain('ok');
+  expect(await page.locator('#saude').getAttribute('title')).toContain('último backup');
+  expect(await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves), 'pede fresc, mo e eb ao banco').toEqual(expect.arrayContaining(['fresc','mo','eb']));
+  await expect(page.locator('#falha')).toBeHidden();
+  expect(r.erros).toEqual([]);
+});
+test('selo de saude: backup falho aparece como degradado', async ({page})=>{
+  const r = await saudeCom(page, {eb:[{nome:'backup-cerebro',falhas_7d:2,orcamento_falhas_7d:1,veredito_budget:'ESTOURADO'}]});
+  expect(r.txt).toBe('sistema degradado: backup falhou 2× em 7 d');
+  expect(r.cls).toContain('w');
+  expect(r.erros).toEqual([]);
+});
+test('selo de saude: backup atrasado, rotina atrasada, snapshot velho e medida ausente tambem degradam', async ({page})=>{
+  const r = await saudeCom(page, {mo:[{nome:'backup-cerebro',estado:'atrasada',janela_horas:26},{nome:'painel-snapshot',estado:'atrasada'}]});
+  expect(r.txt).toBe('sistema degradado: 1 rotina atrasada · backup atrasado');
+  expect(await page.locator('#saude').getAttribute('title')).toContain('painel-snapshot');
+  const v = await page.evaluate(()=>{ D.mo=[{nome:'backup-cerebro',estado:'no ponto'}]; IDADE=IDADE_MAX+600; renderSaude(); const a=document.getElementById('saude').textContent;
+    IDADE=0; delete D.eb; renderSaude(); return [a, document.getElementById('saude').textContent]; });
+  expect(v[0]).toContain('sistema degradado: dados de');
+  expect(v[1]).toBe('sistema degradado: rotinas sem medida nesta carga');
+  expect(r.erros).toEqual([]);
+});
+
+/* Mercury/Stripe: recebivel vencido tem "Cobrar" a um toque. O toque pede pela inbox() um rascunho ao
+   atendente e nao manda nada a ninguem; o texto ao pagador nao cita valor, porque o c13i so tem a parte do
+   Igor e nao o bruto da nota. */
+test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem enviar nada ao pagador', async ({page})=>{
+  await page.addInitScript(()=>{
+    const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+    const fx=(ref,dr)=>({origem:'fluxo',ref,camada_tela:'hoje',teto_tela:5,frente:'20-conenge',titulo:'Receber fluxo '+ref,data_ref:dr,dias_parado:2,acoes:[{label:'caiu',verbo:'confirmado'}]});
+    window.__dados={fila:[fx('251',d(-2)),fx('252',d(0)),fx('253',d(-2))],
+      c13i:[{id:251,natureza:'receber',vencido:true,valor_igor:1400,descricao:'NF 001 Conenge',data_venc:d(-2),frente_slug:'20-conenge'},
+            {id:252,natureza:'receber',vencido:false,valor_igor:900,descricao:'NF 002',data_venc:d(0),frente_slug:'20-conenge'},
+            {id:253,natureza:'pagar',vencido:true,valor_igor:500,descricao:'Boleto',data_venc:d(-2),frente_slug:'20-conenge'}]};
+  });
+  const erros = await abrir(page);
+  const tem = await page.evaluate(()=>['251','252','253'].map(ref=>{ fecharFolha(); abrirHoje(hojeLista().find(x=>x.ref===ref)); return !!document.getElementById('btCobrar'); }));
+  expect(tem, 'so o recebivel com data passada tem Cobrar').toEqual([true,false,false]);
+  await page.evaluate(()=>{ fecharFolha(); abrirHoje(hojeLista().find(x=>x.ref==='251')); });
+  await page.click('#btCobrar');
+  await expect(page.locator('#tbtn'), 'tem desfazer').toBeVisible();
+  await page.evaluate(()=>enviar());
+  const r = await page.evaluate(()=>({inbox:window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a.p_texto), agir:window.__rpc.filter(c=>c.n==='agir')}));
+  expect(r.agir, 'cobrar nao e verbo do agir').toEqual([]);
+  expect(r.inbox.length).toBe(1);
+  expect(r.inbox[0]).toMatch(/^\[cobrar\] Rascunhe e NÃO envie/);
+  expect(r.inbox[0]).toContain('fluxo 251');
+  expect(r.inbox[0]).toContain('NF 001 Conenge');
+  expect(r.inbox[0].split('Sugestão:')[1], 'o texto ao pagador nao cita a parte do Igor como se fosse o valor').not.toContain('R$');
+  await expect(page.locator('#tmsg')).toContainText('nada vai ao pagador sem você');
+  /* no Caixa, a linha do vencido tem o mesmo Cobrar */
+  await page.evaluate(()=>{ fecharFolha(); ir('caixa'); });
+  await expect(page.locator('#cobrarBox .cobrar')).toHaveCount(1);
+  await page.click('#cobrarBox .cobrar');
+  await page.evaluate(()=>enviar());
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').length)).toBe(2);
   expect(erros).toEqual([]);
 });
