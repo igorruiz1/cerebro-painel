@@ -7,10 +7,12 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
-<meta name="theme-color" content="#0d1117">
-<title>Cérebro Igor · Presidente</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta name="theme-color" content="#0B1020">
+<title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap">
 <style>
 /* FRONT STAGE DO PRESIDENTE · p2 (02/10/2026)
    O p1 media bem (controles de 44 px, zero rolagem horizontal) e mesmo assim o Igor a chamou de
@@ -27,12 +29,22 @@
    p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md.
    p4 (03/10/2026): resposta por evento. O toque acorda o atendente na hora (rotina por API, no Max) e a
    resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md. */
+/* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH, o mesmo do index.html (613f498): as duas telas sao um
+   produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
+   Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
 :root{
- --bg:#0d1117; --sf:#121926; --card:#161d2b; --line:#2a3650; --line2:#1f2a3d; --chip:#24314a;
- --ink:#e9eef7; --ink2:#c3ccdb; --mut:#9aa6bb;
- --acc:#5b9bff; --accInk:#0b1220; --warn:#ffb547; --bad:#ff8a8f; --ok:#6ee7a8;
+ /* paleta oficial Dabli Tech */
+ --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
+ --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
+ /* superficies derivadas do Midnight Navy (mesmos degraus do index.html) */
+ --bg:var(--dt-navy); --sf:#0F1629; --card:#121A2F; --line:#2C3A5A; --line2:#1F2A44; --chip:#1E2A47;
+ --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate);
+ --acc:var(--dt-blue); --acc-a:47,128,255; --link:#7AAEFF;
+ /* texto sobre o azul cheio: navy da 5,0:1; branco daria 3,8:1 e reprova em 15 px */
+ --accInk:var(--dt-navy); --warn:#ffb547; --bad:#ff8a8f; --ok:#6ee7a8;
  --r:14px; --tap:48px;
- --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ /* tipografia oficial: Sora */
+ --font:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
@@ -40,7 +52,8 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-a{color:#7fb0ff}
+a{color:var(--link)}
+::selection{background:rgba(var(--acc-a),.3)}
 .hidden{display:none!important}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .mut{color:var(--mut);font-size:14px}
@@ -48,6 +61,21 @@ a{color:#7fb0ff}
 /* login */
 .login{max-width:380px;margin:12vh auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
 .login h1{margin:0 0 8px;font-size:22px}
+/* v71: entrada com a marca inteira (wordmark + slogan oficial) e o produto embaixo, como no index.html */
+.marca-login{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;text-align:center}
+.marca-login h1{margin:0}
+.marca-login .marca .dt{font-size:30px}
+.marca-login .slogan{font-size:12.5px;color:var(--mut);letter-spacing:.01em}
+.marca-login .slogan em{font-style:normal;font-weight:600}
+.marca-login .slogan .az{color:var(--dt-blue)}
+.marca-login .slogan .vi{color:var(--dt-violet)}
+.marca-login .prodl{margin-top:14px;font-size:11px;letter-spacing:3.4px;font-weight:600;color:var(--ink2);
+ padding-top:12px;position:relative}
+.marca-login .prodl::before{content:"";position:absolute;top:0;left:50%;width:56px;height:2px;margin-left:-28px;
+ border-radius:2px;background:var(--dt-grad)}
+/* acao principal da entrada no degrade da marca (no resto da tela .pri segue azul cheio) */
+.login .pri{background:var(--dt-grad);color:#fff}
+.login .pri:hover{filter:brightness(1.08)}
 .login label{font-size:14px;color:var(--mut)}
 .login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px}
 .login .msg{min-height:22px;font-size:14px;color:var(--warn)}
@@ -56,9 +84,25 @@ a{color:#7fb0ff}
 .app{min-height:100vh;display:flex}
 .rail{display:none}
 .col{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh}
-.topo{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line2);
+.topo{position:sticky;top:0;z-index:5;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);
   display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;padding-top:max(8px,env(safe-area-inset-top))}
+/* filete da marca: o degrade azul > violeta do guia, 1 px na base do topo (igual ao index.html) */
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--dt-grad);opacity:.55;pointer-events:none}
 .topo .tt{flex:1;min-width:0}
+/* MARCA: wordmark em texto Sora (Dabli Bold + Tech Light), divisor fino e o produto. Mesmas regras do
+   index.html: sem simbolo, sem imagem (o guia proibe recriar o lettering). */
+.marca{display:inline-flex;align-items:baseline;gap:9px;letter-spacing:0;color:var(--ink);max-width:100%;overflow:hidden}
+.marca .dt{font-size:16px;line-height:1;white-space:nowrap;letter-spacing:-.01em}
+.marca .dt b{font-weight:700}
+.marca .dt span{font-weight:300}
+.marca .prod{font-size:10.5px;letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;
+ padding-left:9px;border-left:1px solid var(--line2);white-space:nowrap;line-height:1.2}
+/* no topo do celular a marca e uma linha acima do titulo da aba; no desktop ela mora no trilho */
+.topo .marca{display:flex;margin-bottom:3px}
+.topo .marca .dt{font-size:14px}
+.topo .marca .prod{font-size:9.5px;letter-spacing:2.2px}
+/* a 360 px o produto nao cabe ao lado do wordmark com os tres botoes do topo: fica so o wordmark */
+@media(max-width:380px){.topo .marca .prod{display:none}}
 .topo h1{margin:0;font-size:20px;font-weight:700}
 .topo .sub{font-size:12px;color:var(--mut)}
 .topo .sub.velho{color:var(--warn)}
@@ -133,6 +177,12 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 .linha-r .t small{display:block;color:var(--mut);font-size:13px}
 .linha-r .r{font-family:var(--mono);color:var(--ok);white-space:nowrap}
 .linha-r .r.z{color:var(--mut)}
+/* v71: o grafico das 13 semanas e desenhado no JS com as cores antigas em atributo; o CSS vence o
+   atributo de apresentacao do SVG, entao a marca chega sem tocar no JS. Vermelho e ambar ficam. */
+.semanas line[stroke="#1f2a3d"]{stroke:var(--line2)}
+.semanas line[stroke="#9aa6bb"]{stroke:var(--mut)}
+.semanas text[fill="#9aa6bb"]{fill:var(--mut)}
+.semanas rect[fill="#5b9bff"]{fill:var(--acc)}
 
 /* Frentes */
 .frente{min-height:64px;width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;text-align:left}
@@ -143,13 +193,13 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 
 /* navegacao */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  background:#0f141d;border-top:1px solid var(--line2);padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  background:rgba(11,16,32,.97);backdrop-filter:blur(14px);border-top:1px solid var(--line2);padding-bottom:max(8px,env(safe-area-inset-bottom))}
 .nav button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--mut);font-size:12px;font-weight:600}
 .nav button .selo{font-family:var(--mono);font-size:15px;min-width:30px;height:28px;padding:0 6px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .nav button.on{color:var(--ink)} .nav button.on .selo{background:var(--chip)}
 
 /* detalhe do card: folha no celular, painel lateral no desktop */
-.veu{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.veu{position:fixed;inset:0;background:rgba(6,9,20,.7);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .folha{width:100%;max-width:560px;background:var(--sf);border-radius:18px 18px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-height:88vh;overflow:auto}
 .folha h3{margin:0;font-size:19px;line-height:1.3;text-wrap:balance}
 .folha>.sec{flex:none}
@@ -196,12 +246,17 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .voz-api label{font-size:14px;color:var(--mut)}
 .voz-api input{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;min-width:0}
 .ico[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
-@media (prefers-reduced-motion:no-preference){.voz-mic[aria-pressed="true"]{animation:pulsa 1.4s ease-in-out infinite}@keyframes pulsa{50%{box-shadow:0 0 0 10px rgba(91,155,255,.18)}}}
+@media (prefers-reduced-motion:no-preference){.voz-mic[aria-pressed="true"]{animation:pulsa 1.4s ease-in-out infinite}@keyframes pulsa{50%{box-shadow:0 0 0 10px rgba(var(--acc-a),.18)}}}
 
 @media (min-width:900px){
   .nav{display:none}
-  .rail{display:flex;flex-direction:column;gap:6px;width:220px;flex-shrink:0;border-right:1px solid var(--line2);padding:24px 14px;background:#0f141d;position:sticky;top:0;height:100vh}
-  .rail .marca{font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--mut);padding:0 10px 18px}
+  .rail{display:flex;flex-direction:column;gap:6px;width:220px;flex-shrink:0;border-right:1px solid var(--line2);padding:24px 14px;background:var(--sf);position:sticky;top:0;height:100vh}
+  /* no desktop a marca fica no alto do trilho (o topo da coluna mostra so a aba); produto embaixo */
+  .rail .marca{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:0 10px 22px;margin-bottom:4px;position:relative}
+  .rail .marca .dt{font-size:20px}
+  .rail .marca .prod{border-left:0;padding-left:0}
+  .rail .marca::after{content:"";position:absolute;left:10px;bottom:10px;width:40px;height:2px;border-radius:2px;background:var(--dt-grad)}
+  .topo .marca{display:none}
   .rail button{min-height:var(--tap);display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:var(--ink2);font-size:15px;font-weight:600;text-align:left}
   .rail button.on{background:var(--chip);color:var(--ink)}
   .rail button .selo{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--mut)}
@@ -223,7 +278,9 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 <body>
 
 <div id="login" class="login hidden">
-  <h1>Cérebro Igor</h1>
+  <div class="marca-login"><h1 class="marca"><span class="dt"><b>Dabli</b> <span>Tech</span></span></h1>
+    <div class="slogan">Sistemas <em class="az">simples</em> para negócios <em class="vi">reais</em>.</div>
+    <div class="prodl">PRESIDENTE</div></div>
   <label for="em">E-mail</label>
   <input id="em" type="email" autocomplete="username" inputmode="email">
   <label for="pw">Senha</label>
@@ -240,7 +297,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <div id="app" class="app hidden">
   <nav class="rail" aria-label="Destinos">
-    <div class="marca">CÉREBRO IGOR</div>
+    <div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div>
     <button data-aba="hoje" onclick="ir('hoje')">Hoje<span class="selo" id="r-hoje"></span></button>
     <button data-aba="fila" onclick="ir('fila')">Fila<span class="selo" id="r-fila"></span></button>
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
@@ -250,7 +307,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
   <div class="col">
     <header class="topo">
-      <div class="tt"><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
+      <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
       <button class="ico" id="micTopo" aria-label="Falar uma instrução" onclick="abrirVoz()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
