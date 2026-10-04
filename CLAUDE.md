@@ -51,8 +51,10 @@ página**, trocando a linha antiga pelo fato novo com a data.
 - PR sempre **draft**.
 - Merge por **squash**.
 - CI `fumaça` verde antes do merge — sem exceção. Ela roda em todo push e toda
-  proposta de mudança, leva ~3 segundos e existe porque quatro versões do painel
-  caíram pela mesma classe de defeito.
+  proposta de mudança e existe porque quatro versões do painel caíram pela mesma
+  classe de defeito. Medido em 04/10/2026 com 79 testes: `npm run teste` leva
+  ~26 s local (2 workers); na CI o job leva ~1 min (51 a 61 s nas últimas
+  execuções), dos quais ~26 s instalam o Chromium e ~19 s rodam a suíte.
 - Rodar local antes de empurrar: `npm run teste`.
 
 ## Escrita

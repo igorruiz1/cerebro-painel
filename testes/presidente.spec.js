@@ -30,7 +30,7 @@ const DUBLE = `(()=>{
     artefato_path:'/pasta/peca_v01.pdf',acoes:ac},
     {origem:'tarefa',ref:'5',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-conenge',titulo:'Segundo card',porque_agora:'vence em 2d',valor_txt:'R$ 3 mil',acoes:ac}];
   const sem=Array.from({length:13},(_,i)=>({semana:i+1,inicio:hoje,saldo_base:(i-4)*1000,saldo_pior:(i-6)*1000,sai_firme:500}));
-  const dados={fila,cont:[{depois:2}],rw:[{dias_sobrevida_pior:16,entrada_provavel_30d:1000,saida_firme_30d:500}],
+  const dados={fila,exp:[],cont:[{depois:2}],rw:[{dias_sobrevida_pior:16,entrada_provavel_30d:1000,saida_firme_30d:500}],
     se:[{chave:'fila.aging_p95_dias',serie:[30]}],cap:[{minutos_dia:120}],min:[{id:2,minutos_estimados:25}],fresc:[],
     c13:sem,c13i:[{natureza:'receber',vencido:true,valor_igor:1400,descricao:'Laudo L1',data_venc:hoje,frente_slug:'11-renda-alt'}]};
   const inv=[{id:2,frente:'11-renda-alt',dono:'igor',status:'pendente',prazo:hoje,parado_dias:1,titulo:'Card de exemplo',criterio_pronto:'Fiscal confirma por e-mail',acoes:[{verbo:'feita',rotulo:'feita',arg:null}]},
@@ -41,10 +41,13 @@ const DUBLE = `(()=>{
   const arv=[{nivel:0,no:'CAIXA'},{nivel:1,no:'11-renda-alt',rotulo:'Renda Alternativa',margem_30d:2000,margem_total:2000},
     {nivel:1,no:'20-conenge',rotulo:'Conenge',margem_30d:1000,margem_total:3000}];
   window.__rpc=[];
-  const q=r=>{const p=Promise.resolve({data:r,error:null});p.lte=()=>p;p.eq=()=>p;p.order=()=>p;p.limit=()=>p;return p;};
+  /* window.__pendura: nomes de RPC ou view que nunca respondem. window.__dados: chaves que trocam as do duble. */
+  const pendura=n=>(window.__pendura||[]).includes(n);
+  const q=(r,v)=>{const p=pendura(v)?new Promise(()=>{}):Promise.resolve({data:r,error:null});p.lte=()=>p;p.eq=()=>p;p.order=()=>p;p.limit=()=>p;return p;};
   window.supabase={createClient:()=>({
-    from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[])}),
-    rpc:(n,a)=>{window.__rpc.push({n,a});return Promise.resolve({data:n==='painel_carga'?{dados,idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):null,error:null});},
+    from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
+    rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
+      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),
           onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
@@ -492,4 +495,110 @@ test('a CSP do presidente deixa o Realtime e o REST do Supabase passarem', async
   });
   expect(r.csp, 'nenhuma violacao de CSP falando com o Supabase (websocket e REST)').toEqual([]);
   expect(r.rest, 'REST do Supabase passa debaixo da CSP').toBe(200);
+});
+
+/* p4.1 (04/10/2026): as duas telas discordavam do proximo passo com o mesmo banco. O index.html (v68) sobe
+   para Hoje a tarefa vencida ou de hoje que o banco deixou no segundo plano (chave exp) e ordena por classe
+   de servico; o presidente lia so a camada hoje por posicao, e abria com a demanda de peso 75 que vence em
+   3 dias na frente da fatura vencida ha 7. A regra agora mora num bloco comum copiado nas duas paginas, e
+   este teste confere byte a byte: o mesmo padrao da tag do supabase-js, que tambem vive nas duas. */
+const fs = require('fs');
+const blocosComuns = arq => {
+  const fonte = fs.readFileSync(path.resolve(__dirname,'..',arq),'utf8'), m = {};
+  for (const x of fonte.matchAll(/\/\* comum:([a-z]+) [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:\1 \*\//g)) m[x[1]] = x[2];
+  return m;
+};
+test('o codigo comum das duas telas (regra de Hoje e teto de tempo) e o mesmo byte a byte', async ()=>{
+  const a = blocosComuns('index.html'), b = blocosComuns('presidente.html');
+  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['hoje','teto']);
+  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['hoje','teto']);
+  for (const k of Object.keys(a)) expect(b[k], `bloco comum:${k} divergiu`).toBe(a[k]);
+});
+
+/* O caso medido em 02/10/2026 (v68): a demanda de peso maior vence em 3 dias, tres tarefas vencem hoje e a
+   fatura EKOS, vencida ha 7 dias, ficou no segundo plano e so chega pela chave exp. */
+const CASO_HOJE = ()=>{
+  const dia=n=>{const d=new Date(); d.setDate(d.getDate()+n); return ivData(d);};
+  const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',teto_tela:5,
+    nivel:3,frente:'20-conenge',acoes:[{label:'feita',verbo:'feita'}],titulo:'item '+ref,titulo_completo:'item '+ref});
+  return {fila:[it('demanda','alex-audios',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
+                it('tarefa','1517',4,70,dia(0)),it('tarefa','1424',5,70,dia(0))],
+          exp:[it('tarefa','1334',9,70,dia(-7),'depois')]};
+};
+const DUBLE_INDEX = `window.supabase={createClient:()=>({
+  from:()=>({select:()=>({eq:()=>Promise.resolve({data:[],error:null})})}),
+  auth:{getSession:()=>new Promise(()=>{}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
+  rpc:()=>new Promise(()=>{})})};`;
+test('o mesmo banco poe o mesmo item no topo de Hoje nas duas telas, com a vencida do segundo plano na frente', async ({page, context})=>{
+  const idx = await context.newPage(), errosIdx = [];
+  idx.on('pageerror',e=>errosIdx.push(String(e)));
+  await idx.addInitScript(DUBLE_INDEX);
+  await idx.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await idx.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
+  await idx.waitForFunction(()=>document.getElementById('selo-ver').textContent.trim()!=='\u2014');
+  const caso = await idx.evaluate(CASO_HOJE);
+  const noIndex = await idx.evaluate(c=>{
+    D.fila=c.fila; D.exp=c.exp; D.depois=[]; D.cont={depois:1}; D.cor=[]; D.min=[]; D.cap=null; semTeto=false;
+    rAgora(); return [...document.querySelectorAll('#fila1 .card')].map(x=>x.dataset.r);
+  }, caso);
+  /* no presidente o caso entra pelo caminho real: painel_carga com as CHAVES da pagina */
+  await page.addInitScript(c=>{ window.__dados=c; }, caso);
+  const erros = await abrir(page);
+  const noPres = await page.evaluate(()=>({ordem:hojeLista().map(x=>String(x.ref)), foco:document.querySelector('#foco .tit').textContent,
+    pediuExp:window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves.includes('exp')}));
+  expect(noIndex[0], 'no index a vencida ha 7 dias abre Hoje').toBe('1334');
+  expect(noPres.ordem[0], 'o topo de Hoje e o mesmo nas duas telas').toBe(noIndex[0]);
+  expect(noPres.pediuExp, 'o presidente pede a chave exp ao banco').toBe(true);
+  expect(noPres.foco, 'o proximo passo do presidente e a vencida').toBe('item 1334');
+  expect(noPres.ordem.slice(0, noIndex.length), 'a ordem ate o corte do index e a mesma').toEqual(noIndex);
+  expect(errosIdx.concat(erros), 'erros de script').toEqual([]);
+});
+
+/* p4.1: nenhuma ida ao banco do presidente tinha teto. RPC que nao volta deixava "gravando…" na tela para
+   sempre, sem erro. O relogio e o do Playwright (page.clock): o teste salta o teto em vez de esperar 12 s. */
+test('no presidente, RPC que nao volta vira erro visivel no teto, e o toast nao fica em "gravando…"', async ({page})=>{
+  await page.addInitScript(()=>{ window.__pendura=['agir','inbox']; window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined; });
+  const erros = await abrir(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_ACAO);
+  await page.evaluate(()=>{abrirFila(0);escolher('repactuar');});
+  await page.click('#campo .datas button >> nth=0');
+  await page.evaluate(()=>{ enviar(); });
+  await expect(page.locator('#tmsg')).toHaveText('gravando…');
+  await page.clock.fastForward(lim-1000);
+  await expect(page.locator('#tmsg'), 'antes do teto ainda espera').toHaveText('gravando…');
+  await page.clock.fastForward(1100);
+  await expect(page.locator('#tmsg'), 'agir: estouro vira erro').toContainText('sem resposta do banco em '+lim/1000+' s');
+  await expect(page.locator('#tmsg'), 'estouro nao finge que nada gravou').toContainText('Nada foi confirmado');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#toast')).toBeVisible();
+  await page.click('#micTopo');
+  await page.fill('#vozTxt','cobrar o laudo L1 na sexta');
+  await page.click('#folha .pri');
+  await page.evaluate(()=>{ enviar(); });
+  await expect(page.locator('#tmsg')).toHaveText('gravando…');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#tmsg'), 'inbox: estouro vira erro').toContainText('sem resposta do banco');
+  await expect(page.locator('#tmsg')).toContainText('O texto ficou guardado no microfone');
+  expect(await page.evaluate(()=>VOZ.rascunho), 'o texto ditado nao se perde').toBe('cobrar o laudo L1 na sexta');
+  expect(erros).toEqual([]);
+});
+
+test('no presidente, leitura que nao volta se declara: carga, inventario, historico e conversa do card', async ({page})=>{
+  const erros = await abrir(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_RECARGA);
+  await page.evaluate(()=>{ window.__pendura=['painel_carga']; carregar(); });
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#falha'), 'carga: estouro aparece').toBeVisible();
+  await expect(page.locator('#falha')).toContainText('sem resposta do banco em '+lim/1000+' s');
+  await page.evaluate(async()=>{ window.__pendura=['v_inventario_frente']; INV=null; await carregar(); });
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#falha'), 'inventario: estouro aparece').toContainText('inventário: sem resposta do banco');
+  await page.evaluate(()=>{ window.__pendura=['acao','dialogo']; abrirFila(0); });
+  await expect(page.locator('#hist')).toContainText('carregando');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#hist')).toContainText('Histórico indisponível');
+  await expect(page.locator('#conv')).toContainText('Conversa indisponível');
+  expect(erros).toEqual([]);
 });

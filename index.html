@@ -1140,21 +1140,23 @@ const nfmt=(v,u)=>v==null?"—":u==="pct"?(+v).toFixed(1)+"%":u==="dias"?(+v).to
   (Math.abs(v)>=10000?rs(v):(Math.abs(v)>=1000?(+v).toLocaleString("pt-BR"):(+v).toFixed(Math.abs(v%1)>0?1:0)));
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
-/* v40: promessa que nao volta e pior que erro — o erro a tela mostra, o silencio nao.
-   Toda ida ao banco passa por aqui com um teto de tempo. Estourou, a tela DIZ, e diz a
-   verdade util: o efeito pode ter chegado, recarregue para ver o estado real. */
-const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
 /* v49: o painel le um snapshot. Snapshot velho e pior que consulta lenta, porque MENTE calado.
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
                      "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf"];
+/* v40: promessa que nao volta e pior que erro — o erro a tela mostra, o silencio nao.
+   Toda ida ao banco passa por aqui com um teto de tempo. Estourou, a tela DIZ, e diz a
+   verdade util: o efeito pode ter chegado, recarregue para ver o estado real. */
+/* comum:teto · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
+const LIMITE_ACAO=12000, LIMITE_RECARGA=15000;
 function comTeto(promessa, ms, rotulo){
   let t;
   const estouro=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("__TETO__"+rotulo)),ms);});
   return Promise.race([Promise.resolve(promessa), estouro]).finally(()=>clearTimeout(t));
 }
 function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf("__TETO__")===0; }
+/* fim comum:teto */
 function avisaTravou(rotulo, gravou){
   msg(gravou
     ? "A ação foi enviada, mas a tela não conseguiu conferir o resultado ("+rotulo+"). Recarregue a página: o efeito pode já estar gravado."
@@ -2499,6 +2501,7 @@ function avisoDepois(){
    Tarefa do Igor vencida ou vencendo hoje que o banco deixou no segundo plano SOBE para hoje: vem
    da chave opcional "exp" (proposta em f5_propostas.sql) ou do segundo plano ja carregado.
    O dia e o do relogio do Igor (ivData local), nao o UTC do banco. */
+/* comum:hoje · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 const ORIGENS_PRAZO=["tarefa","fluxo","demanda"];
 const chaveIt=it=>it.origem+"|"+String(it.ref);
 function diasAtraso(it){
@@ -2508,10 +2511,6 @@ function diasAtraso(it){
 function classeDe(it){
   const a=diasAtraso(it); if(a==null||a<0) return null;
   return a>0?{k:1,nome:"urgente",txt:"vencida há "+a+"d"}:{k:2,nome:"data fixa",txt:"vence hoje"};}
-function tagClasse(it){
-  const c=classeDe(it); if(!c) return "";
-  const sub=it.camada_tela&&it.camada_tela!=="hoje"?" Subiu do segundo plano para hoje.":"";
-  return `<span class="tag cs cs${c.k}" title="Classe de serviço (Kanban): ${c.nome}. Ordena antes do peso.${sub}">${c.nome} · ${c.txt}</span>`;}
 function ordenaClasse(l){
   const pos=x=>typeof x.posicao==="number"?x.posicao:null;
   return l.map((it,i)=>({it,i,k:(classeDe(it)||{k:3}).k})).sort((a,b)=>
@@ -2525,6 +2524,11 @@ function hojeLista(){
     if(!it||it.origem!=="tarefa"||!classeDe(it)) return;
     const k=chaveIt(it); if(vistos.has(k)) return; vistos.add(k); extra.push(it);});
   return ordenaClasse([...(D.fila||[]),...extra]);}
+/* fim comum:hoje */
+function tagClasse(it){
+  const c=classeDe(it); if(!c) return "";
+  const sub=it.camada_tela&&it.camada_tela!=="hoje"?" Subiu do segundo plano para hoje.":"";
+  return `<span class="tag cs cs${c.k}" title="Classe de serviço (Kanban): ${c.nome}. Ordena antes do peso.${sub}">${c.nome} · ${c.txt}</span>`;}
 function depoisFora(){
   const h=new Set(hojeLista().map(chaveIt));
   return (D.depois||[]).filter(x=>!h.has(chaveIt(x)));}
