@@ -335,15 +335,16 @@ test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async 
   await revelarCasca(page);
   const r = await page.evaluate(()=>{
     const s=(chave,serie,meta,dir,banda,p10,p90)=>({chave,serie,meta_num:meta,direcao:dir,p10,p90,situacao_banda:banda});
-    D.se=[s("caixa.sobrevida_dias",[9,9,9,9,9,9,9,9,9],90,"maior_melhor","normal",9,16),
+    /* v74: o folego saiu da faixa (numero-mae de caixa, t1624); o exemplo fora da meta e o parado sem palavra */
+    D.se=[s("caixa.decisao_parada_rs",[9,9,9,9,9,9,9,9,9],0,"menor_melhor","normal",9,16),
           s("entrega.output_sem_ack",[40,42,41,40,39,41,40,42,41],50,"menor_melhor","normal",39,42)];
     D.rw={dias_sobrevida_pior:9,dias_sobrevida:9,caixa_hoje:1,queima_dia_base:1};
     let err=null; try{ rAgora(); }catch(e){ err=String(e); }
     const t=k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`);
     const cor=k=>(t(k).querySelector('.spk path[stroke]')||{getAttribute:()=>null}).getAttribute('stroke');
     return {err,
-      foraClasse:t("caixa.sobrevida_dias").className, foraCor:cor("caixa.sobrevida_dias"),
-      foraTexto:t("caixa.sobrevida_dias").querySelector('.e').textContent,
+      foraClasse:t("caixa.decisao_parada_rs").className, foraCor:cor("caixa.decisao_parada_rs"),
+      foraTexto:t("caixa.decisao_parada_rs").querySelector('.e').textContent,
       naMetaClasse:t("entrega.output_sem_ack").className, naMetaCor:cor("entrega.output_sem_ack")};
   });
   expect(r.err, 'rAgora() derrubou o script').toBe(null);
@@ -720,7 +721,8 @@ test('o caixa das 13 semanas escreve a primeira semana negativa no titulo', asyn
    computador os 7 aparecem e o botao some. A classe que mata: numero de topo empurrando a
    primeira decisao para baixo da dobra. */
 /* v73 · t1625: no celular a faixa comeca RECOLHIDA (0 visiveis) e a primeira decisao sobe; era 3. */
-for (const [largura, visiveis, botao] of [[390,0,true],[1280,7,false]]) {
+/* v74 · t1624: 5 numeros (numero-mae de caixa no lugar de folego, pior saldo e entrada de 30 dias) */
+for (const [largura, visiveis, botao] of [[390,0,true],[1280,5,false]]) {
   test(`a faixa mostra ${visiveis} numeros a ${largura}px e o botao abre o resto`, async ({page})=>{
     await page.setViewportSize({width:largura, height:844});
     await abrir(page);
@@ -736,10 +738,10 @@ for (const [largura, visiveis, botao] of [[390,0,true],[1280,7,false]]) {
       return {total:document.querySelectorAll('#faixa5 .f5').length, antes, mostraBotao, depois:vis(),
         W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
     });
-    expect(r.total, 'a faixa tem 7 numeros').toBe(7);
+    expect(r.total, 'a faixa tem 5 numeros').toBe(5);
     expect(r.antes, 'numeros visiveis antes do toque').toBe(visiveis);
     expect(r.mostraBotao, 'botao de abrir o resto').toBe(botao);
-    if (botao) expect(r.depois, 'o botao abre os 7').toBe(7);
+    if (botao) expect(r.depois, 'o botao abre os 5').toBe(5);
     expect(r.SW, 'rolagem horizontal').toBe(r.W);
   });
 }
@@ -1515,7 +1517,7 @@ test('dono comum vai uma vez no cabecalho da faixa; o numero so diz quem move qu
     const t=[...document.querySelectorAll('#faixa5 .f5')];
     const de=c=>t.find(x=>x.dataset.chave===c);
     return {cab:(document.querySelector('#faixa5 .f5cab')||{}).textContent||'',
-      igorQ:!!de('caixa.sobrevida_dias').querySelector('.q'),
+      igorQ:!!de('caixa.semana_negativa').querySelector('.q'),
       maqQ:(de('entrega.output_sem_ack').querySelector('.q')||{}).textContent||'',
       semDono:t.filter(x=>!x.querySelector('.q')&&x.dataset.dono!=='igor').length,
       repetidos:(document.getElementById('faixa5').textContent.match(/quem move: você/g)||[]).length};
@@ -1564,4 +1566,40 @@ test('troca de mais de 7 dias no card desce para historico recolhido; a recente 
   expect(r.a, 'nada some: o texto continua dentro do historico').toContain('Feito em agosto');
   expect(r.b).not.toContain('<details');
   expect(r.b).toContain('VOCÊ DISSE');
+});
+
+
+/* v74 · t1624 · UMA REGUA DE CAIXA (decisao do Igor, fato 1239): o numero-mae e a semana em que o saldo
+   acumulado fica negativo no cenario realista, da MESMA serie do bloco de 13 semanas; o resto a um clique. */
+test('o numero-mae de caixa e a 1a semana negativa da serie de 13 semanas, e o resto fica a um clique', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const w=(semana,inicio,base)=>({semana,inicio,fim:inicio,saldo_base:base,saldo_pior:base-1000,caixa_hoje:36271});
+    D.c13=[w(1,'2031-09-28',33272.96),w(2,'2031-10-05',18055.62),w(3,'2031-10-12',1643.6),w(4,'2031-10-19',9202.71),
+           w(5,'2031-10-26',-2861.92),w(6,'2031-11-02',-1764.76),w(7,'2031-11-09',-63354.97)];
+    const s=(chave,serie)=>({chave,serie,meta_num:1,direcao:"maior_melhor",p10:1,p90:2,situacao_banda:"normal"});
+    D.se=[s("caixa.entrada_realizada_30d",[500,1234.5])];
+    D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:36271,queima_dia_base:700};
+    D.wip={ativos_ate_48h:5,teto:14}; D.garg=[{tipo:"TOTAL",itens:2,teto:5}];
+    rAgora();
+    const mae=document.querySelector('#faixa5 .f5[data-chave="caixa.semana_negativa"]');
+    const caixaVelhos=['caixa.sobrevida_dias','caixa.menor_saldo_13s','caixa.entrada_realizada_30d']
+      .filter(k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`)).length;
+    const ab=document.querySelector('#hero details.abaixo').textContent;
+    const vazio=(()=>{D.c13=[];rAgora();return document.querySelector('#faixa5 .f5[data-chave="caixa.semana_negativa"]').textContent;})();
+    return {primeiro:document.querySelector('#faixa5 .f5').dataset.chave, v:mae.querySelector('.v').textContent,
+      e:mae.querySelector('.e').textContent, cls:mae.className, caixaVelhos, ab, vazio};
+  });
+  expect(r.primeiro, 'o numero-mae abre a faixa').toBe('caixa.semana_negativa');
+  expect(r.v).toBe('semana de 26/10');
+  expect(r.e).toContain('R$');
+  expect(r.e).toContain('cenário realista');
+  expect(r.cls).toContain('mal');
+  expect(r.caixaVelhos, 'folego, pior saldo e entrada de 30 dias sairam da faixa').toBe(0);
+  expect(r.ab, 'o pior saldo continua a um clique, da mesma serie').toContain('pior saldo em 13 semanas');
+  expect(r.ab).toContain('63.355');
+  expect(r.ab).toContain('entrou em 30 dias');
+  expect(r.ab.toLowerCase()).toContain('fôlego'.toLowerCase().slice(0,1));
+  expect(r.vazio, 'previsao ausente se declara').toContain('sem dado');
 });
