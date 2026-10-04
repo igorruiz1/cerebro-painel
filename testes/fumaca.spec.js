@@ -719,7 +719,8 @@ test('o caixa das 13 semanas escreve a primeira semana negativa no titulo', asyn
 /* v65 · no celular a decisao sobe: a faixa mostra 3 numeros e um botao abre os outros; no
    computador os 7 aparecem e o botao some. A classe que mata: numero de topo empurrando a
    primeira decisao para baixo da dobra. */
-for (const [largura, visiveis, botao] of [[390,3,true],[1280,7,false]]) {
+/* v73 · t1625: no celular a faixa comeca RECOLHIDA (0 visiveis) e a primeira decisao sobe; era 3. */
+for (const [largura, visiveis, botao] of [[390,0,true],[1280,7,false]]) {
   test(`a faixa mostra ${visiveis} numeros a ${largura}px e o botao abre o resto`, async ({page})=>{
     await page.setViewportSize({width:largura, height:844});
     await abrir(page);
@@ -1428,4 +1429,139 @@ test("titulo de 1.300 caracteres fica em 2 linhas no card a 390 px; titulo e tex
   expect(r.b1).toEqual(["ver menos","true"]);
   expect(r.cresceu, "ver mais abre o texto").toBe(true);
   expect(erros).toEqual([]);
+});
+
+/* v73 · t1622 · O PAINEL NAO MENTE. Classe de defeito de 04/10/2026 (auditoria s810): a consulta de uma
+   secao falhou (GRANT faltando, timeout de 6,5 s) e a secao desenhou "0" e "nada aberto" como se fosse
+   verdade. q_ agora marca a falha e guarda() troca o conteudo pelo aviso, sem marcar a secao como carregada. */
+function consultaFalsa(resposta){
+  return `(v)=>{const p=(${resposta})(v);const o={then:(a,b)=>p.then(a,b),catch:b=>p.catch(b),eq:()=>o,order:()=>o,limit:()=>o,in:()=>o};return {select:()=>o};}`;
+}
+test('secao que recebe erro diz "não carregou" e nunca desenha zero; vazio de verdade continua dito', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(async(src)=>{
+    const orig=sb.from;
+    sb.from=eval(src.erro);
+    await abrir('maquina');
+    const mov=document.getElementById('s-movimento');
+    const f1={txt:mov.innerText, aviso:!!mov.querySelector('.naocarregou'), lazy:LAZY.movimento,
+      kpiVisivel:[...mov.querySelectorAll('.kpi')].some(k=>k.offsetParent!==null)};
+    await abrir('sentinela');
+    const sen=document.getElementById('p-sentinela');
+    const f2={txt:sen.innerText, n:document.getElementById('n-sent').textContent, lazy:LAZY.sentinela};
+    sb.from=eval(src.vazio);
+    await recarregarSecao('maquina','movimento');
+    const f3={txt:mov.innerText, aviso:!!mov.querySelector('.naocarregou'), lazy:LAZY.movimento};
+    sb.from=orig;
+    return {f1,f2,f3};
+  }, {erro:consultaFalsa("()=>Promise.resolve({data:null,error:{message:'permission denied for view v_fila_aging'}})"),
+      vazio:consultaFalsa("()=>Promise.resolve({data:[],error:null})")});
+  expect(r.f1.aviso).toBe(true);
+  expect(r.f1.txt).toContain('não carregou');
+  expect(r.f1.txt).toContain('permission denied');
+  expect(r.f1.txt, 'falha nao vira "nada aberto"').not.toContain('Nada aberto para envelhecer');
+  expect(r.f1.kpiVisivel, 'os zeros velhos somem atras do aviso').toBe(false);
+  expect(r.f1.lazy, 'secao com falha nao fica marcada como carregada').toBe(0);
+  expect(r.f2.txt).toContain('não carregou');
+  expect(r.f2.txt, 'sentinela com falha nao diz que esta quieta').not.toContain('está quieta');
+  expect(r.f2.n, 'contador da sentinela com falha e ?, nunca 0').toBe('?');
+  expect(r.f2.lazy).toBe(0);
+  expect(r.f3.aviso, 'a consulta voltou: o aviso sai').toBe(false);
+  expect(r.f3.txt, 'vazio de verdade continua sendo dito').toContain('Nada aberto para envelhecer');
+  expect(r.f3.lazy).toBe(1);
+});
+
+test('abrir Maquina carrega a sub-aba padrao no primeiro clique', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  await page.evaluate((src)=>{window.__q=[]; const f=eval(src); sb.from=(v)=>{window.__q.push(v); return f(v);};},
+    consultaFalsa("()=>Promise.resolve({data:[],error:null})"));
+  await page.click('.tab[data-g="maquina"]');
+  await page.waitForFunction(()=>LAZY.movimento===1);
+  const r = await page.evaluate(()=>({q:window.__q, on:document.getElementById('s-movimento').classList.contains('on')}));
+  expect(r.q).toContain('v_fila_aging');
+  expect(r.on).toBe(true);
+});
+
+/* v73 · t1623: "R$ 6,000.00" e "17.5d" na tela. O dinheiro vinha do banco (corrigido na fonte, caso
+   nenhum_to_char_com_G_ou_D_que_sai_em_ingles no teste diario) e o "17.5d" de toFixed no HTML. */
+test('numero que o Igor le sai em pt-BR, e nenhum toFixed vira texto com unidade', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>({d:nfmt(17.5,'dias'), p:nfmt(12.34,'pct'), m:nfmt(90,'min'), mil:nfmt(1234,'x'),
+    fr:nfmt(2.5,'x'), dec:dec(3890.4,1)}));
+  expect(r).toEqual({d:'17,5d', p:'12,3%', m:'90min', mil:'1.234', fr:'2,5', dec:'3.890,4'});
+  const fs=require('fs');
+  const html=fs.readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
+  /* geometria (largura e posicao de barra em CSS) pode usar toFixed: o ponto ali e sintaxe, nao texto */
+  const ruins=[...html.matchAll(/toFixed\([^)]*\)\s*\+\s*["'`][^"'`]{0,4}(%|d|h|min|dias)/g)]
+    .filter(m=>!/(width|left|top|height|x|y):\s*['"`]?\s*\+?\s*\(?[^;]{0,40}$/.test(html.slice(Math.max(0,m.index-50),m.index))).map(m=>m[0]);
+  const crases=html.match(/\$\{[^}]*toFixed\([^)]*\)\}\s*(h|d|dias|min)\b/g)||[];
+  expect([...ruins,...crases], 'toFixed so para geometria; texto usa dec() ou Intl').toEqual([]);
+});
+
+
+/* v73 · t1625 · TELA LIMPA E CELULAR (auditoria s810, 04/10/2026). */
+test('dono comum vai uma vez no cabecalho da faixa; o numero so diz quem move quando e outro', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const s=(chave,serie,meta)=>({chave,serie,meta_num:meta,direcao:"maior_melhor",p10:1,p90:2,situacao_banda:"normal"});
+    D.se=[s("caixa.sobrevida_dias",[20,15],90),s("entrega.output_sem_ack",[3,4],0)];
+    D.kdono=[{chave:'caixa.sobrevida_dias',dono:'igor'},{chave:'entrega.output_sem_ack',dono:'claude'}];
+    D.wip={ativos_ate_48h:5,teto:14}; D.garg=[{tipo:"TOTAL",itens:2,teto:5}];
+    D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:17023,queima_dia_base:700};
+    rAgora();
+    const t=[...document.querySelectorAll('#faixa5 .f5')];
+    const de=c=>t.find(x=>x.dataset.chave===c);
+    return {cab:(document.querySelector('#faixa5 .f5cab')||{}).textContent||'',
+      igorQ:!!de('caixa.sobrevida_dias').querySelector('.q'),
+      maqQ:(de('entrega.output_sem_ack').querySelector('.q')||{}).textContent||'',
+      semDono:t.filter(x=>!x.querySelector('.q')&&x.dataset.dono!=='igor').length,
+      repetidos:(document.getElementById('faixa5').textContent.match(/quem move: você/g)||[]).length};
+  });
+  expect(r.cab).toContain('quem move estes números: você');
+  expect(r.igorQ, 'numero seu nao repete o dono').toBe(false);
+  expect(r.maqQ).toContain('a máquina');
+  expect(r.semDono, 'todo numero tem dono declarado, no card ou no cabecalho').toBe(0);
+  expect(r.repetidos).toBe(0);
+});
+
+test('a 375 px a primeira decisao aparece sem rolar, acima da barra de baixo', async ({page})=>{
+  await page.setViewportSize({width:375, height:812});
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const s=(chave,serie,meta)=>({chave,serie,meta_num:meta,direcao:"maior_melhor",p10:1,p90:2,situacao_banda:"normal"});
+    D.se=["caixa.sobrevida_dias","caixa.menor_saldo_13s","caixa.entrada_realizada_30d","caixa.decisao_parada_rs","entrega.output_sem_ack"].map(c=>s(c,[1,2],90));
+    D.wip={ativos_ate_48h:23,teto:14}; D.garg=[{tipo:"TOTAL",itens:5,teto:5}];
+    D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:17023,queima_dia_base:700};
+    const it=ref=>({origem:'tarefa',ref,nivel:1,acoes:[],titulo:'Receber parcela '+ref,titulo_completo:'Receber parcela '+ref,recomendacao:'Faça X agora.',frente:'00-x',camada_tela:'hoje'});
+    D.fila=[it('1'),it('2')]; D.cont={}; D.depois=[];
+    document.body.style.letterSpacing='1.5px'; /* a fonte da CI (Linux) e mais larga: medir no pior caso */
+    rAgora();
+    const c=document.querySelector('#fila1 .card .ttl')||document.querySelector('#fila1 .card');
+    const nav=[...document.querySelectorAll('nav,.bnav,.tabs,.abas')].map(e=>e.getBoundingClientRect()).filter(b=>b.top>innerHeight/2);
+    const piso=nav.length?Math.min(...nav.map(b=>b.top)):innerHeight;
+    return {fundo:Math.round(c.getBoundingClientRect().bottom), piso:Math.round(piso),
+      SW:document.documentElement.scrollWidth, W:document.documentElement.clientWidth};
+  });
+  expect(r.fundo, `titulo da 1a decisao termina em ${r.fundo}px, a barra comeca em ${r.piso}px`).toBeLessThan(r.piso);
+  expect(r.SW).toBe(r.W);
+});
+
+test('troca de mais de 7 dias no card desce para historico recolhido; a recente fica aberta', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    const fmt=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' 10:00';
+    const velha=new Date(Date.now()-40*864e5), nova=new Date(Date.now()-1*864e5);
+    const base={ultima_pergunta:'Faca X',ultima_resposta:'Feito em agosto'};
+    const a=trocaVigente({...base,perguntado_em:fmt(velha)},'a'), b=trocaVigente({...base,perguntado_em:fmt(nova)},'b');
+    return {a, b};
+  });
+  expect(r.a).toContain('<details class="hist">');
+  expect(r.a).toContain('histórico: você disse em');
+  expect(r.a, 'nada some: o texto continua dentro do historico').toContain('Feito em agosto');
+  expect(r.b).not.toContain('<details');
+  expect(r.b).toContain('VOCÊ DISSE');
 });
