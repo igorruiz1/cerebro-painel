@@ -21,10 +21,20 @@ const DUBLE = `window.supabase={createClient:()=>({
   auth:{getSession:()=>new Promise(()=>{}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
   rpc:()=>new Promise(()=>{})})};`;
 
+/* v71 · R7: a tag do supabase-js tem integrity (SRI). Corpo dublado servido no lugar do arquivo
+   falha o hash e o navegador RECUSA rodar: o duble nunca chegaria a pagina. Entao o duble entra
+   antes de qualquer script da pagina (addInitScript) e a CDN e abortada: nenhum byte de rede, e o
+   integrity de producao fica intocado. O teste "a CDN dublada no lugar do arquivo e recusada"
+   prova que o navegador de fato confere o hash. */
+async function dublar(page, corpo){
+  await page.addInitScript(corpo);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+}
+
 async function abrir(page){
   const erros=[];
   page.on('pageerror',e=>erros.push(String(e)));
-  await page.route('**cdn.jsdelivr.net**', r=>r.fulfill({status:200,contentType:'application/javascript',body:DUBLE}));
+  await dublar(page, DUBLE);
   await page.goto(PAGINA);
   /* VER e const de topo de script: vive no escopo global mas NAO em window. Esperar por
      window.VER esperaria para sempre. O sinal de que o script rodou e o selo deixar o traco. */
@@ -220,7 +230,7 @@ window.supabase={createClient:()=>({
 async function abrirContando(page){
   const erros=[];
   page.on("pageerror",e=>erros.push(String(e)));
-  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_CONTA}));
+  await dublar(page, DUBLE_CONTA);
   await page.goto(PAGINA);
   await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="\u2014");
   await revelarCasca(page);
@@ -241,8 +251,7 @@ test("chave que o painel espera e o snapshot nao entrega vira aviso, nunca tela 
   const erros=[];
   page.on("pageerror",e=>erros.push(String(e)));
   /* o snapshot devolve TUDO menos a fila: a tela tem de gritar, nao inventar */
-  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",
-    body:DUBLE_CONTA.replace("ks.forEach(k=>{d[k]=[];});","ks.filter(k=>k!==\"fila\").forEach(k=>{d[k]=[];});")}));
+  await dublar(page, DUBLE_CONTA.replace("ks.forEach(k=>{d[k]=[];});","ks.filter(k=>k!==\"fila\").forEach(k=>{d[k]=[];});"));
   await page.goto(PAGINA);
   await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="\u2014");
   await revelarCasca(page);
@@ -383,7 +392,7 @@ async function abrirComSessao(page, segura){
   const erros=[];
   page.on("pageerror",e=>erros.push(String(e)));
   await page.addInitScript(s=>{ window.__segura=s; }, !!segura);
-  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_AUTH}));
+  await dublar(page, DUBLE_AUTH);
   await page.goto(PAGINA);
   await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="—");
   await page.waitForTimeout(300);
@@ -440,7 +449,7 @@ const DUBLE_ARGS = DUBLE_CONTA.replace("rpc:(n)=>{window.__n.rpc[n]=(window.__n.
 async function abrirComArgs(page){
   const erros=[];
   page.on("pageerror",e=>erros.push(String(e)));
-  await page.route("**cdn.jsdelivr.net**", r=>r.fulfill({status:200,contentType:"application/javascript",body:DUBLE_ARGS}));
+  await dublar(page, DUBLE_ARGS);
   await page.goto(PAGINA);
   await page.waitForFunction(()=>document.getElementById("selo-ver").textContent.trim()!=="—");
   await revelarCasca(page);
@@ -1269,4 +1278,111 @@ test('o bastidor leva ao presidente e o atalho instalado abre o presidente', asy
   expect(href).toBe('presidente.html');
   const man = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname,'..','manifest.json'),'utf8'));
   expect(man.start_url).toBe('./presidente.html');
+});
+
+/* v71 · R7 (03/10/2026): SEGURANCA DA PAGINA. Tres classes de defeito:
+   (a) texto do banco virando MARCACAO: o painel monta HTML por template e insere com innerHTML, e um
+       campo do snapshot entrando cru executaria script na sessao do dono, que guarda o token do
+       Supabase. Pior que innerHTML cru e o escape ERRADO: esc() dentro de onclick="f('...')" devolve
+       a aspa como &#39;, que o navegador decodifica antes de rodar o JS. O teste cobra os dois
+       contextos: texto no HTML e texto dentro de argumento JS, com o clique devolvendo o literal;
+   (b) supabase-js flutuante (@2) sem integrity: qualquer publicacao nova ou CDN comprometida rodaria
+       com o token do dono. Versao fixa, sha384 e a mesma tag nas duas paginas;
+   (c) CSP declarada e a pagina inteira funcionando debaixo dela, sem violacao. */
+const XSS_TAG = '<img src=x onerror="window.__xss=1">';
+const XSS_ASPA = "x');window.__xss=2;//";
+const XSS_ENT = "y&#39;);window.__xss=3;//";
+const DUBLE_XSS = DUBLE_ARGS.replace("ks.forEach(k=>{d[k]=[];});", `ks.forEach(k=>{d[k]=[];});
+  d.fila=[{origem:"tarefa",ref:"77",nivel:1,titulo:${JSON.stringify(XSS_TAG)},titulo_completo:${JSON.stringify(XSS_TAG)},
+    frente:${JSON.stringify(XSS_ASPA)},valor_txt:${JSON.stringify(XSS_TAG)},recomendacao:${JSON.stringify(XSS_TAG)},
+    dias_parado:${JSON.stringify(XSS_TAG)},acoes:[{verbo:"arquivar",campo:"texto",label:${JSON.stringify(XSS_ASPA)}}]}];
+  d.op=[{origem:"tarefa",ref:"77",opcoes:[{label:${JSON.stringify(XSS_ENT)},recomendada:true,consequencia:${JSON.stringify(XSS_TAG)}}]}];
+  d.cont=[{depois:${JSON.stringify(XSS_TAG)},leituras:0}];`);
+const VIGIA_CSP = ()=>{ window.__csp=[]; document.addEventListener('securitypolicyviolation',
+  e=>window.__csp.push(e.violatedDirective+' '+e.blockedURI)); };
+
+test('texto hostil do banco aparece como texto e nao executa, nem dentro de onclick', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(VIGIA_CSP);
+  await dublar(page, DUBLE_XSS);
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById('selo-ver').textContent.trim()!=='—');
+  await revelarCasca(page);
+  await page.evaluate(()=>carregar());
+  await page.waitForTimeout(300);
+  const r = await page.evaluate(async()=>{
+    const out={};
+    const card=document.querySelector('#fila1 .card');
+    out.titulo=card&&card.querySelector('.ttl').textContent;
+    out.heroi=document.getElementById('hero').textContent;
+    out.imgs=document.querySelectorAll('img[onerror]').length;
+    /* argumento JS dentro de atributo: o menu de acao, o chip de frente e o botao de opcao */
+    card.querySelector('.menu button').click();
+    out.modal=document.getElementById('mtit').textContent; fecharModal();
+    gavetaFiltros(true);
+    const chip=[...document.querySelectorAll('#chipsFrente .chip')].find(c=>c.textContent.includes('window.__xss'));
+    chip.click(); out.frente=F.frente; limparFiltros();
+    window.__n.args=[];
+    document.querySelector('#fila1 .card .opb').click();
+    await enviarPendente();
+    out.escolha=(window.__n.args.find(a=>a[0]==='escolher')||[])[1];
+    await new Promise(r=>setTimeout(r,200));
+    out.xss=window.__xss; out.csp=window.__csp;
+    return out;
+  });
+  expect(erros, 'erro de script (onclick quebrado tambem conta)').toEqual([]);
+  expect(r.titulo, 'o titulo hostil aparece como texto').toBe(XSS_TAG);
+  expect(r.heroi, 'contador do snapshot tambem e texto').toContain(XSS_TAG);
+  expect(r.imgs, 'nenhum elemento nasceu do texto do banco').toBe(0);
+  expect(r.modal, 'o rotulo chega literal ao modal').toBe(XSS_ASPA);
+  expect(r.frente, 'a frente chega literal ao filtro').toBe(XSS_ASPA);
+  expect(r.escolha, 'a opcao chega literal ao banco').toEqual({p_ref:'77',p_opcao:XSS_ENT});
+  expect(r.xss, 'nenhum handler injetado rodou').toBeUndefined();
+  expect(r.csp, 'nenhuma violacao de CSP desenhando a fila').toEqual([]);
+});
+
+test('o supabase-js vem de versao fixa, com integrity, e a mesma tag nas duas paginas', async ({page})=>{
+  const fs=require('fs');
+  const ler=f=>fs.readFileSync(path.resolve(__dirname,'..',f),'utf8');
+  const externos=s=>s.match(/<script[^>]*\bsrc="https?:[^"]*"[^>]*>/g)||[];
+  const [idx,pres]=[ler('index.html'),ler('presidente.html')];
+  const a=externos(idx), b=externos(pres);
+  expect(a.length, 'um script externo no painel').toBe(1);
+  expect(b, 'o presidente carrega exatamente a mesma tag').toEqual(a);
+  expect(a[0], 'versao exata, nunca @2 flutuante').toMatch(/@supabase\/supabase-js@\d+\.\d+\.\d+\/dist\/umd\/supabase\.js"/);
+  expect(a[0]).toMatch(/integrity="sha384-[A-Za-z0-9+/]{64}"/);
+  expect(a[0]).toContain('crossorigin="anonymous"');
+  for(const s of [idx,pres]) expect(s, 'CSP declarada').toMatch(/<meta http-equiv="Content-Security-Policy"/);
+  await abrir(page);
+  const dom = await page.evaluate(()=>{const s=document.querySelector('script[src*="cdn.jsdelivr.net"]');
+    return {integ:s&&s.integrity, co:s&&s.crossOrigin};});
+  expect(dom.integ, 'o atributo chega ao DOM').toMatch(/^sha384-/);
+  expect(dom.co).toBe('anonymous');
+});
+
+test('a CDN que devolve outro arquivo no lugar do supabase-js e recusada pelo navegador', async ({page})=>{
+  const avisos=[]; page.on('console',m=>avisos.push(m.text()));
+  /* com CORS liberado, o UNICO motivo para recusar e o hash */
+  await page.route('**cdn.jsdelivr.net**', r=>r.fulfill({status:200,contentType:'application/javascript',
+    headers:{'access-control-allow-origin':'*'}, body:'window.__trocado=1;'+DUBLE}));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById('selo-ver').textContent.trim()!=='—');
+  await page.waitForTimeout(200);
+  const r = await page.evaluate(()=>({trocado:window.__trocado, sb:typeof window.supabase}));
+  expect(r.trocado, 'o arquivo trocado nao rodou').toBeUndefined();
+  expect(r.sb).toBe('undefined');
+  expect(avisos.join('\n'), 'o navegador diz que foi o integrity').toMatch(/integrity/i);
+});
+
+test('debaixo da CSP a tela de login abre sem nenhuma violacao', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(VIGIA_CSP);
+  await dublar(page, DUBLE.replace('getSession:()=>new Promise(()=>{})','getSession:()=>Promise.resolve({data:{session:null}})'));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>!document.getElementById('login').classList.contains('hidden'));
+  await page.waitForTimeout(300);
+  const r = await page.evaluate(()=>({csp:window.__csp, vis:getComputedStyle(document.getElementById('login')).display!=='none'}));
+  expect(erros).toEqual([]);
+  expect(r.vis, 'login visivel').toBe(true);
+  expect(r.csp, 'violacao de CSP na abertura').toEqual([]);
 });
