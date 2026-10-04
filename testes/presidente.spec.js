@@ -471,3 +471,25 @@ test('texto hostil do banco aparece como texto e nao executa, nem no clique do v
   expect(r.imgs).toBe(0);
   expect(r.xss).toBeUndefined();
 });
+
+/* p4: o painel acorda o atendente e a resposta chega pelo Realtime (websocket wss://<projeto>.supabase.co).
+   Os testes de CSP do PR #47 rodam com o cliente dublado, que nunca abre websocket: uma CSP sem wss passaria
+   verde e mataria a resposta ao vivo em silencio. Aqui um WebSocket e um fetch NATIVOS saem debaixo da CSP real
+   da pagina; o veredito e o evento securitypolicyviolation, que o navegador decide antes de tocar a rede.
+   Medido em 04/10/2026: page.routeWebSocket troca o WebSocket da pagina por um duble em JS e a CSP nem e
+   consultada (abriu com connect-src 'self'). Por isso o socket vai para um subdominio que nao existe. */
+test('a CSP do presidente deixa o Realtime e o REST do Supabase passarem', async ({page})=>{
+  await page.addInitScript(()=>{ window.__csp=[]; document.addEventListener('securitypolicyviolation',
+    e=>window.__csp.push(e.violatedDirective+' '+e.blockedURI)); });
+  await page.route(/supabase\.co\/rest/, r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
+  await abrir(page);
+  const r = await page.evaluate(async()=>{
+    try{ const ws=new WebSocket('wss://csp-teste.supabase.co/realtime/v1/websocket?vsn=1.0.0'); ws.onerror=()=>{}; }
+    catch(e){ window.__csp.push('excecao '+e.name); }
+    let rest; try{ rest=(await fetch(URL_+'/rest/v1/')).status; }catch(e){ rest='bloqueado'; }
+    await new Promise(res=>setTimeout(res,800));
+    return {rest, csp:window.__csp};
+  });
+  expect(r.csp, 'nenhuma violacao de CSP falando com o Supabase (websocket e REST)').toEqual([]);
+  expect(r.rest, 'REST do Supabase passa debaixo da CSP').toBe(200);
+});
