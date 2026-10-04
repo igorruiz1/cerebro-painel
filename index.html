@@ -288,9 +288,12 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px;font-weight:400;text-tr
 .card.n3{border-left-color:var(--dim)}.card.cor{border-left-color:var(--vio)}
 .card.critico{border-left-color:var(--red)}.card.alto{border-left-color:var(--yel)}
 .card.medio{border-left-color:var(--acc)}
-.ttl{font-size:15px;font-weight:500;line-height:1.4;margin-bottom:6px;
- display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card.aberto .ttl{-webkit-line-clamp:unset;overflow:visible}
+.ttl{font-size:15px;font-weight:500;line-height:1.4;margin-bottom:6px;cursor:pointer;overflow-wrap:anywhere;
+ display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card.aberto .ttl{-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
+/* v72: sem -webkit-line-clamp (navegador antigo) o titulo para em 2 linhas pela altura. Print do Igor,
+   04/10/2026: um titulo de 14 linhas de prosa tomava a tela inteira do celular. */
+@supports not (-webkit-line-clamp:2){.ttl{display:block;max-height:2.8em}.card.aberto .ttl{max-height:none}}
 .meta{font-size:11.5px;color:var(--mut);display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;padding:2px 8px;
  border-radius:20px;background:var(--card2);color:var(--mut);white-space:nowrap}
@@ -303,11 +306,12 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:11.5px;font-weight:400;text-tr
 .txt{font-size:13.4px;color:var(--ink2);background:var(--card2);border-radius:10px;
  padding:10px 12px;margin:8px 0;position:relative}
 .txt .lbl{font-size:10px;letter-spacing:1.3px;color:var(--warn);font-weight:600;display:block;margin-bottom:4px}
-.txt .corpo{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.txt.aberto .corpo{-webkit-line-clamp:unset;overflow:visible}
-.txt .ver{background:none;border:0;color:var(--acc);font-size:12px;cursor:pointer;padding:4px 0 0;
+.txt .corpo{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.txt .corpo.aberto{-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
+@supports not (-webkit-line-clamp:2){.txt .corpo{display:block;max-height:3em}.txt .corpo.aberto{max-height:none}}
+.txt .ver-mais{background:none;border:0;color:var(--acc);font-size:12px;cursor:pointer;padding:4px 0 0;
  text-decoration:none;font-weight:500}
-.txt .ver:hover{text-decoration:underline}
+.txt .ver-mais:hover{text-decoration:underline}
 .txt.vio{border-left:2px solid var(--vio)}
 .txt.vio .lbl{color:var(--lil)}
 .acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
@@ -1110,7 +1114,7 @@ body.foco #fila1 .card.atual{transition:transform .15s;touch-action:pan-y}
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v71";
+const VER="v72";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1157,6 +1161,18 @@ function comTeto(promessa, ms, rotulo){
 }
 function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf("__TETO__")===0; }
 /* fim comum:teto */
+/* v72 (04/10/2026): o "ver tudo" dos blocos de texto nao dizia o estado a leitor de tela nem era o mesmo
+   do presidente. Agora e um codigo so nas duas telas. */
+/* comum:recolhe · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
+/* texto longo nasce recolhido: o CSS de cada tela diz quantas linhas, o botao diz o estado (aria-expanded) */
+function botaoRecolhe(alvo){
+  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" onclick="alternarRecolhe(this)">ver mais</button>`;}
+function alternarRecolhe(b){
+  const el=document.getElementById(b.getAttribute("aria-controls")); if(!el) return;
+  const abre=b.getAttribute("aria-expanded")!=="true";
+  el.classList.toggle("aberto",abre); b.setAttribute("aria-expanded",abre?"true":"false");
+  b.textContent=abre?"ver menos":"ver mais";}
+/* fim comum:recolhe */
 function avisaTravou(rotulo, gravou){
   msg(gravou
     ? "A ação foi enviada, mas a tela não conseguiu conferir o resultado ("+rotulo+"). Recarregue a página: o efeito pode já estar gravado."
@@ -2117,9 +2133,12 @@ function bloco(lbl,txt,cls,id){
   if(!txt)return"";
   const longo=String(txt).length>150;
   return `<div class="txt ${cls||""}" id="${id}">
-    <span class="lbl">${lbl}</span><div class="corpo">${esc(txt)}</div>
-    ${longo?`<button class="ver" onclick="document.getElementById('${id}').classList.toggle('aberto');
-      this.textContent=this.textContent.trim()==='ver tudo'?'recolher':'ver tudo'">ver tudo</button>`:""}</div>`;}
+    <span class="lbl">${lbl}</span><div class="corpo" id="${id}-c">${esc(txt)}</div>
+    ${longo?botaoRecolhe(id+"-c"):""}</div>`;}
+/* v72: o titulo recolhido abre pelo teclado tambem (Enter ou espaco), e diz se esta aberto */
+function abreTitulo(el){ const c=el.parentNode, abre=!c.classList.contains("aberto");
+  c.classList.toggle("aberto",abre); el.setAttribute("aria-expanded",abre?"true":"false"); }
+const TTL_ATTR=`role="button" tabindex="0" aria-expanded="false" onclick="abreTitulo(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();abreTitulo(this)}"`;
 /* v32 REGUA 19 (t890): card com dialogo aberto nao pode dizer so "aguardando o executor"
    sem prazo. Medido em 09/09/2026: o Igor deliberou nove vezes as 00h e recarregou seis
    vezes ate desistir, porque nada na tela dizia que a resposta so viria as 06h58. Reguas:
@@ -2149,7 +2168,7 @@ function cardFila(it){
      ${tagClasse(it)}
      ${minDe(it)!=null?`<span class="tag min">~${minDe(it)} min</span>`:""}
    </div>
-   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
+   <div class="ttl" ${TTL_ATTR}>${esc(p.texto)}</div>
    ${pecaLink(it)}
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${opcoesFila(it)}
@@ -2446,7 +2465,7 @@ function cardCorrecao(c){
      ${c.objeto_valor?`<span class="rs">${esc(c.objeto_valor)}</span>`:""}
      <span>há ${esc(c.dias_esperando)}d</span>
    </div>
-   <div class="ttl" onclick="this.parentNode.classList.toggle('aberto')">${esc(p.texto)}</div>
+   <div class="ttl" ${TTL_ATTR}>${esc(p.texto)}</div>
    ${c.objeto_pronto?`<div class="meta" style="margin:-2px 0 8px"><span class="tag">pronto quando</span>
      <span style="color:var(--mut);font-size:12px">${esc(c.objeto_pronto)}</span></div>`:""}
    ${bloco("VOCÊ DISSE — "+esc(c.quando||""),c.sua_posicao,"vio","v-"+k)}
