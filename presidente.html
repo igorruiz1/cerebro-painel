@@ -28,7 +28,9 @@
    A telemetria da maquina mora no index.html (bastidor), aberto pelo rodape.
    p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md.
    p4 (03/10/2026): resposta por evento. O toque acorda o atendente na hora (rotina por API, no Max) e a
-   resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md. */
+   resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md.
+   p4.2 (04/10/2026): lista mostra so o titulo, em 2 linhas no maximo; o contexto do card vem da tabela de
+   origem ao abrir a folha, recolhido em 3 linhas com "ver mais". */
 /* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH, o mesmo do index.html (613f498): as duas telas sao um
    produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
    Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
@@ -126,9 +128,15 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 .foco{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .foco .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--acc);font-weight:600}
 .foco .tit{font-size:21px;font-weight:600;line-height:1.3;text-wrap:balance}
+/* p4.2 (04/10/2026): print do Igor no celular, aba Hoje, o fluxo 19 com 14 linhas de prosa no lugar do
+   titulo. O banco ja corrigiu a causa (titulo curto na v_fila_base), mas a tela nao pode depender disso:
+   em toda lista o titulo para em 2 linhas com reticencias, e o texto inteiro mora na folha do card.
+   Sem -webkit-line-clamp (navegador antigo) o corte e por altura, sem reticencias. */
+.l2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+@supports not (-webkit-line-clamp:2){.l2{display:block;line-height:1.35!important;max-height:2.7em}}
 .foco .porque{font-size:15px;color:var(--ink2)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font-size:13px;background:var(--chip);color:var(--ink2);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.chip{font-size:13px;background:var(--chip);color:var(--ink2);border-radius:999px;padding:4px 10px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .chip.w{color:var(--warn)} .chip.ok{color:var(--ok)}
 .acoes{display:flex;flex-wrap:wrap;gap:8px}
 .pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:15px;padding:0 18px;flex:1 1 150px}
@@ -139,6 +147,8 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 .ordem .o{font-family:var(--mono);color:var(--mut);width:18px;flex-shrink:0}
 .ordem .t{flex:1;min-width:0}
 .ordem .t small{display:block;color:var(--mut);font-size:13px}
+/* a linha de meta (frente · vence · valor) e uma linha so, em toda lista */
+.ordem .t small,.linha-r .t small,.frente .t small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ordem .min{font-family:var(--mono);font-size:13px;color:var(--mut);white-space:nowrap}
 .atalhos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .atalho{min-height:76px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:14px;color:var(--ink2)}
@@ -201,7 +211,12 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 /* detalhe do card: folha no celular, painel lateral no desktop */
 .veu{position:fixed;inset:0;background:rgba(6,9,20,.7);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .folha{width:100%;max-width:560px;background:var(--sf);border-radius:18px 18px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-height:88vh;overflow:auto}
-.folha h3{margin:0;font-size:19px;line-height:1.3;text-wrap:balance}
+.folha h3{margin:0;font-size:19px;line-height:1.3;text-wrap:balance;overflow-wrap:anywhere}
+/* p4.2: na folha, o contexto do card nasce em 3 linhas; "ver mais" abre o resto (bloco comum:recolhe) */
+.recolhe{margin:0;color:var(--ink2);overflow-wrap:anywhere;white-space:pre-line;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+.recolhe.aberto{display:block;-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
+@supports not (-webkit-line-clamp:3){.recolhe{display:block;max-height:4.35em}.recolhe.aberto{max-height:none}}
+.ver-mais{align-self:flex-start;min-height:44px;min-width:44px;background:none;border:0;color:var(--link);font-size:14px;padding:0 2px;text-decoration:underline}
 .folha>.sec{flex:none}
 .bloco{display:flex;flex-direction:column;gap:4px}
 .bloco .rot.w{color:var(--warn)}
@@ -383,7 +398,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.1";
+const VERP="p4.2";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -403,6 +418,16 @@ function comTeto(promessa, ms, rotulo){
 }
 function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf("__TETO__")===0; }
 /* fim comum:teto */
+/* comum:recolhe · igual byte a byte no index.html; testes/presidente.spec.js confere */
+/* texto longo nasce recolhido: o CSS de cada tela diz quantas linhas, o botao diz o estado (aria-expanded) */
+function botaoRecolhe(alvo){
+  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" onclick="alternarRecolhe(this)">ver mais</button>`;}
+function alternarRecolhe(b){
+  const el=document.getElementById(b.getAttribute("aria-controls")); if(!el) return;
+  const abre=b.getAttribute("aria-expanded")!=="true";
+  el.classList.toggle("aberto",abre); b.setAttribute("aria-expanded",abre?"true":"false");
+  b.textContent=abre?"ver menos":"ver mais";}
+/* fim comum:recolhe */
 /* comTeto que nunca rejeita: estouro e queda de rede voltam como {error}, que todo chamador ja trata */
 const comTetoR=(b,ms,rotulo)=>comTeto(b,ms,rotulo).catch(e=>({data:null,
   error:{message:ehTeto(e)?"sem resposta do banco em "+ms/1000+" s":(e&&e.message)||"falha de rede",teto:ehTeto(e)}}));
@@ -593,13 +618,13 @@ function renderHoje(){
     const f=h[0], m=minDe(f);
     const pri=acaoPrincipal(acoesFila(f), "hoje");
     foco.innerHTML=`<span class="eyebrow">Próximo passo${m?" · "+m+" min":""}</span>
-      <div class="tit">${esc(f.titulo_completo||f.titulo)}</div>
+      <div class="tit l2">${esc(f.titulo_completo||f.titulo)}</div>
       <div class="chips"><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
-      ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque">${esc(curto(ri.texto,160))}</div>`:"";})()}
+      ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque l2">${esc(curto(ri.texto,160))}</div>`:"";})()}
       <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${escAttr(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",h.length<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f);
-      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t">${esc(f.titulo_completo||f.titulo)}<small>${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
+      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
   }
   const c=(D.cont||[])[0]||{}, cob=aCobrar();
   const at=[
@@ -642,7 +667,7 @@ function idadeTxt(t){
 }
 function itemInv(t){
   const p=+t.parado_dias||0, atras=t.status==="aguardando_terceiro"&&t.prazo&&t.prazo<somaDias(0);
-  return `<button class="item" onclick="abrirInv(${+t.id})"><span class="t">${esc(t.titulo||t.resumo)}</span><span class="d"><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
+  return `<button class="item" onclick="abrirInv(${+t.id})"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
 }
 
 /* ---------- Caixa ---------- */
@@ -657,14 +682,14 @@ function renderCaixa(){
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
   document.getElementById("cobrarBox").innerHTML=`<h2>A receber com data passada</h2>`+(cob.length
-    ?cob.map(x=>`<div class="linha-r"><span class="t">${esc(x.descricao||"sem descrição")}<small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span></div>`).join("")
+    ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span></div>`).join("")
     :`<div class="vazio">Ninguém te deve com data passada.</div>`);
   const el=document.getElementById("alavancas");
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const fr=ARV.filter(a=>a.nivel===1&&+a.margem_30d>0).sort((a,b)=>b.margem_30d-a.margem_30d);
   el.innerHTML=fr.length?fr.map(a=>{
     const prox=INV.filter(t=>t.frente===a.no&&t.dono==="igor"&&t.status==="pendente").sort((x,y)=>String(x.prazo||"9").localeCompare(String(y.prazo||"9")))[0];
-    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${escAttr(a.no)}')`}"><span class="t">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}<small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
+    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${escAttr(a.no)}')`}"><span class="t"><span class="l2">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}</span><small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
     :`<div class="vazio">Nenhuma frente com margem a receber em 30 dias.</div>`;
   const fora=ARV.filter(a=>a.nivel===1&&+a.margem_30d<=0&&+a.margem_total>0);
   if(fora.length)el.innerHTML+=`<div class="mut">Fora dos 30 dias: ${fora.map(a=>esc(nomeFrente(a.no))+" "+mil(a.margem_total)).join(" · ")}.</div>`;
@@ -749,6 +774,7 @@ function abrirCard(c,verbo){
   const ri=recInfo(c.rec), rec=ri.texto, recRot=ri.data?(ri.velha?`Nota de ${ri.data}, há ${ri.dias} dias: pode estar vencida`:`Nota do executor de ${ri.data}`):"O executor recomenda";
   mostrarFolha(`<h3 id="folhaTit">${esc(c.titulo)}</h3>
     <div class="chips"><span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}<span class="chip num">${c.origem==="tarefa"?"t":esc(c.origem)+" "}${esc(c.ref)}</span></div>
+    ${DESC_FONTE[c.origem]?`<div class="bloco" id="descBox"><span class="rot">Contexto</span><div id="desc"><p class="mut">carregando…</p></div></div>`:""}
     ${c.porque?`<div class="bloco"><span class="rot">Por que agora</span><p>${esc(c.porque)}</p></div>`:""}
     <div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>
     ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
@@ -758,7 +784,7 @@ function abrirCard(c,verbo){
     <div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
     <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul></div>
     <button class="sec" onclick="fecharFolha()">Fechar</button>`);
-  historico(c); conversa(c);
+  historico(c); conversa(c); descricao(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
 }
 const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" onclick="escolher('${escAttr(a.verbo)}')">${esc(a.rot)}</button>`;
@@ -771,6 +797,21 @@ function pecaHtml(it){
 function copiar(){const c=document.getElementById("pecap");if(!c)return;const t=c.textContent;
   const sel=()=>{try{const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}toast("Caminho selecionado.",null,false,2000);};
   try{navigator.clipboard.writeText(t).then(()=>toast("Caminho copiado.",null,false,1800),sel);}catch(e){sel();}}
+/* p4.2: a fila traz so o titulo (curto, por decisao do banco). O contexto vem da tabela de origem ao abrir a
+   folha, sob o mesmo teto das outras leituras. A RLS dessas quatro tabelas e a mesma de acao e dialogo, que o
+   painel ja le: auth_read com is_dono(), conferido em 04/10/2026. Contexto igual ao titulo nao se repete. */
+const DESC_FONTE={tarefa:["tarefa","descricao"],fluxo:["fluxo_caixa","descricao"],demanda:["demanda","proximo_passo"],documento:["documento","veredito"]};
+async function descricao(c){
+  const fonte=DESC_FONTE[c.origem], el=()=>document.getElementById("desc"); if(!fonte)return;
+  let r; try{ r=await comTeto(sb.from(fonte[0]).select(fonte[1]).eq("id",c.ref).limit(1),LIMITE_RECARGA,fonte[0]); }catch(e){ r={error:e}; }
+  if(!el()||F!==c)return;
+  if(r.error||!r.data){el().innerHTML=`<p class="mut">Contexto indisponível agora.</p>`;return;}
+  const t=String(((r.data[0]||{})[fonte[1]])||"").trim();
+  if(!t||t===String(c.titulo||"").trim()){document.getElementById("descBox").remove();return;}
+  el().innerHTML=`<p class="recolhe" id="descTxt">${esc(t)}</p>${botaoRecolhe("descTxt")}`;
+  /* coube em 3 linhas: o botao nao tem o que abrir */
+  const p=document.getElementById("descTxt"); if(p.scrollHeight<=p.clientHeight+1)p.nextElementSibling.classList.add("hidden");
+}
 async function historico(c){
   const el=()=>document.getElementById("hist");
   let r; try{ r=await comTeto(sb.from("acao").select("verbo,valor,agido_em").eq("origem",c.origem).eq("ref",c.ref).order("agido_em",{ascending:false}).limit(5),LIMITE_RECARGA,"acao"); }catch(e){ r={error:e}; }

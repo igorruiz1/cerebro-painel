@@ -508,10 +508,10 @@ const blocosComuns = arq => {
   for (const x of fonte.matchAll(/\/\* comum:([a-z]+) [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:\1 \*\//g)) m[x[1]] = x[2];
   return m;
 };
-test('o codigo comum das duas telas (regra de Hoje e teto de tempo) e o mesmo byte a byte', async ()=>{
+test('o codigo comum das duas telas (regra de Hoje, teto de tempo e texto recolhido) e o mesmo byte a byte', async ()=>{
   const a = blocosComuns('index.html'), b = blocosComuns('presidente.html');
-  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['hoje','teto']);
-  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['hoje','teto']);
+  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['hoje','recolhe','teto']);
+  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['hoje','recolhe','teto']);
   for (const k of Object.keys(a)) expect(b[k], `bloco comum:${k} divergiu`).toBe(a[k]);
 });
 
@@ -600,5 +600,90 @@ test('no presidente, leitura que nao volta se declara: carga, inventario, histor
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#hist')).toContainText('Histórico indisponível');
   await expect(page.locator('#conv')).toContainText('Conversa indisponível');
+  expect(erros).toEqual([]);
+});
+
+/* p4.2 (04/10/2026): print do Igor no celular, aba Hoje. O fluxo 19 vinha com 14 linhas de prosa no lugar do
+   titulo ("Cliente Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14
+   assinado ..."). O banco ja corrigiu a causa, mas a tela se defende sozinha: na lista o titulo para em 2 linhas,
+   e o contexto inteiro mora na folha, recolhido em 3 linhas com "ver mais". */
+const FRASE = 'Cliente Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado pelas duas partes no DocuSign, com a ressalva do item 7 sobre o reajuste. ';
+const LONGO = (FRASE.repeat(Math.ceil(1300/FRASE.length))).slice(0,1300);
+const linhas = sel => [...document.querySelectorAll(sel)].map(e=>{
+  const cs=getComputedStyle(e), lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.45;
+  return {sel, n:e.getBoundingClientRect().height/lh, cortado:e.scrollHeight>e.clientHeight+1};});
+
+test('titulo de 1.300 caracteres ocupa no maximo 2 linhas na lista a 390 px, sem rolagem horizontal', async ({page})=>{
+  await page.setViewportSize({width:390, height:820});
+  const erros = await abrir(page);
+  expect(LONGO.length).toBe(1300);
+  const r = await page.evaluate(([L,fn])=>{
+    const linhas=eval(fn), out={};
+    const sem='x'.repeat(400);   /* palavra sem espaco: so overflow-wrap impede a rolagem lateral */
+    D.fila.forEach(f=>{f.titulo=f.titulo_completo=L; f.porque_agora='vence em 1d';});
+    D.fila[1].titulo_completo=sem+' '+L;
+    D.fila[0].recomendacao=L;
+    INV.forEach(t=>{t.titulo=L;});
+    D.c13i[0].descricao=L;
+    render();
+    const W=()=>({W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth});
+    ir('hoje'); out.hoje={foco:linhas('#foco .tit'), porque:linhas('#foco .porque'), ordem:linhas('#ordem .l2'), meta:linhas('#ordem small'), ...W()};
+    ir('fila'); out.fila={itens:linhas('#kanban .coluna.on .item .t'), ...W()};
+    ir('caixa'); out.caixa={linhas:linhas('#p-caixa .linha-r .l2'), ...W()};
+    ir('hoje'); abrirFila(1); out.folha={tit:document.getElementById('folhaTit').textContent, ...W()};
+    return out;
+  }, [LONGO, linhas.toString()]);
+  for (const [aba, m] of Object.entries(r)) expect(m.SW, `rolagem horizontal em ${aba}`).toBe(m.W);
+  const todos = [...r.hoje.foco, ...r.hoje.porque, ...r.hoje.ordem, ...r.fila.itens, ...r.caixa.linhas];
+  for (const x of todos) { expect(x.n, 'no maximo 2 linhas em '+x.sel).toBeLessThanOrEqual(2.05); expect(x.cortado, 'o texto foi cortado, nao era curto: '+x.sel).toBe(true); }
+  expect(todos.length, 'mediu foco, ordem, fila e caixa').toBeGreaterThanOrEqual(5);
+  for (const x of r.hoje.meta) expect(x.n, 'a meta e uma linha so').toBeLessThanOrEqual(1.05);
+  expect(r.folha.tit.endsWith(LONGO), 'a folha mostra o titulo inteiro').toBe(true);
+  expect(erros).toEqual([]);
+});
+
+test('na folha, o contexto longo vem da tabela de origem, nasce recolhido em 3 linhas e abre com "ver mais" pelo teclado', async ({page})=>{
+  await page.setViewportSize({width:390, height:820});
+  await page.addInitScript(L=>{ window.__tab={tarefa:[{descricao:L}],fluxo_caixa:[{descricao:'curto'}]}; }, LONGO);
+  const erros = await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  const txt = page.locator('#descTxt'), bt = page.locator('#desc .ver-mais');
+  await expect(txt).toHaveText(LONGO.trim());
+  await expect(bt).toHaveAttribute('aria-expanded','false');
+  await expect(bt).toHaveAttribute('aria-controls','descTxt');
+  await expect(bt).toHaveText('ver mais');
+  const alto = async()=>txt.evaluate(e=>e.getBoundingClientRect().height/parseFloat(getComputedStyle(e).lineHeight));
+  expect(await alto(), 'recolhido: 3 linhas').toBeLessThanOrEqual(3.05);
+  const tam = await bt.evaluate(e=>{const r=e.getBoundingClientRect();return [r.width,r.height];});
+  expect(Math.min(...tam), 'ver mais tem alvo de toque de 44 px').toBeGreaterThanOrEqual(44);
+  await bt.focus(); await page.keyboard.press('Enter');
+  await expect(bt).toHaveAttribute('aria-expanded','true');
+  await expect(bt).toHaveText('ver menos');
+  expect(await alto(), 'aberto: o texto inteiro').toBeGreaterThan(10);
+  await page.keyboard.press('Space');
+  await expect(bt).toHaveAttribute('aria-expanded','false');
+  expect(await alto()).toBeLessThanOrEqual(3.05);
+  const w = await page.evaluate(()=>({W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}));
+  expect(w.SW, 'rolagem horizontal com o contexto aberto').toBe(w.W);
+  /* contexto curto nao ganha botao; contexto igual ao titulo nao se repete; origem sem fonte nao pede nada */
+  await page.evaluate(()=>{ fecharFolha(); window.__tab.tarefa=[{descricao:'Ligar para o fiscal.'}]; abrirFila(0); });
+  await expect(page.locator('#descTxt')).toHaveText('Ligar para o fiscal.');
+  await expect(page.locator('#desc .ver-mais')).toBeHidden();
+  await page.evaluate(()=>{ fecharFolha(); window.__tab.tarefa=[{descricao:D.fila[0].titulo_completo}]; abrirFila(0); });
+  await expect(page.locator('#descBox')).toHaveCount(0);
+  await page.evaluate(()=>{ fecharFolha(); D.fila[0].origem='gargalo'; abrirFila(0); });
+  await expect(page.locator('#descBox')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
+
+test('na folha, contexto que nao volta se declara no teto', async ({page})=>{
+  await page.addInitScript(()=>{ window.__pendura=['tarefa']; });
+  const erros = await abrir(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_RECARGA);
+  await page.evaluate(()=>abrirFila(0));
+  await expect(page.locator('#desc')).toContainText('carregando');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#desc')).toContainText('Contexto indisponível');
   expect(erros).toEqual([]);
 });

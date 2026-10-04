@@ -1393,3 +1393,39 @@ test('debaixo da CSP a tela de login abre sem nenhuma violacao', async ({page})=
   expect(r.vis, 'login visivel').toBe(true);
   expect(r.csp, 'violacao de CSP na abertura').toEqual([]);
 });
+
+/* v72 (04/10/2026): print do Igor no celular, um titulo de 14 linhas de prosa tomando a tela. O banco
+   corrigiu a causa (titulo curto na v_fila_base); a tela se defende sozinha. O titulo do card para em 2
+   linhas a 390 px sem rolagem lateral, abre pelo clique ou pelo teclado, e o texto recolhido diz o estado
+   (aria-expanded) com o mesmo codigo do presidente (bloco comum:recolhe). */
+test("titulo de 1.300 caracteres fica em 2 linhas no card a 390 px; titulo e texto abrem pelo teclado", async ({page})=>{
+  await page.setViewportSize({width:390, height:820});
+  const erros = await abrirComArgs(page);
+  const r = await page.evaluate(async()=>{
+    const frase="Cliente Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado no DocuSign. ";
+    const L=frase.repeat(12).slice(0,1300);
+    D.fila=[{origem:"fluxo",ref:"19",titulo:L,titulo_completo:"x".repeat(300)+" "+L,nivel:1,recomendacao:L,acoes:[]}];
+    D.cor=[]; D.depois=[]; D.cont={}; D.op=[]; D.band=[]; foco=-1;
+    rAgora();
+    const t=document.querySelector("#fila1 .card .ttl"), lh=parseFloat(getComputedStyle(t).lineHeight);
+    const W=()=>document.documentElement.scrollWidth-document.documentElement.clientWidth;
+    const out={n:t.getBoundingClientRect().height/lh, cortado:t.scrollHeight>t.clientHeight+1, sobra:W(), role:t.getAttribute("role")};
+    t.focus(); t.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));
+    out.abertoN=t.getBoundingClientRect().height/lh; out.aria=t.getAttribute("aria-expanded"); out.sobraAberto=W();
+    const b=document.querySelector("#fila1 .card .txt .ver-mais"), c=document.getElementById(b.getAttribute("aria-controls"));
+    out.b0=[b.textContent,b.getAttribute("aria-expanded")]; const h0=c.getBoundingClientRect().height;
+    b.click(); out.b1=[b.textContent,b.getAttribute("aria-expanded")]; out.cresceu=c.getBoundingClientRect().height>h0*3;
+    return out;
+  });
+  expect(r.role, "o titulo e um controle").toBe("button");
+  expect(r.n, "no maximo 2 linhas").toBeLessThanOrEqual(2.05);
+  expect(r.cortado, "o texto foi cortado, nao era curto").toBe(true);
+  expect(r.sobra, "nenhuma rolagem horizontal").toBe(0);
+  expect(r.aria, "Enter abre o titulo").toBe("true");
+  expect(r.abertoN, "aberto, o titulo inteiro").toBeGreaterThan(5);
+  expect(r.sobraAberto, "aberto, ainda sem rolagem horizontal").toBe(0);
+  expect(r.b0).toEqual(["ver mais","false"]);
+  expect(r.b1).toEqual(["ver menos","true"]);
+  expect(r.cresceu, "ver mais abre o texto").toBe(true);
+  expect(erros).toEqual([]);
+});
