@@ -30,7 +30,11 @@
    p4 (03/10/2026): resposta por evento. O toque acorda o atendente na hora (rotina por API, no Max) e a
    resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md.
    p4.2 (04/10/2026): lista mostra so o titulo, em 2 linhas no maximo; o contexto do card vem da tabela de
-   origem ao abrir a folha, recolhido em 3 linhas com "ver mais". */
+   origem ao abrir a folha, recolhido em 3 linhas com "ver mais".
+   p4.3 (04/10/2026), onda 1 do benchmark (t1635): selo "esperando voce ha X" em todo card (Linear Triage);
+   depois de um ato na folha o proximo card de Hoje abre sozinho, com A, S e R no teclado (Superhuman);
+   selo unico de saude no topo (Statuspage); "Cobrar" no recebivel vencido pede o rascunho pela inbox(),
+   sem enviar nada ao pagador (Mercury/Stripe). */
 /* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH, o mesmo do index.html (613f498): as duas telas sao um
    produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
    Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
@@ -240,6 +244,18 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   padding:6px 6px 6px 14px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);font-size:14px}
 .toast button{min-height:44px;border-radius:9px;border:0;background:var(--acc);color:var(--accInk);font-weight:700;padding:0 14px}
 .toast.bad{border-color:var(--bad);color:var(--bad)}
+/* p4.3: ha quanto tempo o card espera o Igor (Linear Triage); selo unico de saude no topo (Statuspage) */
+.espera{white-space:nowrap}
+.chip.espera.w,.espera.w{color:var(--warn)}
+.saude{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saude::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.saude.ok{color:var(--ok)} .saude.w{color:var(--warn)}
+.saude span{overflow:hidden;text-overflow:ellipsis}
+.linha-r .cobrar{flex:none;min-width:88px}
+/* atalhos da folha (A, S, R) so aparecem onde ha teclado fisico */
+.teclas{display:none;font-size:13px;color:var(--mut)}
+.teclas kbd{font-family:var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px;color:var(--ink2)}
+@media (hover:hover) and (pointer:fine){.teclas{display:block}}
 
 /* instrucao por voz: folha cheia no celular, painel lateral no desktop */
 .folha.cheia{max-height:none;height:100%;border-radius:0}
@@ -317,12 +333,12 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="fila" onclick="ir('fila')">Fila<span class="selo" id="r-fila"></span></button>
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
-    <div class="pe"><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="#" onclick="sair();return false">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="#" onclick="sair();return false">sair</a></div>
   </nav>
 
   <div class="col">
     <header class="topo">
-      <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
+      <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><div class="sub saude" id="saude"></div><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
       <button class="ico" id="micTopo" aria-label="Falar uma instrução" onclick="abrirVoz()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
@@ -398,14 +414,16 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.2";
+const VERP="p4.3";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
 /* So as chaves que esta tela desenha. c13 e c13i entram no p2 para as 13 semanas e o "a cobrar".
    exp entra no p4.1: a tarefa vencida ou de hoje que o banco deixou no segundo plano sobe para Hoje,
-   pela mesma regra do index.html (bloco comum:hoje abaixo). */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp"];
+   pela mesma regra do index.html (bloco comum:hoje abaixo).
+   fresc, mo e eb entram no p4.3 para o selo de saude: ja estavam no snapshot (o index.html le as tres),
+   entao o selo nao pede mudanca no banco. */
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -431,7 +449,7 @@ function alternarRecolhe(b){
 /* comTeto que nunca rejeita: estouro e queda de rede voltam como {error}, que todo chamador ja trata */
 const comTetoR=(b,ms,rotulo)=>comTeto(b,ms,rotulo).catch(e=>({data:null,
   error:{message:ehTeto(e)?"sem resposta do banco em "+ms/1000+" s":(e&&e.message)||"falha de rede",teto:ehTeto(e)}}));
-const D={}; let INV=null, ARV=null, ABA="hoje", COL="semana", PEND=null, F=null;
+const D={}; let INV=null, ARV=null, ABA="hoje", COL="semana", PEND=null, F=null, IDADE=0;
 
 /* v71 · R7: texto do banco entra no HTML por esc() (texto e atributo entre aspas duplas), por escAttr()
    quando e argumento JS entre aspas simples dentro de onclick (esc ali deixa a aspa voltar como &#39;,
@@ -505,6 +523,7 @@ async function carregar(forcar){
   const falt=CHAVES.filter(k=>!(k in (data.dados||{})));
   if(falt.length)falha("Parte dos dados não chegou ("+falt.join(", ")+"). O que aparece está certo, mas incompleto.");
   const idade=+data.idade_s||0, quando=data.gerado_em?new Date(data.gerado_em):null;
+  IDADE=idade;
   const hh=quando?quando.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"?";
   const f=document.getElementById("fresco");
   f.textContent=idade>IDADE_MAX?"dados de "+hh+", há "+Math.round(idade/60)+" min. Toque em recarregar":"dados de "+hh;
@@ -599,8 +618,66 @@ function colunaDe(t){
 }
 const contar=c=>INV?INV.filter(t=>colunaDe(t)===c).length:0;
 
+/* ---------- p4.3: ha quanto tempo o card espera voce (Linear Triage) ----------
+   Medido na carga de 04/10/2026: a fila traz dias_parado = CURRENT_DATE - atualizado_em::date, em DIAS
+   inteiros; o timestamp atualizado_em nao sai na v_painel_fila. Se um dia sair, o selo passa a horas
+   sozinho. Sem nenhum dos dois o selo aparece mesmo assim, dizendo que nao ha medida: card sem selo
+   pareceria card novo. Tarefa da fila sem dias_parado usa o parado_dias do inventario. */
+function seloEspera(dias,desde,terceiro){
+  const quem=terceiro?"com outra pessoa":"esperando você";
+  const t=desde?Date.parse(desde):NaN;
+  if(!isNaN(t)){
+    const h=Math.max(0,(Date.now()-t)/36e5);
+    if(h<48) return {txt:quem+" há "+(h<1?"menos de 1 h":Math.floor(h)+" h"),w:false};
+    dias=Math.floor(h/24);
+  }
+  if(dias==null||dias===""||isNaN(+dias)) return {txt:quem+" (sem data de entrada)",w:false};
+  const d=Math.max(0,Math.floor(+dias));
+  return {txt:quem+(d===0?" desde hoje":" há "+d+" d"),w:d>=7};
+}
+function esperaFila(f){
+  let d=f.dias_parado;
+  if(d==null&&f.origem==="tarefa"){const t=invDe(f.ref); if(t)d=t.parado_dias;}
+  return seloEspera(d,f.atualizado_em,false);
+}
+const esperaInv=t=>seloEspera(t.parado_dias,t.atualizado_em,t.status==="aguardando_terceiro");
+
+/* ---------- p4.3: selo unico de saude (Statuspage) ----------
+   Junta o que a carga ja traz: idade do snapshot, frescor das metricas (fresc), rotinas atrasadas
+   (mo, v_painel_motor) e o backup-cerebro (mo para o ultimo ponto, eb para o orcamento de falha).
+   Medida ausente nao vira "ok": vira degradado, dizendo o que falta. */
+const BACKUP="backup-cerebro", RUIM_MO=new Set(["atrasada","nunca"]);
+function saude(){
+  const mot=[], det=[], fr=(D.fresc||[])[0], mo=D.mo, eb=D.eb;
+  if(IDADE>IDADE_MAX) mot.push("dados de "+Math.round(IDADE/60)+" min atrás");
+  if(fr&&fr.estado&&fr.estado!=="FRESCO") mot.push("métricas "+String(fr.estado).toLowerCase());
+  let ultimo=null;
+  if(!Array.isArray(mo)||!Array.isArray(eb)) mot.push("rotinas sem medida nesta carga");
+  else{
+    const atr=mo.filter(r=>RUIM_MO.has(r.estado)&&r.nome!==BACKUP);
+    if(atr.length){ mot.push(plural(atr.length,"rotina atrasada","rotinas atrasadas")); det.push("atrasadas: "+atr.map(r=>r.nome).join(", ")); }
+    const bm=mo.find(r=>r.nome===BACKUP), be=eb.find(r=>r.nome===BACKUP);
+    ultimo=bm&&bm.ultimo_ponto?bm.ultimo_ponto:null;
+    if(be&&(be.veredito_budget==="ESTOURADO"||(+be.falhas_7d||0)>(+be.orcamento_falhas_7d||0)))
+      mot.push("backup falhou "+(+be.falhas_7d||0)+"× em 7 d");
+    else if(bm&&RUIM_MO.has(bm.estado)) mot.push("backup atrasado");
+    else if(!bm&&!be) mot.push("backup sem medida");
+    if(bm&&bm.estado==="nova") det.push("backup novo: ainda sem a primeira execução esperada");
+  }
+  if(ultimo) det.push("último backup "+ddmm(ultimo)+" "+hhmm(ultimo));
+  return {ok:!mot.length, mot, det};
+}
+function renderSaude(){
+  const s=saude(), el=document.getElementById("saude"), rail=document.getElementById("saudeRail");
+  const txt=s.ok?"sistema ok":"sistema degradado: "+s.mot.join(" · ");
+  el.className="sub saude "+(s.ok?"ok":"w");
+  el.innerHTML=`<span>${esc(txt)}</span>`;
+  el.title=[txt].concat(s.det).join("\n");
+  if(rail){ rail.textContent=txt; rail.title=el.title; }
+}
+
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();}
 function renderHoje(){
   const rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=+(((D.cap||[])[0]||{}).minutos_dia)||120;
   const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0), semMin=mins.filter(m=>m==null).length;
@@ -615,16 +692,16 @@ function renderHoje(){
     foco.innerHTML=`<span class="eyebrow">Hoje está limpo</span><div class="tit">Nada pede você agora.</div><div class="porque">Aproveite para olhar os parados: Fila, coluna Decidir.</div><div class="acoes"><button class="sec" onclick="irColuna('decidir')">Ver os parados</button></div>`;
     document.getElementById("ordemBox").classList.add("hidden");
   }else{
-    const f=h[0], m=minDe(f);
+    const f=h[0], m=minDe(f), es=esperaFila(f);
     const pri=acaoPrincipal(acoesFila(f), "hoje");
     foco.innerHTML=`<span class="eyebrow">Próximo passo${m?" · "+m+" min":""}</span>
       <div class="tit l2">${esc(f.titulo_completo||f.titulo)}</div>
-      <div class="chips"><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
+      <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
       ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque l2">${esc(curto(ri.texto,160))}</div>`:"";})()}
       <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${escAttr(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",h.length<2);
-    document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f);
-      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
+    document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f), es=esperaFila(f);
+      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
   }
   const c=(D.cont||[])[0]||{}, cob=aCobrar();
   const at=[
@@ -666,8 +743,8 @@ function idadeTxt(t){
   return "até "+diaCurto(t.prazo);
 }
 function itemInv(t){
-  const p=+t.parado_dias||0, atras=t.status==="aguardando_terceiro"&&t.prazo&&t.prazo<somaDias(0);
-  return `<button class="item" onclick="abrirInv(${+t.id})"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
+  const p=+t.parado_dias||0, atras=t.status==="aguardando_terceiro"&&t.prazo&&t.prazo<somaDias(0), es=esperaInv(t);
+  return `<button class="item" onclick="abrirInv(${+t.id})"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
 }
 
 /* ---------- Caixa ---------- */
@@ -682,7 +759,7 @@ function renderCaixa(){
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
   document.getElementById("cobrarBox").innerHTML=`<h2>A receber com data passada</h2>`+(cob.length
-    ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span></div>`).join("")
+    ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span>${x.id!=null?`<button class="sec cobrar" onclick="cobrar('${escAttr(x.id)}')">Cobrar</button>`:""}</div>`).join("")
     :`<div class="vazio">Ninguém te deve com data passada.</div>`);
   const el=document.getElementById("alavancas");
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
@@ -756,30 +833,33 @@ function acaoPrincipal(ac,col){
   if(col==="decidir")return tem("repactuar")?{...tem("repactuar"),rot:"Manter com data"}:tem("arquivar");
   return ac.find(a=>CONCLUIR.has(a.verbo))||ac[0];
 }
-function abrirFila(i,verbo){
-  const f=hojeLista()[i]; if(!f)return;
+function abrirFila(i,verbo){ const f=hojeLista()[i]; if(f)abrirHoje(f,verbo); }
+function abrirHoje(f,verbo){
   const t=f.origem==="tarefa"?invDe(f.ref):null;
   abrirCard({origem:f.origem,ref:String(f.ref),titulo:f.titulo_completo||f.titulo,frente:f.frente,porque:f.porque_agora,
-    valor:f.valor_txt,rec:f.recomendacao,pronto:t&&t.criterio_pronto,peca:f,acoes:t?juntar(acoesFila(f),acoesInv(t)):acoesFila(f),col:"hoje",min:minDe(f)},verbo);
+    valor:f.valor_txt,rec:f.recomendacao,pronto:t&&t.criterio_pronto,peca:f,acoes:t?juntar(acoesFila(f),acoesInv(t)):acoesFila(f),col:"hoje",min:minDe(f),
+    espera:esperaFila(f),cobra:cobravel(f)},verbo);
 }
 function abrirInv(id){
   const t=invDe(id); if(!t)return;
   const f=(D.fila||[]).find(x=>x.origem==="tarefa"&&String(x.ref)===String(id));
   abrirCard({origem:"tarefa",ref:String(t.id),titulo:t.titulo||t.resumo,frente:t.frente,porque:f&&f.porque_agora,
-    valor:f&&f.valor_txt,rec:f&&f.recomendacao,pronto:t.criterio_pronto,peca:f,acoes:f?juntar(acoesFila(f),acoesInv(t)):acoesInv(t),col:colunaDe(t)||"semana",idade:idadeTxt(t),min:minutos()[String(t.id)]});
+    valor:f&&f.valor_txt,rec:f&&f.recomendacao,pronto:t.criterio_pronto,peca:f,acoes:f?juntar(acoesFila(f),acoesInv(t)):acoesInv(t),col:colunaDe(t)||"semana",idade:idadeTxt(t),min:minutos()[String(t.id)],espera:esperaInv(t)});
 }
 function abrirCard(c,verbo){
-  F=c;
+  F=c; c.t0=Date.now();
   const pri=acaoPrincipal(c.acoes,c.col), resto=c.acoes.filter(a=>!pri||a.verbo!==pri.verbo);
   const ri=recInfo(c.rec), rec=ri.texto, recRot=ri.data?(ri.velha?`Nota de ${ri.data}, há ${ri.dias} dias: pode estar vencida`:`Nota do executor de ${ri.data}`):"O executor recomenda";
   mostrarFolha(`<h3 id="folhaTit">${esc(c.titulo)}</h3>
-    <div class="chips"><span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}<span class="chip num">${c.origem==="tarefa"?"t":esc(c.origem)+" "}${esc(c.ref)}</span></div>
+    <div class="chips">${c.espera?`<span class="chip espera ${c.espera.w?"w":""}">${esc(c.espera.txt)}</span>`:""}<span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}<span class="chip num">${c.origem==="tarefa"?"t":esc(c.origem)+" "}${esc(c.ref)}</span></div>
     ${DESC_FONTE[c.origem]?`<div class="bloco" id="descBox"><span class="rot">Contexto</span><div id="desc"><p class="mut">carregando…</p></div></div>`:""}
     ${c.porque?`<div class="bloco"><span class="rot">Por que agora</span><p>${esc(c.porque)}</p></div>`:""}
     <div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>
     ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
     ${pecaHtml(c.peca)}
+    ${c.cobra?`<div class="bloco"><span class="rot w">Venceu em ${esc(ddmm(c.cobra.venc))} e não entrou</span><div class="acoes"><button class="pri" id="btCobrar" onclick="cobrar('${escAttr(c.ref)}')">Cobrar</button></div><span class="mut">Pede ao atendente um rascunho curto ao pagador. Nada é enviado sem você.</span></div>`:""}
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.map(a=>botaoAcao(a,"sec")).join("")}</div>`:`<div class="vazio">O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor.</div>`}
+    <div class="teclas">Teclado: <kbd>A</kbd> ${esc(pri?pri.rot:"ato principal")} · <kbd>S</kbd> nova data · <kbd>R</kbd> responder · <kbd>Esc</kbd> fechar</div>
     <div id="campo"></div>
     <div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
     <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul></div>
@@ -865,14 +945,111 @@ function toast(t,cls,comBotao,ms){
 }
 function agir(verbo,valor,rot){
   const c=F; if(!c)return;
+  medirAto(c,atoDe(c,verbo));
+  pendurar({origem:c.origem,ref:c.ref,verbo,valor},rot+" · "+(c.origem==="tarefa"?"t":"")+c.ref,c);
+}
+/* Todo ato da folha passa por aqui: grava o pendente anterior, fecha a folha, abre 6 s para desfazer e,
+   se o card veio de Hoje, abre o proximo (p4.3). p.inbox: texto que vai pela inbox() em vez do agir(). */
+function pendurar(p,rot,c){
   if(PEND)enviar();
   fecharFolha();
-  PEND={origem:c.origem,ref:c.ref,verbo,valor,t:setTimeout(enviar,6000)};
-  toast(rot+" · "+(c.origem==="tarefa"?"t":"")+c.ref,null,true);
+  PEND={...p,t:setTimeout(enviar,6000)};
+  toast(rot,null,true);
+  if(c)avancar(c);
+}
+/* ---------- p4.3: auto-advance (Superhuman) ----------
+   Antes: depois de cada ato a folha fechava e o Igor voltava a lista, achava o proximo e tocava de novo.
+   Agora o proximo card de Hoje abre na hora, sem esperar o banco nem recarregar; o card agido fica fora
+   da volta ate o desfazer ou a proxima carga mostrar o que o banco decidiu. */
+const FEITOS=new Set();
+function avancar(c){
+  if(!c||c.col!=="hoje")return null;
+  const k=c.origem+"|"+String(c.ref); FEITOS.add(k);
+  const l=hojeLista(), i=l.findIndex(x=>chaveIt(x)===k);
+  const ordem=i<0?l:l.slice(i+1).concat(l.slice(0,i));
+  const prox=ordem.find(x=>!FEITOS.has(chaveIt(x)));
+  if(prox)abrirHoje(prox);
+  return prox||null;
+}
+/* Tempo por decisao: o mesmo painel_medir_decisao do index.html (v67), com p_modo 'presidente'. O relogio
+   comeca quando a folha abre e para no ato. a: ato principal, s: nova data, r: responder. */
+function atoDe(c,verbo){
+  if(verbo==="repactuar")return "s";
+  if(verbo==="deliberar"||verbo==="__resposta")return "r";
+  const pri=acaoPrincipal(c.acoes,c.col);
+  return pri&&pri.verbo===verbo?"a":null;
+}
+function medirAto(c,k){
+  if(!c||!k||!c.t0)return null;
+  const a={p_origem:c.origem,p_ref:String(c.ref),p_ato:k,p_ms:Math.round(Math.max(0,Date.now()-c.t0)),p_modo:"presidente"};
+  c.t0=null;
+  try{ comTeto(sb.rpc("painel_medir_decisao",a),LIMITE_ACAO,"painel_medir_decisao").then(()=>{},()=>{}); }catch(e){}
+  return a;
+}
+/* ---------- p4.3: atalhos da folha ----------
+   A: ato principal · S: nova data · R: responder (deliberar; sem deliberar, pela inbox). Nunca dentro de
+   campo de texto, nunca com Ctrl/Cmd/Alt, e so com a folha de um card aberta (a de voz nao conta). */
+document.addEventListener("keydown",e=>{
+  if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey||e.repeat)return;
+  if(!F||document.getElementById("veu").classList.contains("hidden"))return;
+  const t=e.target; if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||"")))return;
+  const k=String(e.key||"").toLowerCase(); if(k!=="a"&&k!=="s"&&k!=="r")return;
+  e.preventDefault(); teclaFolha(k);
+});
+function teclaFolha(k){
+  if(!F)return;
+  const tem=v=>F.acoes.some(a=>a.verbo===v);
+  if(k==="a"){ const pri=acaoPrincipal(F.acoes,F.col); if(pri)escolher(pri.verbo); else toast("Este card não tem ato principal.","bad",false,2500); }
+  else if(k==="s"){ if(tem("repactuar"))escolher("repactuar"); else toast("Este card não aceita nova data.","bad",false,2500); }
+  else if(k==="r"){ if(tem("deliberar"))escolher("deliberar"); else responder(); }
+}
+/* responder sem o verbo deliberar: o texto vai pela inbox(), com o card no comeco para o atendente achar */
+function responder(){
+  const campo=document.getElementById("campo"); if(!F||!campo)return;
+  campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Responder ao atendente sobre este card</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmarResposta()">Enviar resposta</button></div>`;
+  document.getElementById("cv").focus();
+}
+function confirmarResposta(){
+  const c=F, cv=document.getElementById("cv"), v=cv?cv.value.trim():""; if(!c)return;
+  if(v.length<3){toast("Escreva a resposta antes de enviar.","bad",false,3000);if(cv)cv.focus();return;}
+  medirAto(c,atoDe(c,"__resposta"));
+  pendurar({inbox:"[resposta "+c.origem+" "+c.ref+"] "+v,origem:c.origem,ref:c.ref},"Resposta · "+(c.origem==="tarefa"?"t":c.origem+" ")+c.ref,c);
+}
+/* ---------- p4.3: Cobrar recebivel vencido (Mercury/Stripe) ----------
+   Recebivel: fila de origem fluxo, natureza receber (c13i, mesmo id do fluxo_caixa) e data_ref antes de
+   hoje. Um toque pede pela inbox() um RASCUNHO curto ao pagador; o painel nao envia nada a ninguem.
+   O c13i so tem a parte do Igor (valor_igor), nao o bruto da nota: o texto ao pagador nao cita valor,
+   e o pedido manda o atendente conferir o bruto no lancamento. */
+const recebivel=ref=>(D.c13i||[]).find(y=>String(y.id)===String(ref))||null;
+function cobravel(f){
+  if(!f||f.origem!=="fluxo")return null;
+  const x=recebivel(f.ref), nat=f.natureza||(x&&x.natureza);
+  const venc=String(f.data_ref||(x&&x.data_venc)||"").slice(0,10);
+  if(nat!=="receber"||!/^\d{4}-\d{2}-\d{2}$/.test(venc)||venc>=somaDias(0))return null;
+  return {ref:String(f.ref),venc};
+}
+function textoCobranca(ref){
+  const x=recebivel(ref), f=[...(D.fila||[]),...(D.exp||[])].find(y=>y.origem==="fluxo"&&String(y.ref)===String(ref));
+  const desc=curto(String((x&&x.descricao)||(f&&(f.titulo_completo||f.titulo))||"recebível sem descrição").replace(/\s+/g," "),120);
+  const venc=ddmm((f&&f.data_ref)||(x&&x.data_venc));
+  return `[cobrar] Rascunhe e NÃO envie: cobrança curta ao pagador do fluxo ${ref} (${desc}), vencido em ${venc}.`+
+    (x&&x.valor_igor!=null?` A parte do Igor é ${rs(x.valor_igor)}; confira o valor bruto no lançamento antes de citar valor.`:` Confira o valor no lançamento antes de citar valor.`)+
+    ` Sugestão: "Olá! Consta em aberto ${desc}, com vencimento em ${venc}. Pode me confirmar a previsão de pagamento? Obrigado, Igor."`;
+}
+function cobrar(ref){
+  const c=F&&F.origem==="fluxo"&&String(F.ref)===String(ref)?F:null;
+  pendurar({inbox:textoCobranca(ref),origem:"fluxo",ref:String(ref)},"Pedir rascunho de cobrança · fluxo "+ref,c);
 }
 function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
+  if(p.origem!=null)FEITOS.delete(p.origem+"|"+String(p.ref));
   if(p.voz){abrirVoz(p.voz);toast("Desfeito. O texto voltou para você corrigir.",null,false,3000);return;}
   toast("Desfeito. Nada foi gravado.",null,false,2600); }
+/* p4.3: com o auto-advance, um ato novo costuma estar pendente quando o anterior volta do banco. O
+   resultado do anterior nao pode cobrir o toast de desfazer do novo: sucesso calado, erro espera a vez. */
+function resultado(t,cls,ms){
+  if(PEND){ if(cls==="bad")setTimeout(()=>resultado(t,cls,ms),6500); return; }
+  toast(t,cls,false,ms);
+}
 /* estouro nao e recusa: o pedido pode ter chegado ao banco, so a resposta nao voltou */
 const erroTxt=e=>"Erro: "+e.message+(e.teto?". Nada foi confirmado, e pode ter gravado: recarregue antes de repetir.":"");
 async function enviar(){
@@ -881,14 +1058,21 @@ async function enviar(){
   if(p.voz){
     const {data,error}=await comTetoR(sb.rpc("inbox",{p_texto:VOZ_PREFIXO+p.voz}),LIMITE_ACAO,"inbox");
     const txt=error?erroTxt(error):String(data||"");
-    if(error||txt.startsWith("RECUSADO")){ VOZ.rascunho=p.voz; toast(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220)+" O texto ficou guardado no microfone.","bad",false,9000); return; }
-    VOZ.rascunho=""; toast(/^ANOTADO/.test(txt)?await recibo("Anotado."):txt.slice(0,160),null,false,6000);
+    if(error||txt.startsWith("RECUSADO")){ VOZ.rascunho=p.voz; resultado(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220)+" O texto ficou guardado no microfone.","bad",9000); return; }
+    VOZ.rascunho=""; resultado(/^ANOTADO/.test(txt)?await recibo("Anotado."):txt.slice(0,160),null,6000);
+    return;
+  }
+  if(p.inbox){
+    const {data,error}=await comTetoR(sb.rpc("inbox",{p_texto:p.inbox}),LIMITE_ACAO,"inbox");
+    const txt=error?erroTxt(error):String(data||"");
+    if(error||txt.startsWith("RECUSADO")){ resultado(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
+    resultado(/^ANOTADO/.test(txt)?await recibo(/^\[cobrar\]/.test(p.inbox)?"Rascunho pedido; nada vai ao pagador sem você.":"Anotado."):txt.slice(0,160),null,6000);
     return;
   }
   const {data,error}=await comTetoR(sb.rpc("agir",{p_origem:p.origem,p_ref:String(p.ref),p_verbo:p.verbo,p_valor:p.valor}),LIMITE_ACAO,"agir");
   const txt=error?erroTxt(error):(typeof data==="string"?data:"feito");
-  if(error||String(txt).startsWith("RECUSADO")){ toast(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",false,9000); return; }
-  toast(p.verbo==="deliberar"?await recibo("Gravado."):"Gravado.",null,false,p.verbo==="deliberar"?6000:2500);
+  if(error||String(txt).startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); resultado(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
+  resultado(p.verbo==="deliberar"?await recibo("Gravado."):"Gravado.",null,p.verbo==="deliberar"?6000:2500);
   await carregar(true);
 }
 
