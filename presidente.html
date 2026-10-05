@@ -37,7 +37,9 @@
    sem enviar nada ao pagador (Mercury/Stripe).
    p4.4 (05/10/2026): quinto destino, Mesa. O que saiu hoje, o estoque de pecas paradas esperando o Igor,
    os relatorios em PDF por link assinado e a baixa de envio com canal e prova (LC-14). Modulo replicavel
-   entre os marcadores modulo:mesa e fim modulo:mesa, estilo com prefixo ms-. Ver docs/mesa.md. */
+   entre os marcadores modulo:mesa e fim modulo:mesa, estilo com prefixo ms-. Ver docs/mesa.md.
+   p4.6 (05/10/2026): link "segurança" no rodape do trilho e no rodape da coluna (o trilho some abaixo de
+   900 px) para seguranca.html, onde o Igor ativa o segundo fator (TOTP) da conta. */
 /* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH, o mesmo do index.html (613f498): as duas telas sao um
    produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
    Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
@@ -382,7 +384,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" onclick="ir('mesa')">Mesa<span class="selo" id="r-mesa"></span></button>
-    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="#" onclick="sair();return false">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="seguranca.html">segurança</a><br><a href="#" onclick="sair();return false">sair</a></div>
   </nav>
 
   <div class="col">
@@ -450,7 +452,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
         <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
       </section>
 
-      <div class="rodape"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema</div>
+      <div class="rodape"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a></div>
     </main>
   </div>
 
@@ -468,7 +470,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.5";
+const VERP="p4.6";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
