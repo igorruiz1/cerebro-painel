@@ -12,7 +12,8 @@
      6. instrucao por voz (p3) so chega a inbox() depois de revisada e enviada, e a API do aparelho
         recebe o audio e devolve texto para revisar, sem nada dela no fonte;
      7. resposta por evento (p4): o recibo diz o que o banco mediu do despertador, a resposta chega pelo
-        Realtime sem recarregar, e o fio do card para em 3 trocas em 7 dias.
+        Realtime sem recarregar, e o fio do card para em 3 trocas em 7 dias;
+     8. aba Mesa (p4.4): estoque, relatorios por link assinado e baixa de envio que sem canal nao grava.
    O cliente e dublado como no fumaca.spec.js: o defeito que se persegue vive na TELA. */
 const {test, expect} = require('@playwright/test');
 const path = require('path');
@@ -44,15 +45,31 @@ const DUBLE = `(()=>{
     {id:7,frente:'20-conenge',dono:'claude',status:'pendente',prazo:hoje,parado_dias:0,titulo:'Item do executor',acoes:[]}];
   const arv=[{nivel:0,no:'CAIXA'},{nivel:1,no:'11-renda-alt',rotulo:'Renda Alternativa',margem_30d:2000,margem_total:2000},
     {nivel:1,no:'20-conenge',rotulo:'Conenge',margem_30d:1000,margem_total:3000}];
-  window.__rpc=[];
+  /* p4.4: retorno de mesa_painel com tres pecas (uma nova), uma saida, dois relatorios e a regua da hora.
+     window.__mesa troca o retorno inteiro; window.__baixa troca a resposta de mesa_baixa_painel. */
+  const mesa={hoje,em_jogo:15400,horas_mes:42.5,
+    estoque:[{id:101,frente:'20-conenge',titulo:'Medicao 7 de exemplo',ato:'aprovar',dest:'Fiscal de exemplo',canal:'whatsapp',rs:12000,dias:9,motivo:'Falta a sua aprovacao para protocolar.',copia:null,novo:false},
+      {id:102,frente:'11-renda-alt',titulo:'Laudo de exemplo',ato:'enviar',dest:'Cliente de exemplo',canal:'gmail',rs:3400,dias:2,motivo:'Pronto, falta sair.',copia:null,novo:true},
+      {id:103,frente:null,titulo:'Contrato de exemplo',ato:'assinar',dest:null,canal:null,rs:null,dias:0,motivo:null,copia:null,novo:false}],
+    producao_hoje:{A_AGIR:3,B_FEITO:1,C_SISTEMA:2,D_DEMAIS:0,FORA:0},
+    saiu_hoje:[{id:90,titulo:'Oficio de exemplo',dest:'Fiscal de exemplo',prova:'documental'}],
+    valor_hora:{recebido:5000,horas:42.5,por_hora:117.65,piso:63.03,teto:480},
+    relatorios:[{tipo:'dia',alvo:hoje,versao:'02',titulo:'Fechamento do dia de exemplo v02',path:'dia/fechamento_v02.pdf'},
+      {tipo:'estoque',alvo:hoje,versao:'01',titulo:'Estoque parado de exemplo v01',path:'estoque/estoque_v01.pdf'}]};
+  window.__rpc=[]; window.__storage=[];
   /* window.__pendura: nomes de RPC ou view que nunca respondem. window.__dados: chaves que trocam as do duble. */
   const pendura=n=>(window.__pendura||[]).includes(n);
   const q=(r,v)=>{const p=pendura(v)?new Promise(()=>{}):Promise.resolve({data:r,error:null});p.lte=()=>p;p.eq=()=>p;p.order=()=>p;p.limit=()=>p;return p;};
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
+    /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
+    storage:{from:b=>({
+      createSignedUrl:(p,s)=>{window.__storage.push({b,op:'createSignedUrl',p,s});
+        return Promise.resolve(window.__storageErro?{data:null,error:{message:'objeto nao encontrado'}}:{data:{signedUrl:'about:blank'},error:null});},
+      upload:(p,f)=>{window.__storage.push({b,op:'upload',p,tipo:f&&f.type});return Promise.resolve({data:{path:p},error:null});}})},
     auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),
           onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
           signInWithOtp:()=>Promise.resolve({error:null})}})};
@@ -79,14 +96,14 @@ test('todo destino abre um painel que existe, e todo painel tem destino', async 
   });
   expect(r.semPainel,'destino sem painel').toEqual([]);
   expect(r.semDestino,'painel sem destino').toEqual([]);
-  expect(r.n,'quatro destinos planos').toBe(4);
+  expect(r.n,'cinco destinos planos').toBe(5);
 });
 
 for (const largura of [360, 390, 1280]) {
   test(`a ${largura}px: nenhum controle abaixo de 44 px e nenhuma rolagem horizontal`, async ({page})=>{
     await page.setViewportSize({width:largura, height:820});
     const erros = await abrir(page);
-    for (const aba of ['hoje','fila','caixa','frentes']) {
+    for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
       await page.evaluate(a=>ir(a), aba);
       const m = await page.evaluate(()=>{
         const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
@@ -112,6 +129,17 @@ for (const largura of [360, 390, 1280]) {
     });
     expect(v.r, 'controles pequenos na tela de voz').toEqual([]);
     expect(v.SW, 'rolagem horizontal com a tela de voz aberta').toBe(v.W);
+    /* p4.4: folha da peca da Mesa aberta, com canal escolhido */
+    await page.evaluate(()=>{fecharFolha();ir('mesa');});
+    await page.waitForSelector('#ms-raiz .ms-item');
+    await page.evaluate(()=>{msAbrir(0);msEscolherCanal('email_corporativo');});
+    const ms = await page.evaluate(()=>{
+      const r=[...document.querySelectorAll('#folha button,#folha input,#folha textarea')].filter(e=>{const b=e.getBoundingClientRect();return b.width>0&&(b.height<44||b.width<44);}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim());
+      return {r, n:document.querySelectorAll('#folha .ms-canal').length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+    });
+    expect(ms.n, 'a folha da peca tem os seis canais').toBe(6);
+    expect(ms.r, 'controles pequenos na folha da peca').toEqual([]);
+    expect(ms.SW, 'rolagem horizontal com a folha da peca aberta').toBe(ms.W);
     expect(erros,'erros de script').toEqual([]);
   });
 }
@@ -879,5 +907,131 @@ test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem env
   await page.click('#cobrarBox .cobrar');
   await page.evaluate(()=>enviar());
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').length)).toBe(2);
+  expect(erros).toEqual([]);
+});
+
+/* ---------- p4.4 (05/10/2026): aba Mesa ----------
+   O banco ja guarda o estoque de pecas paradas esperando o Igor (mesa_painel) e aceita a baixa de envio
+   (mesa_baixa_painel). A tela cobra tres coisas: codigo do banco nunca aparece cru (ato, canal, gaveta,
+   tipo de prova, slug de frente), baixa sem canal nao vai ao banco (LC-14) e o relatorio abre por link
+   assinado do bucket mesa, com erro virando aviso e nunca tela em branco. */
+const CRUS_MESA = ['aprovar','enviar','assinar','A_AGIR','B_FEITO','C_SISTEMA','whatsapp','gmail','email_corporativo','em_maos','documental','declaratoria','20-conenge','11-renda-alt','null','undefined','NaN'];
+const abrirMesa = async page=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('mesa'));
+  await page.waitForSelector('#ms-raiz .ms-item');
+  return erros;
+};
+
+test('Mesa: a aba mostra as 3 pecas, o dia, a regua da hora e os 2 relatorios, sem codigo cru do banco', async ({page})=>{
+  await page.setViewportSize({width:360, height:820});
+  const erros = await abrirMesa(page);
+  await expect(page.locator('#ms-raiz .ms-item')).toHaveCount(3);
+  await expect(page.locator('#ms-raiz .ms-rel')).toHaveCount(2);
+  await expect(page.locator('#n-mesa'), 'selo da nav = pecas no estoque').toHaveText('3');
+  await expect(page.locator('#tituloAba')).toHaveText('Mesa');
+  /* toLocaleString poe espaco fixo (U+00A0) depois do R$: o teste compara com espaco comum */
+  const txt = (await page.locator('#p-mesa').innerText()).replace(/\u00a0/g,' ');
+  expect(txt).toContain('3 peças esperam você');
+  expect(txt).toContain('1 nova hoje');
+  expect(txt).toContain('Neste mês: 42,5 h');
+  expect(txt).toContain('piso R$ 63,03');
+  expect(txt).toContain('teto R$ 480,00');
+  for (const s of ['Aprovação para Fiscal de exemplo','Envio para Cliente de exemplo','Assinatura','sem valor','parada há 9 d','parada desde hoje','Saiu hoje','com comprovante','Fechamento do dia de exemplo v02'])
+    expect(txt, 'mostra '+s).toContain(s);
+  for (const cru of CRUS_MESA) expect(txt, 'codigo cru na aba: '+cru).not.toContain(cru);
+  /* a folha da peca tambem fala lingua de gente */
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await expect(page.locator('#folhaTit')).toHaveText('Medicao 7 de exemplo');
+  await expect(page.locator('#msDest'), 'para quem vem preenchido').toHaveValue('Fiscal de exemplo');
+  const folha = (await page.locator('#folha').innerText()).replace(/\u00a0/g,' ');
+  expect(folha).toContain('Falta a sua aprovacao para protocolar.');
+  expect(folha).toContain('Previsto por WhatsApp');
+  for (const cru of CRUS_MESA) expect(folha, 'codigo cru na folha: '+cru).not.toContain(cru);
+  /* fonte mais larga (Linux da CI): o desenho encolhe o texto, nao a pagina */
+  const w = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; const a={W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+    fecharFolha(); return [a,{W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}]; });
+  for (const m of w) expect(m.SW, 'rolagem horizontal com letra larga').toBe(m.W);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: "Dar baixa" sem canal nao chama o banco e diz o que falta', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#msBt');
+  await expect(page.locator('#msAviso')).toContainText('Escolha por onde a peça saiu');
+  await expect(page.locator('#veu'), 'a folha continua aberta').toBeVisible();
+  await page.waitForTimeout(150);
+  const r = await page.evaluate(()=>({baixa:window.__rpc.filter(c=>c.n==='mesa_baixa_painel'), up:window.__storage.filter(c=>c.op==='upload')}));
+  expect(r.baixa, 'sem canal nao grava').toEqual([]);
+  expect(r.up, 'sem canal nem o print sobe').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: com canal, a baixa chama mesa_baixa_painel com a peca e o canal certos; com print, o arquivo sobe antes', async ({page})=>{
+  const erros = await abrirMesa(page);
+  const baixas = ()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_baixa_painel').map(c=>c.a));
+  const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length);
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.click('#folha [data-canal="gmail"]');
+  await expect(page.locator('#folha [data-canal="gmail"]')).toHaveAttribute('aria-pressed','true');
+  await page.click('#msBt');
+  await expect.poll(baixas).toEqual([{p_doc:102,p_canal:'gmail',p_dest:'Cliente de exemplo',p_prova_path:null}]);
+  await expect(page.locator('#veu'), 'baixa gravada fecha a folha').toBeHidden();
+  await expect(page.locator('#tmsg')).toContainText('Baixa gravada: saiu por E-mail para Cliente de exemplo');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length), 'a aba recarrega').toBeGreaterThan(cargas0);
+  /* com print: sobe para mesa-provas em AAAA-MM/<peca>_<hora>.<ext> e o banco recebe o mesmo caminho */
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#folha [data-canal="whatsapp"]');
+  await page.setInputFiles('#msArq', {name:'print.PNG', mimeType:'image/png', buffer:Buffer.from('png')});
+  await page.click('#msBt');
+  await expect.poll(async()=>(await baixas()).length).toBe(2);
+  const b = (await baixas())[1], up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
+  expect(b).toMatchObject({p_doc:101,p_canal:'whatsapp',p_dest:'Fiscal de exemplo'});
+  expect(b.p_prova_path).toMatch(/^\d{4}-\d{2}\/101_\d+\.png$/);
+  expect(up).toEqual([{b:'mesa-provas',op:'upload',p:b.p_prova_path,tipo:'image/png'}]);
+  /* recusa do banco vira aviso com o texto, e a folha fica para corrigir */
+  await page.evaluate(()=>{ window.__baixa='RECUSADO: doc 103 nao esta esperando voce'; });
+  await page.click('#ms-raiz .ms-item >> nth=2');
+  await expect(page.locator('#msDest')).toHaveValue('');
+  await page.click('#folha [data-canal="em_maos"]');
+  await page.click('#msBt');
+  await expect(page.locator('#msAviso'), 'sem destinatario nao grava').toContainText('para quem');
+  await page.fill('#msDest','Cartorio de exemplo');
+  await page.click('#msBt');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#tmsg')).toContainText('Não gravou: doc 103 nao esta esperando voce');
+  await expect(page.locator('#veu')).toBeVisible();
+  await expect(page.locator('#msBt')).toBeEnabled();
+  expect((await baixas()).length).toBe(3);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: tocar num relatorio pede o link assinado ao bucket mesa e abre; erro vira aviso', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.evaluate(()=>{ window.__abas=[]; window.open=()=>{ const w={closed:false,location:{href:''},close(){this.closed=true;}}; window.__abas.push(w); return w; }; });
+  await page.click('#ms-raiz .ms-rel >> nth=0');
+  await expect.poll(()=>page.evaluate(()=>window.__abas.map(w=>w.location.href))).toEqual(['about:blank']);
+  expect(await page.evaluate(()=>window.__storage)).toEqual([{b:'mesa',op:'createSignedUrl',p:'dia/fechamento_v02.pdf',s:300}]);
+  await expect(page.locator('#tmsg')).toContainText('Relatório aberto');
+  await page.evaluate(()=>{ window.__storageErro=true; });
+  await page.click('#ms-raiz .ms-rel >> nth=1');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#tmsg')).toContainText('Não consegui abrir o relatório: objeto nao encontrado');
+  expect(await page.evaluate(()=>window.__abas[1].closed), 'a aba vazia fecha').toBe(true);
+  await expect(page.locator('#ms-raiz .ms-rel'), 'a lista continua na tela').toHaveCount(2);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: leitura que falha se declara na aba, sem tela em branco', async ({page})=>{
+  await page.addInitScript(()=>{ window.__pendura=['mesa_painel']; });
+  const erros = await abrir(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_RECARGA);
+  /* a carga da partida ja pendurou com o relogio de verdade: solta ela e abre a aba sob o relogio falso */
+  await page.evaluate(()=>{ MS.carga=null; ir('mesa'); });
+  await expect(page.locator('#ms-raiz')).toContainText('carregando');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#ms-raiz .aviso')).toContainText('Não consegui ler a mesa: sem resposta do banco');
   expect(erros).toEqual([]);
 });
