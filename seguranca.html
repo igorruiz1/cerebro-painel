@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Mesma CSP do presidente.html, byte a byte (testes/seguranca.spec.js confere). O QR do segundo fator
+     chega como data: URL de SVG e entra por img-src data:. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta name="theme-color" content="#0B1020">
+<meta name="referrer" content="no-referrer">
+<title>Segurança · Dabli Tech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap">
+<style>
+/* SEGURANCA DA CONTA · s1 (05/10/2026)
+   Pagina autonoma para ativar o segundo fator (TOTP) da conta do painel. Usa a sessao que o
+   presidente.html ja guardou neste aparelho (mesma origem, mesmo armazenamento do supabase-js).
+   O segredo do TOTP vive so na tela enquanto a ativacao corre: nao vai para console, banco, log
+   nem armazenamento do navegador, e some da tela quando o codigo confere.
+   Visual e tokens copiados do presidente.html (design system Dabli Tech, v71). */
+:root{
+ --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
+ --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
+ --bg:var(--dt-navy); --sf:#0F1629; --card:#121A2F; --line:#2C3A5A; --line2:#1F2A44; --chip:#1E2A47;
+ --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate);
+ --acc:var(--dt-blue); --acc-a:47,128,255; --link:#7AAEFF;
+ --accInk:var(--dt-navy); --warn:#ffb547; --bad:#ff8a8f; --ok:#6ee7a8;
+ --tap:48px;
+ --font:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+a{color:var(--link)}
+.hidden{display:none!important}
+.mut{color:var(--mut);font-size:14px}
+
+/* login: o mesmo do presidente.html */
+.login{max-width:380px;margin:12vh auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
+.marca-login{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;text-align:center}
+.marca-login h1{margin:0}
+.marca-login .marca .dt{font-size:30px}
+.marca-login .slogan{font-size:12.5px;color:var(--mut);letter-spacing:.01em}
+.marca-login .slogan em{font-style:normal;font-weight:600}
+.marca-login .slogan .az{color:var(--dt-blue)}
+.marca-login .slogan .vi{color:var(--dt-violet)}
+.marca-login .prodl{margin-top:14px;font-size:11px;letter-spacing:3.4px;font-weight:600;color:var(--ink2);padding-top:12px;position:relative}
+.marca-login .prodl::before{content:"";position:absolute;top:0;left:50%;width:56px;height:2px;margin-left:-28px;border-radius:2px;background:var(--dt-grad)}
+.login .pri{background:var(--dt-grad);color:#fff}
+.login label{font-size:14px;color:var(--mut)}
+.login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;min-width:0}
+.msg{min-height:22px;font-size:14px;color:var(--warn);overflow-wrap:anywhere}
+.msg.ok{color:var(--ok)}
+
+/* marca e topo */
+.marca{display:inline-flex;align-items:baseline;gap:9px;color:var(--ink);max-width:100%;overflow:hidden}
+.marca .dt{font-size:16px;line-height:1;white-space:nowrap;letter-spacing:-.01em}
+.marca .dt b{font-weight:700}
+.marca .dt span{font-weight:300}
+.marca .prod{font-size:10.5px;letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;padding-left:9px;border-left:1px solid var(--line2);white-space:nowrap;line-height:1.2}
+.topo{position:sticky;top:0;z-index:5;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);
+  display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;padding-top:max(8px,env(safe-area-inset-top))}
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--dt-grad);opacity:.55;pointer-events:none}
+.topo .tt{flex:1;min-width:0}
+.topo .marca{display:flex;margin-bottom:3px}
+.topo .marca .dt{font-size:14px}
+.topo .marca .prod{font-size:9.5px;letter-spacing:2.2px}
+.topo h1{margin:0;font-size:20px;font-weight:700}
+.topo .sub{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ico{width:var(--tap);height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-width:560px;width:100%;margin:0 auto}
+.cartao{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cartao h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
+.cartao p{margin:0;overflow-wrap:anywhere}
+.estado{font-size:18px;line-height:1.4}
+.estado.ok{color:var(--ok)}
+.aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;overflow-wrap:anywhere}
+.pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:15px;padding:0 18px}
+.sec{min-height:var(--tap);border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px;font-size:15px;
+  display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
+.pri:disabled,.sec:disabled{opacity:.5;cursor:not-allowed}
+.passos{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;color:var(--ink2)}
+/* o QR vem em SVG sem garantia de fundo: fundo branco e margem para a camera ler sobre o navy */
+.qr{align-self:center;width:220px;max-width:100%;height:auto;aspect-ratio:1;background:#fff;border-radius:12px;padding:10px}
+.segredo{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.segredo code{flex:1 1 180px;min-width:0;font-family:var(--mono);font-size:15px;letter-spacing:.06em;background:var(--bg);border:1px solid var(--line2);
+  border-radius:12px;padding:12px;overflow-wrap:anywhere;word-break:break-all;user-select:all}
+.segredo .sec{flex:0 0 auto;min-width:96px}
+.campo{display:flex;flex-direction:column;gap:8px}
+.campo label{font-size:14px;color:var(--mut)}
+.campo input{height:56px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 14px;min-width:0;
+  font-family:var(--mono);font-size:24px;letter-spacing:.3em;text-align:center}
+.campo input:focus{border-color:var(--acc)}
+.volta{display:flex;width:100%}
+</style>
+</head>
+<body>
+
+<div id="login" class="login hidden">
+  <div class="marca-login"><h1 class="marca"><span class="dt"><b>Dabli</b> <span>Tech</span></span></h1>
+    <div class="slogan">Sistemas <em class="az">simples</em> para negócios <em class="vi">reais</em>.</div>
+    <div class="prodl">SEGURANÇA</div></div>
+  <label for="em">E-mail</label>
+  <input id="em" type="email" autocomplete="username" inputmode="email">
+  <label for="pw">Senha</label>
+  <input id="pw" type="password" autocomplete="current-password">
+  <button class="pri" onclick="entrarSenha()">Entrar</button>
+  <button class="sec" onclick="pedirCodigo()">Receber código por e-mail</button>
+  <div id="codigoBox" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+    <label for="cod">Código recebido</label>
+    <input id="cod" inputmode="numeric" autocomplete="one-time-code">
+    <button class="pri" onclick="entrarCodigo()">Confirmar código</button>
+  </div>
+  <div id="lmsg" class="msg" role="status"></div>
+  <a class="sec" href="presidente.html">Entrar pelo painel</a>
+</div>
+
+<div id="app" class="hidden">
+  <header class="topo">
+    <div class="tt"><div class="marca" title="Segurança · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Segurança</span></div>
+      <h1>Segurança da conta</h1><div class="sub" id="quem"></div></div>
+    <a class="ico" href="presidente.html" aria-label="Voltar ao painel">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </a>
+  </header>
+
+  <main>
+    <div id="falha" class="aviso hidden" role="alert"></div>
+
+    <section class="cartao" aria-labelledby="tEstado">
+      <h2 id="tEstado">Segundo fator</h2>
+      <p class="estado" id="estado" aria-live="polite">carregando…</p>
+      <p class="mut" id="nivel"></p>
+    </section>
+
+    <section class="cartao hidden" id="ativarBox" aria-label="Ativar segundo fator">
+      <p>Com o segundo fator, entrar pede a senha e mais um código de 6 números. O código muda a cada 30 segundos no app do seu celular.</p>
+      <button class="pri" id="btAtivar" onclick="ativar()">Ativar segundo fator</button>
+    </section>
+
+    <section class="cartao hidden" id="metadeBox" aria-label="Ativação pela metade">
+      <p>Uma ativação ficou pela metade. Recomece para gerar um QR novo.</p>
+      <button class="pri" id="btRecomecar" onclick="recomecar()">Recomeçar</button>
+    </section>
+
+    <section class="cartao hidden" id="qrBox" aria-label="Ler o QR">
+      <ol class="passos">
+        <li>Abra o Google Authenticator ou o Microsoft Authenticator.</li>
+        <li>Toque em adicionar.</li>
+        <li>Leia o QR abaixo.</li>
+      </ol>
+      <img id="qr" class="qr" alt="QR do segundo fator para o app autenticador">
+      <p class="mut">Sem câmera? Digite este código no app:</p>
+      <div class="segredo"><code id="segredo"></code><button class="sec" id="btCopiar" onclick="copiar()">Copiar</button></div>
+      <div class="campo">
+        <label for="cod6">Código de 6 números que o app mostra</label>
+        <input id="cod6" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" oninput="soNumeros(this)" onkeydown="if(event.key==='Enter')confirmar()">
+      </div>
+      <button class="pri" id="btConfirmar" onclick="confirmar()">Confirmar</button>
+      <div id="qmsg" class="msg" role="status"></div>
+    </section>
+
+    <section class="cartao hidden" id="subirBox" aria-label="Confirmar com o código do app">
+      <p>Esta sessão entrou sem o código do app. Digite o código para confirmar que é você.</p>
+      <div class="campo">
+        <label for="codSobe">Código de 6 números que o app mostra</label>
+        <input id="codSobe" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" oninput="soNumeros(this)" onkeydown="if(event.key==='Enter')subirNivel()">
+      </div>
+      <button class="pri" id="btSubir" onclick="subirNivel()">Confirmar código</button>
+      <div id="smsg" class="msg" role="status"></div>
+    </section>
+
+    <section class="cartao hidden" id="prontoBox" aria-live="polite">
+      <p class="estado ok">Pronto. Seu login agora pede o código do app.</p>
+    </section>
+
+    <a class="sec volta" href="presidente.html">Voltar ao painel</a>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script>
+const VERS="s1";
+const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
+const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
+const sb=supabase.createClient(URL_,KEY_);
+const $=id=>document.getElementById(id);
+const LIMITE=15000;
+/* toda ida ao Auth tem teto: chamada que nao volta vira {error} e a tela diz, nunca fica em "carregando" */
+function teto(p){
+  let t; const estouro=new Promise(r=>{t=setTimeout(()=>r({data:null,error:{message:"sem resposta em "+LIMITE/1000+" s"}}),LIMITE);});
+  return Promise.race([Promise.resolve(p).catch(e=>({data:null,error:{message:(e&&e.message)||"falha de rede"}})),estouro]).finally(()=>clearTimeout(t));
+}
+const mostra=(id,sim)=>$(id).classList.toggle("hidden",!sim);
+function falha(t){ $("falha").textContent=t||""; mostra("falha",!!t); }
+const ddmm=s=>{const d=new Date(s); return isNaN(d)?"":String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");};
+function soNumeros(el){ const v=el.value.replace(/\D/g,"").slice(0,6); if(v!==el.value)el.value=v; }
+function ocupado(id,sim){ const b=$(id); if(b)b.disabled=!!sim; }
+
+/* ---------- login: o mesmo do presidente.html, so conta que ja existe ---------- */
+const lm=t=>$("lmsg").textContent=t;
+async function entrarSenha(){
+  const e=$("em").value.trim(), p=$("pw").value;
+  if(!e||!p){lm("Preencha e-mail e senha.");return;}
+  const {error}=await teto(sb.auth.signInWithPassword({email:e,password:p}));
+  if(error)lm(/Invalid login/i.test(error.message)?"E-mail ou senha não conferem.":error.message);
+}
+async function pedirCodigo(){
+  const e=$("em").value.trim(); if(!e){lm("Preencha o e-mail.");return;}
+  const {error}=await teto(sb.auth.signInWithOtp({email:e,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}}));
+  if(error){lm(error.message);return;}
+  $("codigoBox").classList.remove("hidden");
+  lm("Se a conta existir, o código chega no e-mail.");
+}
+async function entrarCodigo(){
+  const e=$("em").value.trim(), c=$("cod").value.trim();
+  const {error}=await teto(sb.auth.verifyOtp({email:e,token:c,type:"email"}));
+  if(error)lm(error.message);
+}
+
+/* ---------- estado do segundo fator ---------- */
+/* ENR guarda o fator em ativacao (id e segredo) so na memoria desta aba. Nunca vai para console,
+   localStorage, banco ou log; zera quando o codigo confere. */
+let ENR=null, PENDENTE=null, VERIFICADO=null;
+async function lerEstado(){
+  falha("");
+  const [f,a]=await Promise.all([teto(sb.auth.mfa.listFactors()),teto(sb.auth.mfa.getAuthenticatorAssuranceLevel())]);
+  if(f.error){ $("estado").textContent="Não consegui ler seus fatores."; falha("Erro ao ler: "+f.error.message+". Recarregue a página."); return; }
+  const d=f.data||{};
+  const todos=(d.all&&d.all.length?d.all:[].concat(d.totp||[])).filter(x=>x&&x.factor_type==="totp");
+  VERIFICADO=todos.find(x=>x.status==="verified")||null;
+  PENDENTE=todos.find(x=>x.status!=="verified")||null;
+  if(VERIFICADO){
+    const desde=ddmm(VERIFICADO.updated_at||VERIFICADO.created_at);
+    $("estado").textContent="Segundo fator ativo"+(desde?" desde "+desde:"")+".";
+    $("estado").classList.add("ok");
+  }else{
+    $("estado").textContent="Segundo fator desligado. Hoje basta a senha ou o código do e-mail para entrar.";
+    $("estado").classList.remove("ok");
+  }
+  const n=a.data||{};
+  let nv="";
+  if(a.error) nv="Não consegui ler o nível desta sessão.";
+  else if(n.currentLevel==="aal2") nv="Esta sessão entrou com senha e código do app. É o nível mais forte.";
+  else if(n.nextLevel==="aal2") nv="Esta sessão entrou só com senha ou e-mail, sem o código do app.";
+  else nv="Esta sessão entrou com senha ou código do e-mail.";
+  $("nivel").textContent=nv;
+  const emAtivacao=!!ENR;
+  mostra("ativarBox",!VERIFICADO&&!PENDENTE&&!emAtivacao);
+  mostra("metadeBox",!VERIFICADO&&!!PENDENTE&&!emAtivacao);
+  mostra("qrBox",emAtivacao);
+  mostra("subirBox",!!VERIFICADO&&!a.error&&n.currentLevel!=="aal2");
+}
+
+/* ---------- ativar: enroll, QR, challenge, verify ---------- */
+async function ativar(){
+  ocupado("btAtivar",true); falha("");
+  const {data,error}=await teto(sb.auth.mfa.enroll({factorType:"totp",friendlyName:"celular"}));
+  ocupado("btAtivar",false);
+  if(error||!data||!data.totp){
+    falha("Não consegui começar a ativação: "+(error?error.message:"resposta vazia")+". Tente de novo.");
+    await lerEstado(); return;
+  }
+  ENR={id:data.id,secret:data.totp.secret};
+  $("qr").src=data.totp.qr_code;
+  $("segredo").textContent=data.totp.secret;
+  $("cod6").value=""; $("qmsg").textContent=""; $("qmsg").classList.remove("ok");
+  mostra("ativarBox",false); mostra("metadeBox",false); mostra("prontoBox",false); mostra("qrBox",true);
+}
+async function recomecar(){
+  if(!PENDENTE)return;
+  ocupado("btRecomecar",true); falha("");
+  /* so o fator NAO verificado sai; o verificado nunca passa por aqui */
+  if(PENDENTE.status==="verified"){ocupado("btRecomecar",false);return;}
+  const {error}=await teto(sb.auth.mfa.unenroll({factorId:PENDENTE.id}));
+  ocupado("btRecomecar",false);
+  if(error){ falha("Não consegui recomeçar: "+error.message+". Tente de novo."); return; }
+  PENDENTE=null;
+  await ativar();
+}
+async function copiar(){
+  const t=ENR&&ENR.secret; if(!t)return;
+  let ok=false;
+  try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){}
+  if(!ok){ const r=document.createRange(); r.selectNodeContents($("segredo")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+  $("qmsg").classList.toggle("ok",ok);
+  $("qmsg").textContent=ok?"Código copiado. Cole no app autenticador.":"Não deu para copiar sozinho. O código está selecionado: copie e cole no app.";
+}
+/* desafio e verificacao, usados na ativacao e para subir o nivel da sessao */
+async function desafiar(factorId,code){
+  const c=await teto(sb.auth.mfa.challenge({factorId}));
+  if(c.error||!c.data) return {erro:"Não consegui pedir a confirmação: "+(c.error?c.error.message:"resposta vazia")+". Tente de novo.",codigo:false};
+  const v=await teto(sb.auth.mfa.verify({factorId,challengeId:c.data.id,code}));
+  if(v.error) return {erro:"Código não confere. Veja o código que está na tela do app agora e digite de novo.",codigo:true};
+  return {erro:null};
+}
+async function confirmar(){
+  if(!ENR)return;
+  const msg=$("qmsg"); msg.classList.remove("ok");
+  const code=$("cod6").value.replace(/\D/g,"");
+  if(code.length!==6){ msg.textContent="Digite os 6 números que o app mostra."; $("cod6").focus(); return; }
+  ocupado("btConfirmar",true); msg.textContent="Conferindo…";
+  const r=await desafiar(ENR.id,code);
+  ocupado("btConfirmar",false);
+  if(r.erro){ msg.textContent=r.erro; if(r.codigo){$("cod6").value="";$("cod6").focus();} return; }
+  /* conferiu: o segredo sai da tela e da memoria */
+  ENR=null; $("segredo").textContent=""; $("qr").removeAttribute("src"); $("cod6").value=""; msg.textContent="";
+  mostra("qrBox",false); mostra("prontoBox",true);
+  await lerEstado();
+}
+async function subirNivel(){
+  if(!VERIFICADO)return;
+  const msg=$("smsg"); msg.classList.remove("ok");
+  const code=$("codSobe").value.replace(/\D/g,"");
+  if(code.length!==6){ msg.textContent="Digite os 6 números que o app mostra."; return; }
+  ocupado("btSubir",true); msg.textContent="Conferindo…";
+  const r=await desafiar(VERIFICADO.id,code);
+  ocupado("btSubir",false); $("codSobe").value="";
+  if(r.erro){ msg.textContent=r.erro; return; }
+  msg.textContent="";
+  await lerEstado();
+}
+
+/* ---------- partida: a sessao salva pelo presidente.html vale aqui ---------- */
+let INICIADO=false;
+function iniciar(s){ if(INICIADO)return; INICIADO=true;
+  mostra("login",false); mostra("app",true);
+  $("quem").textContent=(s&&s.user&&s.user.email)||"";
+  lerEstado(); }
+sb.auth.getSession().then(({data})=>{
+  if(data&&data.session)iniciar(data.session); else mostra("login",true);});
+sb.auth.onAuthStateChange((ev,s)=>{ if(ev==="SIGNED_IN"&&s)setTimeout(()=>iniciar(s),0); });
+</script>
+</body>
+</html>
