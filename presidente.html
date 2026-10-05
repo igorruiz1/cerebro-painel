@@ -34,7 +34,10 @@
    p4.3 (04/10/2026), onda 1 do benchmark (t1635): selo "esperando voce ha X" em todo card (Linear Triage);
    depois de um ato na folha o proximo card de Hoje abre sozinho, com A, S e R no teclado (Superhuman);
    selo unico de saude no topo (Statuspage); "Cobrar" no recebivel vencido pede o rascunho pela inbox(),
-   sem enviar nada ao pagador (Mercury/Stripe). */
+   sem enviar nada ao pagador (Mercury/Stripe).
+   p4.4 (05/10/2026): quinto destino, Mesa. O que saiu hoje, o estoque de pecas paradas esperando o Igor,
+   os relatorios em PDF por link assinado e a baixa de envio com canal e prova (LC-14). Modulo replicavel
+   entre os marcadores modulo:mesa e fim modulo:mesa, estilo com prefixo ms-. Ver docs/mesa.md. */
 /* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH, o mesmo do index.html (613f498): as duas telas sao um
    produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
    Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
@@ -206,7 +209,7 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 .frente .r.z{color:var(--mut)}
 
 /* navegacao */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
   background:rgba(11,16,32,.97);backdrop-filter:blur(14px);border-top:1px solid var(--line2);padding-bottom:max(8px,env(safe-area-inset-bottom))}
 .nav button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--mut);font-size:12px;font-weight:600}
 .nav button .selo{font-family:var(--mono);font-size:15px;min-width:30px;height:28px;padding:0 6px;border-radius:9px;display:flex;align-items:center;justify-content:center}
@@ -304,6 +307,40 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   .folha.cheia{max-width:520px}
 }
 @media (prefers-reduced-motion:no-preference){.folha{animation:sobe .18s ease-out}@keyframes sobe{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}}
+/* estilo:mesa · p4.4 (05/10/2026): so as classes do modulo:mesa, todas com prefixo ms-. Nada aqui depende
+   da largura da fonte: texto que nao cabe encolhe com reticencias ou quebra dentro do proprio botao. */
+.ms-raiz{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ms-dia{margin:0;font-size:18px;line-height:1.4;text-wrap:balance;overflow-wrap:anywhere}
+.ms-dia b{font-weight:600}
+.ms-hora{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink2);max-width:460px;overflow-wrap:anywhere}
+.ms-hora b.w{color:var(--warn)}
+.ms-regua{position:relative;display:block;height:8px;margin:4px 0 0;border-radius:6px;background:var(--chip)}
+.ms-regua i{position:absolute;top:-4px;width:4px;height:16px;margin-left:-2px;border-radius:2px;background:var(--ok)}
+.ms-regua i.w{background:var(--warn)}
+.ms-regua-rot{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mut)}
+.ms-regua-rot span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-item,.ms-rel,.ms-saiu{min-height:64px;width:100%;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;justify-content:center;text-align:left}
+.ms-saiu{background:transparent;border-style:dashed}
+.ms-tit{font-size:15px;line-height:1.3;max-width:100%}
+.ms-um{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-meta{display:block;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ms-meta2{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:13px;color:var(--mut);min-width:0}
+.ms-rs{font-family:var(--mono);white-space:nowrap}
+.ms-rs.ok{color:var(--ok)}
+.ms-dias{white-space:nowrap}
+.ms-dias.w{color:var(--warn)}
+.ms-novo{font-size:12px;font-weight:700;line-height:1.5;color:var(--accInk);background:var(--acc);border-radius:999px;padding:0 8px}
+.ms-mais{flex:none}
+.bloco.ms-baixa{gap:10px;border-top:1px solid var(--line2);padding-top:12px}
+.ms-baixa .pri{flex:none}
+.ms-canais{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.ms-canal{min-height:var(--tap);min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:6px 10px;font-size:14px;line-height:1.2;overflow-wrap:anywhere}
+.ms-canal[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--accInk);font-weight:700}
+.campo .ms-arq{width:100%;min-width:0;min-height:var(--tap);padding:8px 10px;font-size:14px}
+.ms-arq::file-selector-button{min-height:34px;margin-right:10px;border:1px solid var(--line);border-radius:9px;background:var(--chip);color:var(--ink);padding:0 12px;font:inherit}
+.ms-aviso{margin:0;color:var(--bad);font-size:14px;overflow-wrap:anywhere}
+.ms-aviso:empty{display:none}
+/* fim estilo:mesa */
 </style>
 </head>
 <body>
@@ -333,6 +370,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="fila" onclick="ir('fila')">Fila<span class="selo" id="r-fila"></span></button>
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
+    <button data-aba="mesa" onclick="ir('mesa')">Mesa<span class="selo" id="r-mesa"></span></button>
     <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="#" onclick="sair();return false">sair</a></div>
   </nav>
 
@@ -397,6 +435,10 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
         <div id="frentesLista" class="pilha"></div>
       </section>
 
+      <section class="pane" id="p-mesa" aria-label="Mesa">
+        <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
+      </section>
+
       <div class="rodape"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema</div>
     </main>
   </div>
@@ -406,6 +448,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="fila" onclick="ir('fila')"><span class="selo" id="n-fila"></span><span>Fila</span></button>
     <button data-aba="caixa" onclick="ir('caixa')"><span class="selo" id="n-caixa">R$</span><span>Caixa</span></button>
     <button data-aba="frentes" onclick="ir('frentes')"><span class="selo" id="n-frentes"></span><span>Frentes</span></button>
+    <button data-aba="mesa" onclick="ir('mesa')"><span class="selo" id="n-mesa"></span><span>Mesa</span></button>
   </nav>
 </div>
 
@@ -414,7 +457,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.3";
+const VERP="p4.4";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -482,7 +525,7 @@ function recInfo(r){
   return {texto:t,data:d[0]+"/"+d[1],dias,velha:dias>7};
 }
 const plural=(n,s1,s2)=>n+" "+(+n===1?s1:s2);
-const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes"};
+const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes",mesa:"Mesa"};
 
 /* Verbo do banco -> verbo de gente. O banco continua recebendo o verbo dele; so o rotulo muda.
    Verbo que o banco oferecer e nao estiver aqui aparece com o rotulo que o banco mandou. */
@@ -516,6 +559,8 @@ async function sair(){await sb.auth.signOut();location.reload();}
 function falha(t){const el=document.getElementById("falha");el.textContent=t;el.classList.toggle("hidden",!t);}
 async function carregar(forcar){
   falha("");
+  /* p4.4: a Mesa tem leitura propria (mesa_painel), em paralelo; erro dela fica na aba, nao aqui */
+  msCarregar();
   if(forcar){ try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:CHAVES}),LIMITE_ACAO,"painel_snapshot_montar"); }catch(e){} INV=null; ARV=null; }
   const {data,error}=await comTetoR(sb.rpc("painel_carga",{p_chaves:CHAVES}),LIMITE_RECARGA,"painel_carga");
   if(error||!data){falha("Não consegui ler o banco: "+(error?error.message:"resposta vazia")+". Toque em recarregar.");return;}
@@ -568,6 +613,7 @@ function ir(aba){
   document.querySelectorAll("[data-aba]").forEach(b=>{const on=b.dataset.aba===aba;b.classList.toggle("on",on);b.setAttribute("aria-current",on?"page":"false");});
   document.getElementById("tituloAba").textContent=NOMES[aba];
   window.scrollTo(0,0);
+  if(aba==="mesa")msCarregar();
 }
 function irColuna(c){COL=c;renderFila();ir("fila");}
 function alternarBusca(){const b=document.getElementById("busca");b.classList.toggle("hidden");if(!b.classList.contains("hidden"))document.getElementById("q").focus();}
@@ -677,7 +723,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();msRender();}
 function renderHoje(){
   const rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=+(((D.cap||[])[0]||{}).minutos_dia)||120;
   const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0), semMin=mins.filter(m=>m==null).length;
@@ -1338,6 +1384,178 @@ async function atualizarDoEvento(){
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&INICIADO)atendenteEstado(); });
 setInterval(()=>{ if(!INICIADO||RT_OK||document.hidden||!ATD||!ATD.pendentes)return;
   const antes=ATD.pendentes; atendenteEstado().then(a=>{ if(a&&a.pendentes<antes){RT_CARGA=true;atualizarDoEvento();} }); },60000);
+
+/* modulo:mesa · p4.4 (05/10/2026)
+   Aba Mesa: a frase do dia, o estoque de pecas paradas esperando o dono, o que saiu hoje, os relatorios
+   em PDF e a baixa de envio. Contrato completo em docs/mesa.md.
+   O modulo so fala com a casca por: sb, comTetoR, LIMITE_RECARGA, LIMITE_ACAO, esc, toast, mostrarFolha,
+   fecharFolha, nomeFrente e rs. A casca chama msCarregar() ao abrir a aba e no recarregar, e msRender()
+   quando redesenha; o modulo desenha em #ms-raiz e nos selos #n-mesa e #r-mesa.
+   Codigo do banco nunca vai cru para a tela: ato, canal, tipo de relatorio e tipo de prova passam pelos
+   dicionarios abaixo, e o que o dicionario nao conhece vira um rotulo generico.
+   Baixa sem canal nao vai ao banco (LC-14: concluir sem prova nao grava). Sem print, a baixa vira
+   declaracao datada; com print, o arquivo sobe antes e o banco recebe o caminho dele. */
+const MS_ATO={aprovar:"aprovação",assinar:"assinatura",enviar:"envio",decidir:"decisão",ler:"leitura",protocolar:"protocolo",entregar:"entrega"};
+const MS_CANAIS=[["whatsapp","WhatsApp"],["gmail","E-mail"],["email_corporativo","E-mail da empresa"],["em_maos","Em mãos"],["protocolo","Protocolo"],["outro","Outro"]];
+const MS_CANAL_NOME=Object.assign(Object.fromEntries(MS_CANAIS),{impresso:"impresso",drive_compartilhado:"Drive compartilhado",portal:"portal"});
+const MS_REL={dia:"Fechamento do dia",mes:"Fechamento do mês",estoque:"Estoque parado"};
+const MS_PROVA={documental:"com comprovante",declaratoria:"declaração datada"};
+const MS_BUCKET_REL="mesa", MS_BUCKET_PROVA="mesa-provas", MS_URL_S=300, MS_TETO_UPLOAD=60000, MS_REL_VISIVEIS=8;
+const MS={dados:null,erro:"",carga:null,peca:null,canal:null,todosRel:false,gravando:false};
+const msPl=(n,a,b)=>n+" "+(+n===1?a:b);
+const msCap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
+const msAto=a=>MS_ATO[a]||"ato seu";
+const msCanal=c=>MS_CANAL_NOME[c]||"outro canal";
+const msTemRs=v=>v!=null&&v!==""&&!isNaN(+v);
+const msRs2=v=>!msTemRs(v)?"sem valor":(+v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
+const msHoras=h=>(+h).toLocaleString("pt-BR",{maximumFractionDigits:1})+" h";
+const msParada=d=>d==null||d===""||isNaN(+d)?"sem data de entrada":(+d<=0?"parada desde hoje":"parada há "+Math.floor(+d)+" d");
+const msFrente=f=>f?nomeFrente(f):"";
+function msAlvo(a){
+  const s=String(a==null?"":a); let m;
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return m[3]+"/"+m[2]+"/"+m[1];
+  if((m=s.match(/^(\d{4})-(\d{2})$/)))return m[2]+"/"+m[1];
+  return s;
+}
+function msExt(f){
+  const m=String(f&&f.name||"").match(/\.([a-z0-9]{1,5})$/i); if(m)return m[1].toLowerCase();
+  return {"image/jpeg":"jpg","image/png":"png","image/heic":"heic","image/webp":"webp","application/pdf":"pdf"}[f&&f.type]||"bin";
+}
+/* chamada que pode estourar na hora (cliente sem storage, por exemplo) vira {error} como as outras */
+const msPedir=(fn,ms,rotulo)=>comTetoR(Promise.resolve().then(fn),ms,rotulo);
+
+/* uma carga por vez: abrir a aba durante o recarregar nao dobra a ida ao banco */
+function msCarregar(){ if(!MS.carga)MS.carga=msCarregar_().finally(()=>{MS.carga=null;}); return MS.carga; }
+async function msCarregar_(){
+  if(!MS.dados)msRender();
+  const {data,error}=await msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel");
+  if(error||!data||typeof data!=="object")MS.erro="Não consegui ler a mesa: "+(error?error.message:"resposta vazia")+". Toque em recarregar.";
+  else{ MS.erro=""; MS.dados=data; }
+  msRender();
+}
+
+function msRender(){
+  const raiz=document.getElementById("ms-raiz"); if(!raiz)return;
+  const d=MS.dados, est=d&&Array.isArray(d.estoque)?d.estoque:[];
+  ["n-mesa","r-mesa"].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=d?String(est.length):"";});
+  const falha=MS.erro?`<div class="aviso" role="alert">${esc(MS.erro)}</div>`:"";
+  if(!d){ raiz.innerHTML=falha||`<p class="ms-dia">carregando…</p>`; return; }
+  const novas=est.filter(p=>p.novo===true).length;
+  const dia=est.length
+    ?`<b>${esc(msPl(est.length,"peça espera","peças esperam"))} você</b>, <b class="num">${esc(rs(d.em_jogo||0))}</b> em jogo${novas?`, ${esc(msPl(novas,"nova","novas"))} hoje`:""}.`
+    :"Nenhuma peça espera você.";
+  const lista=est.length?est.map((p,i)=>`<button class="ms-item" onclick="msAbrir(${i})">
+      <span class="ms-tit l2">${esc(p.titulo||"peça sem título")}</span>
+      <span class="ms-meta">${esc(msCap(msAto(p.ato)))}${p.dest?" para "+esc(p.dest):""}${p.frente?" · "+esc(msFrente(p.frente)):""}</span>
+      <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span><span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="ms-novo">nova</span>`:""}</span>
+    </button>`).join(""):`<div class="vazio">Nada espera você agora.</div>`;
+  const saiu=Array.isArray(d.saiu_hoje)?d.saiu_hoje:[];
+  const saiuH=saiu.length?`<h2>Saiu hoje</h2><div class="pilha">${saiu.map(s=>`<div class="ms-saiu"><span class="ms-tit l2">${esc(s.titulo||"peça sem título")}</span><span class="ms-meta">${s.dest?"para "+esc(s.dest)+" · ":""}${esc(MS_PROVA[s.prova]||"sem prova registrada")}</span></div>`).join("")}</div>`:"";
+  const rel=Array.isArray(d.relatorios)?d.relatorios:[], relVis=MS.todosRel?rel:rel.slice(0,MS_REL_VISIVEIS);
+  const relH=`<h2>Relatórios</h2><div class="pilha">${rel.length?relVis.map((r,i)=>`<button class="ms-rel" onclick="msRelatorio(${i})"><span class="ms-tit ms-um">${esc(r.titulo||((MS_REL[r.tipo]||"Relatório")+" "+msAlvo(r.alvo)))}</span><span class="ms-meta">${esc(MS_REL[r.tipo]||"Relatório")}${r.versao!=null&&r.versao!==""?" · versão "+esc(r.versao):""} · abre o PDF</span></button>`).join(""):`<div class="vazio">Nenhum relatório gerado ainda.</div>`}${rel.length>relVis.length?`<button class="sec ms-mais" onclick="MS.todosRel=true;msRender()">Mostrar todos (${rel.length})</button>`:""}</div>`;
+  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p>${msHoraHtml(d)}<h2>Esperando você</h2><div class="pilha">${lista}</div>${saiuH}${relH}`;
+}
+/* horas do mes e o valor da hora contra a regua (piso e teto vem do banco, nunca escritos aqui) */
+function msHoraHtml(d){
+  const vh=d.valor_hora&&typeof d.valor_hora==="object"?d.valor_hora:null;
+  const hm=d.horas_mes!=null?d.horas_mes:(vh?vh.horas:null);
+  if(!vh&&hm==null)return "";
+  const partes=[];
+  if(hm!=null&&!isNaN(+hm))partes.push("Neste mês: "+esc(msHoras(hm))+".");
+  let barra="";
+  if(vh){
+    const p=msTemRs(vh.por_hora)?+vh.por_hora:null, piso=msTemRs(vh.piso)?+vh.piso:null, teto=msTemRs(vh.teto)?+vh.teto:null;
+    if(p==null)partes.push("Sua hora ainda sem cálculo neste mês.");
+    else{
+      const abaixo=piso!=null&&p<piso, acima=teto!=null&&p>=teto;
+      partes.push(`Sua hora: <b class="num ${abaixo?"w":""}">${esc(msRs2(p))}</b>, ${abaixo?"abaixo do piso":acima?"no teto ou acima":"dentro da régua"}.`);
+      if(piso!=null&&teto!=null&&teto>piso){
+        const pos=Math.max(0,Math.min(100,(p-piso)/(teto-piso)*100));
+        barra=`<span class="ms-regua" role="img" aria-label="Valor da hora entre o piso e o teto"><i class="${abaixo?"w":""}" style="left:${pos.toFixed(1)}%"></i></span>`;
+      }
+    }
+    if(piso!=null||teto!=null)barra+=`<span class="ms-regua-rot"><span>piso ${esc(msRs2(piso))}</span><span>teto ${esc(msRs2(teto))}</span></span>`;
+  }
+  return `<div class="ms-hora"><span>${partes.join(" ")}</span>${barra}</div>`;
+}
+
+/* ---------- folha da peca e baixa de envio ---------- */
+function msAbrir(i){
+  const p=MS.dados&&(MS.dados.estoque||[])[i]; if(!p)return;
+  MS.peca=p; MS.canal=null; MS.gravando=false;
+  mostrarFolha(`<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
+    <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}</div>
+    <div class="bloco"><span class="rot">Para quem</span><p>${p.dest?esc(p.dest)+".":"Sem destinatário escrito."}${p.canal?" Previsto por "+esc(msCanal(p.canal))+".":""}</p></div>
+    <div class="bloco"><span class="rot">Valor</span><p class="${msTemRs(p.rs)?"num":""}">${msTemRs(p.rs)?esc(msRs2(p.rs)):"sem valor"}</p></div>
+    <div class="bloco"><span class="rot">O que falta</span><p>${p.motivo?esc(p.motivo):"Sem motivo escrito."}</p></div>
+    <div class="bloco ms-baixa"><span class="rot">Já enviei</span>
+      <span class="mut">Por onde saiu?</span>
+      <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="false" onclick="msEscolherCanal('${esc(c)}')">${esc(n)}</button>`).join("")}</div>
+      <div class="campo"><label for="msDest" class="mut">Para quem</label><input id="msDest" type="text" autocomplete="off" value="${esc(p.dest||"")}"></div>
+      <div class="campo"><label for="msArq" class="mut">Print ou comprovante (opcional)</label><input id="msArq" class="ms-arq" type="file" accept="image/*,application/pdf"></div>
+      <p class="ms-aviso" id="msAviso" role="alert"></p>
+      <button class="pri" id="msBt" onclick="msBaixa()">Dar baixa</button>
+      <span class="mut">Sem print, a baixa vira declaração sua, com data e hora.</span>
+    </div>
+    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+}
+function msEscolherCanal(c){
+  if(!MS_CANAL_NOME[c])return;
+  MS.canal=c;
+  document.querySelectorAll("#folha .ms-canal").forEach(b=>b.setAttribute("aria-pressed",b.dataset.canal===c?"true":"false"));
+  const av=document.getElementById("msAviso"); if(av)av.textContent="";
+}
+async function msBaixa(){
+  const p=MS.peca; if(!p||MS.gravando)return;
+  const av=document.getElementById("msAviso"), bt=document.getElementById("msBt");
+  const diz=t=>{ if(av)av.textContent=t; toast(t,"bad",false,5000); };
+  if(!MS.canal){ diz("Escolha por onde a peça saiu. Sem o canal, a baixa não grava."); return; }
+  const destEl=document.getElementById("msDest"), dest=destEl?destEl.value.trim():"";
+  if(dest.length<2){ diz("Diga para quem a peça foi."); if(destEl)destEl.focus(); return; }
+  const arqEl=document.getElementById("msArq"), arq=arqEl&&arqEl.files&&arqEl.files[0]||null, canal=MS.canal;
+  MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
+  const volta=()=>{ MS.gravando=false; if(bt&&document.body.contains(bt)){bt.disabled=false;bt.textContent="Dar baixa";} };
+  let prova=null;
+  if(arq){
+    const mes=String((MS.dados&&MS.dados.hoje)||new Date().toISOString()).slice(0,7);
+    const caminho=`${mes}/${p.id}_${Date.now()}.${msExt(arq)}`;
+    const up=await msPedir(()=>sb.storage.from(MS_BUCKET_PROVA).upload(caminho,arq),MS_TETO_UPLOAD,"upload");
+    if(up.error){ volta(); diz("O print não subiu ("+up.error.message+"). Nada foi gravado."); return; }
+    prova=(up.data&&up.data.path)||caminho;
+  }
+  const {data,error}=await msPedir(()=>sb.rpc("mesa_baixa_painel",{p_doc:p.id,p_canal:canal,p_dest:dest,p_prova_path:prova}),LIMITE_ACAO,"mesa_baixa_painel");
+  const txt=error?String(error.message||"falha de rede"):String(data==null?"":data);
+  if(!error&&/^OK/.test(txt)){
+    MS.gravando=false;
+    if(MS.peca===p)fecharFolha();
+    toast("Baixa gravada: saiu por "+msCanal(canal)+" para "+dest+(prova?", com print.":", como declaração sua."),null,false,5000);
+    msCarregar();
+    return;
+  }
+  volta();
+  diz(txt.replace(/^RECUSADO:?\s*/i,"Não gravou: ").slice(0,220)+(error&&error.teto?" Nada foi confirmado e pode ter gravado: recarregue antes de repetir.":""));
+}
+
+/* ---------- relatorios: PDF por link assinado de 5 min ----------
+   A aba nova abre no toque e recebe o link depois: no iPhone, window.open feito depois de esperar o banco
+   e bloqueado como pop-up. Sem aba (bloqueada mesmo assim), tenta abrir direto e, se nao der, diz. */
+async function msRelatorio(i){
+  const r=MS.dados&&(MS.dados.relatorios||[])[i];
+  if(!r||!r.path){ toast("Este relatório ainda não tem arquivo.","bad",false,4000); return; }
+  let w=null; try{ w=window.open("","_blank"); }catch(e){}
+  toast("abrindo o relatório…",null,false);
+  const {data,error}=await msPedir(()=>sb.storage.from(MS_BUCKET_REL).createSignedUrl(r.path,MS_URL_S),LIMITE_ACAO,"relatorio");
+  const url=data&&data.signedUrl;
+  if(error||!url){
+    if(w)try{w.close();}catch(e){}
+    toast("Não consegui abrir o relatório: "+(error?error.message:"o link veio vazio")+".","bad",false,6000); return;
+  }
+  if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast("Relatório aberto em outra aba.",null,false,2500); return; }
+  let w2=null; try{ w2=window.open(url,"_blank"); }catch(e){}
+  if(w2)toast("Relatório aberto em outra aba.",null,false,2500);
+  else toast("O navegador bloqueou a aba do relatório. Libere janelas deste site e toque de novo.","bad",false,6000);
+}
+/* fim modulo:mesa */
 
 /* ---------- partida ---------- */
 /* uma partida so: getSession e o evento SIGNED_IN chegam os dois na abertura com sessao salva,
