@@ -340,6 +340,17 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .ms-arq::file-selector-button{min-height:34px;margin-right:10px;border:1px solid var(--line);border-radius:9px;background:var(--chip);color:var(--ink);padding:0 12px;font:inherit}
 .ms-aviso{margin:0;color:var(--bad);font-size:14px;overflow-wrap:anywhere}
 .ms-aviso:empty{display:none}
+/* p4.5: botao da peca no topo da folha e o bloco "Sua decisao". Na folha (coluna flex) o .pri cresceria
+   na altura pelo flex-basis: aqui ele fica flex:none. Aprovar ocupa a linha; ajuste e largar dividem a de baixo. */
+.folha>.ms-abrir{flex:none}
+.ms-sem-copia{margin:0;overflow-wrap:anywhere}
+.bloco.ms-decide{gap:10px;border-top:1px solid var(--line2);padding-top:12px}
+.ms-decisoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ms-decisoes button{min-width:0;padding:6px 12px;line-height:1.2;overflow-wrap:anywhere}
+.ms-decisoes .pri{grid-column:1/-1}
+.ms-decisoes .sec[aria-expanded="true"]{border-color:var(--acc);font-weight:700}
+.ms-nota[hidden]{display:none}
+.ms-nota .pri{flex:none}
 /* fim estilo:mesa */
 </style>
 </head>
@@ -457,7 +468,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.4";
+const VERP="p4.5";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -1385,9 +1396,10 @@ document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&INICIADO
 setInterval(()=>{ if(!INICIADO||RT_OK||document.hidden||!ATD||!ATD.pendentes)return;
   const antes=ATD.pendentes; atendenteEstado().then(a=>{ if(a&&a.pendentes<antes){RT_CARGA=true;atualizarDoEvento();} }); },60000);
 
-/* modulo:mesa · p4.4 (05/10/2026)
+/* modulo:mesa · p4.4 (05/10/2026), p4.5 (05/10/2026)
    Aba Mesa: a frase do dia, o estoque de pecas paradas esperando o dono, o que saiu hoje, os relatorios
-   em PDF e a baixa de envio. Contrato completo em docs/mesa.md.
+   em PDF e a baixa de envio. p4.5: a folha da peca abre a copia guardada no bucket mesa e delibera
+   (aprovar, pedir ajuste, largar) por mesa_deliberar. Contrato completo em docs/mesa.md.
    O modulo so fala com a casca por: sb, comTetoR, LIMITE_RECARGA, LIMITE_ACAO, esc, toast, mostrarFolha,
    fecharFolha, nomeFrente e rs. A casca chama msCarregar() ao abrir a aba e no recarregar, e msRender()
    quando redesenha; o modulo desenha em #ms-raiz e nos selos #n-mesa e #r-mesa.
@@ -1400,8 +1412,16 @@ const MS_CANAIS=[["whatsapp","WhatsApp"],["gmail","E-mail"],["email_corporativo"
 const MS_CANAL_NOME=Object.assign(Object.fromEntries(MS_CANAIS),{impresso:"impresso",drive_compartilhado:"Drive compartilhado",portal:"portal"});
 const MS_REL={dia:"Fechamento do dia",mes:"Fechamento do mês",estoque:"Estoque parado"};
 const MS_PROVA={documental:"com comprovante",declaratoria:"declaração datada"};
-const MS_BUCKET_REL="mesa", MS_BUCKET_PROVA="mesa-provas", MS_URL_S=300, MS_TETO_UPLOAD=60000, MS_REL_VISIVEIS=8;
-const MS={dados:null,erro:"",carga:null,peca:null,canal:null,todosRel:false,gravando:false};
+const MS_BUCKET_REL="mesa", MS_BUCKET_PECA="mesa", MS_BUCKET_PROVA="mesa-provas", MS_URL_S=300, MS_URL_PECA=600, MS_TETO_UPLOAD=60000, MS_REL_VISIVEIS=8;
+/* p4.5: a decisao vai ao banco pelo codigo (a chave); a tela so mostra rotulo e frase.
+   Ajuste e largar exigem nota escrita: sem ela a tela nao chama o banco. */
+const MS_DEC={
+  aprovado:{bt:"msBtAprovar",rot:"Aprovar",ok:"Aprovação gravada."},
+  ajustar:{abre:"msAbreAjustar",campo:"msNotaAjustar",txt:"msTxtAjustar",bt:"msBtAjustar",rot:"Enviar pedido",
+    falta:"Diga o que precisa mudar na peça. Sem isso, o pedido não vai.",ok:"Pedido de ajuste gravado."},
+  largar:{abre:"msAbreLargar",campo:"msNotaLargar",txt:"msTxtLargar",bt:"msBtLargar",rot:"Confirmar",
+    falta:"Diga o motivo de tirar a peça da mesa. Sem ele, nada é gravado.",ok:"Peça tirada da sua mesa."}};
+const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false};
 const msPl=(n,a,b)=>n+" "+(+n===1?a:b);
 const msCap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
 const msAto=a=>MS_ATO[a]||"ato seu";
@@ -1482,12 +1502,24 @@ function msHoraHtml(d){
 /* ---------- folha da peca e baixa de envio ---------- */
 function msAbrir(i){
   const p=MS.dados&&(MS.dados.estoque||[])[i]; if(!p)return;
-  MS.peca=p; MS.canal=null; MS.gravando=false;
+  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
   mostrarFolha(`<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
     <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}</div>
+    ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" onclick="msAbrirPeca()">Abrir a peça</button>`:`<p class="mut ms-sem-copia">A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.</p>`}
     <div class="bloco"><span class="rot">Para quem</span><p>${p.dest?esc(p.dest)+".":"Sem destinatário escrito."}${p.canal?" Previsto por "+esc(msCanal(p.canal))+".":""}</p></div>
     <div class="bloco"><span class="rot">Valor</span><p class="${msTemRs(p.rs)?"num":""}">${msTemRs(p.rs)?esc(msRs2(p.rs)):"sem valor"}</p></div>
     <div class="bloco"><span class="rot">O que falta</span><p>${p.motivo?esc(p.motivo):"Sem motivo escrito."}</p></div>
+    <div class="bloco ms-decide"><span class="rot">Sua decisão</span>
+      <div class="ms-decisoes" role="group" aria-label="Sua decisão">
+        <button type="button" class="pri" id="msBtAprovar" onclick="msDecidir('aprovado')">Aprovar</button>
+        <button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" onclick="msMotivo('ajustar')">Pedir ajuste</button>
+        <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" onclick="msMotivo('largar')">Largar</button>
+      </div>
+      <span class="mut">Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa.</span>
+      <div class="campo ms-nota" id="msNotaAjustar" hidden><label for="msTxtAjustar" class="mut">O que ajustar</label><textarea id="msTxtAjustar" rows="3"></textarea><button type="button" class="pri" id="msBtAjustar" onclick="msDecidir('ajustar')">Enviar pedido</button></div>
+      <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que largar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" onclick="msDecidir('largar')">Confirmar</button></div>
+      <p class="ms-aviso" id="msAvisoDec" role="alert"></p>
+    </div>
     <div class="bloco ms-baixa"><span class="rot">Já enviei</span>
       <span class="mut">Por onde saiu?</span>
       <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="false" onclick="msEscolherCanal('${esc(c)}')">${esc(n)}</button>`).join("")}</div>
@@ -1536,24 +1568,73 @@ async function msBaixa(){
   diz(txt.replace(/^RECUSADO:?\s*/i,"Não gravou: ").slice(0,220)+(error&&error.teto?" Nada foi confirmado e pode ter gravado: recarregue antes de repetir.":""));
 }
 
-/* ---------- relatorios: PDF por link assinado de 5 min ----------
+/* ---------- decisao da peca (p4.5): aprovar, pedir ajuste, largar ----------
+   Uma escrita por vez (MS.gravando vale para a baixa tambem). Resposta "OK..." fecha a folha e recarrega;
+   "RECUSADO..." fica na folha com o texto do banco. Ajuste e largar sem nota nao vao ao banco. */
+function msMotivo(dec){
+  const c=MS_DEC[dec]; if(!c||!c.campo||MS.gravando)return;
+  MS.dec=MS.dec===dec?null:dec;
+  Object.keys(MS_DEC).forEach(k=>{ const o=MS_DEC[k]; if(!o.campo)return;
+    const el=document.getElementById(o.campo), bt=document.getElementById(o.abre);
+    if(el)el.hidden=k!==MS.dec; if(bt)bt.setAttribute("aria-expanded",k===MS.dec?"true":"false"); });
+  const av=document.getElementById("msAvisoDec"); if(av)av.textContent="";
+  if(MS.dec){ const t=document.getElementById(c.txt); if(t)t.focus(); }
+}
+async function msDecidir(dec){
+  const p=MS.peca, c=MS_DEC[dec]; if(!p||!c||MS.gravando)return;
+  const av=document.getElementById("msAvisoDec");
+  const diz=t=>{ if(av)av.textContent=t; toast(t,"bad",false,5000); };
+  let nota=null;
+  if(c.txt){
+    const el=document.getElementById(c.txt); nota=el?el.value.trim():"";
+    if(!nota){ diz(c.falta); if(el)el.focus(); return; }
+  }
+  const bts=[...document.querySelectorAll("#folha .ms-decide button")], bt=document.getElementById(c.bt);
+  MS.gravando=true; bts.forEach(b=>{b.disabled=true;}); if(bt)bt.textContent="gravando…"; if(av)av.textContent="";
+  const volta=()=>{ MS.gravando=false; bts.forEach(b=>{b.disabled=false;}); if(bt)bt.textContent=c.rot; };
+  const {data,error}=await msPedir(()=>sb.rpc("mesa_deliberar",{p_doc:p.id,p_decisao:dec,p_nota:nota}),LIMITE_ACAO,"mesa_deliberar");
+  const txt=error?String(error.message||"falha de rede"):String(data==null?"":data).trim();
+  if(!error&&/^OK/.test(txt)){
+    MS.gravando=false;
+    if(MS.peca===p)fecharFolha();
+    toast(c.ok,null,false,5000);
+    msCarregar();
+    return;
+  }
+  volta();
+  const motivo=error&&error.teto?"Sem confirmação do banco ("+txt+"). Pode ter gravado: recarregue antes de repetir."
+    :/^RECUSADO/i.test(txt)?txt.replace(/^RECUSADO:?\s*/i,"Não gravou: "):"Não gravou: "+(txt||"o banco não respondeu nada")+".";
+  diz(motivo.slice(0,240));
+}
+
+/* ---------- relatorio e peca: PDF por link assinado do bucket mesa ----------
    A aba nova abre no toque e recebe o link depois: no iPhone, window.open feito depois de esperar o banco
-   e bloqueado como pop-up. Sem aba (bloqueada mesmo assim), tenta abrir direto e, se nao der, diz. */
-async function msRelatorio(i){
-  const r=MS.dados&&(MS.dados.relatorios||[])[i];
-  if(!r||!r.path){ toast("Este relatório ainda não tem arquivo.","bad",false,4000); return; }
+   e bloqueado como pop-up. Sem aba (bloqueada mesmo assim), tenta abrir direto e, se nao der, diz.
+   t: textos do que se abre ({o:"o relatório", aberto:"Relatório aberto", da:"do relatório", rotulo}). */
+async function msAbrirAssinado(bucket,caminho,segundos,t){
   let w=null; try{ w=window.open("","_blank"); }catch(e){}
-  toast("abrindo o relatório…",null,false);
-  const {data,error}=await msPedir(()=>sb.storage.from(MS_BUCKET_REL).createSignedUrl(r.path,MS_URL_S),LIMITE_ACAO,"relatorio");
+  toast("abrindo "+t.o+"…",null,false);
+  const {data,error}=await msPedir(()=>sb.storage.from(bucket).createSignedUrl(caminho,segundos),LIMITE_ACAO,t.rotulo);
   const url=data&&data.signedUrl;
   if(error||!url){
     if(w)try{w.close();}catch(e){}
-    toast("Não consegui abrir o relatório: "+(error?error.message:"o link veio vazio")+".","bad",false,6000); return;
+    toast("Não consegui abrir "+t.o+": "+(error?error.message:"o link veio vazio")+".","bad",false,6000); return;
   }
-  if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast("Relatório aberto em outra aba.",null,false,2500); return; }
+  if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast(t.aberto+" em outra aba.",null,false,2500); return; }
   let w2=null; try{ w2=window.open(url,"_blank"); }catch(e){}
-  if(w2)toast("Relatório aberto em outra aba.",null,false,2500);
-  else toast("O navegador bloqueou a aba do relatório. Libere janelas deste site e toque de novo.","bad",false,6000);
+  if(w2)toast(t.aberto+" em outra aba.",null,false,2500);
+  else toast("O navegador bloqueou a aba "+t.da+". Libere janelas deste site e toque de novo.","bad",false,6000);
+}
+function msRelatorio(i){
+  const r=MS.dados&&(MS.dados.relatorios||[])[i];
+  if(!r||!r.path){ toast("Este relatório ainda não tem arquivo.","bad",false,4000); return; }
+  return msAbrirAssinado(MS_BUCKET_REL,r.path,MS_URL_S,{o:"o relatório",aberto:"Relatório aberto",da:"do relatório",rotulo:"relatorio"});
+}
+/* p4.5: a copia da peca sobe do PC para mesa/pecas/<id>/...; link de 10 min */
+function msAbrirPeca(){
+  const p=MS.peca;
+  if(!p||!p.peca){ toast("A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.","bad",false,5000); return; }
+  return msAbrirAssinado(MS_BUCKET_PECA,p.peca,MS_URL_PECA,{o:"a peça",aberto:"Peça aberta",da:"da peça",rotulo:"peca"});
 }
 /* fim modulo:mesa */
 
