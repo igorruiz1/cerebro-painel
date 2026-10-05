@@ -13,7 +13,8 @@
         recebe o audio e devolve texto para revisar, sem nada dela no fonte;
      7. resposta por evento (p4): o recibo diz o que o banco mediu do despertador, a resposta chega pelo
         Realtime sem recarregar, e o fio do card para em 3 trocas em 7 dias;
-     8. aba Mesa (p4.4): estoque, relatorios por link assinado e baixa de envio que sem canal nao grava.
+     8. aba Mesa (p4.4): estoque, relatorios por link assinado e baixa de envio que sem canal nao grava;
+        p4.5: a folha abre a copia da peca e delibera (aprovar, pedir ajuste, largar), nota vazia nao grava.
    O cliente e dublado como no fumaca.spec.js: o defeito que se persegue vive na TELA. */
 const {test, expect} = require('@playwright/test');
 const path = require('path');
@@ -46,11 +47,12 @@ const DUBLE = `(()=>{
   const arv=[{nivel:0,no:'CAIXA'},{nivel:1,no:'11-renda-alt',rotulo:'Renda Alternativa',margem_30d:2000,margem_total:2000},
     {nivel:1,no:'20-conenge',rotulo:'Conenge',margem_30d:1000,margem_total:3000}];
   /* p4.4: retorno de mesa_painel com tres pecas (uma nova), uma saida, dois relatorios e a regua da hora.
-     window.__mesa troca o retorno inteiro; window.__baixa troca a resposta de mesa_baixa_painel. */
+     window.__mesa troca o retorno inteiro; window.__baixa troca a resposta de mesa_baixa_painel.
+     p4.5: duas pecas com copia no bucket (peca), a terceira sem; window.__deliberar troca a resposta de mesa_deliberar. */
   const mesa={hoje,em_jogo:15400,horas_mes:42.5,
-    estoque:[{id:101,frente:'20-conenge',titulo:'Medicao 7 de exemplo',ato:'aprovar',dest:'Fiscal de exemplo',canal:'whatsapp',rs:12000,dias:9,motivo:'Falta a sua aprovacao para protocolar.',copia:null,novo:false},
-      {id:102,frente:'11-renda-alt',titulo:'Laudo de exemplo',ato:'enviar',dest:'Cliente de exemplo',canal:'gmail',rs:3400,dias:2,motivo:'Pronto, falta sair.',copia:null,novo:true},
-      {id:103,frente:null,titulo:'Contrato de exemplo',ato:'assinar',dest:null,canal:null,rs:null,dias:0,motivo:null,copia:null,novo:false}],
+    estoque:[{id:101,frente:'20-conenge',titulo:'Medicao 7 de exemplo',ato:'aprovar',dest:'Fiscal de exemplo',canal:'whatsapp',rs:12000,dias:9,motivo:'Falta a sua aprovacao para protocolar.',copia:null,novo:false,peca:'pecas/101/medicao-7_exemplo_v01.pdf'},
+      {id:102,frente:'11-renda-alt',titulo:'Laudo de exemplo',ato:'enviar',dest:'Cliente de exemplo',canal:'gmail',rs:3400,dias:2,motivo:'Pronto, falta sair.',copia:null,novo:true,peca:'pecas/102/laudo_exemplo_v02.pdf'},
+      {id:103,frente:null,titulo:'Contrato de exemplo',ato:'assinar',dest:null,canal:null,rs:null,dias:0,motivo:null,copia:null,novo:false,peca:null}],
     producao_hoje:{A_AGIR:3,B_FEITO:1,C_SISTEMA:2,D_DEMAIS:0,FORA:0},
     saiu_hoje:[{id:90,titulo:'Oficio de exemplo',dest:'Fiscal de exemplo',prova:'documental'}],
     valor_hora:{recebido:5000,horas:42.5,por_hora:117.65,piso:63.03,teto:480},
@@ -63,7 +65,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -140,6 +142,21 @@ for (const largura of [360, 390, 1280]) {
     expect(ms.n, 'a folha da peca tem os seis canais').toBe(6);
     expect(ms.r, 'controles pequenos na folha da peca').toEqual([]);
     expect(ms.SW, 'rolagem horizontal com a folha da peca aberta').toBe(ms.W);
+    /* p4.5: o bloco "Sua decisao" com cada campo de nota aberto */
+    for (const dec of ['ajustar','largar']) {
+      await page.evaluate(d=>msMotivo(d), dec);
+      const dc = await page.evaluate(()=>{
+        const vis=e=>{const b=e.getBoundingClientRect();return b.width>0&&b.height>0;};
+        const r=[...document.querySelectorAll('#folha button,#folha input,#folha textarea')].filter(vis).filter(e=>{const b=e.getBoundingClientRect();return b.height<44||b.width<44;}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim());
+        return {r, peca:vis(document.getElementById('msPeca')), dec:[...document.querySelectorAll('#folha .ms-decide button')].filter(vis).length,
+          nota:[...document.querySelectorAll('#folha .ms-decide textarea')].filter(vis).length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+      });
+      expect(dc.peca, 'botao da peca na folha').toBe(true);
+      expect(dc.dec, `tres decisoes e o botao do campo (${dec})`).toBe(4);
+      expect(dc.nota, `um campo de nota aberto (${dec})`).toBe(1);
+      expect(dc.r, `controles pequenos com o campo de ${dec} aberto`).toEqual([]);
+      expect(dc.SW, `rolagem horizontal com o campo de ${dec} aberto`).toBe(dc.W);
+    }
     expect(erros,'erros de script').toEqual([]);
   });
 }
@@ -1020,6 +1037,129 @@ test('Mesa: tocar num relatorio pede o link assinado ao bucket mesa e abre; erro
   await expect(page.locator('#tmsg')).toContainText('Não consegui abrir o relatório: objeto nao encontrado');
   expect(await page.evaluate(()=>window.__abas[1].closed), 'a aba vazia fecha').toBe(true);
   await expect(page.locator('#ms-raiz .ms-rel'), 'a lista continua na tela').toHaveCount(2);
+  expect(erros).toEqual([]);
+});
+
+/* ---------- p4.5 (05/10/2026): abrir a peca e deliberar ----------
+   A copia da peca vem do bucket privado mesa por link assinado de 10 min, com a aba aberta no toque.
+   A decisao vai por mesa_deliberar(p_doc, p_decisao, p_nota); ajuste e largar sem nota nao chamam o banco. */
+const deliberacoes = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').map(c=>c.a));
+const abaFalsa = page=>page.evaluate(()=>{ window.__abas=[]; window.open=()=>{ const w={closed:false,location:{href:''},close(){this.closed=true;}}; window.__abas.push(w); return w; }; });
+
+test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca sem copia avisa e nao tem o botao', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await abaFalsa(page);
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await expect(page.locator('#msPeca')).toHaveText('Abrir a peça');
+  await page.click('#msPeca');
+  await expect.poll(()=>page.evaluate(()=>window.__abas.map(w=>w.location.href)), 'a aba abre no toque e recebe o link').toEqual(['about:blank']);
+  expect(await page.evaluate(()=>window.__storage)).toEqual([{b:'mesa',op:'createSignedUrl',p:'pecas/101/medicao-7_exemplo_v01.pdf',s:600}]);
+  await expect(page.locator('#tmsg')).toContainText('Peça aberta em outra aba');
+  /* segunda peca: o caminho e o dela, nao o da primeira */
+  await page.evaluate(()=>fecharFolha());
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.click('#msPeca');
+  await expect.poll(()=>page.evaluate(()=>window.__storage.map(c=>c.p))).toEqual(['pecas/101/medicao-7_exemplo_v01.pdf','pecas/102/laudo_exemplo_v02.pdf']);
+  /* terceira peca, sem copia: aviso no lugar do botao e nenhuma ida ao bucket */
+  await page.evaluate(()=>fecharFolha());
+  await page.click('#ms-raiz .ms-item >> nth=2');
+  await expect(page.locator('#msPeca')).toHaveCount(0);
+  await expect(page.locator('#folha')).toContainText('A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.');
+  /* erro do bucket vira aviso e a aba vazia fecha */
+  await page.evaluate(()=>{ fecharFolha(); window.__storageErro=true; });
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#msPeca');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#tmsg')).toContainText('Não consegui abrir a peça: objeto nao encontrado');
+  expect(await page.evaluate(()=>window.__abas[2].closed), 'a aba vazia fecha').toBe(true);
+  expect(await page.evaluate(()=>window.__storage.length)).toBe(3);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: "Aprovar" chama mesa_deliberar com a peca certa, fecha a folha e recarrega; recusa fica na folha', async ({page})=>{
+  const erros = await abrirMesa(page);
+  const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length);
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await expect(page.locator('#folha .ms-decide')).toContainText('Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa.');
+  await page.click('#msBtAprovar');
+  await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:101,p_decisao:'aprovado',p_nota:null}]);
+  await expect(page.locator('#veu'), 'OK fecha a folha').toBeHidden();
+  await expect(page.locator('#toast')).not.toHaveClass(/bad/);
+  await expect(page.locator('#tmsg')).toHaveText('Aprovação gravada.');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length), 'a aba recarrega').toBeGreaterThan(cargas0);
+  /* RECUSADO: toast de erro com o texto do banco, folha aberta e botoes de volta */
+  await page.evaluate(()=>{ window.__deliberar='RECUSADO: doc 102 ja saiu da mesa'; });
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.click('#msBtAprovar');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#tmsg')).toContainText('Não gravou: doc 102 ja saiu da mesa');
+  await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 102 ja saiu da mesa');
+  await expect(page.locator('#veu')).toBeVisible();
+  await expect(page.locator('#msBtAprovar')).toBeEnabled();
+  await expect(page.locator('#msBtAprovar')).toHaveText('Aprovar');
+  expect((await deliberacoes(page)).map(a=>a.p_doc)).toEqual([101,102]);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: "Pedir ajuste" sem texto nao chama o banco; com texto vai com a nota', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await expect(page.locator('#msTxtAjustar'), 'o campo nasce fechado').toBeHidden();
+  await page.click('#msAbreAjustar');
+  await expect(page.locator('#msTxtAjustar')).toBeVisible();
+  await expect(page.locator('#msAbreAjustar')).toHaveAttribute('aria-expanded','true');
+  await page.click('#msBtAjustar');
+  await expect(page.locator('#msAvisoDec')).toContainText('Diga o que precisa mudar na peça');
+  await page.fill('#msTxtAjustar','   ');
+  await page.click('#msBtAjustar');
+  await page.waitForTimeout(150);
+  expect(await deliberacoes(page), 'texto vazio ou so espaco nao grava').toEqual([]);
+  await expect(page.locator('#veu')).toBeVisible();
+  await page.fill('#msTxtAjustar','  Trocar a data da capa para 06/10  ');
+  await page.click('#msBtAjustar');
+  await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:102,p_decisao:'ajustar',p_nota:'Trocar a data da capa para 06/10'}]);
+  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#tmsg')).toHaveText('Pedido de ajuste gravado.');
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: "Largar" sem motivo nao chama o banco; com motivo vai com a nota', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=2');
+  await page.click('#msAbreLargar');
+  await expect(page.locator('#msTxtLargar')).toBeVisible();
+  await expect(page.locator('#msTxtAjustar'), 'um campo por vez').toBeHidden();
+  await page.click('#msBtLargar');
+  await expect(page.locator('#msAvisoDec')).toContainText('Diga o motivo de tirar a peça da mesa');
+  await page.waitForTimeout(150);
+  expect(await deliberacoes(page), 'sem motivo nao grava').toEqual([]);
+  await page.fill('#msTxtLargar','Cliente desistiu do contrato');
+  await page.click('#msBtLargar');
+  await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:103,p_decisao:'largar',p_nota:'Cliente desistiu do contrato'}]);
+  await expect(page.locator('#tmsg')).toHaveText('Peça tirada da sua mesa.');
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: nenhum codigo da decisao aparece cru na folha nem no aviso', async ({page})=>{
+  const erros = await abrirMesa(page);
+  /* "O que ajustar" e "Por que largar" sao os rotulos pedidos, em portugues de gente; fora deles, nada */
+  const CRUS_DEC = ['aprovado','ajustar','largar','mesa_deliberar','p_decisao','p_nota','RECUSADO','OK:'];
+  const textos = [];
+  const colhe = async()=>textos.push((await page.locator('#folha').innerText())+'\n'+(await page.locator('#tmsg').innerText()));
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await colhe();
+  await page.click('#msAbreAjustar'); await page.click('#msBtAjustar'); await colhe();
+  await page.click('#msAbreLargar'); await page.click('#msBtLargar'); await colhe();
+  await page.evaluate(()=>{ window.__deliberar='RECUSADO: fora do prazo'; });
+  await page.click('#msBtAprovar'); await expect(page.locator('#toast')).toHaveClass(/bad/); await colhe();
+  await page.evaluate(()=>{ window.__deliberar='OK: aprovado'; });
+  await page.click('#msBtAprovar'); await expect(page.locator('#veu')).toBeHidden(); await colhe();
+  for (const t of textos) {
+    const limpo = t.replace(/ /g,' ').split('O que ajustar').join('').split('Por que largar').join('');
+    for (const cru of [...CRUS_DEC, ...CRUS_MESA]) expect(limpo, 'codigo cru: '+cru).not.toContain(cru);
+  }
+  const rot = await page.evaluate(()=>{ msAbrir(0); return [...document.querySelectorAll('#folha .ms-decide button, #folha .ms-decide label, #msPeca')].map(e=>e.textContent.trim()); });
+  expect(rot).toEqual(['Abrir a peça','Aprovar','Pedir ajuste','Largar','O que ajustar','Enviar pedido','Por que largar','Confirmar']);
   expect(erros).toEqual([]);
 });
 
