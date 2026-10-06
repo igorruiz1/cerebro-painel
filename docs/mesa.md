@@ -72,11 +72,15 @@ Sem `p_prova_path` (null), o banco registra a baixa como declaração datada; co
   (gmail: E-mail), prova vira frase (documental: com comprovante). Código desconhecido vira rótulo genérico.
 - Baixa sem canal não chama o banco (LC-14: concluir sem prova não grava). Sem destinatário também não.
 - O print sobe antes da RPC. Se não subir, nada é gravado.
-- Decisão (p4.5): Aprovar chama `mesa_deliberar` direto. Pedir ajuste e Largar abrem um campo ("O que
-  ajustar", "Por que largar"); vazio não chama o banco e diz o que falta. `OK` fecha a folha, avisa e
-  recarrega a aba; `RECUSADO` fica na folha com o texto do banco. Aprovar tira da mesa o que é leitura ou
-  decisão; o que é envio continua lá até a baixa.
-- Uma escrita por vez: enquanto a decisão ou a baixa grava, a outra não sai.
+- Decisão (p4.5, desfazer na p4.19): Pedir ajuste, Adiar e Largar abrem um campo ("O que ajustar", "Volta
+  para a mesa em", "Por que largar"); vazio não chama o banco e diz o que falta. Válida, a decisão espera
+  6 s com desfazer, como os atos da folha: a folha anda na hora (fecha, ou passa à próxima no ritual) e
+  `mesa_deliberar` só sai depois do prazo. Desfazer devolve a peça com a nota no campo; no ritual, volta ao
+  mesmo passo. `OK` avisa e recarrega a aba; `RECUSADO` vira aviso de erro e, com a folha livre, a peça volta
+  com o texto do banco. Aprovar tira da mesa o que é leitura ou decisão; o que é envio continua lá até a baixa.
+- Baixa e ciência gravam antes a decisão que ainda espera os 6 s. Aprovação recusada segura a baixa.
+- Baixa e ciência: uma escrita por vez. A decisão não trava a seguinte: no ritual, o toque na próxima peça
+  vale enquanto a anterior grava.
 - Erro de leitura fica na própria aba; erro de relatório e de baixa vira aviso. Nunca tela em branco.
 - O relatório e a peça abrem numa aba criada no toque, que recebe o link depois. Medido no iPhone:
   `window.open` feito depois de esperar o banco é bloqueado como pop-up.

@@ -519,7 +519,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.18";
+const VERP="p4.19";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -1440,6 +1440,7 @@ function cobrar(ref){
   pendurar({inbox:textoCobranca(ref),origem:"fluxo",ref:String(ref)},"Pedir rascunho de cobrança · fluxo "+ref,c);
 }
 function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
+  if(p.mesa){msVolta(p.mesa,false);toast("Desfeito. Nada foi gravado.",null,false,2600);return;}
   if(p.origem!=null)FEITOS.delete(p.origem+"|"+String(p.ref));
   if(p.voz){abrirVoz(p.voz);toast("Desfeito. O texto voltou para você corrigir.",null,false,3000);return;}
   toast("Desfeito. Nada foi gravado.",null,false,2600); }
@@ -1454,6 +1455,7 @@ const erroTxt=e=>"Erro: "+e.message+(e.teto?". Nada foi confirmado, e pode ter g
 async function enviar(){
   if(!PEND)return; const p=PEND; PEND=null; clearTimeout(p.t);
   toast("gravando…",null,false);
+  if(p.mesa)return msGravarDec(p.mesa);
   if(p.voz){
     const {data,error}=await comTetoR(sb.rpc("inbox",{p_texto:VOZ_PREFIXO+p.voz}),LIMITE_ACAO,"inbox");
     const txt=error?erroTxt(error):String(data||"");
@@ -1772,13 +1774,13 @@ const MS_BUCKET_REL="mesa", MS_BUCKET_PECA="mesa", MS_BUCKET_PROVA="mesa-provas"
 /* p4.5: a decisao vai ao banco pelo codigo (a chave); a tela so mostra rotulo e frase.
    Ajuste e largar exigem nota escrita: sem ela a tela nao chama o banco. */
 const MS_DEC={
-  aprovado:{bt:"msBtAprovar",rot:"Aprovar",ok:"Aprovação gravada."},
+  aprovado:{bt:"msBtAprovar",rot:"Aprovar",ok:"Aprovação gravada.",pend:"Aprovada"},
   ajustar:{abre:"msAbreAjustar",campo:"msNotaAjustar",txt:"msTxtAjustar",bt:"msBtAjustar",rot:"Enviar pedido",
-    falta:"Diga o que precisa mudar na peça. Sem isso, o pedido não vai.",ok:"Pedido de ajuste gravado."},
+    falta:"Diga o que precisa mudar na peça. Sem isso, o pedido não vai.",ok:"Pedido de ajuste gravado.",pend:"Ajuste pedido"},
   largar:{abre:"msAbreLargar",campo:"msNotaLargar",txt:"msTxtLargar",bt:"msBtLargar",rot:"Confirmar",
-    falta:"Diga o motivo de tirar a peça da mesa. Sem ele, nada é gravado.",ok:"Peça tirada da sua mesa."},
+    falta:"Diga o motivo de tirar a peça da mesa. Sem ele, nada é gravado.",ok:"Peça tirada da sua mesa.",pend:"Tirada da mesa"},
   adiar:{abre:"msAbreAdiar",campo:"msNotaAdiar",txt:"msTxtAdiar",bt:"msBtAdiar",rot:"Adiar",
-    falta:"Escolha a data em que a peça volta. Sem ela, nada é gravado.",ok:"Peça adiada."}};
+    falta:"Escolha a data em que a peça volta. Sem ela, nada é gravado.",ok:"Peça adiada.",pend:"Adiada"}};
 const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false,rel:[],ritual:null,ordem:"valor",frente:""};
 /* p4.16 (06/10/2026, pedido do Igor): ordenar a mesa por data e filtrar por frente. "valor" e a ordem do banco
    (maior valor, depois a mais parada). Escolha fica no aparelho; storage bloqueado so volta ao padrao. */
@@ -2006,6 +2008,8 @@ async function msBaixa(){
   const destEl=document.getElementById("msDest"), dest=destEl?destEl.value.trim():"";
   if(dest.length<2){ diz("Diga para quem a peça foi."); if(destEl)destEl.focus(); return; }
   const arqEl=document.getElementById("msArq"), arq=arqEl&&arqEl.files&&arqEl.files[0]||null, canal=MS.canal;
+  /* p4.19: a aprovacao que ainda espera os 6 s vai antes da baixa; recusada, a baixa nao vai */
+  if(PEND&&PEND.mesa&&await enviar()===false)return;
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
   const volta=()=>{ MS.gravando=false; if(bt&&document.body.contains(bt)){bt.disabled=false;bt.textContent="Dar baixa";} };
   let prova=null;
@@ -2050,33 +2054,49 @@ async function msDecidir(dec){
     const el=document.getElementById(c.txt); nota=el?el.value.trim():"";
     if(!nota){ diz(c.falta); if(el)el.focus(); return; }
   }
-  const bts=[...document.querySelectorAll("#folha .ms-decide button")], bt=document.getElementById(c.bt);
-  MS.gravando=true; bts.forEach(b=>{b.disabled=true;}); if(bt)bt.textContent="gravando…"; if(av)av.textContent="";
-  const volta=()=>{ MS.gravando=false; bts.forEach(b=>{b.disabled=false;}); if(bt)bt.textContent=c.rot; };
+  /* p4.19 (plano 84): a decisao espera 6 s com desfazer, como os atos da folha. A folha anda na hora (fecha, ou
+     passa a proxima no ritual) e o banco so recebe depois do prazo. Antes o toque gravava na hora, sem volta. */
+  if(PEND)enviar();
+  const r=MS.ritual, m={p,dec,nota,r,ri:r?r.i:null,motivo0:p.motivo,saida:dec==="aprovado"&&MS_ATO_SAIDA.has(p.ato)&&!r};
+  if(av)av.textContent="";
+  if(m.saida){
+    /* p4.17: aprovar peca de envio nao a tira da mesa; fora do ritual a folha fica e desce ate "Ja enviei" */
+    const n=new Date(), d2=x=>String(x).padStart(2,"0");
+    p.motivo=`aprovado por voce em ${d2(n.getDate())}/${d2(n.getMonth()+1)} ${d2(n.getHours())}:${d2(n.getMinutes())}; falta ${p.ato}`;
+    msAbrirP(p);
+    const b=document.getElementById("msBaixaBloco"); if(b)b.scrollIntoView({block:"start",behavior:"smooth"});
+    const c1=document.querySelector("#folha .ms-canal"); if(c1)c1.focus({preventScroll:true});
+  } else if(r) msRitualProx(true); else fecharFolha();
+  PEND={mesa:m,t:setTimeout(enviar,6000)};
+  toast(m.saida?"Aprovada. Quando enviar, dê a baixa aqui.":c.pend+": "+curto(p.titulo||"peça sem título",60),null,true);
+}
+/* p4.19: devolve a peca a folha como estava antes do toque, com a nota no campo dela. Desfazer no ritual volta
+   ao mesmo passo; recusa do banco nao rebobina o ritual (o Igor ja esta na peca seguinte). */
+function msVolta(m,recusa){
+  const {p,dec,nota}=m, c=MS_DEC[dec];
+  if(m.saida)p.motivo=m.motivo0;
+  if(!recusa&&m.r&&MS.ritual===m.r){ m.r.i=m.ri; m.r.feitas--; msRitualMostrar(); } else msAbrirP(p);
+  if(c&&c.campo){ msMotivo(dec); const t=document.getElementById(c.txt); if(t)t.value=nota; }
+}
+/* p4.19: a decisao vai ao banco so aqui, depois dos 6 s. Sucesso fica calado se outro ato ja espera (resultado);
+   recusa nunca some: toast de erro e, com a folha livre ou ainda nesta peca, a peca volta com o aviso. */
+async function msGravarDec(m){
+  const {p,dec,nota}=m, c=MS_DEC[dec];
   const {data,error}=await msPedir(()=>sb.rpc("mesa_deliberar",{p_doc:p.id,p_decisao:dec,p_nota:nota}),LIMITE_ACAO,"mesa_deliberar");
   const txt=error?String(error.message||"falha de rede"):String(data==null?"":data).trim();
   if(!error&&/^OK/.test(txt)){
-    MS.gravando=false;
-    /* p4.17: aprovar peca de envio nao a tira da mesa; fora do ritual a folha fica e desce ate "Ja enviei" */
-    if(dec==="aprovado"&&MS_ATO_SAIDA.has(p.ato)&&!MS.ritual&&MS.peca===p){
-      const n=new Date(), d2=x=>String(x).padStart(2,"0");
-      p.motivo=`aprovado por voce em ${d2(n.getDate())}/${d2(n.getMonth()+1)} ${d2(n.getHours())}:${d2(n.getMinutes())}; falta ${p.ato}`;
-      msAbrirP(p);
-      const b=document.getElementById("msBaixaBloco"); if(b)b.scrollIntoView({block:"start",behavior:"smooth"});
-      const c1=document.querySelector("#folha .ms-canal"); if(c1)c1.focus({preventScroll:true});
-      toast("Aprovada. Quando enviar, dê a baixa aqui.",null,false,6000);
-      msCarregar();
-      return;
-    }
-    if(MS.peca===p){ if(MS.ritual)msRitualProx(true); else fecharFolha(); }
-    toast((dec==="adiar"&&/adiada ate/i.test(txt)?"Adiada até "+txt.replace(/^.*adiada ate\s*/i,"")+".":dec==="aprovado"&&MS_ATO_SAIDA.has(p.ato)?"Aprovada. Ela segue na mesa até a baixa do envio.":c.ok)+msCardTxt(txt),null,false,6000);
+    resultado((dec==="adiar"&&/adiada ate/i.test(txt)?"Adiada até "+txt.replace(/^.*adiada ate\s*/i,"")+".":m.saida?"Aprovada. Quando enviar, dê a baixa aqui.":dec==="aprovado"&&MS_ATO_SAIDA.has(p.ato)?"Aprovada. Ela segue na mesa até a baixa do envio.":c.ok)+msCardTxt(txt),null,6000);
     msCarregar(); if(/concluido junto/.test(txt))carregar(true);
-    return;
+    return true;
   }
-  volta();
-  const motivo=error&&error.teto?"Sem confirmação do banco ("+txt+"). Pode ter gravado: recarregue antes de repetir."
-    :/^RECUSADO/i.test(txt)?txt.replace(/^RECUSADO:?\s*/i,"Não gravou: "):"Não gravou: "+(txt||"o banco não respondeu nada")+".";
-  diz(motivo.slice(0,240));
+  const motivo=(error&&error.teto?"Sem confirmação do banco ("+txt+"). Pode ter gravado: recarregue antes de repetir."
+    :/^RECUSADO/i.test(txt)?txt.replace(/^RECUSADO:?\s*/i,"Não gravou: "):"Não gravou: "+(txt||"o banco não respondeu nada")+".").slice(0,240);
+  if(m.r&&MS.ritual===m.r){ m.r.feitas--; m.r.puladas++; }
+  if(document.getElementById("veu").classList.contains("hidden")||(MS.peca===p&&document.getElementById("msAvisoDec"))){
+    msVolta(m,true); const av=document.getElementById("msAvisoDec"); if(av)av.textContent=motivo; }
+  resultado(motivo,"bad",9000);
+  msCarregar();
+  return false;
 }
 
 /* ---------- relatorio e peca: PDF por link assinado do bucket mesa ----------
@@ -2152,6 +2172,7 @@ function msResumo(){
 }
 async function msCiencia(dia){
   if(MS.gravando)return;
+  if(PEND&&PEND.mesa)await enviar(); /* p4.19: a ciencia conta a mesa com a ultima decisao ja gravada */
   const av=document.getElementById("msAvisoCi"), bt=document.getElementById("msBtCiencia"), rot=bt?bt.textContent:"";
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
   const {data,error}=await msPedir(()=>sb.rpc("mesa_ciencia",{p_dia:dia||null,p_nota:null}),LIMITE_ACAO,"mesa_ciencia");
@@ -2166,6 +2187,7 @@ async function msCiencia(dia){
 /* p4.18: ciencia em lote de todo fechamento de dia anterior a hoje sem ciencia (mesa_ciencia_lote), num toque */
 async function msCienciaLote(){
   if(MS.gravando)return;
+  if(PEND&&PEND.mesa)await enviar();
   const av=document.getElementById("msAvisoLote"), bt=document.getElementById("msBtLote"), rot=bt?bt.textContent:"";
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
   const {data,error}=await msPedir(()=>sb.rpc("mesa_ciencia_lote"),LIMITE_ACAO,"mesa_ciencia_lote");
