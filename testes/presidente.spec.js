@@ -32,7 +32,7 @@ const DUBLE = `(()=>{
     titulo:'Card de exemplo',titulo_completo:'Card de exemplo',porque_agora:'vence em 1d',verbo_sugerido:'feita',
     recomendacao:'Recomendacao de exemplo, longa o bastante para ser cortada no foco e inteira no detalhe do card, com texto suficiente para passar de cento e oitenta caracteres sem esforco algum, so repetindo.',
     artefato_path:'/pasta/peca_v01.pdf',acoes:ac},
-    {origem:'tarefa',ref:'5',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-conenge',titulo:'Segundo card',porque_agora:'vence em 2d',valor_txt:'R$ 3 mil',acoes:ac}];
+    {origem:'tarefa',ref:'5',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-contrato-pj',titulo:'Segundo card',porque_agora:'vence em 2d',valor_txt:'R$ 3 mil',acoes:ac}];
   const sem=Array.from({length:13},(_,i)=>({semana:i+1,inicio:hoje,saldo_base:(i-4)*1000,saldo_pior:(i-6)*1000,sai_firme:500}));
   const dados={fila,exp:[],cont:[{depois:2}],rw:[{dias_sobrevida_pior:16,entrada_provavel_30d:1000,saida_firme_30d:500}],
     se:[{chave:'fila.aging_p95_dias',serie:[30]}],cap:[{minutos_dia:120}],min:[{id:2,minutos_estimados:25}],
@@ -42,17 +42,17 @@ const DUBLE = `(()=>{
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
     eb:[{nome:'backup-cerebro',falhas_7d:0,orcamento_falhas_7d:1,veredito_budget:'DENTRO DO ORCAMENTO'}]};
   const inv=[{id:2,frente:'11-renda-alt',dono:'igor',status:'pendente',prazo:hoje,parado_dias:1,titulo:'Card de exemplo',criterio_pronto:'Fiscal confirma por e-mail',acoes:[{verbo:'feita',rotulo:'feita',arg:null}]},
-    {id:3,frente:'20-conenge',dono:'igor',status:'aguardando_terceiro',prazo:hoje,parado_dias:0,titulo:'Item esperando',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'}]},
-    {id:4,frente:'04-obra-wanderlei',dono:'igor',status:'pendente',prazo:null,parado_dias:40,titulo:'Item para decidir',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'},{verbo:'arquivar',rotulo:'arquivar',arg:'texto'}]},
-    {id:6,frente:'20-conenge',dono:'igor',status:'pendente',prazo:'2999-01-01',parado_dias:0,titulo:'Item depois',acoes:[]},
-    {id:7,frente:'20-conenge',dono:'claude',status:'pendente',prazo:hoje,parado_dias:0,titulo:'Item do executor',acoes:[]}];
+    {id:3,frente:'20-contrato-pj',dono:'igor',status:'aguardando_terceiro',prazo:hoje,parado_dias:0,titulo:'Item esperando',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'}]},
+    {id:4,frente:'04-obra-residencial',dono:'igor',status:'pendente',prazo:null,parado_dias:40,titulo:'Item para decidir',acoes:[{verbo:'repactuar',rotulo:'repactuar',arg:'data'},{verbo:'arquivar',rotulo:'arquivar',arg:'texto'}]},
+    {id:6,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:'2999-01-01',parado_dias:0,titulo:'Item depois',acoes:[]},
+    {id:7,frente:'20-contrato-pj',dono:'claude',status:'pendente',prazo:hoje,parado_dias:0,titulo:'Item do executor',acoes:[]}];
   const arv=[{nivel:0,no:'CAIXA'},{nivel:1,no:'11-renda-alt',rotulo:'Renda Alternativa',margem_30d:2000,margem_total:2000},
-    {nivel:1,no:'20-conenge',rotulo:'Conenge',margem_30d:1000,margem_total:3000}];
+    {nivel:1,no:'20-contrato-pj',rotulo:'Contrato PJ',margem_30d:1000,margem_total:3000}];
   /* p4.4: retorno de mesa_painel com tres pecas (uma nova), uma saida, dois relatorios e a regua da hora.
      window.__mesa troca o retorno inteiro; window.__baixa troca a resposta de mesa_baixa_painel.
      p4.5: duas pecas com copia no bucket (peca), a terceira sem; window.__deliberar troca a resposta de mesa_deliberar. */
   const mesa={hoje,em_jogo:15400,horas_mes:42.5,
-    estoque:[{id:101,frente:'20-conenge',titulo:'Medicao 7 de exemplo',ato:'aprovar',dest:'Fiscal de exemplo',canal:'whatsapp',rs:12000,dias:9,motivo:'Falta a sua aprovacao para protocolar.',copia:null,novo:false,peca:'pecas/101/medicao-7_exemplo_v01.pdf'},
+    estoque:[{id:101,frente:'20-contrato-pj',titulo:'Medicao 7 de exemplo',ato:'aprovar',dest:'Fiscal de exemplo',canal:'whatsapp',rs:12000,dias:9,motivo:'Falta a sua aprovacao para protocolar.',copia:null,novo:false,peca:'pecas/101/medicao-7_exemplo_v01.pdf'},
       {id:102,frente:'11-renda-alt',titulo:'Laudo de exemplo',ato:'enviar',dest:'Cliente de exemplo',canal:'gmail',rs:3400,dias:2,motivo:'Pronto, falta sair.',copia:null,novo:true,peca:'pecas/102/laudo_exemplo_v02.pdf'},
       {id:103,frente:null,titulo:'Contrato de exemplo',ato:'assinar',dest:null,canal:null,rs:null,dias:0,motivo:null,copia:null,novo:false,peca:null}],
     producao_hoje:{A_AGIR:3,B_FEITO:1,C_SISTEMA:2,D_DEMAIS:0,FORA:0},
@@ -67,7 +67,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -149,16 +149,16 @@ for (const largura of [360, 390, 1280]) {
     expect(ms.r, 'controles pequenos na folha da peca').toEqual([]);
     expect(ms.SW, 'rolagem horizontal com a folha da peca aberta').toBe(ms.W);
     /* p4.5: o bloco "Sua decisao" com cada campo de nota aberto */
-    for (const dec of ['ajustar','largar']) {
+    for (const dec of ['ajustar','adiar','largar']) {
       await page.evaluate(d=>msMotivo(d), dec);
       const dc = await page.evaluate(()=>{
         const vis=e=>{const b=e.getBoundingClientRect();return b.width>0&&b.height>0;};
         const r=[...document.querySelectorAll('#folha button,#folha input,#folha textarea')].filter(vis).filter(e=>{const b=e.getBoundingClientRect();return b.height<44||b.width<44;}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim());
         return {r, peca:vis(document.getElementById('msPeca')), dec:[...document.querySelectorAll('#folha .ms-decide button')].filter(vis).length,
-          nota:[...document.querySelectorAll('#folha .ms-decide textarea')].filter(vis).length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+          nota:[...document.querySelectorAll('#folha .ms-decide textarea, #folha .ms-decide input[type=date]')].filter(vis).length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
       });
       expect(dc.peca, 'botao da peca na folha').toBe(true);
-      expect(dc.dec, `tres decisoes e o botao do campo (${dec})`).toBe(4);
+      expect(dc.dec, `quatro decisoes e o botao do campo (${dec})`).toBe(5);
       expect(dc.nota, `um campo de nota aberto (${dec})`).toBe(1);
       expect(dc.r, `controles pequenos com o campo de ${dec} aberto`).toEqual([]);
       expect(dc.SW, `rolagem horizontal com o campo de ${dec} aberto`).toBe(dc.W);
@@ -289,16 +289,16 @@ test('voz pelo navegador: o texto aparece para revisar, so Enviar grava na inbox
   await expect(page.locator('#vozMic')).toHaveAttribute('aria-pressed','false');
   let inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox'));
   expect(inbox, 'falar nao grava nada sozinho').toEqual([]);
-  await page.fill('#vozTxt','reagendar a vistoria da Conenge para quinta');
+  await page.fill('#vozTxt','reagendar a vistoria da obra para quinta');
   await page.click('#folha .pri');
   await page.click('#tbtn');
-  await expect(page.locator('#vozTxt'), 'desfazer devolve o texto para corrigir').toHaveValue('reagendar a vistoria da Conenge para quinta');
+  await expect(page.locator('#vozTxt'), 'desfazer devolve o texto para corrigir').toHaveValue('reagendar a vistoria da obra para quinta');
   inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox'));
   expect(inbox, 'desfazer nao grava').toEqual([]);
   await page.click('#folha .pri');
   await page.evaluate(()=>enviar());
   inbox = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='inbox').map(c=>c.a));
-  expect(inbox).toEqual([{p_texto:'[voz] reagendar a vistoria da Conenge para quinta'}]);
+  expect(inbox).toEqual([{p_texto:'[voz] reagendar a vistoria da obra para quinta'}]);
 });
 
 /* Print do Igor, 02/10/2026 23h16: limpar com o microfone aberto e falar de novo trazia de volta o texto
@@ -575,7 +575,7 @@ test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhi
 const CASO_HOJE = ()=>{
   const dia=n=>{const d=new Date(); d.setDate(d.getDate()+n); return ivData(d);};
   const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',teto_tela:5,
-    nivel:3,frente:'20-conenge',acoes:[{label:'feita',verbo:'feita'}],titulo:'item '+ref,titulo_completo:'item '+ref});
+    nivel:3,frente:'20-contrato-pj',acoes:[{label:'feita',verbo:'feita'}],titulo:'item '+ref,titulo_completo:'item '+ref});
   return {fila:[it('demanda','alex-audios',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
                 it('tarefa','1517',4,70,dia(0)),it('tarefa','1424',5,70,dia(0))],
           exp:[it('tarefa','1334',9,70,dia(-7),'depois')]};
@@ -662,10 +662,10 @@ test('no presidente, leitura que nao volta se declara: carga, inventario, histor
 });
 
 /* p4.2 (04/10/2026): print do Igor no celular, aba Hoje. O fluxo 19 vinha com 14 linhas de prosa no lugar do
-   titulo ("Brafor Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14
+   titulo ("Cliente Exemplo Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14
    assinado ..."). O banco ja corrigiu a causa, mas a tela se defende sozinha: na lista o titulo para em 2 linhas,
    e o contexto inteiro mora na folha, recolhido em 3 linhas com "ver mais". */
-const FRASE = 'Brafor Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado pelas duas partes no DocuSign, com a ressalva do item 7 sobre o reajuste. ';
+const FRASE = 'Cliente Exemplo Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado pelas duas partes no DocuSign, com a ressalva do item 7 sobre o reajuste. ';
 const LONGO = (FRASE.repeat(Math.ceil(1300/FRASE.length))).slice(0,1300);
 const linhas = sel => [...document.querySelectorAll(sel)].map(e=>{
   const cs=getComputedStyle(e), lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.45;
@@ -756,8 +756,8 @@ test('todo card de Hoje e da Fila mostra ha quanto tempo espera voce', async ({p
   const r = await page.evaluate(()=>{
     D.fila[0].dias_parado=9;
     D.fila[1].atualizado_em=new Date(Date.now()-5*36e5).toISOString();
-    D.fila.push({origem:'demanda',ref:'dx',camada_tela:'hoje',posicao:3,teto_tela:5,frente:'20-conenge',titulo:'Sem medida',acoes:[]});
-    D.fila.push({origem:'tarefa',ref:'2b',camada_tela:'hoje',posicao:4,teto_tela:5,frente:'20-conenge',titulo:'Hoje mesmo',dias_parado:0,acoes:[]});
+    D.fila.push({origem:'demanda',ref:'dx',camada_tela:'hoje',posicao:3,teto_tela:5,frente:'20-contrato-pj',titulo:'Sem medida',acoes:[]});
+    D.fila.push({origem:'tarefa',ref:'2b',camada_tela:'hoje',posicao:4,teto_tela:5,frente:'20-contrato-pj',titulo:'Hoje mesmo',dias_parado:0,acoes:[]});
     render(); ir('hoje');
     const cards=[document.querySelector('#foco'),...document.querySelectorAll('#ordem button')];
     const sel=cards.map(c=>{const e=c.querySelector('.espera');return e?{t:e.textContent,w:e.classList.contains('w')}:null;});
@@ -903,11 +903,11 @@ test('selo de saude: backup atrasado, rotina atrasada, snapshot velho e medida a
 test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem enviar nada ao pagador', async ({page})=>{
   await page.addInitScript(()=>{
     const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
-    const fx=(ref,dr)=>({origem:'fluxo',ref,camada_tela:'hoje',teto_tela:5,frente:'20-conenge',titulo:'Receber fluxo '+ref,data_ref:dr,dias_parado:2,acoes:[{label:'caiu',verbo:'confirmado'}]});
+    const fx=(ref,dr)=>({origem:'fluxo',ref,camada_tela:'hoje',teto_tela:5,frente:'20-contrato-pj',titulo:'Receber fluxo '+ref,data_ref:dr,dias_parado:2,acoes:[{label:'caiu',verbo:'confirmado'}]});
     window.__dados={fila:[fx('251',d(-2)),fx('252',d(0)),fx('253',d(-2))],
-      c13i:[{id:251,natureza:'receber',vencido:true,valor_igor:1400,descricao:'NF 001 Conenge',data_venc:d(-2),frente_slug:'20-conenge'},
-            {id:252,natureza:'receber',vencido:false,valor_igor:900,descricao:'NF 002',data_venc:d(0),frente_slug:'20-conenge'},
-            {id:253,natureza:'pagar',vencido:true,valor_igor:500,descricao:'Boleto',data_venc:d(-2),frente_slug:'20-conenge'}]};
+      c13i:[{id:251,natureza:'receber',vencido:true,valor_igor:1400,descricao:'NF 001 Cliente',data_venc:d(-2),frente_slug:'20-contrato-pj'},
+            {id:252,natureza:'receber',vencido:false,valor_igor:900,descricao:'NF 002',data_venc:d(0),frente_slug:'20-contrato-pj'},
+            {id:253,natureza:'pagar',vencido:true,valor_igor:500,descricao:'Boleto',data_venc:d(-2),frente_slug:'20-contrato-pj'}]};
   });
   const erros = await abrir(page);
   const tem = await page.evaluate(()=>['251','252','253'].map(ref=>{ fecharFolha(); abrirHoje(hojeLista().find(x=>x.ref===ref)); return !!document.getElementById('btCobrar'); }));
@@ -921,7 +921,7 @@ test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem env
   expect(r.inbox.length).toBe(1);
   expect(r.inbox[0]).toMatch(/^\[cobrar\] Rascunhe e NÃO envie/);
   expect(r.inbox[0]).toContain('fluxo 251');
-  expect(r.inbox[0]).toContain('NF 001 Conenge');
+  expect(r.inbox[0]).toContain('NF 001 Cliente');
   expect(r.inbox[0].split('Sugestão:')[1], 'o texto ao pagador nao cita a parte do Igor como se fosse o valor').not.toContain('R$');
   await expect(page.locator('#tmsg')).toContainText('nada vai ao pagador sem você');
   /* no Caixa, a linha do vencido tem o mesmo Cobrar */
@@ -940,21 +940,21 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
   await page.setViewportSize({width:360, height:820});
   await page.addInitScript(()=>{
     const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
-    const ops=[['Sicredi','PF · Sicredi 28889-3'],['Bradesco','PF · Bradesco 631418-0'],['PagBank','PF · PagBank'],['Nomad','PF · Nomad (US$)'],
-      ['RUIZ_CORA_7702261-5','Ruiz · Cora 7702261-5'],['DABLI_CORA_7680065-8','Dabli · Cora 7680065-8'],['IGV_BB_2414-7','IGV · BB 2414-7'],
-      ['IGV_SICREDI_69676-2','IGV · Sicredi 69676-2'],['IGV_INTER','IGV · Inter'],['IGV_NUBANK','IGV · Nubank'],['REIDOPISO_ITAU_98645-6','Rei do Piso · Itaú 98645-6']]
+    const ops=[['BANCO_A','PF · Banco A 10001-1'],['BANCO_B','PF · Banco B 200002-2'],['CARTEIRA','PF · Carteira digital'],['EXTERIOR','PF · Exterior (US$)'],
+      ['EMPRESA1_X_3000003-3','Empresa 1 · Banco X 3000003-3'],['EMPRESA2_X_4000004-4','Empresa 2 · Banco X 4000004-4'],['EMPRESA3_Y_5005-5','Empresa 3 · Banco Y 5005-5'],
+      ['EMPRESA3_A_60006-6','Empresa 3 · Banco A 60006-6'],['EMPRESA3_Z','Empresa 3 · Banco Z'],['EMPRESA3_W','Empresa 3 · Banco W'],['EMPRESA4_V_70007-7','Empresa 4 · Banco V 70007-7']]
       .map(([v,rot])=>({v,rot}));
-    window.__dados={fila:[{origem:'fluxo',ref:'19',camada_tela:'hoje',teto_tela:5,frente:'08-dabli-tech',titulo:'Receber parcela 1/5 da Brafor',data_ref:d(-1),dias_parado:1,
-      acoes:[{label:'caiu',verbo:'recebido',campo:'entidade',padrao:'DABLI_CORA_7680065-8',opcoes:ops},{campo:'date',label:'nova data',verbo:'repactuar'}]}]};
+    window.__dados={fila:[{origem:'fluxo',ref:'19',camada_tela:'hoje',teto_tela:5,frente:'08-startup',titulo:'Receber parcela 1/5 do cliente',data_ref:d(-1),dias_parado:1,
+      acoes:[{label:'caiu',verbo:'recebido',campo:'entidade',padrao:'EMPRESA2_X_4000004-4',opcoes:ops},{campo:'date',label:'nova data',verbo:'repactuar'}]}]};
   });
   const erros = await abrir(page);
   await page.evaluate(()=>abrirFila(0,'recebido'));
   const contas = page.locator('#campo .contas button');
   await expect(contas).toHaveCount(11);
   await expect(page.locator('#campo .contas button.sug'), 'so a ultima usada vem destacada').toHaveCount(1);
-  await expect(page.locator('#campo .contas button.sug')).toHaveAttribute('data-conta','DABLI_CORA_7680065-8');
+  await expect(page.locator('#campo .contas button.sug')).toHaveAttribute('data-conta','EMPRESA2_X_4000004-4');
   /* p4.10: classe no DOM nao prova destaque. Mede a cor DESENHADA: todo texto das contas passa 4,5:1 e a
-     sugerida tem fundo e borda diferentes das outras (o chip do IGV Sicredi sumiu com a classe certa) */
+     sugerida tem fundo e borda diferentes das outras (o chip de uma das contas sumiu com a classe certa) */
   const med = await page.evaluate(contrasteDos, '#campo .contas button, #campo .contas button *');
   expect(med.length, 'mediu as 11 contas e o selo').toBe(12);
   expect(med.filter(m=>!(m.razao>=4.5)), 'texto das contas abaixo de 4,5:1 (NaN reprova)').toEqual([]);
@@ -963,10 +963,10 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
   expect(vis[0], 'a sugerida se distingue das outras').not.toBe(vis[1]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360 px').toBe(true);
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir a escolha nao grava nada').toBe(0);
-  await page.click('#campo .contas button[data-conta="RUIZ_CORA_7702261-5"]');
+  await page.click('#campo .contas button[data-conta="EMPRESA1_X_3000003-3"]');
   await page.evaluate(()=>enviar());
   const ag = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
-  expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ_CORA_7702261-5'}]);
+  expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'EMPRESA1_X_3000003-3'}]);
   expect(erros).toEqual([]);
 });
 
@@ -1024,7 +1024,7 @@ test('folha modal: foco entra, 40 Tabs nao saem e o Esc devolve o foco a quem ab
    (mesa_baixa_painel). A tela cobra tres coisas: codigo do banco nunca aparece cru (ato, canal, gaveta,
    tipo de prova, slug de frente), baixa sem canal nao vai ao banco (LC-14) e o relatorio abre por link
    assinado do bucket mesa, com erro virando aviso e nunca tela em branco. */
-const CRUS_MESA = ['aprovar','enviar','assinar','A_AGIR','B_FEITO','C_SISTEMA','whatsapp','gmail','email_corporativo','em_maos','documental','declaratoria','20-conenge','11-renda-alt','null','undefined','NaN'];
+const CRUS_MESA = ['aprovar','enviar','assinar','A_AGIR','B_FEITO','C_SISTEMA','whatsapp','gmail','email_corporativo','em_maos','documental','declaratoria','20-contrato-pj','11-renda-alt','null','undefined','NaN'];
 const abrirMesa = async page=>{
   const erros = await abrir(page);
   await page.evaluate(()=>ir('mesa'));
@@ -1046,7 +1046,7 @@ test('Mesa: a aba mostra as 3 pecas, o dia, a regua da hora e os 2 relatorios, s
   expect(txt).toContain('Neste mês: 42,5 h');
   expect(txt).toContain('piso R$ 63,03');
   expect(txt).toContain('teto R$ 480,00');
-  for (const s of ['Aprovação para Fiscal de exemplo','Envio para Cliente de exemplo','Assinatura','sem valor','parada há 9 d','parada desde hoje','Saiu hoje','com comprovante','Fechamento do dia de exemplo v02'])
+  for (const s of ['Aprovação para Fiscal de exemplo','Envio para Cliente de exemplo','Assinatura','sem valor','parada há 9 d','parada desde hoje','Saiu hoje','com comprovante','Fechamento do dia','versão 02','sem ciência'])
     expect(txt, 'mostra '+s).toContain(s);
   for (const cru of CRUS_MESA) expect(txt, 'codigo cru na aba: '+cru).not.toContain(cru);
   /* a folha da peca tambem fala lingua de gente */
@@ -1116,15 +1116,20 @@ test('Mesa: com canal, a baixa chama mesa_baixa_painel com a peca e o canal cert
   expect(erros).toEqual([]);
 });
 
-test('Mesa: tocar num relatorio pede o link assinado ao bucket mesa e abre; erro vira aviso', async ({page})=>{
+test('Mesa: o relatorio abre a folha; o PDF sai do botao pelo link assinado do bucket mesa; erro vira aviso', async ({page})=>{
   const erros = await abrirMesa(page);
   await page.evaluate(()=>{ window.__abas=[]; window.open=()=>{ const w={closed:false,location:{href:''},close(){this.closed=true;}}; window.__abas.push(w); return w; }; });
   await page.click('#ms-raiz .ms-rel >> nth=0');
+  /* p4.12: o toque abre a folha do relatorio, nunca o PDF direto */
+  await expect(page.locator('#folhaTit')).toContainText('Fechamento do dia');
+  expect(await page.evaluate(()=>window.__storage), 'o toque na lista nao abre o PDF').toEqual([]);
+  await page.click('#msRelPdf');
   await expect.poll(()=>page.evaluate(()=>window.__abas.map(w=>w.location.href))).toEqual(['about:blank']);
   expect(await page.evaluate(()=>window.__storage)).toEqual([{b:'mesa',op:'createSignedUrl',p:'dia/fechamento_v02.pdf',s:300}]);
   await expect(page.locator('#tmsg')).toContainText('Relatório aberto');
-  await page.evaluate(()=>{ window.__storageErro=true; });
+  await page.evaluate(()=>{ window.__storageErro=true; fecharFolha(); });
   await page.click('#ms-raiz .ms-rel >> nth=1');
+  await page.click('#msRelPdf');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
   await expect(page.locator('#tmsg')).toContainText('Não consegui abrir o relatório: objeto nao encontrado');
   expect(await page.evaluate(()=>window.__abas[1].closed), 'a aba vazia fecha').toBe(true);
@@ -1251,7 +1256,7 @@ test('Mesa: nenhum codigo da decisao aparece cru na folha nem no aviso', async (
     for (const cru of [...CRUS_DEC, ...CRUS_MESA]) expect(limpo, 'codigo cru: '+cru).not.toContain(cru);
   }
   const rot = await page.evaluate(()=>{ msAbrir(0); return [...document.querySelectorAll('#folha .ms-decide button, #folha .ms-decide label, #msPeca')].map(e=>e.textContent.trim()); });
-  expect(rot).toEqual(['Abrir a peça','Aprovar','Pedir ajuste','Largar','O que ajustar','Enviar pedido','Por que largar','Confirmar']);
+  expect(rot).toEqual(['Abrir a peça','Aprovar','Pedir ajuste','Adiar','Largar','O que ajustar','Enviar pedido','Volta para a mesa em','Adiar','Por que largar','Confirmar']);
   expect(erros).toEqual([]);
 });
 
@@ -1385,8 +1390,8 @@ test('o index.html (bastidor) passa pela mesma porta: sem o codigo nao carrega, 
 test('s859: pagamento conta minutos pela chave fluxo e nao pega os da tarefa de mesmo numero', async ({page})=>{
   await abrir(page);
   const sit = await page.evaluate(()=>{
-    D.fila=[{origem:'fluxo',ref:'9',camada_tela:'hoje',posicao:1,teto_tela:5,frente:'20-conenge',titulo:'Pagar parcela de exemplo',porque_agora:'vence em 1d',valor_txt:'R$ 2.000,00',acoes:[]},
-            {origem:'tarefa',ref:'9',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-conenge',titulo:'Tarefa de mesmo numero',porque_agora:'vence em 1d',acoes:[]}];
+    D.fila=[{origem:'fluxo',ref:'9',camada_tela:'hoje',posicao:1,teto_tela:5,frente:'20-contrato-pj',titulo:'Pagar parcela de exemplo',porque_agora:'vence em 1d',valor_txt:'R$ 2.000,00',acoes:[]},
+            {origem:'tarefa',ref:'9',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-contrato-pj',titulo:'Tarefa de mesmo numero',porque_agora:'vence em 1d',acoes:[]}];
     D.exp=[]; D.min=[{id:'9',minutos_estimados:25},{id:'fluxo:9',minutos_estimados:10}];
     render(); return document.getElementById('situacao').textContent;
   });
@@ -1402,4 +1407,190 @@ test('s859: a hora da Mesa diz a janela de 30 dias e nao alarma dentro da regua'
   })).replace(/\u00a0/g,' ');
   expect(txt).toContain('Sua hora nos últimos 30 dias: R$ 195,72, dentro da régua');
   expect(txt).not.toContain('abaixo do piso');
+});
+
+/* ---------- p4.12 (06/10/2026, s03): Mesa como ritual de fim de dia e modo demonstracao ----------
+   O Igor abria o "fechamento do dia" direto no PDF, sem onde dar ciencia nem decidir, e via v01, v02 e v03 do
+   mesmo dia misturadas com a vigente. Os testes cobram a classe: relatorio repetido nunca aparece duas vezes,
+   o toque nunca abre PDF sem passar pela folha, o ritual so grava o que foi decidido e termina na ciencia,
+   e a demonstracao nao cria cliente do banco nem carrega nome real no fonte (o repositorio e publico). */
+const ciencias = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_ciencia').map(c=>c.a));
+
+test('Mesa p4.12: relatorio repetido aparece uma vez, na versao vigente; a anterior so dentro da folha; a ciencia do dia vai ao banco', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await abaFalsa(page);
+  const hoje = await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados));
+    m.relatorios=[{tipo:'dia',alvo:m.hoje,versao:'01',titulo:'x v01',path:'dia/v01.pdf'},{tipo:'dia',alvo:m.hoje,versao:'03',titulo:'x v03',path:'dia/v03.pdf'},
+      {tipo:'dia',alvo:m.hoje,versao:'02',titulo:'x v02',path:'dia/v02.pdf'}];
+    m.fechamentos=[]; window.__mesa=m; msCarregar(); return m.hoje; });
+  await expect(page.locator('#ms-raiz .ms-rel'), 'banco antigo mandava cada versao numa linha').toHaveCount(1);
+  await expect(page.locator('#ms-raiz .ms-rel')).toContainText('versão 03');
+  await expect(page.locator('#ms-raiz .ms-rel')).toContainText('2 versões anteriores');
+  await page.click('#ms-raiz .ms-rel');
+  expect(await page.evaluate(()=>window.__storage), 'o toque abre a folha, nao o PDF').toEqual([]);
+  await page.click('#msRelPdf');
+  await expect.poll(()=>page.evaluate(()=>window.__storage.map(x=>x.p))).toEqual(['dia/v03.pdf']);
+  await page.click('#folha summary');
+  await expect(page.locator('#folha .ms-versoes button')).toHaveText(['Versão 02, substituída','Versão 01, substituída']);
+  await page.click('#msBtCiencia');
+  await expect.poll(()=>ciencias(page)).toEqual([{p_dia:hoje,p_nota:null}]);
+  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#tmsg')).toContainText('Ciência gravada');
+  expect(erros).toEqual([]);
+});
+
+test('Mesa p4.12: "Encerrar o dia" passa peca por peca (nova primeiro), Pular nao grava, e termina na ciencia do dia', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await expect(page.locator('#msBtEncerrar')).toHaveText('Encerrar o dia (3)');
+  await page.click('#msBtEncerrar');
+  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
+  await expect(page.locator('#folhaTit'), 'a nova vem primeiro').toHaveText('Laudo de exemplo');
+  await page.click('#msBtAprovar');
+  await expect(page.locator('#folha .ms-ritual')).toHaveText(/2 de 3/i);
+  await expect(page.locator('#folhaTit'), 'depois a de maior valor').toHaveText('Medicao 7 de exemplo');
+  expect(await deliberacoes(page)).toEqual([{p_doc:102,p_decisao:'aprovado',p_nota:null}]);
+  await page.click('#folha .ms-ritual-pe >> text=Pular');
+  await expect(page.locator('#folha .ms-ritual')).toHaveText(/3 de 3/i);
+  await page.click('#folha .ms-ritual-pe >> text=Pular');
+  expect((await deliberacoes(page)).length, 'pular nao grava').toBe(1);
+  await expect(page.locator('#folhaTit')).toHaveText('Encerrar o dia');
+  await expect(page.locator('#folha')).toContainText('Você decidiu 1 peça e pulou 2.');
+  await expect(page.locator('#folha')).toContainText('2 peças ficam na mesa para amanhã.');
+  await page.click('#msBtCiencia');
+  await expect.poll(()=>ciencias(page)).toEqual([{p_dia:null,p_nota:null}]);
+  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#tmsg')).toContainText('Dia encerrado');
+  /* recusa do banco fica no resumo, com o texto dele, e o botao volta */
+  await page.evaluate(()=>{ window.__ciencia='RECUSADO: nao da para dar ciencia de dia que nao chegou'; MS.ritual={ids:[],snap:{},i:0,feitas:0,puladas:0}; msResumo(); });
+  await page.click('#msBtCiencia');
+  await expect(page.locator('#msAvisoCi')).toContainText('Não gravou: nao da para dar ciencia');
+  await expect(page.locator('#msBtCiencia')).toBeEnabled();
+  expect(erros).toEqual([]);
+});
+
+test('Mesa p4.12: Adiar vai com a data; sem data nao grava; a peca adiada sai da conta do dia e diz quando volta', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#msAbreAdiar');
+  const amanha = await page.evaluate(()=>somaDias(1));
+  await expect(page.locator('#msTxtAdiar')).toHaveValue(amanha);
+  await page.fill('#msTxtAdiar','');
+  await page.click('#msBtAdiar');
+  await expect(page.locator('#msAvisoDec')).toContainText('Escolha a data');
+  expect(await deliberacoes(page), 'sem data nao grava').toEqual([]);
+  await page.fill('#msTxtAdiar', amanha);
+  await page.evaluate(()=>{ window.__deliberar='OK: adiada ate 07/10'; });
+  await page.click('#msBtAdiar');
+  await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:101,p_decisao:'adiar',p_nota:amanha}]);
+  await expect(page.locator('#tmsg')).toContainText('Adiada até 07/10.');
+  await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados)); m.estoque[0].adiado_ate=somaDias(2); window.__mesa=m; msCarregar(); });
+  await expect(page.locator('#n-mesa'), 'a adiada sai do selo').toHaveText('2');
+  await expect(page.locator('#msBtEncerrar')).toHaveText('Encerrar o dia (2)');
+  await expect(page.locator('#ms-raiz details.ms-adiadas summary')).toHaveText('Adiadas (1)');
+  await page.click('#ms-raiz details.ms-adiadas summary');
+  await expect(page.locator('#ms-raiz details.ms-adiadas .ms-item')).toContainText('volta em');
+  expect(erros).toEqual([]);
+});
+
+/* a demonstracao entra pelo mesmo arquivo; o duble do supabase continua no lugar, para provar que ninguem o chama */
+async function abrirDemo(page, largura){
+  const erros=[], rede=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  page.on('request',r=>{ const u=r.url(); if(!/^(file|data|blob|about):/.test(u)&&!/cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u))rede.push(u); });
+  if(largura)await page.setViewportSize({width:largura, height:820});
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(()=>{ try{sessionStorage.setItem('cerebro.demo','1');}catch(e){}
+    const c=window.supabase.createClient; window.supabase.createClient=(...a)=>{ window.__criou=(window.__criou||0)+1; return c(...a); }; });
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit') && !!document.querySelector('#kanban .item'));
+  return {erros, rede};
+}
+
+test('Demonstracao: nenhum cliente do banco nasce, nada sai para a rede, a marca e neutra e tudo se clica', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 360);
+  await expect(page.locator('#demoAviso')).toBeVisible();
+  await abaFalsa(page);
+  for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
+    await page.evaluate(a=>ir(a), aba);
+    if(aba==='mesa') await page.waitForSelector('#ms-raiz .ms-item');
+    const m = await page.evaluate(()=>{
+      const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
+      const pequenos=[...document.querySelectorAll('button,input,textarea,summary,a[href]:not(.rodape a)')].filter(vis)
+        .filter(e=>{const r=e.getBoundingClientRect();return r.height<44||r.width<44;}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim().slice(0,30));
+      return {pequenos, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth, txt:document.body.innerText};
+    });
+    expect(m.pequenos, `controles pequenos em ${aba}`).toEqual([]);
+    expect(m.SW, `rolagem horizontal em ${aba}`).toBe(m.W);
+    expect(m.txt, `marca real em ${aba}`).not.toMatch(/Dabli/);
+  }
+  await expect(page.locator('.so-real').first(), 'bastidor, seguranca e sair somem').toBeHidden();
+  /* ritual com dado ficticio: decide, adia, para; o estado muda so na memoria da pagina */
+  const antes = await page.locator('#n-mesa').innerText();
+  await page.click('#msBtEncerrar');
+  await page.click('#msBtAprovar');
+  await page.click('#msAbreAdiar'); await page.click('#msBtAdiar');
+  await expect(page.locator('#folha .ms-ritual')).toHaveText(/3 de/i);
+  await page.click('#folha .ms-ritual-pe >> text=Parar');
+  await expect.poll(()=>page.locator('#n-mesa').innerText()).not.toBe(antes);
+  await page.click('#ms-raiz .ms-rel >> nth=0'); await page.click('#msRelPdf');
+  await expect(page.locator('#tmsg')).toContainText('Relatório aberto');
+  await page.evaluate(()=>{ fecharFolha(); ir('hoje'); abrirFila(0); });
+  await expect(page.locator('#veu')).toBeVisible();
+  await page.evaluate(()=>fecharFolha());
+  expect(await page.evaluate(()=>window.__criou||0), 'createClient chamado na demonstracao').toBe(0);
+  expect(await page.evaluate(()=>window.__rpc.length), 'o duble do banco nao recebe nada').toBe(0);
+  expect(rede, 'nada sai para a rede').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('Demonstracao: sair pede o codigo do app antes de qualquer dado real, mesmo com sessao aal2', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(()=>{ try{sessionStorage.setItem('cerebro.demo.saida','1');}catch(e){} window.__aal='aal2'; window.__fatores=[{id:'f1',status:'verified',factor_type:'totp'}]; });
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  await expect(page.locator('#fator')).toBeVisible();
+  await expect(page.locator('#fatorTxt')).toContainText('sair da demonstração');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'nada carrega antes do codigo').toBe(0);
+  await page.fill('#codFator','123456');
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  expect(await page.evaluate(()=>sessionStorage.getItem('cerebro.demo.saida')), 'a marca de saida some depois do codigo').toBeNull();
+  expect(erros).toEqual([]);
+});
+
+test('Demonstracao: conta sem segundo fator sai da sessao ao deixar a demonstracao', async ({page})=>{
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(()=>{ try{sessionStorage.setItem('cerebro.demo.saida','1');}catch(e){} window.__aal='aal1'; window.__fatores=[]; });
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  await expect(page.locator('#login')).toBeVisible();
+  await expect(page.locator('#lmsg')).toContainText('saiu da demonstração');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length)).toBe(0);
+});
+
+test('Demonstracao: o bloco do modo nao carrega nome real nem endereco do banco (repositorio publico)', ()=>{
+  const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  const i = fonte.indexOf('/* modulo:demo'), f = fonte.indexOf('/* fim modulo:demo */');
+  expect(i, 'bloco de demonstracao existe').toBeGreaterThan(0);
+  const bloco = fonte.slice(fonte.indexOf('*/', i)+2, f);
+  expect(bloco.length).toBeGreaterThan(3000);
+  expect(bloco, 'endereco do banco no bloco').not.toMatch(/supabase\.co|@gmail|createClient\(URL_/);
+  /* A lista de nomes proibidos (pessoas, empresas, bancos, cidade e id do projeto) vai em SHA-256: escrita em claro,
+     ela mesma vazaria os nomes neste repositorio publico. Cada palavra do bloco, e cada par e trio de palavras
+     seguidas, sem acento e em minuscula, e comparada com a lista. Nome novo: gerar o hash do mesmo jeito. */
+  const crypto = require('crypto');
+  const PROIBIDOS = new Set(['6ab84705e5d695ef','f1fca769f672a482','eb8b7bef229ddb38','4cb8b3c18423fdf7','57ddbe120c2a5254','4c006c647316bd2e','b748ad66d73dd832',
+    '1fa4c9eed0c8dab6','ff30d1531a8d9f49','fe7870a244a2000b','3a476a05128038e1','a39fdca4bf85865d','b599675130c2a485','e606e9794651b68d','b4fba2288e6a880a',
+    'd86dc6e60b0632e3','91d1699885940621','064d1e677b995c1f','b684e5a7d5767cce','6035dd9902419a84','b8d8a9b672985b1d','b90f4994c4675589','44c2fc7b06e5b214',
+    '948ed6a2a21964d6','80efd4dd27606356','4d9639d39ff3c9aa','c2c64c35e75eda0f','5fbc1daee9d1fa06','4135aa9dc1b842a6','ff06535ac1029cca','8dd28c9b66f34782',
+    'ec0aa35a6ea6b190','7ded2c90172ea13a','7fac0d0407d16331','a0d66abfb6c54bfb']);
+  const h = t=>crypto.createHash('sha256').update(t).digest('hex').slice(0,16);
+  /* dono:"igor" e valor_igor sao contrato da tela (colunaDe, aCobrar), nao dado: saem antes da varredura */
+  const pal = bloco.replace(/dono:"igor"|valor_igor/g,' ').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const achados = [];
+  for (let k=0; k<pal.length; k++) for (let n=1; n<=3 && k+n<=pal.length; n++) { const t=pal.slice(k,k+n).join(' '); if(PROIBIDOS.has(h(t))) achados.push(t); }
+  expect(achados, 'nome real no bloco de demonstracao').toEqual([]);
+  /* o detector detecta: um nome proibido conhecido, posto num texto, tem de ser achado */
+  expect(PROIBIDOS.has(h('kssvzrnjiqfgtvoifboj')), 'a lista de hashes confere com o id do projeto').toBe(true);
 });

@@ -360,7 +360,27 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .ms-decisoes .sec[aria-expanded="true"]{border-color:var(--acc);font-weight:700}
 .ms-nota[hidden]{display:none}
 .ms-nota .pri{flex:none}
+/* p4.12: Encerrar o dia (ritual de fim de dia), adiadas e a folha do relatorio */
+.ms-fecho{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;overflow-wrap:anywhere}
+.ms-fecho.limpa{border-color:var(--ok)}
+.ms-fecho-num{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--ink2)}
+.ms-fecho-num b{font-family:var(--mono);color:var(--ink)}
+.ms-barra{display:block;height:8px;border-radius:6px;background:var(--chip);overflow:hidden}
+.ms-barra i{display:block;height:100%;background:var(--ok)}
+.ms-fecho .pri,.ms-fecho .sec{flex:none}
+.ms-ritual{margin:0;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.ms-ritual-pe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ms-adiadas summary{min-height:var(--tap);display:flex;align-items:center;cursor:pointer;font-weight:600}
+.ms-adiadas .pilha,.ms-adiadas .ms-versoes{margin-top:8px}
+.ms-versoes{display:flex;flex-direction:column;gap:8px}
+.ms-versoes .sec{flex:none}
 /* fim estilo:mesa */
+/* estilo:demo · p4.12: aviso fixo de demonstracao no topo do conteudo */
+.demo-aviso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;color:var(--ink2);overflow-wrap:anywhere}
+.demo-aviso b{color:var(--ink)}
+.demo-aviso span{flex:1 1 220px;min-width:0}
+.demo-aviso .sec{flex:none}
+/* fim estilo:demo */
 </style>
 </head>
 <body>
@@ -406,7 +426,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" onclick="ir('mesa')">Mesa<span class="selo" id="r-mesa"></span></button>
-    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a href="index.html">bastidor da máquina</a><a href="seguranca.html">segurança</a><a href="#" onclick="sair();return false">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" onclick="demoEntrar();return false">demonstração</a><a class="so-real" href="#" onclick="sair();return false">sair</a></div>
   </nav>
 
   <div class="col">
@@ -429,6 +449,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     </div>
 
     <main>
+      <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><button type="button" class="sec" onclick="demoSair()">Sair da demonstração</button></div>
       <div id="falha" class="aviso hidden" role="alert"></div>
       <button id="novaVersao" class="pri hidden" onclick="atualizarPainel()"></button>
 
@@ -474,7 +495,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
         <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
       </section>
 
-      <div class="rodape"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a></div>
+      <div class="rodape so-real"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a> · <a href="#" onclick="demoEntrar();return false">Modo demonstração</a></div>
     </main>
   </div>
 
@@ -492,10 +513,178 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.11";
+const VERP="p4.12";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const sb=supabase.createClient(URL_,KEY_);
+/* modulo:demo · p4.12 (06/10/2026, s03)
+   Modo demonstracao para venda presencial, no celular do dono: a tela inteira roda com dados inventados e o
+   cliente do Supabase nem nasce. Nada sai para o banco, o Storage, o Realtime ou a API de voz; o que se clica
+   muda so a memoria desta pagina. Entra pelo link "demonstração" de dentro do painel (sessao aberta) e sai pelo
+   aviso do topo; a saida pede o codigo do app autenticador antes de mostrar dado real, porque quem segura o
+   celular numa venda e o cliente. Link aberto para terceiros fica para depois (decisao do Igor, 06/10/2026).
+   Todo dado aqui e ficticio, escrito a mao: o repositorio e publico, e testes/presidente.spec.js reprova o
+   bloco se aparecer nome de pessoa, empresa ou banco real. Estrutura igual a do painel_carga e do mesa_painel. */
+const DEMO_CHAVE="cerebro.demo", DEMO_SAIDA="cerebro.demo.saida";
+const DEMO=(()=>{try{return sessionStorage.getItem(DEMO_CHAVE)==="1";}catch(e){return false;}})();
+function demoEntrar(){
+  try{ sessionStorage.setItem(DEMO_CHAVE,"1"); }catch(e){ toast("Este navegador não deixou ligar a demonstração.","bad",false,5000); return; }
+  location.reload();
+}
+function demoSair(){
+  try{ sessionStorage.removeItem(DEMO_CHAVE); sessionStorage.setItem(DEMO_SAIDA,"1"); }catch(e){}
+  location.reload();
+}
+function demoVestir(){
+  document.title="Demonstração · Cérebro";
+  document.querySelectorAll(".marca").forEach(m=>{ m.title="Cérebro · demonstração";
+    const dt=m.querySelector(".dt"); if(dt)dt.innerHTML="<b>Cérebro</b>";
+    const pr=m.querySelector(".prod"); if(pr)pr.textContent="Demo"; });
+  document.querySelectorAll(".so-real").forEach(e=>e.classList.add("hidden"));
+  const av=document.getElementById("demoAviso"); if(av)av.classList.remove("hidden");
+}
+function demoBase(){
+  const dd=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+  const seg=n=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+  const agoraMenos=h=>new Date(Date.now()-h*36e5).toISOString();
+  const AC=[{verbo:"feita",label:"feita"},{verbo:"repactuar",label:"nova data",campo:"date"},{verbo:"deliberar",label:"deliberar",campo:"texto"}];
+  const CONTAS=[{rot:"PF · Banco Exemplo 0001",v:"PF_EXEMPLO"},{rot:"Empresa · Conta Exemplo 0002",v:"PJ_EXEMPLO"}];
+  const PAGAR=[{verbo:"pago",label:"paguei",campo:"entidade",opcoes:CONTAS,padrao:"PF_EXEMPLO"},AC[1],AC[2]];
+  const RECEBER=[{verbo:"recebido",label:"recebi",campo:"entidade",opcoes:CONTAS,padrao:"PJ_EXEMPLO"},AC[1],AC[2]];
+  const IA=[{verbo:"feita",rotulo:"feita",arg:null},{verbo:"repactuar",rotulo:"novo prazo",arg:"data"},{verbo:"esperar",rotulo:"passei para alguém",arg:"texto"},{verbo:"arquivar",rotulo:"arquivar",arg:"motivo"},{verbo:"deliberar",rotulo:"deliberar",arg:"texto"}];
+  const card=(o,i)=>Object.assign({camada_tela:"hoje",posicao:i+1,teto_tela:5,teto_wip:5,tipo_card:"ato",nivel:1,peso:10-i,acoes:AC,
+    titulo_completo:o.titulo,titulo_truncado:false,contestado:false,correcao_aberta:false,forcar_decisao:false,rec_vencida:false,acima_do_teto:false},o);
+  const fila=[
+    card({origem:"fluxo",ref:"501",frente:"07-financas-pf",titulo:"Pagar a parcela 3 de 6 do financiamento do carro",porque_agora:"vence hoje",valor_txt:"R$ 1.850,00",verbo_sugerido:"pago",acoes:PAGAR,data_ref:dd(0),dias_parado:1,
+      recomendacao:"Pague pela conta pessoal: a da empresa fica reservada para a folha de sexta."},0),
+    card({origem:"fluxo",ref:"502",frente:"11-consultoria",titulo:"Receber a 2ª parcela do laudo da Clínica Horizonte",porque_agora:"vence hoje",valor_txt:"R$ 9.400,00",verbo_sugerido:"recebido",acoes:RECEBER,data_ref:dd(0),dias_parado:0},1),
+    card({origem:"tarefa",ref:"301",frente:"11-consultoria",titulo:"Ligar para a Construtora Aurora antes de reenviar a proposta",porque_agora:"proposta parada há 5 d",valor_txt:"R$ 180 mil",verbo_sugerido:"feita",data_ref:dd(0),dias_parado:5,
+      recomendacao:"Ligue antes de reenviar: o comprador pediu 30 dias de prazo na última conversa. Se ele aceitar a condição nova, a proposta sai hoje mesmo."},2),
+    card({origem:"tarefa",ref:"302",frente:"20-contrato-pj",titulo:"Assinar o boletim de medição 7 e protocolar na fiscalização",porque_agora:"vence hoje",valor_txt:"R$ 12 mil",verbo_sugerido:"feita",data_ref:dd(0),dias_parado:1},3),
+    card({origem:"tarefa",ref:"303",frente:"08-startup",titulo:"Fazer o check-in semanal de três linhas com o sócio",porque_agora:"combinado toda semana",verbo_sugerido:"feita",data_ref:dd(1),dias_parado:0},4),
+    card({origem:"tarefa",ref:"304",frente:"04-obra-residencial",titulo:"Aprovar a troca do revestimento da área gourmet",porque_agora:"o cliente espera a resposta",valor_txt:"R$ 3,2 mil",verbo_sugerido:"feita",data_ref:dd(1),dias_parado:2},5)];
+  const exp=[card({origem:"tarefa",ref:"305",camada_tela:"depois",frente:"05-cobranca",titulo:"Mandar ao advogado a contraproposta do acordo",porque_agora:"prazo era ontem",verbo_sugerido:"feita",data_ref:dd(-1),dias_parado:3},6)];
+  const inv=[
+    {id:301,frente:"11-consultoria",dono:"igor",status:"pendente",prazo:dd(0),parado_dias:5,titulo:"Ligar para a Construtora Aurora antes de reenviar a proposta",criterio_pronto:"Prazo combinado por telefone e anotado na proposta",acoes:IA},
+    {id:302,frente:"20-contrato-pj",dono:"igor",status:"pendente",prazo:dd(0),parado_dias:1,titulo:"Assinar o boletim de medição 7 e protocolar na fiscalização",criterio_pronto:"Protocolo com número e data",acoes:IA},
+    {id:303,frente:"08-startup",dono:"igor",status:"pendente",prazo:dd(1),parado_dias:0,titulo:"Fazer o check-in semanal de três linhas com o sócio",acoes:IA},
+    {id:304,frente:"04-obra-residencial",dono:"igor",status:"pendente",prazo:dd(1),parado_dias:2,titulo:"Aprovar a troca do revestimento da área gourmet",acoes:IA},
+    {id:305,frente:"05-cobranca",dono:"igor",status:"pendente",prazo:dd(-1),parado_dias:3,titulo:"Mandar ao advogado a contraproposta do acordo",acoes:IA},
+    {id:306,frente:"11-consultoria",dono:"igor",status:"pendente",prazo:dd(3),parado_dias:2,titulo:"Mandar o orçamento revisado da reforma da Padaria Central",acoes:IA},
+    {id:307,frente:"20-contrato-pj",dono:"igor",status:"aguardando_terceiro",prazo:dd(-2),parado_dias:12,titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",acoes:IA},
+    {id:308,frente:"08-startup",dono:"igor",status:"pendente",prazo:dd(5),parado_dias:1,titulo:"Revisar o contrato do primeiro cliente pagante",acoes:IA},
+    {id:309,frente:"05-cobranca",dono:"igor",status:"aguardando_terceiro",prazo:dd(4),parado_dias:6,titulo:"Esperar o advogado devolver a minuta do acordo",acoes:IA},
+    {id:310,frente:"07-financas-pf",dono:"igor",status:"pendente",prazo:dd(6),parado_dias:0,titulo:"Declarar o carnê-leão do mês",acoes:IA},
+    {id:311,frente:"04-obra-residencial",dono:"igor",status:"pendente",prazo:dd(2),parado_dias:1,titulo:"Visitar a obra e conferir o contrapiso",acoes:IA},
+    {id:312,frente:"11-consultoria",dono:"igor",status:"pendente",prazo:null,parado_dias:34,titulo:"Decidir se mantém a proposta para a Escola Girassol",acoes:IA},
+    {id:313,frente:"00-sistema",dono:"igor",status:"pendente",prazo:null,parado_dias:22,titulo:"Decidir se a rotina de transcrições roda de hora em hora",acoes:IA},
+    {id:314,frente:"08-startup",dono:"igor",status:"pendente",prazo:dd(18),parado_dias:0,titulo:"Preparar a apresentação para o investidor-anjo",acoes:IA},
+    {id:315,frente:"20-contrato-pj",dono:"igor",status:"pendente",prazo:dd(25),parado_dias:0,titulo:"Renovar a ART do contrato",acoes:IA},
+    {id:316,frente:"11-consultoria",dono:"igor",status:"pendente",prazo:dd(40),parado_dias:0,titulo:"Atualizar o portfólio com as três obras do ano",acoes:IA},
+    {id:317,frente:"00-sistema",dono:"claude",status:"pendente",prazo:dd(1),parado_dias:0,titulo:"Gerar o fechamento mensal",acoes:[]},
+    {id:318,frente:"11-consultoria",dono:"claude",status:"pendente",prazo:dd(2),parado_dias:0,titulo:"Montar a memória de cálculo do laudo",acoes:[]}];
+  const arv=[{nivel:0,no:"CAIXA",rotulo:"Caixa"},
+    {nivel:1,no:"11-consultoria",rotulo:"Consultoria de obras",margem_30d:28500,margem_total:61000,itens:6,veredito:"Duas propostas na rua; a maior decide o trimestre."},
+    {nivel:1,no:"20-contrato-pj",rotulo:"Contrato de engenharia (PJ)",margem_30d:12000,margem_total:36000,itens:3,veredito:"Medição mensal em dia; o pedido de reajuste está sem resposta."},
+    {nivel:1,no:"04-obra-residencial",rotulo:"Obra residencial",margem_30d:6800,margem_total:6800,itens:2},
+    {nivel:1,no:"08-startup",rotulo:"Startup de tecnologia (sócio)",margem_30d:4200,margem_total:90000,itens:3,veredito:"Primeiro cliente pagante; o sócio cobra o plano do trimestre."},
+    {nivel:1,no:"05-cobranca",rotulo:"Cobrança de cliente",margem_30d:0,margem_total:48000,itens:2,veredito:"Acordo proposto; a outra parte pediu 15 dias."},
+    {nivel:1,no:"07-financas-pf",rotulo:"Finanças pessoais",margem_30d:0,margem_total:0,itens:1},
+    {nivel:1,no:"00-sistema",rotulo:"Sistema (memória e rotinas)",margem_30d:0,margem_total:0,itens:1}];
+  const saldos=[38200,31000,44500,39800,27600,35100,52300,47000,41800,58900,53200,61000,66400];
+  const c13=saldos.map((s,i)=>({semana:i+1,inicio:seg(i),fim:seg(i),saldo_base:s,saldo_pior:Math.round(s*0.62),sai_firme:i===0?6400:5200+i*120,entra_firme:i%2?9000:3000,
+    caixa_hoje:38200,custo_vida:9000,sai_incerta:800,entra_incerta:4000,entra_incerta_ponderada:2400,sai_vencida_na_semana1:0,entra_vencida_na_semana1:0,
+    semana_mais_apertada_base:i===4,semana_mais_apertada_pior:i===4}));
+  const c13i=[{id:601,natureza:"receber",vencido:true,valor_igor:6500,descricao:"Saldo do laudo estrutural do Edifício Ipê",data_venc:dd(-9),frente_slug:"11-consultoria",semana:1,peso:1,status:"confirmado"},
+    {id:602,natureza:"receber",vencido:true,valor_igor:2300,descricao:"Reembolso da ART da obra residencial",data_venc:dd(-3),frente_slug:"04-obra-residencial",semana:1,peso:1,status:"confirmado"},
+    {id:603,natureza:"receber",vencido:false,valor_igor:12000,descricao:"Medição 7 do contrato de engenharia",data_venc:dd(12),frente_slug:"20-contrato-pj",semana:2,peso:0.9,status:"confirmado"}];
+  const se=[{chave:"fila.aging_p95_dias",serie:[21],direcao:"menor_melhor",situacao_banda:"normal"}];
+  const mo=[{nome:"backup-cerebro",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(5)},{nome:"fechamento-do-dia",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)},
+    {nome:"triagem-da-mesa",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)}];
+  const eb=[{nome:"backup-cerebro",falhas_7d:0,orcamento_falhas_7d:1,veredito_budget:"DENTRO DO ORCAMENTO"}];
+  const min=[{id:"301",minutos_estimados:15},{id:"302",minutos_estimados:30},{id:"303",minutos_estimados:10},{id:"304",minutos_estimados:10},{id:"305",minutos_estimados:20},
+    {id:"fluxo:501",minutos_estimados:5},{id:"fluxo:502",minutos_estimados:10}];
+  const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
+    cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
+    rw:[{dias_sobrevida_pior:48,dias_sobrevida:96,caixa_hoje:38200,entrada_provavel_30d:41000,saida_firme_30d:22600,custo_vida_pf:9000}]};
+  const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
+  const mes=dd(-new Date().getDate()).slice(0,7);
+  const mesa={em_jogo:0,horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
+    estoque:[
+      ap(701,{frente:"11-consultoria",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",ato:"enviar",dest:"Construtora Aurora",canal:"gmail",rs:180000,dias:5,motivo:"Pronta desde sexta; falta a sua ligação antes de sair."}),
+      ap(703,{frente:"05-cobranca",titulo:"Contraproposta do acordo em 6 parcelas",ato:"decidir",dest:"Advogado da cobrança",canal:"gmail",rs:48000,dias:9,motivo:"Escolha entre 6 parcelas com entrada ou 10 sem entrada."}),
+      ap(702,{frente:"20-contrato-pj",titulo:"Boletim de medição 7 com a memória de cálculo",ato:"assinar",dest:"Fiscalização do contrato",canal:"protocolo",rs:12000,dias:1,motivo:"Falta a sua assinatura para protocolar."}),
+      ap(706,{frente:"11-consultoria",titulo:"Laudo de vistoria da Clínica Horizonte v02",ato:"entregar",dest:"Clínica Horizonte",canal:"em_maos",rs:9400,dias:3,motivo:"Impresso e assinado; falta entregar na visita de quinta."}),
+      ap(704,{frente:"04-obra-residencial",titulo:"Aditivo de troca do revestimento da área gourmet",ato:"aprovar",dest:"Cliente da obra",canal:"whatsapp",rs:3200,dias:0,novo:true,motivo:"O cliente escolheu o porcelanato; o aditivo cobre a diferença."}),
+      ap(707,{frente:"07-financas-pf",titulo:"Planilha do imposto do mês",ato:"decidir",rs:null,dias:0,novo:true,motivo:"Confirme as duas despesas médicas antes de fechar."}),
+      ap(705,{frente:"08-startup",titulo:"Relatório mensal aos sócios",ato:"ler",rs:null,dias:2,motivo:"Leitura de 5 minutos; nada a assinar."}),
+      ap(708,{frente:"00-sistema",titulo:"Proposta de ajuste da rotina de backup",ato:"aprovar",rs:null,dias:12,adiado_ate:dd(2),motivo:"Troca o horário do backup para depois do fechamento do dia."})],
+    saiu_hoje:[{id:690,titulo:"Ofício de pedido de reajuste",dest:"Fiscalização do contrato",prova:"documental"}],
+    valor_hora:{janela:"30 dias",recebido:21800,horas:96.5,por_hora:225.91,piso:80,teto:400},
+    relatorios:[
+      {tipo:"dia",alvo:dd(-1),versao:"01",titulo:"Fechamento do dia",path:"demo/dia-1.pdf",anteriores:[]},
+      {tipo:"dia",alvo:dd(-2),versao:"02",titulo:"Fechamento do dia",path:"demo/dia-2-v02.pdf",anteriores:[{versao:"01",path:"demo/dia-2-v01.pdf"}]},
+      {tipo:"dia",alvo:dd(-3),versao:"01",titulo:"Fechamento do dia",path:"demo/dia-3.pdf",anteriores:[]},
+      {tipo:"mes",alvo:mes,versao:"01",titulo:"Fechamento do mês",path:"demo/mes.pdf",anteriores:[]},
+      {tipo:"estoque",alvo:dd(-4),versao:"01",titulo:"Estoque parado",path:"demo/estoque.pdf",anteriores:[]}],
+    fechamentos:[{dia:dd(-2),ciente_em:new Date(Date.now()-2*864e5+3*36e5).toISOString(),pendentes:2,adiadas:1,decididas:7},
+      {dia:dd(-3),ciente_em:new Date(Date.now()-3*864e5+3*36e5).toISOString(),pendentes:0,adiadas:0,decididas:5}]};
+  return {dados,inv,arv,mesa,dd};
+}
+function demoCliente(){
+  let db=null; const B=()=>db||(db=demoBase());
+  const ok=d=>Promise.resolve({data:d,error:null});
+  const copia=o=>JSON.parse(JSON.stringify(o));
+  const consulta=dados=>{const p=ok(dados);["select","eq","lte","order","limit"].forEach(k=>{p[k]=()=>p;});return p;};
+  const tirar=(o,r)=>{ const b=B(); b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); b.dados.exp=b.dados.exp.filter(x=>!(x.origem===o&&String(x.ref)===r));
+    if(o==="tarefa")b.inv=b.inv.filter(t=>String(t.id)!==r); if(o==="fluxo")b.dados.c13i=b.dados.c13i.filter(x=>String(x.id)!==r); };
+  const mesaVista=()=>{ const b=B(), m=b.mesa, h=b.dd(0);
+    m.estoque.forEach(p=>{ if(p.adiado_ate&&p.adiado_ate<=h)p.adiado_ate=null; });
+    return copia(Object.assign({},m,{hoje:h,pendentes_hoje:m.estoque.filter(p=>!p.adiado_ate).length,adiadas_hoje:m.estoque.filter(p=>p.adiado_ate).length,
+      em_jogo:m.estoque.reduce((s,p)=>s+(+p.rs||0),0)})); };
+  const RPC={
+    painel_carga:()=>({dados:copia(B().dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}),
+    agir:a=>{ const o=a.p_origem, r=String(a.p_ref), v=a.p_verbo, b=B();
+      if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
+      else if(v==="repactuar"||v==="esperar"){ const t=b.inv.find(x=>String(x.id)===r);
+        if(t){ if(v==="repactuar")t.prazo=a.p_valor; else t.status="aguardando_terceiro"; t.parado_dias=0; }
+        b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); }
+      return "OK: "+v+" (demonstração)"; },
+    inbox:()=>"ANOTADO. Demonstração: nada foi gravado.",
+    mesa_painel:mesaVista,
+    mesa_deliberar:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc), nota=String(a.p_nota||"").trim(), h=B().dd(0);
+      if(!p)return "RECUSADO: doc "+a.p_doc+" nao esta esperando voce";
+      if(a.p_decisao==="adiar"){ const ate=nota||B().dd(1); if(ate<=h)return "RECUSADO: adiar e para depois de hoje";
+        p.adiado_ate=ate; m.decididas_hoje++; return "OK: adiada ate "+ate.slice(8,10)+"/"+ate.slice(5,7); }
+      if((a.p_decisao==="ajustar"||a.p_decisao==="largar")&&!nota)return "RECUSADO: escreva o que ajustar ou por que largar";
+      m.decididas_hoje++; p.adiado_ate=null;
+      if(a.p_decisao==="ajustar"){ p.motivo="Ajuste pedido por você: "+nota; return "OK: ajuste pedido (tarefa 990)"; }
+      if(a.p_decisao==="aprovado"&&["enviar","assinar","entregar","protocolar"].includes(p.ato)){ p.motivo="Aprovada por você; falta sair."; return "OK: aprovado"; }
+      m.estoque=m.estoque.filter(x=>x!==p); return a.p_decisao==="largar"?"OK: largada":"OK: aprovado"; },
+    mesa_baixa_painel:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc);
+      if(!p)return "RECUSADO: doc "+a.p_doc+" nao esta esperando voce";
+      m.estoque=m.estoque.filter(x=>x!==p); m.decididas_hoje++;
+      m.saiu_hoje.push({id:p.id,titulo:p.titulo,dest:a.p_dest,prova:a.p_prova_path?"documental":"declaratoria"}); return "OK: baixa gravada (envio 991)"; },
+    mesa_ciencia:a=>{ const m=B().mesa, dia=a.p_dia||B().dd(0), v=mesaVista();
+      m.fechamentos=[{dia,ciente_em:new Date().toISOString(),pendentes:v.pendentes_hoje,adiadas:v.adiadas_hoje,decididas:m.decididas_hoje}].concat(m.fechamentos.filter(f=>f.dia!==dia));
+      return "OK: ciencia do dia "+dia.slice(8,10)+"/"+dia.slice(5,7)+" gravada"; }};
+  /* PDF e peca nao existem na demonstracao: o link abre uma pagina local que diz isso, sem sair do aparelho */
+  const arquivo=(p,s)=>URL.createObjectURL(new Blob(['<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Documento fictício</title>'+
+    '<body style="font:16px/1.5 system-ui,sans-serif;padding:24px;background:#fff;color:#111"><h1 style="font-size:20px">Documento fictício</h1>'+
+    '<p>Na demonstração os documentos não existem. No painel real, este toque abre o PDF guardado no armazenamento privado, por um link que vale '+(+s||300)+' segundos.</p>'+
+    '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
+  return {
+    rpc:(n,a)=>ok(RPC[n]?RPC[n](a||{}):null),
+    from:v=>consulta(v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):[]),
+    channel:()=>{const ch={on:()=>ch,subscribe:cb=>{if(cb)cb("SUBSCRIBED");return ch;},unsubscribe:()=>ok(null)};return ch;},
+    removeChannel:()=>ok(null),
+    storage:{from:()=>({createSignedUrl:(p,s)=>ok({signedUrl:arquivo(p,s)}),upload:p=>ok({path:p})})},
+    auth:{getSession:()=>ok({session:{user:{id:"demo"},access_token:"demo"}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
+      signOut:()=>ok(null),signInWithPassword:()=>ok(null),signInWithOtp:()=>ok(null),verifyOtp:()=>ok(null),
+      mfa:{getAuthenticatorAssuranceLevel:()=>ok({currentLevel:"aal2",nextLevel:"aal2"}),listFactors:()=>ok({all:[],totp:[],phone:[]}),
+        challenge:()=>ok({id:"demo"}),verify:()=>ok({})}}};
+}
+/* fim modulo:demo */
+const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
 /* So as chaves que esta tela desenha. c13 e c13i entram no p2 para as 13 semanas e o "a cobrar".
    exp entra no p4.1: a tarefa vencida ou de hoje que o banco deixou no segundo plano sobe para Hoje,
    pela mesma regra do index.html (bloco comum:hoje abaixo).
@@ -615,7 +804,7 @@ async function entrarCodigo(){
   const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
   if(error)lm(error.message);
 }
-async function sair(){await sb.auth.signOut();location.reload();}
+async function sair(){try{sessionStorage.removeItem(DEMO_SAIDA);}catch(e){}await sb.auth.signOut();location.reload();}
 
 /* ---------- carga ---------- */
 function falha(t){const el=document.getElementById("falha");el.textContent=t;el.classList.toggle("hidden",!t);}
@@ -1232,6 +1421,7 @@ const juntarFrases=(res,de)=>{const p=[];for(let i=de;i<res.length;i++){const t=
 const vozEl=id=>document.getElementById(id);
 
 function abrirVoz(texto){
+  if(DEMO){ toast("Na demonstração a voz fica desligada: nada sai deste aparelho.",null,false,4000); return; }
   if(texto!=null)VOZ.rascunho=texto;
   F=null;
   const m=vozMotor(), api=vozApi();
@@ -1243,7 +1433,7 @@ function abrirVoz(texto){
     <button class="voz-mic" id="vozMic" aria-pressed="false" onclick="vozAlternar()"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
     <div class="voz-estado" id="vozEstado" role="status" aria-live="polite">${m?"":"Use o microfone do teclado do celular no campo abaixo, ou ligue a sua API."}</div>
     <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>
-    <textarea id="vozTxt" class="voz-txt" oninput="vozDigitou(this.value)" placeholder="Ex.: reagendar a vistoria da Conenge para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
+    <textarea id="vozTxt" class="voz-txt" oninput="vozDigitou(this.value)" placeholder="Ex.: reagendar a vistoria da obra para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
     <div class="acoes voz-acoes"><button class="pri" onclick="vozEnviar()">Enviar ao Claude</button><button class="sec" onclick="vozLimpar()">Limpar</button></div>
     <div class="mut" id="vozDestino">${esc(destinoTxt())}${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
     <details class="voz-api"><summary>API de transcrição deste aparelho${api?" · ligada":""}</summary><div class="corpo">
@@ -1476,6 +1666,11 @@ setInterval(()=>{ if(!INICIADO||RT_OK||document.hidden||!ATD||!ATD.pendentes)ret
    dicionarios abaixo, e o que o dicionario nao conhece vira um rotulo generico.
    Baixa sem canal nao vai ao banco (LC-14: concluir sem prova nao grava). Sem print, a baixa vira
    declaracao datada; com print, o arquivo sobe antes e o banco recebe o caminho dele. */
+/* p4.12 (06/10/2026, s03): a Mesa vira o ritual de fim de dia (Sunsama, "daily shutdown"). "Encerrar o dia" passa
+   peca por peca (decidir, dar baixa, adiar ou pular) e termina na ciencia do dia (mesa_ciencia), que grava quanto
+   ficou na mesa. Adiar (mesa_deliberar 'adiar', nota = AAAA-MM-DD) tira a peca da conta do dia ate a data, sem mudar
+   a gaveta. Relatorio so na versao vigente; o toque abre a folha dele (ciencia, versoes anteriores) e o PDF sai do
+   botao. Antes, o toque abria o PDF direto e nao havia onde dar ciencia nem decidir. */
 const MS_ATO={aprovar:"aprovação",assinar:"assinatura",enviar:"envio",decidir:"decisão",ler:"leitura",protocolar:"protocolo",entregar:"entrega"};
 const MS_CANAIS=[["whatsapp","WhatsApp"],["gmail","E-mail"],["email_corporativo","E-mail da empresa"],["em_maos","Em mãos"],["protocolo","Protocolo"],["outro","Outro"]];
 const MS_CANAL_NOME=Object.assign(Object.fromEntries(MS_CANAIS),{impresso:"impresso",drive_compartilhado:"Drive compartilhado",portal:"portal"});
@@ -1489,8 +1684,10 @@ const MS_DEC={
   ajustar:{abre:"msAbreAjustar",campo:"msNotaAjustar",txt:"msTxtAjustar",bt:"msBtAjustar",rot:"Enviar pedido",
     falta:"Diga o que precisa mudar na peça. Sem isso, o pedido não vai.",ok:"Pedido de ajuste gravado."},
   largar:{abre:"msAbreLargar",campo:"msNotaLargar",txt:"msTxtLargar",bt:"msBtLargar",rot:"Confirmar",
-    falta:"Diga o motivo de tirar a peça da mesa. Sem ele, nada é gravado.",ok:"Peça tirada da sua mesa."}};
-const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false};
+    falta:"Diga o motivo de tirar a peça da mesa. Sem ele, nada é gravado.",ok:"Peça tirada da sua mesa."},
+  adiar:{abre:"msAbreAdiar",campo:"msNotaAdiar",txt:"msTxtAdiar",bt:"msBtAdiar",rot:"Adiar",
+    falta:"Escolha a data em que a peça volta. Sem ela, nada é gravado.",ok:"Peça adiada."}};
+const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false,rel:[],ritual:null};
 const msPl=(n,a,b)=>n+" "+(+n===1?a:b);
 const msCap=s=>String(s||"").charAt(0).toUpperCase()+String(s||"").slice(1);
 const msAto=a=>MS_ATO[a]||"ato seu";
@@ -1523,26 +1720,63 @@ async function msCarregar_(){
   msRender();
 }
 
-function msRender(){
-  const raiz=document.getElementById("ms-raiz"); if(!raiz)return;
-  const d=MS.dados, est=d&&Array.isArray(d.estoque)?d.estoque:[];
-  ["n-mesa","r-mesa"].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=d?String(est.length):"";});
-  const falha=MS.erro?`<div class="aviso" role="alert">${esc(MS.erro)}</div>`:"";
-  if(!d){ raiz.innerHTML=falha||`<p class="ms-dia">carregando…</p>`; return; }
-  const novas=est.filter(p=>p.novo===true).length;
-  const dia=est.length
-    ?`<b>${esc(msPl(est.length,"peça espera","peças esperam"))} você</b>, <b class="num">${esc(rs(d.em_jogo||0))}</b> em jogo${novas?`, ${esc(msPl(novas,"nova","novas"))} hoje`:""}.`
-    :"Nenhuma peça espera você.";
-  const lista=est.length?est.map((p,i)=>`<button class="ms-item" onclick="msAbrir(${i})">
+/* p4.12: so a versao vigente de cada relatorio. O banco ja manda assim (anteriores dentro da vigente);
+   a tela garante o mesmo contra banco antigo, que mandava cada versao numa linha. */
+function msVigentes(rel){
+  const m=new Map();
+  rel.forEach(r=>{ if(!r)return; const k=r.tipo+"|"+r.alvo, a=m.get(k), ant=Array.isArray(r.anteriores)?r.anteriores:[];
+    if(!a){ m.set(k,Object.assign({},r,{anteriores:ant.slice()})); return; }
+    if(String(r.versao||"")>String(a.versao||"")) m.set(k,Object.assign({},r,{anteriores:[{versao:a.versao,path:a.path}].concat(a.anteriores,ant)}));
+    else a.anteriores.push({versao:r.versao,path:r.path}); });
+  const v=[...m.values()]; v.forEach(r=>r.anteriores.sort((a,b)=>String(b.versao||"").localeCompare(String(a.versao||"")))); return v;
+}
+const msEst=d=>d&&Array.isArray(d.estoque)?d.estoque:[];
+const msPend=d=>msEst(d).filter(p=>!p.adiado_ate);
+const msAdiadas=d=>msEst(d).filter(p=>!!p.adiado_ate);
+const msHora=t=>{const x=new Date(t);return isNaN(x)?"":x.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
+const msFechDia=dia=>MS.dados&&Array.isArray(MS.dados.fechamentos)?MS.dados.fechamentos.find(f=>String(f.dia).slice(0,10)===String(dia).slice(0,10)):null;
+const msFechDe=r=>r&&r.tipo==="dia"?msFechDia(r.alvo):null;
+function msItemHtml(p){
+  return `<button class="ms-item" onclick="msAbrirId(${+p.id})">
       <span class="ms-tit l2">${esc(p.titulo||"peça sem título")}</span>
       <span class="ms-meta">${esc(msCap(msAto(p.ato)))}${p.dest?" para "+esc(p.dest):""}${p.frente?" · "+esc(msFrente(p.frente)):""}</span>
-      <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span><span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="ms-novo">nova</span>`:""}</span>
-    </button>`).join(""):`<div class="vazio">Nada espera você agora.</div>`;
+      <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span>${p.adiado_ate?`<span class="ms-dias">volta em ${esc(msAlvo(p.adiado_ate))}</span>`:`<span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>`}${p.novo===true?`<span class="ms-novo">nova</span>`:""}</span>
+    </button>`;
+}
+function msFechoHtml(d,pend,adi){
+  const f=msFechDia(d.hoje), dec=+d.decididas_hoje||0, tot=pend.length+dec, pct=tot?Math.round(dec/tot*100):100;
+  const num=`<span class="ms-fecho-num"><span><b>${esc(pend.length)}</b> ${pend.length===1?"pendente":"pendentes"}</span><span><b>${esc(dec)}</b> ${dec===1?"decidida":"decididas"} hoje</span><span><b>${esc(adi.length)}</b> ${adi.length===1?"adiada":"adiadas"}</span></span>
+    <span class="ms-barra" role="img" aria-label="${esc(pct)}% da mesa decidida hoje"><i style="width:${pct}%"></i></span>`;
+  if(f) return `<div class="ms-fecho ${+f.pendentes===0?"limpa":""}"><b>Dia encerrado às ${esc(msHora(f.ciente_em))}${+f.pendentes===0?": mesa limpa.":", com "+esc(msPl(f.pendentes,"peça pendente","peças pendentes"))+"."}</b>${num}
+    ${pend.length?`<button type="button" class="sec" id="msBtEncerrar" onclick="msEncerrar()">Decidir as ${esc(pend.length)} que ficaram</button>`:""}</div>`;
+  return `<div class="ms-fecho ${pend.length?"":"limpa"}"><b>${pend.length?"Para limpar a mesa hoje: "+esc(msPl(pend.length,"peça pede","peças pedem"))+" uma decisão sua.":"Mesa limpa. Falta só a sua ciência do dia."}</b>${num}
+    <button type="button" class="pri" id="msBtEncerrar" onclick="msEncerrar()">${pend.length?"Encerrar o dia ("+esc(pend.length)+")":"Dar ciência e encerrar o dia"}</button></div>`;
+}
+function msRelMeta(r){
+  const p=[];
+  if(r.versao!=null&&r.versao!=="")p.push("versão "+r.versao);
+  if(r.tipo==="dia"){const f=msFechDe(r); p.push(f?"ciente em "+ddmm(f.ciente_em)+" às "+msHora(f.ciente_em):"sem ciência");}
+  const n=Array.isArray(r.anteriores)?r.anteriores.length:0; if(n)p.push(msPl(n,"versão anterior","versões anteriores"));
+  return p.join(" · ");
+}
+function msRender(){
+  const raiz=document.getElementById("ms-raiz"); if(!raiz)return;
+  const d=MS.dados, est=msEst(d), pend=msPend(d), adi=msAdiadas(d);
+  ["n-mesa","r-mesa"].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=d?String(pend.length):"";});
+  const falha=MS.erro?`<div class="aviso" role="alert">${esc(MS.erro)}</div>`:"";
+  if(!d){ raiz.innerHTML=falha||`<p class="ms-dia">carregando…</p>`; return; }
+  const novas=pend.filter(p=>p.novo===true).length;
+  const dia=pend.length
+    ?`<b>${esc(msPl(pend.length,"peça espera","peças esperam"))} você</b>, <b class="num">${esc(rs(d.em_jogo||0))}</b> em jogo${novas?`, ${esc(msPl(novas,"nova","novas"))} hoje`:""}.`
+    :(est.length?"Nenhuma peça espera você hoje.":"Nenhuma peça espera você.");
+  const lista=pend.length?pend.map(msItemHtml).join(""):`<div class="vazio">Nada espera você agora.</div>`;
+  const adiH=adi.length?`<details class="ms-adiadas"><summary>Adiadas (${esc(adi.length)})</summary><div class="pilha">${adi.map(msItemHtml).join("")}</div></details>`:"";
   const saiu=Array.isArray(d.saiu_hoje)?d.saiu_hoje:[];
   const saiuH=saiu.length?`<h2>Saiu hoje</h2><div class="pilha">${saiu.map(s=>`<div class="ms-saiu"><span class="ms-tit l2">${esc(s.titulo||"peça sem título")}</span><span class="ms-meta">${s.dest?"para "+esc(s.dest)+" · ":""}${esc(MS_PROVA[s.prova]||"sem prova registrada")}</span></div>`).join("")}</div>`:"";
-  const rel=Array.isArray(d.relatorios)?d.relatorios:[], relVis=MS.todosRel?rel:rel.slice(0,MS_REL_VISIVEIS);
-  const relH=`<h2>Relatórios</h2><div class="pilha">${rel.length?relVis.map((r,i)=>`<button class="ms-rel" onclick="msRelatorio(${i})"><span class="ms-tit ms-um">${esc(r.titulo||((MS_REL[r.tipo]||"Relatório")+" "+msAlvo(r.alvo)))}</span><span class="ms-meta">${esc(MS_REL[r.tipo]||"Relatório")}${r.versao!=null&&r.versao!==""?" · versão "+esc(r.versao):""} · abre o PDF</span></button>`).join(""):`<div class="vazio">Nenhum relatório gerado ainda.</div>`}${rel.length>relVis.length?`<button class="sec ms-mais" onclick="MS.todosRel=true;msRender()">Mostrar todos (${rel.length})</button>`:""}</div>`;
-  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p>${msHoraHtml(d)}<h2>Esperando você</h2><div class="pilha">${lista}</div>${saiuH}${relH}`;
+  const rel=msVigentes(Array.isArray(d.relatorios)?d.relatorios:[]), relVis=MS.todosRel?rel:rel.slice(0,MS_REL_VISIVEIS);
+  MS.rel=rel;
+  const relH=`<h2>Relatórios</h2><div class="pilha">${rel.length?relVis.map((r,i)=>`<button class="ms-rel" onclick="msRelatorio(${i})"><span class="ms-tit ms-um">${esc((MS_REL[r.tipo]||"Relatório")+" "+msAlvo(r.alvo))}</span><span class="ms-meta">${esc(msRelMeta(r))}</span></button>`).join(""):`<div class="vazio">Nenhum relatório gerado ainda.</div>`}${rel.length>relVis.length?`<button class="sec ms-mais" onclick="MS.todosRel=true;msRender()">Mostrar todos (${rel.length})</button>`:""}</div>`;
+  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p>${msFechoHtml(d,pend,adi)}${msHoraHtml(d)}<h2>Esperando você</h2><div class="pilha">${lista}</div>${adiH}${saiuH}${relH}`;
 }
 /* horas do mes e o valor da hora contra a regua (piso e teto vem do banco, nunca escritos aqui) */
 function msHoraHtml(d){
@@ -1570,11 +1804,13 @@ function msHoraHtml(d){
 }
 
 /* ---------- folha da peca e baixa de envio ---------- */
-function msAbrir(i){
-  const p=MS.dados&&(MS.dados.estoque||[])[i]; if(!p)return;
+function msAbrir(i){ const p=msEst(MS.dados)[i]; if(p){MS.ritual=null;msAbrirP(p);} }
+function msAbrirId(id){ const p=msEst(MS.dados).find(x=>+x.id===+id); if(p){MS.ritual=null;msAbrirP(p);} }
+function msAbrirP(p){
   MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
-  mostrarFolha(`<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
-    <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}</div>
+  const r=MS.ritual, amanha=somaDias(1);
+  mostrarFolha(`${r?`<p class="ms-ritual">Encerrar o dia · ${esc(r.i+1)} de ${esc(r.ids.length)}</p>`:""}<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
+    <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}${p.adiado_ate?`<span class="chip">adiada até ${esc(msAlvo(p.adiado_ate))}</span>`:""}</div>
     ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" onclick="msAbrirPeca()">Abrir a peça</button>`:`<p class="mut ms-sem-copia">A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.</p>`}
     <div class="bloco"><span class="rot">Para quem</span><p>${p.dest?esc(p.dest)+".":"Sem destinatário escrito."}${p.canal?" Previsto por "+esc(msCanal(p.canal))+".":""}</p></div>
     <div class="bloco"><span class="rot">Valor</span><p class="${msTemRs(p.rs)?"num":""}">${msTemRs(p.rs)?esc(msRs2(p.rs)):"sem valor"}</p></div>
@@ -1583,10 +1819,12 @@ function msAbrir(i){
       <div class="ms-decisoes" role="group" aria-label="Sua decisão">
         <button type="button" class="pri" id="msBtAprovar" onclick="msDecidir('aprovado')">Aprovar</button>
         <button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" onclick="msMotivo('ajustar')">Pedir ajuste</button>
+        <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" onclick="msMotivo('adiar')">Adiar</button>
         <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" onclick="msMotivo('largar')">Largar</button>
       </div>
-      <span class="mut">Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa.</span>
+      <span class="mut">Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa. Adiar tira da conta de hoje até a data.</span>
       <div class="campo ms-nota" id="msNotaAjustar" hidden><label for="msTxtAjustar" class="mut">O que ajustar</label><textarea id="msTxtAjustar" rows="3"></textarea><button type="button" class="pri" id="msBtAjustar" onclick="msDecidir('ajustar')">Enviar pedido</button></div>
+      <div class="campo ms-nota" id="msNotaAdiar" hidden><label for="msTxtAdiar" class="mut">Volta para a mesa em</label><input id="msTxtAdiar" type="date" min="${amanha}" max="${somaDias(30)}" value="${amanha}"><button type="button" class="pri" id="msBtAdiar" onclick="msDecidir('adiar')">Adiar</button></div>
       <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que largar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" onclick="msDecidir('largar')">Confirmar</button></div>
       <p class="ms-aviso" id="msAvisoDec" role="alert"></p>
     </div>
@@ -1599,7 +1837,7 @@ function msAbrir(i){
       <button class="pri" id="msBt" onclick="msBaixa()">Dar baixa</button>
       <span class="mut">Sem print, a baixa vira declaração sua, com data e hora.</span>
     </div>
-    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+    ${r?`<div class="ms-ritual-pe"><button type="button" class="sec" onclick="msRitualProx(false)">Pular</button><button type="button" class="sec" onclick="msRitualParar()">Parar</button></div>`:`<button class="sec" onclick="fecharFolha()">Fechar</button>`}`);
 }
 function msEscolherCanal(c){
   if(!MS_CANAL_NOME[c])return;
@@ -1629,7 +1867,7 @@ async function msBaixa(){
   const txt=error?String(error.message||"falha de rede"):String(data==null?"":data);
   if(!error&&/^OK/.test(txt)){
     MS.gravando=false;
-    if(MS.peca===p)fecharFolha();
+    if(MS.peca===p){ if(MS.ritual)msRitualProx(true); else fecharFolha(); }
     toast("Baixa gravada: saiu por "+msCanal(canal)+" para "+dest+(prova?", com print.":", como declaração sua."),null,false,5000);
     msCarregar();
     return;
@@ -1666,8 +1904,8 @@ async function msDecidir(dec){
   const txt=error?String(error.message||"falha de rede"):String(data==null?"":data).trim();
   if(!error&&/^OK/.test(txt)){
     MS.gravando=false;
-    if(MS.peca===p)fecharFolha();
-    toast(c.ok,null,false,5000);
+    if(MS.peca===p){ if(MS.ritual)msRitualProx(true); else fecharFolha(); }
+    toast(dec==="adiar"&&/adiada ate/i.test(txt)?"Adiada até "+txt.replace(/^.*adiada ate\s*/i,"")+".":c.ok,null,false,5000);
     msCarregar();
     return;
   }
@@ -1695,10 +1933,65 @@ async function msAbrirAssinado(bucket,caminho,segundos,t){
   if(w2)toast(t.aberto+" em outra aba.",null,false,2500);
   else toast("O navegador bloqueou a aba "+t.da+". Libere janelas deste site e toque de novo.","bad",false,6000);
 }
+/* p4.12: o toque no relatorio abre a folha dele (versao vigente, ciencia do dia, versoes anteriores); o PDF sai do
+   botao "Abrir o PDF", e a versao substituida so de dentro de "Versoes anteriores". */
 function msRelatorio(i){
-  const r=MS.dados&&(MS.dados.relatorios||[])[i];
-  if(!r||!r.path){ toast("Este relatório ainda não tem arquivo.","bad",false,4000); return; }
-  return msAbrirAssinado(MS_BUCKET_REL,r.path,MS_URL_S,{o:"o relatório",aberto:"Relatório aberto",da:"do relatório",rotulo:"relatorio"});
+  const r=MS.rel[i]; if(!r)return;
+  MS.ritual=null;
+  const f=msFechDe(r), ant=Array.isArray(r.anteriores)?r.anteriores:[], dia=String(r.alvo||"").slice(0,10);
+  const recente=r.tipo==="dia"&&dia>=somaDias(-1)&&msPend(MS.dados).length>0;
+  const ciencia=r.tipo!=="dia"?"":f
+    ?`<div class="bloco"><span class="rot">Sua ciência</span><p>Dada em ${esc(ddmm(f.ciente_em))} às ${esc(msHora(f.ciente_em))}: ${esc(msPl(+f.pendentes||0,"peça pendente","peças pendentes"))}, ${esc(msPl(+f.adiadas||0,"adiada","adiadas"))} e ${esc(msPl(+f.decididas||0,"decisão","decisões"))} no dia.</p></div>`
+    :`<div class="bloco"><span class="rot">Sua ciência</span><p class="mut">Leu o fechamento? A ciência fica gravada com o que ainda está na mesa agora.</p><button type="button" class="pri" id="msBtCiencia" onclick="msCiencia('${escAttr(dia)}')">Dar ciência deste dia</button><p class="ms-aviso" id="msAvisoCi" role="alert"></p></div>`;
+  mostrarFolha(`<h3 id="folhaTit">${esc((MS_REL[r.tipo]||"Relatório")+" "+msAlvo(r.alvo))}</h3>
+    <div class="chips"><span class="chip">versão ${esc(r.versao||"sem número")}</span>${r.tipo==="dia"?(f?`<span class="chip ok">ciente</span>`:`<span class="chip w">sem ciência</span>`):""}</div>
+    ${r.path?`<button type="button" class="pri ms-abrir" id="msRelPdf" onclick="msRelPdf(${i},-1)">Abrir o PDF</button>`:`<p class="mut">Este relatório ainda não tem arquivo.</p>`}
+    ${ciencia}
+    ${recente?`<button type="button" class="sec" onclick="msEncerrar()">Decidir as peças da mesa agora</button>`:""}
+    ${ant.length?`<details class="ms-adiadas"><summary>Versões anteriores (${esc(ant.length)})</summary><div class="ms-versoes">${ant.map((a,j)=>`<button type="button" class="sec" onclick="msRelPdf(${i},${j})">Versão ${esc(a.versao||"sem número")}, substituída</button>`).join("")}</div></details>`:""}
+    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+}
+function msRelPdf(i,j){
+  const r=MS.rel[i], a=r&&j>=0?(r.anteriores||[])[j]:r, p=a&&a.path;
+  if(!p){ toast("Este relatório ainda não tem arquivo.","bad",false,4000); return; }
+  return msAbrirAssinado(MS_BUCKET_REL,p,MS_URL_S,{o:"o relatório",aberto:"Relatório aberto",da:"do relatório",rotulo:"relatorio"});
+}
+
+/* ---------- p4.12: Encerrar o dia ----------
+   Fila do ritual: novas primeiro, depois maior valor e mais parada. Decisao ou baixa que grava passa para a
+   proxima; Pular passa sem gravar; Parar volta a mesa. No fim, o resumo e a ciencia do dia (mesa_ciencia),
+   que grava quantas ficaram: e essa conta que diz se a mesa fechou limpa. */
+function msEncerrar(){
+  const d=MS.dados; if(!d||MS.gravando)return;
+  const ordem=msPend(d).slice().sort((a,b)=>((b.novo===true)-(a.novo===true))||((+b.rs||0)-(+a.rs||0))||((+b.dias||0)-(+a.dias||0)));
+  MS.ritual={ids:ordem.map(p=>p.id),snap:Object.fromEntries(ordem.map(p=>[p.id,p])),i:0,feitas:0,puladas:0};
+  msRitualMostrar();
+}
+function msRitualMostrar(){ const r=MS.ritual; if(!r)return; if(r.i>=r.ids.length){msResumo();return;} msAbrirP(r.snap[r.ids[r.i]]); }
+function msRitualProx(feita){ const r=MS.ritual; if(!r)return; if(feita)r.feitas++; else r.puladas++; r.i++; msRitualMostrar(); }
+function msRitualParar(){ MS.ritual=null; fecharFolha(); }
+function msResumo(){
+  const r=MS.ritual, ficam=r?r.puladas:msPend(MS.dados).length;
+  const txt=r&&r.ids.length?"Você decidiu "+msPl(r.feitas,"peça","peças")+(r.puladas?" e pulou "+r.puladas:"")+".":"Nenhuma peça pedia decisão.";
+  mostrarFolha(`<h3 id="folhaTit">Encerrar o dia</h3>
+    <p>${esc(txt)} ${ficam?esc(msPl(ficam,"peça fica","peças ficam"))+" na mesa para amanhã.":"A mesa fica limpa."}</p>
+    <p class="mut">A ciência grava o dia com o que ficou. Amanhã a Mesa começa desta conta.</p>
+    <button type="button" class="pri" id="msBtCiencia" onclick="msCiencia()">Dar ciência e encerrar o dia</button>
+    <p class="ms-aviso" id="msAvisoCi" role="alert"></p>
+    <button type="button" class="sec" onclick="msRitualParar()">Voltar à mesa</button>`);
+}
+async function msCiencia(dia){
+  if(MS.gravando)return;
+  const av=document.getElementById("msAvisoCi"), bt=document.getElementById("msBtCiencia"), rot=bt?bt.textContent:"";
+  MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
+  const {data,error}=await msPedir(()=>sb.rpc("mesa_ciencia",{p_dia:dia||null,p_nota:null}),LIMITE_ACAO,"mesa_ciencia");
+  const txt=error?String(error.message||"falha de rede"):String(data==null?"":data).trim();
+  MS.gravando=false;
+  if(!error&&/^OK/.test(txt)){ MS.ritual=null; fecharFolha(); toast(dia?"Ciência gravada.":"Dia encerrado. A ciência ficou gravada.",null,false,5000); msCarregar(); return; }
+  if(bt&&document.body.contains(bt)){bt.disabled=false;bt.textContent=rot;}
+  const m=error&&error.teto?"Sem confirmação do banco ("+txt+"). Pode ter gravado: recarregue antes de repetir."
+    :/^RECUSADO/i.test(txt)?txt.replace(/^RECUSADO:?\s*/i,"Não gravou: "):"Não gravou: "+(txt||"o banco não respondeu nada")+".";
+  if(av)av.textContent=m.slice(0,240); toast(m.slice(0,240),"bad",false,5000);
 }
 /* p4.5: a copia da peca sobe do PC para mesa/pecas/<id>/...; link de 10 min */
 function msAbrirPeca(){
@@ -1708,6 +2001,17 @@ function msAbrirPeca(){
 }
 /* fim modulo:mesa */
 
+/* p4.12: porta da saida da demonstracao (ver portaFator_) */
+async function demoPortaSaida(){
+  const f=await tetoFator(()=>sb.auth.mfa.listFactors(),"fatores");
+  if(f.error) return {erro:"Não consegui ler seus fatores ("+f.error.message+")."};
+  const v=((f.data&&f.data.totp)||[]).find(x=>x&&x.status==="verified");
+  if(v){ const t=document.getElementById("fatorTxt"); if(t)t.textContent="Para sair da demonstração e ver os seus dados, digite os 6 números do app autenticador."; return {fator:v.id}; }
+  try{sessionStorage.removeItem(DEMO_SAIDA);}catch(e){}
+  try{ await sb.auth.signOut(); }catch(e){} document.getElementById("login").classList.remove("hidden");
+  lm("Você saiu da demonstração. Entre de novo para ver os seus dados.");
+  return {relogar:true};
+}
 /* ---------- partida ---------- */
 /* uma partida so: getSession e o evento SIGNED_IN chegam os dois na abertura com sessao salva,
    e sem a trava a carga corria duas vezes (medido em 02/10/2026) */
@@ -1721,7 +2025,11 @@ const fm=t=>document.getElementById("fmsg").textContent=t;
 function portaFator(){ if(INICIADO)return; if(!PORTA)PORTA=portaFator_().finally(()=>{PORTA=null;}); return PORTA; }
 async function portaFator_(){
   fm("");
-  const r=await fatorPendente();
+  /* p4.12: saindo da demonstracao, o dado real so volta com o codigo do app, mesmo com sessao aal2. Conta sem
+     fator sai da sessao e entra de novo. Leitura que falha fecha a porta, como no resto do t1745. */
+  let saida=false; try{saida=sessionStorage.getItem(DEMO_SAIDA)==="1";}catch(e){}
+  const r=saida?await demoPortaSaida():await fatorPendente();
+  if(r.relogar)return;
   if(INICIADO)return;
   if(!r.erro&&!r.fator){iniciar();return;}
   FATOR=r.fator||null;
@@ -1738,8 +2046,9 @@ async function entrarFator(){
   const r=await conferirFator(FATOR,code);
   CONFERINDO=false; document.getElementById("btFator").disabled=false;
   if(r.erro){fm(r.erro);if(r.codigo){el.value="";el.focus();}return;}
-  fm(""); el.value=""; FATOR=null; iniciar();
+  fm(""); el.value=""; FATOR=null; try{sessionStorage.removeItem(DEMO_SAIDA);}catch(e){} iniciar();
 }
+if(DEMO)demoVestir();
 sb.auth.getSession().then(({data})=>{
   if(data&&data.session)portaFator(); else document.getElementById("login").classList.remove("hidden");});
 /* o callback roda dentro da trava do Auth: chamar o Auth ali pode pendurar, entao a porta sai no proximo giro */
