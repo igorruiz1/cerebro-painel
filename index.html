@@ -25,15 +25,15 @@
  --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
  /* tipografia oficial: Sora (Regular, Medium, SemiBold, Bold) */
  --font:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+ --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
  /* superficies derivadas do Midnight Navy (degraus de luminosidade, mesmo matiz) */
  --bg:var(--dt-navy); --surface:#0F1629; --card:#121A2F; --card2:#18223B; --raise:#1E2A47;
- --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate); --dim:#66758F; --line:#1F2A44; --line2:#2C3A5A;
+ --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate); --dim:#8795AE; --line:#2C3A5A; --line2:#1F2A44;
  --red:#e5484d; --yel:#f5a623; --grn:#30a46c; --acc:var(--dt-blue); --vio:var(--dt-violet);
- --ok:#6ee7a8; --bad:#ff8a8f; --warn:#f5c26b; --lil:#B9A2FA;
+ --ok:#6ee7a8; --bad:#ff8a8f; --warn:#ffb547; --lil:#B9A2FA;
  /* fundo de item selecionado: azul da marca sobre o navy */
  --acc-bg:#132A57; --acc-a:47,128,255; --vio-bg:#221A47; --vio-bg2:#2C2160;
- --r:12px; --r2:16px; --r-s:9px;
+ --r:14px; --r2:16px; --r-s:9px;
  /* eixo diverging dos graficos — RdBu, validado: dE 26,4 protan / 33,1 normal.
     vermelho x verde reprova em deuteranopia (dE 4,9), entao verde so no semaforo, com rotulo. */
  --rd:#e5484d; --bl:#4c8dff; --nt:#6b7a94;
@@ -1145,7 +1145,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v77";
+const VER="v78";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();

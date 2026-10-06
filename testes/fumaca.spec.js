@@ -390,6 +390,22 @@ const DUBLE_AUTH = DUBLE_CONTA
       mfa:{getAuthenticatorAssuranceLevel:()=>{(window.__mfa=window.__mfa||[]).push({op:"aal"});if(window.__mfaErro==="aal")return Promise.resolve({data:null,error:{message:"falha de teste"}});const v=(window.__fatores||[]).some(f=>f.status==="verified");return Promise.resolve({data:{currentLevel:window.__aal||"aal1",nextLevel:v?"aal2":(window.__aal||"aal1")},error:null});},listFactors:()=>{(window.__mfa=window.__mfa||[]).push({op:"listFactors"});const all=window.__fatores||[];return Promise.resolve({data:{all,totp:all.filter(f=>f.status==="verified"),phone:[]},error:null});},challenge:a=>{(window.__mfa=window.__mfa||[]).push({op:"challenge",a});return Promise.resolve({data:{id:"desafio-1"},error:null});},verify:a=>{(window.__mfa=window.__mfa||[]).push({op:"verify",a});if(a.code!==(window.__codigoBom||"123456"))return Promise.resolve({data:null,error:{message:"Invalid TOTP code entered",code:"mfa_verification_failed"}});window.__aal="aal2";return Promise.resolve({data:{access_token:"x"},error:null});}}},`)
   .replace(`if(n==="painel_carga"){`, `if(n==="painel_carga"){ if(window.__segura) return new Promise(()=>{});`);
 
+/* p4.11 (06/10/2026): --dim #66758F dava 3,05 a 4,06:1 em 61 usos no bastidor. Todo texto dos 7 paineis passa 4,5:1. */
+test('bastidor: nenhum texto abaixo de 4,5:1 nos sete paineis', async ({page})=>{
+  const {contrasteDos}=require('./_contraste');
+  await page.setViewportSize({width:1280, height:900});
+  const erros = await abrirComSessao(page);
+  const ruins=[]; let medidos=0;
+  for (const p of ['agora','tudo','leituras','sentinela','maquina','panorama','pf']){
+    await page.evaluate(p=>abrir(p), p); await page.waitForTimeout(100);
+    const m = await page.evaluate(contrasteDos, 'body *'); medidos+=m.length;
+    ruins.push(...m.filter(x=>!(x.razao>=4.5)).map(x=>p+': '+x.txt+' = '+x.razao));
+  }
+  expect(medidos, 'mediu texto').toBeGreaterThan(50);
+  expect(ruins).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
 async function abrirComSessao(page, segura){
   const erros=[];
   page.on("pageerror",e=>erros.push(String(e)));

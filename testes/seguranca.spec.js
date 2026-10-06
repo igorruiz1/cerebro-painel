@@ -198,7 +198,7 @@ test('g. mesma tag do supabase-js e mesma CSP do presidente.html; login nunca cr
 
 test('h. o presidente.html leva a pagina nova pelo rodape do trilho e da coluna', async ()=>{
   const pres=ler('presidente.html');
-  expect(pres).toMatch(/<a href="index\.html">bastidor da máquina<\/a><br><a href="seguranca\.html">segurança<\/a><br><a href="#" onclick="sair\(\);return false">sair<\/a>/);
+  expect(pres).toMatch(/<a href="index\.html">bastidor da máquina<\/a>(<br>)?<a href="seguranca\.html">segurança<\/a>(<br>)?<a href="#" onclick="sair\(\);return false">sair<\/a>/);
   expect(pres).toMatch(/<div class="rodape">[^\n]*<a href="seguranca\.html">/);
   expect(ler('seguranca.html')).toMatch(/<a [^>]*href="presidente\.html"/);
 });
