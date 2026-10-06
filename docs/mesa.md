@@ -1,4 +1,4 @@
-# Aba Mesa (presidente p4.4, p4.5)
+# Aba Mesa (presidente p4.4, p4.5, p4.12)
 
 A Mesa mostra o que espera o dono do painel: peças prontas paradas, o que saiu hoje, os relatórios em PDF
 e a baixa de envio. Nasceu em 05/10/2026 porque o banco já guardava 33 peças paradas esperando o Igor e
@@ -7,15 +7,29 @@ nenhuma tela mostrava isso.
 A p4.5 (05/10/2026) fecha o ciclo na própria folha: abrir a cópia da peça e decidir (aprovar, pedir ajuste,
 largar). Antes, decidir uma peça da Mesa exigia sair do painel.
 
+A p4.12 (06/10/2026, s03) faz da Mesa o ritual de fim de dia, no molde do "daily shutdown" do Sunsama. Motivo
+medido: desde a p4.5 o banco tinha **0 deliberações e 0 baixas pelo painel** com 40 peças paradas (13 delas há 7
+dias ou mais), e o fechamento do dia abria direto no PDF, sem lugar para ciência, com v01, v02 e v03 do mesmo dia
+misturadas.
+
+- **Encerrar o dia**: passa peça por peça (novas primeiro, depois maior valor e mais parada). Decisão ou baixa
+  gravada vai para a próxima; Pular passa sem gravar; Parar volta à mesa. No fim, `mesa_ciencia()` grava o dia
+  com quantas ficaram pendentes, adiadas e decididas. É essa conta que diz se a mesa fechou limpa.
+- **Adiar**: `mesa_deliberar(doc, 'adiar', 'AAAA-MM-DD')` (vazio = amanhã, até 30 dias). Não muda a gaveta; tira a
+  peça da conta do dia até a data. Qualquer outra decisão limpa o adiamento.
+- **Relatórios**: só a versão vigente de cada tipo+alvo. O toque abre a folha (ciência do dia, versões
+  anteriores); o PDF sai do botão "Abrir o PDF".
+
 ## Contrato com o banco
 
-Três RPC e dois buckets. Nada além disso.
+Quatro RPC e dois buckets. Nada além disso.
 
 | Peça | O que faz |
 | --- | --- |
 | `rpc("mesa_painel")` | Leitura. Sem argumento. Devolve o jsonb abaixo. Teto: `LIMITE_RECARGA`. |
 | `rpc("mesa_baixa_painel", {p_doc, p_canal, p_dest, p_prova_path})` | Baixa de envio. Devolve texto: começa com `OK` (gravou) ou `RECUSADO` (não gravou, com o motivo). Teto: `LIMITE_ACAO`. |
-| `rpc("mesa_deliberar", {p_doc, p_decisao, p_nota})` | Decisão sobre a peça (p4.5). `p_decisao`: `aprovado`, `ajustar` ou `largar`. `p_nota`: `null` em `aprovado`; texto obrigatório nos outros dois (a tela não chama o banco sem ele). Devolve texto `OK...` ou `RECUSADO...`, como a baixa. Teto: `LIMITE_ACAO`. |
+| `rpc("mesa_deliberar", {p_doc, p_decisao, p_nota})` | Decisão sobre a peça (p4.5; `adiar` na p4.12). `p_decisao`: `aprovado`, `ajustar`, `largar` ou `adiar`. `p_nota`: `null` em `aprovado`; texto obrigatório em `ajustar` e `largar` (a tela não chama o banco sem ele); data `AAAA-MM-DD` em `adiar`. Devolve texto `OK...` ou `RECUSADO...`, como a baixa. Teto: `LIMITE_ACAO`. |
+| `rpc("mesa_ciencia", {p_dia, p_nota})` | Ciência do fechamento do dia (p4.12). `p_dia` null = hoje; aceita até 31 dias para trás. Grava em `mesa_fechamento` as contagens do momento. Devolve `OK...` ou `RECUSADO...`. Teto: `LIMITE_ACAO`. |
 | bucket `mesa` | PDFs dos relatórios e cópias das peças. Relatório: `createSignedUrl(path, 300)`. Peça: `createSignedUrl(peca, 600)`. |
 | bucket `mesa-provas` | Print ou comprovante da baixa, em `AAAA-MM/<id>_<epoch ms>.<ext>`. |
 
@@ -23,16 +37,18 @@ Retorno de `mesa_painel`:
 
 ```
 { hoje: "AAAA-MM-DD",
-  estoque: [{id, frente, titulo, ato, dest, canal, rs, dias, motivo, copia, novo, peca}],
+  estoque: [{id, frente, titulo, ato, dest, canal, rs, dias, motivo, copia, novo, peca, adiado_ate}],
+  pendentes_hoje: number, adiadas_hoje: number, decididas_hoje: number,
+  fechamentos: [{dia, ciente_em, pendentes, adiadas, decididas}],
   em_jogo: number,
   producao_hoje: {A_AGIR, B_FEITO, C_SISTEMA, D_DEMAIS, FORA} | null,
   saiu_hoje: [{id, titulo, dest, prova}],
   horas_mes: number | null,
   valor_hora: {recebido, horas, por_hora, piso, teto} | null,
-  relatorios: [{tipo: "dia"|"mes"|"estoque", alvo, versao, titulo, path}] }
+  relatorios: [{tipo: "dia"|"mes"|"estoque", alvo, versao, titulo, path, anteriores: [{versao, path}]}] }
 ```
 
-`peca` (p4.5): caminho da cópia no bucket privado `mesa`, por exemplo `pecas/2095/Cliente-burger_proposta_v02.pdf`,
+`peca` (p4.5): caminho da cópia no bucket privado `mesa`, por exemplo `pecas/2095/cliente-exemplo_proposta_v02.pdf`,
 ou `null` enquanto a cópia não subiu. A cópia sai do PC na rotina de hora em hora; com `null` a folha diz
 isso em vez de mostrar um botão que não abre nada.
 

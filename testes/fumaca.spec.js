@@ -630,7 +630,7 @@ test('tres abas levam aos seis paineis, e o teto da faixa e o numero que bloquei
 });
 
 /* CLASSE DE DEFEITO 4 · v63: numero que parece completo e nao e. A sobrevida so soma recebivel
-   com valor E data; em 30/09/2026 tres entradas ficavam fora (Conenge sem valor, R$ 37 mil sem
+   com valor E data; em 30/09/2026 tres entradas ficavam fora (contrato PJ sem valor, R$ 37 mil sem
    data) e a tela nao dizia. Pior: o unico aviso que existia (fontes_de_caixa_sem_valor) contava
    uma linha CANCELADA. O teste afirma os dois lados: com entrada fora, a faixa diz quantas e por
    que; sem entrada fora, nenhuma faixa. */
@@ -1449,7 +1449,7 @@ test("titulo de 1.300 caracteres fica em 2 linhas no card a 390 px; titulo e tex
   await page.setViewportSize({width:390, height:820});
   const erros = await abrirComArgs(page);
   const r = await page.evaluate(async()=>{
-    const frase="Cliente Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado no DocuSign. ";
+    const frase="Cliente Exemplo Fase A, parcela 1/5 (entrada). R$ 3.890,40, vence 05/10/2026, boleto emitido. - Contrato v14 assinado no DocuSign. ";
     const L=frase.repeat(12).slice(0,1300);
     D.fila=[{origem:"fluxo",ref:"19",titulo:L,titulo_completo:"x".repeat(300)+" "+L,nivel:1,recomendacao:L,acoes:[]}];
     D.cor=[]; D.depois=[]; D.cont={}; D.op=[]; D.band=[]; foco=-1;
