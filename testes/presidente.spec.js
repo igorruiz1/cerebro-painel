@@ -23,6 +23,8 @@ const PAGINA = 'file://' + path.resolve(__dirname, '..', 'presidente.html');
 /* Duble com sessao valida e dado minimo: dois cards na fila de hoje, quatro no inventario
    (um por coluna), duas frentes na arvore, 13 semanas e um recebivel vencido. Nada aqui e real.
    window.__rpc guarda toda chamada ao banco para o teste conferir o que foi (ou nao) gravado. */
+/* t1745: segundo fator dublado, usado aqui e no index (porta comum:fator) */
+const MFA_DUBLE = `mfa:{getAuthenticatorAssuranceLevel:()=>{(window.__mfa=window.__mfa||[]).push({op:'aal'});if(window.__mfaErro==='aal')return Promise.resolve({data:null,error:{message:'falha de teste'}});const v=(window.__fatores||[]).some(f=>f.status==='verified');return Promise.resolve({data:{currentLevel:window.__aal||'aal1',nextLevel:v?'aal2':(window.__aal||'aal1')},error:null});},listFactors:()=>{(window.__mfa=window.__mfa||[]).push({op:'listFactors'});const all=window.__fatores||[];return Promise.resolve({data:{all,totp:all.filter(f=>f.status==='verified'),phone:[]},error:null});},challenge:a=>{(window.__mfa=window.__mfa||[]).push({op:'challenge',a});return Promise.resolve({data:{id:'desafio-1'},error:null});},verify:a=>{(window.__mfa=window.__mfa||[]).push({op:'verify',a});if(a.code!==(window.__codigoBom||'123456'))return Promise.resolve({data:null,error:{message:'Invalid TOTP code entered',code:'mfa_verification_failed'}});window.__aal='aal2';return Promise.resolve({data:{access_token:'x'},error:null});}}`;
 const DUBLE = `(()=>{
   const hoje=new Date().toISOString().slice(0,10);
   const ac=[{label:'feita',verbo:'feita'},{label:'nova data',verbo:'repactuar',campo:'date'},{label:'deliberar',verbo:'deliberar',campo:'text'}];
@@ -74,7 +76,10 @@ const DUBLE = `(()=>{
       upload:(p,f)=>{window.__storage.push({b,op:'upload',p,tipo:f&&f.type});return Promise.resolve({data:{path:p},error:null});}})},
     auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),
           onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
-          signInWithOtp:()=>Promise.resolve({error:null})}})};
+          signInWithOtp:()=>Promise.resolve({error:null}),
+          /* t1745: segundo fator dublado; padrao sem fator (a porta abre direto). window.__fatores, __aal,
+             __codigoBom e __mfaErro trocam o cenario; window.__mfa guarda cada chamada */
+          ${MFA_DUBLE}}})};
 })();`;
 
 /* v71 · R7: o supabase-js tem integrity (SRI); corpo dublado no lugar do arquivo seria recusado pelo
@@ -557,10 +562,10 @@ const blocosComuns = arq => {
   for (const x of fonte.matchAll(/\/\* comum:([a-z]+) [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:\1 \*\//g)) m[x[1]] = x[2];
   return m;
 };
-test('o codigo comum das duas telas (regra de Hoje, teto de tempo e texto recolhido) e o mesmo byte a byte', async ()=>{
+test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhido e porta do segundo fator) e o mesmo byte a byte', async ()=>{
   const a = blocosComuns('index.html'), b = blocosComuns('presidente.html');
-  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['hoje','recolhe','teto']);
-  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['hoje','recolhe','teto']);
+  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['fator','hoje','recolhe','teto']);
+  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['fator','hoje','recolhe','teto']);
   for (const k of Object.keys(a)) expect(b[k], `bloco comum:${k} divergiu`).toBe(a[k]);
 });
 
@@ -1173,5 +1178,116 @@ test('Mesa: leitura que falha se declara na aba, sem tela em branco', async ({pa
   await expect(page.locator('#ms-raiz')).toContainText('carregando');
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#ms-raiz .aviso')).toContainText('Não consegui ler a mesa: sem resposta do banco');
+  expect(erros).toEqual([]);
+});
+
+/* t1745 (s855, 05/10/2026): o MFA (TOTP) do Igor ficou ativo as 20h01, mas as duas telas abriam com a
+   sessao so de senha ou e-mail (aal1). A porta comum:fator le o nivel da sessao: com fator ativo e sessao
+   aal1, pede o codigo do app e NAO carrega nada do banco antes de conferir. Leitura que falha fecha a porta
+   (nunca abre por omissao) e oferece tentar de novo. Sessao que ja entrou com o codigo (aal2) abre direto. */
+const FATOR_ATIVO = [{id:'fator-1',friendly_name:'celular',factor_type:'totp',status:'verified'}];
+async function abrirComFator(page, cenario){
+  const erros=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(c=>{ Object.assign(window,c); }, cenario);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  return erros;
+}
+const cargas = page => page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+const opsMfa = page => page.evaluate(()=>(window.__mfa||[]).map(c=>c.op));
+
+test('fator ativo e sessao so de senha: pede o codigo do app, nada carrega antes, codigo errado nao abre', async ({page})=>{
+  const erros = await abrirComFator(page, {__fatores:FATOR_ATIVO});
+  await expect(page.locator('#fator')).toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#login')).toBeHidden();
+  await expect(page.locator('#btFatorDeNovo')).toBeHidden();
+  const campo = await page.locator('#codFator').evaluate(e=>({im:e.inputMode, ac:e.autocomplete, foco:document.activeElement===e}));
+  expect(campo).toEqual({im:'numeric', ac:'one-time-code', foco:true});
+  expect(await cargas(page), 'painel_carga antes do codigo').toBe(0);
+  await page.fill('#codFator','12');
+  await page.click('#btFator');
+  await expect(page.locator('#fmsg')).toContainText('6 números');
+  expect(await opsMfa(page), 'codigo curto nao pede desafio').not.toContain('challenge');
+  await page.fill('#codFator','999999');            /* 6 digitos confere sozinho, sem tocar no botao */
+  await expect(page.locator('#fmsg')).toContainText('não confere');
+  await expect(page.locator('#codFator')).toHaveValue('');
+  await expect(page.locator('#app')).toBeHidden();
+  expect(await cargas(page), 'painel_carga com codigo errado').toBe(0);
+  await page.fill('#codFator','123456');
+  await expect(page.locator('#app')).toBeVisible();
+  await expect(page.locator('#fator')).toBeHidden();
+  const ver = await page.evaluate(()=>window.__mfa.filter(c=>c.op==='verify').map(c=>c.a));
+  expect(ver.at(-1)).toEqual({factorId:'fator-1', challengeId:'desafio-1', code:'123456'});
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  expect(await cargas(page), 'uma carga depois do codigo').toBe(1);
+  expect(erros).toEqual([]);
+});
+
+test('sessao que ja entrou com o codigo (aal2) e conta sem fator abrem direto, sem desafio', async ({page, context})=>{
+  const erros = await abrirComFator(page, {__fatores:FATOR_ATIVO, __aal:'aal2'});
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  await expect(page.locator('#fator')).toBeHidden();
+  expect(await opsMfa(page)).not.toContain('challenge');
+  const p2 = await context.newPage();
+  const erros2 = await abrirComFator(p2, {});
+  await p2.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  await expect(p2.locator('#fator')).toBeHidden();
+  expect(await opsMfa(p2), 'sem fator nao lista nem desafia').toEqual(['aal']);
+  expect(erros.concat(erros2)).toEqual([]);
+});
+
+test('leitura do nivel que falha fecha a porta e oferece tentar de novo; nunca abre por omissao', async ({page})=>{
+  const erros = await abrirComFator(page, {__fatores:FATOR_ATIVO, __mfaErro:'aal'});
+  await expect(page.locator('#fator')).toBeVisible();
+  await expect(page.locator('#btFatorDeNovo')).toBeVisible();
+  await expect(page.locator('#codFator')).toBeHidden();
+  await expect(page.locator('#fmsg')).toContainText('fica fechada');
+  await expect(page.locator('#app')).toBeHidden();
+  expect(await cargas(page)).toBe(0);
+  await page.evaluate(()=>{ window.__mfaErro=null; });
+  await page.click('#btFatorDeNovo');
+  await expect(page.locator('#codFator')).toBeVisible();
+  await expect(page.locator('#btFatorDeNovo')).toBeHidden();
+  await page.fill('#codFator','123456');
+  await expect(page.locator('#app')).toBeVisible();
+  expect(erros).toEqual([]);
+});
+
+test('a 360 px a porta do segundo fator nao tem controle abaixo de 44 px nem rolagem horizontal', async ({page})=>{
+  await page.setViewportSize({width:360, height:740});
+  await abrirComFator(page, {__fatores:FATOR_ATIVO});
+  await expect(page.locator('#fator')).toBeVisible();
+  const m = await page.evaluate(()=>{
+    const pequenos=[...document.querySelectorAll('#fator button,#fator input')].filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.height<44||r.width<44);})
+      .map(e=>(e.textContent||e.id).trim());
+    return {pequenos, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+  });
+  expect(m.pequenos).toEqual([]);
+  expect(m.SW).toBe(m.W);
+});
+
+const DUBLE_INDEX_FATOR = `window.__cargas=0; window.supabase={createClient:()=>({
+  from:()=>({select:()=>({eq:()=>Promise.resolve({data:[],error:null})})}),
+  auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),${MFA_DUBLE}},
+  rpc:n=>{ if(n==='painel_carga')window.__cargas++; return new Promise(()=>{}); }})};`;
+test('o index.html (bastidor) passa pela mesma porta: sem o codigo nao carrega, com ele abre', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE_INDEX_FATOR);
+  await page.addInitScript(f=>{ window.__fatores=f; }, FATOR_ATIVO);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
+  await expect(page.locator('#fator')).toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  expect(await page.evaluate(()=>window.__cargas), 'painel_carga antes do codigo').toBe(0);
+  await page.fill('#codFator','999999');
+  await expect(page.locator('#fmsg')).toContainText('não confere');
+  await page.fill('#codFator','123456');
+  await expect(page.locator('#app')).toBeVisible();
+  await expect(page.locator('#fator')).toBeHidden();
+  await page.waitForFunction(()=>window.__cargas>0);
+  expect(await page.evaluate(()=>window.__cargas), 'uma carga depois do codigo').toBe(1);
   expect(erros).toEqual([]);
 });

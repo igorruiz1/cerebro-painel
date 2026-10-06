@@ -386,7 +386,8 @@ const DUBLE_AUTH = DUBLE_CONTA
     `auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:"u"}}}}),
       onAuthStateChange:(cb)=>{window.__auth=cb; const s={user:{id:"u"}};
         cb("INITIAL_SESSION",s); cb("SIGNED_IN",s);
-        return {data:{subscription:{unsubscribe(){}}}};}},`)
+        return {data:{subscription:{unsubscribe(){}}}};},
+      mfa:{getAuthenticatorAssuranceLevel:()=>{(window.__mfa=window.__mfa||[]).push({op:"aal"});if(window.__mfaErro==="aal")return Promise.resolve({data:null,error:{message:"falha de teste"}});const v=(window.__fatores||[]).some(f=>f.status==="verified");return Promise.resolve({data:{currentLevel:window.__aal||"aal1",nextLevel:v?"aal2":(window.__aal||"aal1")},error:null});},listFactors:()=>{(window.__mfa=window.__mfa||[]).push({op:"listFactors"});const all=window.__fatores||[];return Promise.resolve({data:{all,totp:all.filter(f=>f.status==="verified"),phone:[]},error:null});},challenge:a=>{(window.__mfa=window.__mfa||[]).push({op:"challenge",a});return Promise.resolve({data:{id:"desafio-1"},error:null});},verify:a=>{(window.__mfa=window.__mfa||[]).push({op:"verify",a});if(a.code!==(window.__codigoBom||"123456"))return Promise.resolve({data:null,error:{message:"Invalid TOTP code entered",code:"mfa_verification_failed"}});window.__aal="aal2";return Promise.resolve({data:{access_token:"x"},error:null});}}},`)
   .replace(`if(n==="painel_carga"){`, `if(n==="painel_carga"){ if(window.__segura) return new Promise(()=>{});`);
 
 async function abrirComSessao(page, segura){
