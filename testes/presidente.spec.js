@@ -1794,3 +1794,49 @@ test('Mesa p4.17: aprovar peca de envio deixa a folha aberta em "Já enviei" e m
   await expect(page.locator('#veu')).toBeHidden();
   expect(erros).toEqual([]);
 });
+
+/* p4.18 (06/10/2026, plano 100): o Igor deu ciencia em 10/09 e 12/09 e eles continuaram na lista; e o de 01/09
+   ofereceu "Dar ciencia" que o banco recusou (mais de 31 dias). Agora: topo so o que espera ciencia, Lidos e
+   Arquivo recolhidos, e ciencia em lote dos atrasados num toque. O p4.17 reprova aqui. */
+test('Mesa p4.18: ciência tira do topo; Lidos e Arquivo recolhidos; fora da janela sem botão; lote num toque', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>{
+    const h=somaDias(0), d=n=>somaDias(-n);
+    window.__mesa={hoje:h,em_jogo:0,horas_mes:1,estoque:[],producao_hoje:{},saiu_hoje:[],
+      relatorios:[{tipo:'dia',alvo:h,versao:'01',path:'dia/h.pdf'},{tipo:'dia',alvo:d(1),versao:'01',path:'dia/d1.pdf'},
+        {tipo:'dia',alvo:d(5),versao:'01',path:'dia/d5.pdf'},{tipo:'dia',alvo:d(40),versao:'01',path:'dia/d40.pdf'},
+        {tipo:'mes',alvo:h.slice(0,7),versao:'01',path:'mes/m.pdf'}],
+      fechamentos:[{dia:d(1),ciente_em:new Date().toISOString(),pendentes:null,adiadas:null,decididas:2}]};
+    const orig=sb.rpc.bind(sb);
+    sb.rpc=(n,a)=>{ if(n!=='mesa_ciencia_lote')return orig(n,a); window.__rpc.push({n,a});
+      return Promise.resolve({data:'OK: ciencia em lote de 2 dia(s) gravada, sem contagem da mesa',error:null}); };
+    ir('mesa');
+  });
+  await page.waitForSelector('#ms-raiz .ms-rel');
+  const titulos = sel=>page.evaluate(s=>[...document.querySelectorAll(s)].map(b=>b.querySelector('.ms-tit').textContent),sel);
+  const topo = await titulos('#ms-raiz > .pilha .ms-rel');
+  expect(topo, 'topo: hoje, o atrasado dentro da janela e o do mes').toHaveLength(3);
+  expect(topo.some(t=>/Fechamento do mês/.test(t))).toBe(true);
+  expect(await titulos('#msLidos .ms-rel'), 'com ciencia vai para Lidos').toHaveLength(1);
+  expect(await titulos('#msArquivo .ms-rel'), 'mais de 31 dias vai para Arquivo').toHaveLength(1);
+  await expect(page.locator('#msLidos')).not.toHaveAttribute('open','');
+  await expect(page.locator('#msBtLote')).toHaveText('Dar ciência em lote (2 dias atrasados)');
+  /* Arquivo: sem botao que o banco recusa, com o motivo escrito */
+  await page.click('#msArquivo summary');
+  await page.click('#msArquivo .ms-rel');
+  await expect(page.locator('#msCiFora')).toContainText('Mais de 31 dias');
+  await expect(page.locator('#msBtCiencia')).toHaveCount(0);
+  await page.evaluate(()=>fecharFolha());
+  /* Lidos: ciencia retroativa sem contagem inventada */
+  await page.click('#msLidos summary');
+  await page.click('#msLidos .ms-rel');
+  await expect(page.locator('#msCiDada')).toContainText('depois do dia');
+  await expect(page.locator('#msCiDada')).not.toContainText('peça');
+  await page.evaluate(()=>fecharFolha());
+  /* lote: uma chamada, sem parametro */
+  await page.click('#msBtLote');
+  await expect(page.locator('#tmsg')).toContainText('Ciência em lote gravada: 2 dias.');
+  const lote = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_ciencia_lote'));
+  expect(lote).toHaveLength(1);
+  expect(erros).toEqual([]);
+});
