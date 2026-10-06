@@ -198,7 +198,8 @@ test('g. mesma tag do supabase-js e mesma CSP do presidente.html; login nunca cr
 
 test('h. o presidente.html leva a pagina nova pelo rodape do trilho e da coluna', async ()=>{
   const pres=ler('presidente.html');
-  expect(pres).toMatch(/<a href="index\.html">bastidor da máquina<\/a>(<br>)?<a href="seguranca\.html">segurança<\/a>(<br>)?<a href="#" onclick="sair\(\);return false">sair<\/a>/);
-  expect(pres).toMatch(/<div class="rodape">[^\n]*<a href="seguranca\.html">/);
+  /* p4.12: os links ganharam a classe so-real (somem na demonstracao) e o link da demonstracao entra antes de sair */
+  expect(pres).toMatch(/<a (class="so-real" )?href="index\.html">bastidor da máquina<\/a>(<br>)?<a (class="so-real" )?href="seguranca\.html">segurança<\/a>(<br>)?(<a [^>]*>demonstração<\/a>)?<a (class="so-real" )?href="#" onclick="sair\(\);return false">sair<\/a>/);
+  expect(pres).toMatch(/<div class="rodape( so-real)?">[^\n]*<a href="seguranca\.html">/);
   expect(ler('seguranca.html')).toMatch(/<a [^>]*href="presidente\.html"/);
 });
