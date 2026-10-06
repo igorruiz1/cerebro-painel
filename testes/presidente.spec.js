@@ -677,6 +677,7 @@ test('titulo de 1.300 caracteres ocupa no maximo 2 linhas na lista a 390 px, sem
   expect(LONGO.length).toBe(1300);
   const r = await page.evaluate(([L,fn])=>{
     const linhas=eval(fn), out={};
+    MS.dados=null;   /* p4.14: mede so os cards; a peca da Mesa em Hoje tem teste proprio */
     const sem='x'.repeat(400);   /* palavra sem espaco: so overflow-wrap impede a rolagem lateral */
     D.fila.forEach(f=>{f.titulo=f.titulo_completo=L; f.porque_agora='vence em 1d';});
     D.fila[1].titulo_completo=sem+' '+L;
@@ -754,6 +755,7 @@ test('na folha, contexto que nao volta se declara no teto', async ({page})=>{
 test('todo card de Hoje e da Fila mostra ha quanto tempo espera voce', async ({page})=>{
   const erros = await abrir(page);
   const r = await page.evaluate(()=>{
+    MS.dados=null;   /* p4.14: mede so os cards; a peca da Mesa em Hoje tem teste proprio */
     D.fila[0].dias_parado=9;
     D.fila[1].atualizado_em=new Date(Date.now()-5*36e5).toISOString();
     D.fila.push({origem:'demanda',ref:'dx',camada_tela:'hoje',posicao:3,teto_tela:5,frente:'20-contrato-pj',titulo:'Sem medida',acoes:[]});
@@ -1392,7 +1394,7 @@ test('s859: pagamento conta minutos pela chave fluxo e nao pega os da tarefa de 
   const sit = await page.evaluate(()=>{
     D.fila=[{origem:'fluxo',ref:'9',camada_tela:'hoje',posicao:1,teto_tela:5,frente:'20-contrato-pj',titulo:'Pagar parcela de exemplo',porque_agora:'vence em 1d',valor_txt:'R$ 2.000,00',acoes:[]},
             {origem:'tarefa',ref:'9',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-contrato-pj',titulo:'Tarefa de mesmo numero',porque_agora:'vence em 1d',acoes:[]}];
-    D.exp=[]; D.min=[{id:'9',minutos_estimados:25},{id:'fluxo:9',minutos_estimados:10}];
+    D.exp=[]; D.min=[{id:'9',minutos_estimados:25},{id:'fluxo:9',minutos_estimados:10}]; MS.dados=null;
     render(); return document.getElementById('situacao').textContent;
   });
   expect(sit, 'nenhum passo sem estimativa').not.toContain('sem estimativa');
@@ -1610,4 +1612,59 @@ test('Demonstracao: o bloco do modo nao carrega nome real nem endereco do banco 
   expect(achados, 'nome real no bloco de demonstracao').toEqual([]);
   /* o detector detecta: um nome proibido conhecido, posto num texto, tem de ser achado */
   expect(PROIBIDOS.has(h('kssvzrnjiqfgtvoifboj')), 'a lista de hashes confere com o id do projeto').toBe(true);
+});
+
+/* ---------- p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so ----------
+   Duas listas pediam o mesmo dono e a mesma acao aparecia nas duas (medido: 5 a 6 de 48 pecas eram o trabalho de um
+   card aberto). A classe que se cobra: o mesmo trabalho nunca aparece duas vezes em Hoje, so entram as pecas da regra
+   (novas + 3 de maior valor, adiada nunca), o tempo delas entra na conta do dia e a baixa que conclui o card avisa. */
+const pecasNaHoje = page=>page.evaluate(()=>[...document.querySelectorAll('#ordem .peca-hoje .l2')].map(e=>e.textContent));
+
+test('Hoje p4.14: entram as pecas novas e as 3 de maior valor; adiada e o resto ficam no estoque; o tempo delas soma no dia', async ({page})=>{
+  const erros = await abrir(page);
+  await expect.poll(()=>pecasNaHoje(page)).toEqual(['Laudo de exemplo','Medicao 7 de exemplo']);
+  const r = await page.evaluate(()=>({sit:document.getElementById('situacao').textContent, selo:document.getElementById('n-hoje').textContent, n:hojeLista().length}));
+  expect(r.sit).toContain('2 peças da Mesa');
+  expect(r.selo, 'o selo de Hoje conta cards e pecas').toBe(String(r.n+2));
+  await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados)), h=m.hoje;
+    const p=(id,rs,o)=>Object.assign({id,frente:'20-contrato-pj',titulo:'Peca '+id,ato:'enviar',dest:'Alguem',canal:'gmail',rs,dias:3,motivo:'x',copia:null,novo:false,peca:null},o||{});
+    m.estoque=[p(201,900),p(202,800),p(203,700),p(204,600),p(205,99999,{adiado_ate:'2999-01-01'}),p(206,null)];
+    window.__mesa=m; msCarregar(); });
+  await expect.poll(()=>pecasNaHoje(page), 'top 3 por valor; adiada e sem valor fora').toEqual(['Peca 201','Peca 202','Peca 203']);
+  const mins = await page.evaluate(()=>document.getElementById('situacao').textContent);
+  expect(mins).toContain('3 peças da Mesa');
+  await page.click('#ordem .peca-hoje >> nth=0');
+  await expect(page.locator('#folhaTit'), 'a peca de Hoje abre a folha da Mesa').toHaveText('Peca 201');
+  await expect(page.locator('#msBtAprovar')).toBeVisible();
+  /* tempo: 3 pecas de envio = 45 min a mais que so os cards */
+  const dif = await page.evaluate(()=>{ fecharFolha(); const so=MS.dados; const txt1=document.getElementById('situacao').textContent;
+    MS.dados=null; renderHoje(); const txt0=document.getElementById('situacao').textContent; MS.dados=so; renderHoje();
+    const h=t=>+((t.match(/cerca de ([\d,]+) h/)||[])[1]||'0').replace(',','.'); return Math.round((h(txt1)-h(txt0))*60); });
+  expect(Math.abs(dif-45), 'tres envios somam 45 min (arredondado a 6 min)').toBeLessThanOrEqual(6);
+  expect(erros).toEqual([]);
+});
+
+test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a peca; a baixa que conclui o card avisa e recarrega', async ({page})=>{
+  const erros = await abrir(page);
+  await expect.poll(()=>pecasNaHoje(page)).toHaveLength(2);
+  await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados));
+    m.estoque=m.estoque.map(p=>p.id===101?Object.assign(p,{tarefa:2,fecha_tarefa:true}):p); window.__mesa=m; msCarregar(); });
+  await expect.poll(()=>pecasNaHoje(page), 'a peca ligada ao card de Hoje nao repete').toEqual(['Laudo de exemplo']);
+  await expect(page.locator('#foco')).toContainText('com peça da Mesa');
+  await page.evaluate(()=>abrirFila(0));
+  await expect(page.locator('#folha')).toContainText('Peça da Mesa ligada a este card');
+  await expect(page.locator('#folha')).toContainText('conclui este card');
+  await page.click('#folha .ms-ligada');
+  await expect(page.locator('#folhaTit')).toHaveText('Medicao 7 de exemplo');
+  const montar0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length);
+  await page.evaluate(()=>{ window.__baixa='OK: baixa gravada (envio 7); card 2 concluido junto'; });
+  await page.click('#folha [data-canal="whatsapp"]');
+  await page.click('#msBt');
+  await expect(page.locator('#tmsg')).toContainText('O card ligado foi concluído junto.');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length), 'a fila recarrega do banco').toBeGreaterThan(montar0);
+  /* o mesmo trabalho nunca duas vezes: nenhuma peca de Hoje aponta para card que esta em Hoje */
+  const dup = await page.evaluate(()=>{ const cards=new Set(hojeLista().filter(f=>f.origem==='tarefa').map(f=>String(f.ref)));
+    return pecasHoje().filter(p=>p.tarefa!=null&&cards.has(String(p.tarefa))).map(p=>p.id); });
+  expect(dup).toEqual([]);
+  expect(erros).toEqual([]);
 });

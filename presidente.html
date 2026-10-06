@@ -513,7 +513,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.13";
+const VERP="p4.14";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -606,15 +606,15 @@ function demoBase(){
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
     cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
     rw:[{dias_sobrevida_pior:48,dias_sobrevida:96,caixa_hoje:38200,entrada_provavel_30d:41000,saida_firme_30d:22600,custo_vida_pf:9000}]};
-  const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
+  const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,tarefa:null,fecha_tarefa:false,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
   const mes=dd(-new Date().getDate()).slice(0,7);
   const mesa={em_jogo:0,horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
     estoque:[
-      ap(701,{frente:"11-consultoria",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",ato:"enviar",dest:"Construtora Aurora",canal:"gmail",rs:180000,dias:5,motivo:"Pronta desde sexta; falta a sua ligação antes de sair."}),
-      ap(703,{frente:"05-cobranca",titulo:"Contraproposta do acordo em 6 parcelas",ato:"decidir",dest:"Advogado da cobrança",canal:"gmail",rs:48000,dias:9,motivo:"Escolha entre 6 parcelas com entrada ou 10 sem entrada."}),
-      ap(702,{frente:"20-contrato-pj",titulo:"Boletim de medição 7 com a memória de cálculo",ato:"assinar",dest:"Fiscalização do contrato",canal:"protocolo",rs:12000,dias:1,motivo:"Falta a sua assinatura para protocolar."}),
+      ap(701,{tarefa:301,fecha_tarefa:false,frente:"11-consultoria",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",ato:"enviar",dest:"Construtora Aurora",canal:"gmail",rs:180000,dias:5,motivo:"Pronta desde sexta; falta a sua ligação antes de sair."}),
+      ap(703,{tarefa:305,fecha_tarefa:false,frente:"05-cobranca",titulo:"Contraproposta do acordo em 6 parcelas",ato:"decidir",dest:"Advogado da cobrança",canal:"gmail",rs:48000,dias:9,motivo:"Escolha entre 6 parcelas com entrada ou 10 sem entrada."}),
+      ap(702,{tarefa:302,fecha_tarefa:true,frente:"20-contrato-pj",titulo:"Boletim de medição 7 com a memória de cálculo",ato:"assinar",dest:"Fiscalização do contrato",canal:"protocolo",rs:12000,dias:1,motivo:"Falta a sua assinatura para protocolar."}),
       ap(706,{frente:"11-consultoria",titulo:"Laudo de vistoria da Clínica Horizonte v02",ato:"entregar",dest:"Clínica Horizonte",canal:"em_maos",rs:9400,dias:3,motivo:"Impresso e assinado; falta entregar na visita de quinta."}),
-      ap(704,{frente:"04-obra-residencial",titulo:"Aditivo de troca do revestimento da área gourmet",ato:"aprovar",dest:"Cliente da obra",canal:"whatsapp",rs:3200,dias:0,novo:true,motivo:"O cliente escolheu o porcelanato; o aditivo cobre a diferença."}),
+      ap(704,{tarefa:304,fecha_tarefa:true,frente:"04-obra-residencial",titulo:"Aditivo de troca do revestimento da área gourmet",ato:"aprovar",dest:"Cliente da obra",canal:"whatsapp",rs:3200,dias:0,novo:true,motivo:"O cliente escolheu o porcelanato; o aditivo cobre a diferença."}),
       ap(707,{frente:"07-financas-pf",titulo:"Planilha do imposto do mês",ato:"decidir",rs:null,dias:0,novo:true,motivo:"Confirme as duas despesas médicas antes de fechar."}),
       ap(705,{frente:"08-startup",titulo:"Relatório mensal aos sócios",ato:"ler",rs:null,dias:2,motivo:"Leitura de 5 minutos; nada a assinar."}),
       ap(708,{frente:"00-sistema",titulo:"Proposta de ajuste da rotina de backup",ato:"aprovar",rs:null,dias:12,adiado_ate:dd(2),motivo:"Troca o horário do backup para depois do fechamento do dia."})],
@@ -659,11 +659,15 @@ function demoCliente(){
       m.decididas_hoje++; p.adiado_ate=null;
       if(a.p_decisao==="ajustar"){ p.motivo="Ajuste pedido por você: "+nota; return "OK: ajuste pedido (tarefa 990)"; }
       if(a.p_decisao==="aprovado"&&["enviar","assinar","entregar","protocolar"].includes(p.ato)){ p.motivo="Aprovada por você; falta sair."; return "OK: aprovado"; }
-      m.estoque=m.estoque.filter(x=>x!==p); return a.p_decisao==="largar"?"OK: largada":"OK: aprovado"; },
+      m.estoque=m.estoque.filter(x=>x!==p);
+      if(a.p_decisao==="aprovado"&&p.fecha_tarefa&&p.tarefa!=null){ tirar("tarefa",String(p.tarefa)); return "OK: aprovado; card "+p.tarefa+" concluido junto"; }
+      return a.p_decisao==="largar"?"OK: largada":"OK: aprovado"; },
     mesa_baixa_painel:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc);
       if(!p)return "RECUSADO: doc "+a.p_doc+" nao esta esperando voce";
       m.estoque=m.estoque.filter(x=>x!==p); m.decididas_hoje++;
-      m.saiu_hoje.push({id:p.id,titulo:p.titulo,dest:a.p_dest,prova:a.p_prova_path?"documental":"declaratoria"}); return "OK: baixa gravada (envio 991)"; },
+      m.saiu_hoje.push({id:p.id,titulo:p.titulo,dest:a.p_dest,prova:a.p_prova_path?"documental":"declaratoria"});
+      if(p.fecha_tarefa&&p.tarefa!=null){ tirar("tarefa",String(p.tarefa)); return "OK: baixa gravada (envio 991); card "+p.tarefa+" concluido junto"; }
+      return "OK: baixa gravada (envio 991)"; },
     mesa_ciencia:a=>{ const m=B().mesa, dia=a.p_dia||B().dd(0), v=mesaVista();
       m.fechamentos=[{dia,ciente_em:new Date().toISOString(),pendentes:v.pendentes_hoje,adiadas:v.adiadas_hoje,decididas:m.decididas_hoje}].concat(m.fechamentos.filter(f=>f.dia!==dia));
       return "OK: ciencia do dia "+dia.slice(8,10)+"/"+dia.slice(5,7)+" gravada"; }};
@@ -979,15 +983,18 @@ function renderSaude(){
 function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();msRender();}
 function renderHoje(){
   const rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=+(((D.cap||[])[0]||{}).minutos_dia)||120;
-  const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0), semMin=mins.filter(m=>m==null).length;
+  /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma */
+  const pz=pecasHoje(), nPassos=h.length+pz.length;
+  const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0)+pz.reduce((s,p)=>s+pecaMin(p),0), semMin=mins.filter(m=>m==null).length;
   const dias=rw.dias_sobrevida_pior;
   const fr=[];
   if(dias!=null)fr.push(`O caixa aguenta <b class="${dias<30?"w":""}">${esc(dias)} dias</b> no pior cenário.`);
   const hh=m=>(Math.round(m/6)/10).toLocaleString("pt-BR"), passa=soma-cap;
-  fr.push(h.length?`Hoje ${h.length===1?"é":"são"} <b>${plural(h.length,"passo","passos")}</b>, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
+  fr.push(nPassos?`Hoje ${nPassos===1?"é":"são"} <b>${plural(nPassos,"passo","passos")}</b>${pz.length?` (${plural(pz.length,"peça da Mesa","peças da Mesa")})`:""}, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
   document.getElementById("situacao").innerHTML=fr.join(" ");
   const foco=document.getElementById("foco");
-  if(!h.length){
+  if(!h.length&&pz.length){ focoPeca(foco,pz); }
+  else if(!h.length){
     foco.innerHTML=`<span class="eyebrow">Hoje está limpo</span><div class="tit">Nada pede você agora.</div><div class="porque">Aproveite para olhar os parados: Fila, coluna Decidir.</div><div class="acoes"><button class="sec" onclick="irColuna('decidir')">Ver os parados</button></div>`;
     document.getElementById("ordemBox").classList.add("hidden");
   }else{
@@ -995,12 +1002,13 @@ function renderHoje(){
     const pri=acaoPrincipal(acoesFila(f), "hoje");
     foco.innerHTML=`<span class="eyebrow">Próximo passo${m?" · "+m+" min":""}</span>
       <div class="tit l2">${esc(f.titulo_completo||f.titulo)}</div>
-      <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}</div>
+      <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}${pecasDoCard(f.origem,f.ref).length?`<span class="chip">com peça da Mesa</span>`:""}</div>
       ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque l2">${esc(curto(ri.texto,160))}</div>`:"";})()}
       <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${escAttr(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
-    document.getElementById("ordemBox").classList.toggle("hidden",h.length<2);
+    document.getElementById("ordemBox").classList.toggle("hidden",nPassos<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f), es=esperaFila(f);
-      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("");
+      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${pecasDoCard(f.origem,f.ref).length?"com peça · ":""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("")
+      +pz.map((p,i)=>linhaPeca(p,h.length+i+1)).join("");
   }
   const c=(D.cont||[])[0]||{}, cob=aCobrar();
   const at=[
@@ -1010,6 +1018,37 @@ function renderHoje(){
     cob.length?{n:mil(cob.reduce((s,x)=>s+(+x.valor_igor||0),0)),t:"a receber com data passada",aba:"caixa",w:true}
               :{n:c.depois!=null?c.depois:"…",t:"em segundo plano, fora de hoje",c:"semana"}];
   document.getElementById("atalhos").innerHTML=at.map(a=>`<button class="atalho ${a.w?"w":""}" onclick="${a.aba?`ir('${a.aba}')`:`irColuna('${a.c}')`}"><b>${esc(a.n)}</b><span>${esc(a.t)}</span></button>`).join("");
+}
+/* p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so, no molde da lista Hoje do Things e da caixa do Linear: uma fila,
+   acao propria por tipo. Entram em Hoje, depois dos cards, as pecas da Mesa que nasceram hoje e as 3 paradas de maior
+   valor (decisao do Igor, 06/10/2026). Peca ligada a card de Hoje (mesa_item.tarefa_id) nao aparece de novo: vai
+   dentro da folha do card. Adiada nunca entra. O resto fica no estoque da Mesa, para o ritual da noite. */
+const MIN_ATO={ler:10,aprovar:10,decidir:10,enviar:15,assinar:15,entregar:15,protocolar:15};
+const pecaMin=p=>MIN_ATO[p&&p.ato]||10;
+const pecasDoCard=(origem,ref)=>origem!=="tarefa"?[]:msEst(MS.dados).filter(p=>p.tarefa!=null&&String(p.tarefa)===String(ref));
+function pecasHoje(){
+  const pend=msPend(MS.dados); if(!pend.length)return [];
+  const cards=new Set(hojeLista().filter(f=>f.origem==="tarefa").map(f=>String(f.ref)));
+  const soltas=pend.filter(p=>!(p.tarefa!=null&&cards.has(String(p.tarefa))));
+  const novas=soltas.filter(p=>p.novo===true);
+  const valor=soltas.filter(p=>p.novo!==true&&msTemRs(p.rs)).sort((a,b)=>(+b.rs)-(+a.rs)).slice(0,3);
+  return novas.concat(valor);
+}
+function linhaPeca(p,n){
+  return `<button class="peca-hoje" onclick="msAbrirId(${+p.id})"><span class="o">${n}</span><span class="t"><span class="l2">${esc(p.titulo||"peça sem título")}</span><small><span class="espera ${+p.dias>=7?"w":""}">peça da Mesa · ${esc(msAto(p.ato))}</span> · ${esc(msFrente(p.frente)||"sem frente")}${msTemRs(p.rs)?" · "+esc(rs(p.rs)):""}</small></span><span class="min">${pecaMin(p)} min</span></button>`;
+}
+function focoPeca(foco,pz){
+  const p=pz[0];
+  foco.innerHTML=`<span class="eyebrow">Próximo passo · peça da Mesa · ${pecaMin(p)} min</span>
+    <div class="tit l2">${esc(p.titulo||"peça sem título")}</div>
+    <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${chipDinheiro(msTemRs(p.rs)?rs(p.rs):null)}</div>
+    <div class="acoes"><button class="pri" onclick="msAbrirId(${+p.id})">Decidir a peça</button></div>`;
+  document.getElementById("ordemBox").classList.toggle("hidden",pz.length<2);
+  document.getElementById("ordem").innerHTML=pz.slice(1).map((x,i)=>linhaPeca(x,i+2)).join("");
+}
+function pecasLigadasHtml(c){
+  const ps=pecasDoCard(c.origem,c.ref); if(!ps.length)return "";
+  return `<div class="bloco"><span class="rot">Peça da Mesa ligada a este card</span>${ps.map(p=>`<button type="button" class="sec ms-ligada" onclick="msAbrirId(${+p.id})">${esc(p.titulo||"peça sem título")}</button><span class="mut">${esc(msCap(msAto(p.ato)))}${p.fecha_tarefa?". A baixa ou a aprovação desta peça conclui este card.":". Concluir a peça não fecha este card."}</span>`).join("")}</div>`;
 }
 const curto=(s,n)=>{s=String(s||"");return s.length>n?s.slice(0,n).replace(/\s+\S*$/,"")+"…":s;};
 const chipDinheiro=v=>v?`<span class="chip ok">${esc(v)}</span>`:`<span class="chip">sem dinheiro ligado</span>`;
@@ -1103,7 +1142,7 @@ function abrirFrente(slug){
 }
 
 function renderSelos(){
-  const h=hojeLista().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const h=hojeLista().length+pecasHoje().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("n-hoje",h);set("r-hoje",h);
   const nf=INV?INV.filter(t=>t.dono==="igor"&&t.status!=="feita").length:"";
   set("n-fila",nf);set("r-fila",nf);
@@ -1156,6 +1195,7 @@ function abrirCard(c,verbo){
     <div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>
     ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
     ${pecaHtml(c.peca)}
+    ${pecasLigadasHtml(c)}
     ${c.cobra?`<div class="bloco"><span class="rot w">Venceu em ${esc(ddmm(c.cobra.venc))} e não entrou</span><div class="acoes"><button class="pri" id="btCobrar" onclick="cobrar('${escAttr(c.ref)}')">Cobrar</button></div><span class="mut">Pede ao atendente um rascunho curto ao pagador. Nada é enviado sem você.</span></div>`:""}
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.map(a=>botaoAcao(a,"sec")).join("")}</div>`:`<div class="vazio">O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor.</div>`}
     <div class="teclas">Teclado: <kbd>A</kbd> ${esc(pri?pri.rot:"ato principal")} · <kbd>S</kbd> nova data · <kbd>R</kbd> responder · <kbd>Esc</kbd> fechar</div>
@@ -1718,6 +1758,8 @@ async function msCarregar_(){
   if(error||!data||typeof data!=="object")MS.erro="Não consegui ler a mesa: "+(error?error.message:"resposta vazia")+". Toque em recarregar.";
   else{ MS.erro=""; MS.dados=data; }
   msRender();
+  /* p4.14: Hoje mostra pecas da Mesa; so redesenha depois que a carga do painel chegou (D.fila) */
+  if(D.fila){ renderHoje(); renderSelos(); }
 }
 
 /* p4.12: so a versao vigente de cada relatorio. O banco ja manda assim (anteriores dentro da vigente);
@@ -1740,7 +1782,7 @@ function msItemHtml(p){
   return `<button class="ms-item" onclick="msAbrirId(${+p.id})">
       <span class="ms-tit l2">${esc(p.titulo||"peça sem título")}</span>
       <span class="ms-meta">${esc(msCap(msAto(p.ato)))}${p.dest?" para "+esc(p.dest):""}${p.frente?" · "+esc(msFrente(p.frente)):""}</span>
-      <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span>${p.adiado_ate?`<span class="ms-dias">volta em ${esc(msAlvo(p.adiado_ate))}</span>`:`<span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>`}${p.novo===true?`<span class="ms-novo">nova</span>`:""}</span>
+      <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span>${p.adiado_ate?`<span class="ms-dias">volta em ${esc(msAlvo(p.adiado_ate))}</span>`:`<span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>`}${p.novo===true?`<span class="ms-novo">nova</span>`:""}${p.tarefa!=null?`<span class="ms-dias">com card</span>`:""}</span>
     </button>`;
 }
 function msFechoHtml(d,pend,adi){
@@ -1804,6 +1846,8 @@ function msHoraHtml(d){
 }
 
 /* ---------- folha da peca e baixa de envio ---------- */
+/* p4.14: o banco diz se o card ligado fechou junto ou ficou aberto; a tela traduz */
+const msCardTxt=t=>/concluido junto/.test(t)?" O card ligado foi concluído junto.":/ficou aberto/.test(t)?" O card ligado ficou aberto: conclua pelo card.":"";
 function msAbrir(i){ const p=msEst(MS.dados)[i]; if(p){MS.ritual=null;msAbrirP(p);} }
 function msAbrirId(id){ const p=msEst(MS.dados).find(x=>+x.id===+id); if(p){MS.ritual=null;msAbrirP(p);} }
 function msAbrirP(p){
@@ -1868,8 +1912,8 @@ async function msBaixa(){
   if(!error&&/^OK/.test(txt)){
     MS.gravando=false;
     if(MS.peca===p){ if(MS.ritual)msRitualProx(true); else fecharFolha(); }
-    toast("Baixa gravada: saiu por "+msCanal(canal)+" para "+dest+(prova?", com print.":", como declaração sua."),null,false,5000);
-    msCarregar();
+    toast("Baixa gravada: saiu por "+msCanal(canal)+" para "+dest+(prova?", com print.":", como declaração sua.")+msCardTxt(txt),null,false,6000);
+    msCarregar(); if(/concluido junto/.test(txt))carregar(true);
     return;
   }
   volta();
@@ -1905,8 +1949,8 @@ async function msDecidir(dec){
   if(!error&&/^OK/.test(txt)){
     MS.gravando=false;
     if(MS.peca===p){ if(MS.ritual)msRitualProx(true); else fecharFolha(); }
-    toast(dec==="adiar"&&/adiada ate/i.test(txt)?"Adiada até "+txt.replace(/^.*adiada ate\s*/i,"")+".":c.ok,null,false,5000);
-    msCarregar();
+    toast((dec==="adiar"&&/adiada ate/i.test(txt)?"Adiada até "+txt.replace(/^.*adiada ate\s*/i,"")+".":c.ok)+msCardTxt(txt),null,false,6000);
+    msCarregar(); if(/concluido junto/.test(txt))carregar(true);
     return;
   }
   volta();
