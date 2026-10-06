@@ -1414,6 +1414,23 @@ test('s859: a hora da Mesa diz a janela de 30 dias e nao alarma dentro da regua'
    mesmo dia misturadas com a vigente. Os testes cobram a classe: relatorio repetido nunca aparece duas vezes,
    o toque nunca abre PDF sem passar pela folha, o ritual so grava o que foi decidido e termina na ciencia,
    e a demonstracao nao cria cliente do banco nem carrega nome real no fonte (o repositorio e publico). */
+test('Mesa p4.13: o link do aviso (?ritual=1) abre a Mesa ja no "Encerrar o dia" e tira o parametro da barra', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA+'?ritual=1');
+  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
+  await expect(page.locator('#tituloAba')).toHaveText('Mesa');
+  expect(page.url(), 'o parametro sai da barra').not.toContain('ritual');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').length), 'abrir o ritual nao grava').toBe(0);
+  /* sem o parametro, nada de ritual */
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  await page.waitForTimeout(300);
+  await expect(page.locator('#veu')).toBeHidden();
+  expect(erros).toEqual([]);
+});
+
 const ciencias = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_ciencia').map(c=>c.a));
 
 test('Mesa p4.12: relatorio repetido aparece uma vez, na versao vigente; a anterior so dentro da folha; a ciencia do dia vai ao banco', async ({page})=>{
