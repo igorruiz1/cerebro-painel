@@ -19,6 +19,9 @@
    nem armazenamento do navegador, e some da tela quando o codigo confere.
    Visual e tokens copiados do presidente.html (design system Dabli Tech, v71). */
 :root{
+ /* p4.22 (plano 83): escala tipografica unica, 5 degraus. Piso: 14 px no presidente e na seguranca,
+    12 px no bastidor. Tamanho novo entra aqui, nunca solto numa regra (o teste cobra). */
+ --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:28px;
  --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
  --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
  --bg:var(--dt-navy); --sf:#0F1629; --card:#121A2F; --line:#2C3A5A; --line2:#1F2A44; --chip:#1E2A47;
@@ -30,71 +33,71 @@
  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs-3);line-height:1.45;-webkit-text-size-adjust:100%}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 a{color:var(--link)}
 .hidden{display:none!important}
-.mut{color:var(--mut);font-size:14px}
+.mut{color:var(--mut);font-size:var(--fs-2)}
 
 /* login: o mesmo do presidente.html */
 .login{max-width:380px;margin:12vh auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
 .marca-login{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;text-align:center}
 .marca-login h1{margin:0}
-.marca-login .marca .dt{font-size:30px}
-.marca-login .slogan{font-size:12.5px;color:var(--mut);letter-spacing:.01em}
+.marca-login .marca .dt{font-size:var(--fs-5)}
+.marca-login .slogan{font-size:var(--fs-2);color:var(--mut);letter-spacing:.01em}
 .marca-login .slogan em{font-style:normal;font-weight:600}
 .marca-login .slogan .az{color:var(--dt-blue)}
 .marca-login .slogan .vi{color:var(--dt-violet)}
-.marca-login .prodl{margin-top:14px;font-size:11px;letter-spacing:3.4px;font-weight:600;color:var(--ink2);padding-top:12px;position:relative}
+.marca-login .prodl{margin-top:14px;font-size:var(--fs-2);letter-spacing:3.4px;font-weight:600;color:var(--ink2);padding-top:12px;position:relative}
 .marca-login .prodl::before{content:"";position:absolute;top:0;left:50%;width:56px;height:2px;margin-left:-28px;border-radius:2px;background:var(--dt-grad)}
 .login .pri{background:var(--dt-grad);color:#fff}
-.login label{font-size:14px;color:var(--mut)}
-.login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;min-width:0}
-.msg{min-height:22px;font-size:14px;color:var(--warn);overflow-wrap:anywhere}
+.login label{font-size:var(--fs-2);color:var(--mut)}
+.login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:var(--fs-3);min-width:0}
+.msg{min-height:22px;font-size:var(--fs-2);color:var(--warn);overflow-wrap:anywhere}
 .msg.ok{color:var(--ok)}
 
 /* marca e topo */
 .marca{display:inline-flex;align-items:baseline;gap:9px;color:var(--ink);max-width:100%;overflow:hidden}
-.marca .dt{font-size:16px;line-height:1;white-space:nowrap;letter-spacing:-.01em}
+.marca .dt{font-size:var(--fs-3);line-height:1;white-space:nowrap;letter-spacing:-.01em}
 .marca .dt b{font-weight:700}
 .marca .dt span{font-weight:300}
-.marca .prod{font-size:10.5px;letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;padding-left:9px;border-left:1px solid var(--line2);white-space:nowrap;line-height:1.2}
+.marca .prod{font-size:var(--fs-2);letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;padding-left:9px;border-left:1px solid var(--line2);white-space:nowrap;line-height:1.2}
 .topo{position:sticky;top:0;z-index:5;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);
   display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;padding-top:max(8px,env(safe-area-inset-top))}
 .topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--dt-grad);opacity:.55;pointer-events:none}
 .topo .tt{flex:1;min-width:0}
 .topo .marca{display:flex;margin-bottom:3px}
-.topo .marca .dt{font-size:14px}
-.topo .marca .prod{font-size:9.5px;letter-spacing:2.2px}
-.topo h1{margin:0;font-size:20px;font-weight:700}
-.topo .sub{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topo .marca .dt{font-size:var(--fs-2)}
+.topo .marca .prod{font-size:var(--fs-2);letter-spacing:2.2px}
+.topo h1{margin:0;font-size:var(--fs-4);font-weight:700}
+.topo .sub{font-size:var(--fs-2);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ico{width:var(--tap);height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-width:560px;width:100%;margin:0 auto}
 .cartao{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.cartao h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
+.cartao h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 .cartao p{margin:0;overflow-wrap:anywhere}
-.estado{font-size:18px;line-height:1.4}
+.estado{font-size:var(--fs-4);line-height:1.4}
 .estado.ok{color:var(--ok)}
-.aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;overflow-wrap:anywhere}
-.pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:15px;padding:0 18px}
-.sec{min-height:var(--tap);border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px;font-size:15px;
+.aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:var(--fs-2);overflow-wrap:anywhere}
+.pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:var(--fs-3);padding:0 18px}
+.sec{min-height:var(--tap);border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px;font-size:var(--fs-3);
   display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
 .pri:disabled,.sec:disabled{opacity:.5;cursor:not-allowed}
 .passos{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;color:var(--ink2)}
 /* o QR vem em SVG sem garantia de fundo: fundo branco e margem para a camera ler sobre o navy */
 .qr{align-self:center;width:220px;max-width:100%;height:auto;aspect-ratio:1;background:#fff;border-radius:12px;padding:10px}
 .segredo{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
-.segredo code{flex:1 1 180px;min-width:0;font-family:var(--mono);font-size:15px;letter-spacing:.06em;background:var(--bg);border:1px solid var(--line2);
+.segredo code{flex:1 1 180px;min-width:0;font-family:var(--mono);font-size:var(--fs-3);letter-spacing:.06em;background:var(--bg);border:1px solid var(--line2);
   border-radius:12px;padding:12px;overflow-wrap:anywhere;word-break:break-all;user-select:all}
 .segredo .sec{flex:0 0 auto;min-width:96px}
 .campo{display:flex;flex-direction:column;gap:8px}
-.campo label{font-size:14px;color:var(--mut)}
+.campo label{font-size:var(--fs-2);color:var(--mut)}
 .campo input{height:56px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 14px;min-width:0;
-  font-family:var(--mono);font-size:24px;letter-spacing:.3em;text-align:center}
+  font-family:var(--mono);font-size:var(--fs-4);letter-spacing:.3em;text-align:center}
 .campo input:focus{border-color:var(--acc)}
 .volta{display:flex;width:100%}
 </style>
