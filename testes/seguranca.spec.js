@@ -108,7 +108,7 @@ test('c. com 6 digitos chama challenge e verify com o factorId do enroll; codigo
   await expect(page.locator('#qrBox'), 'o QR continua na tela para tentar de novo').toBeVisible();
   await page.fill('#cod6','123456');
   await page.click('#btConfirmar');
-  await expect(page.locator('#prontoBox')).toContainText('Pronto. Segundo fator cadastrado. O próximo passo é o painel pedir esse código ao entrar.');
+  await expect(page.locator('#prontoBox')).toContainText('Pronto. Segundo fator ativo. Daqui em diante o painel pede o código do app ao entrar.');
   const c = await page.evaluate(()=>window.__mfa.filter(x=>x.op==='challenge'||x.op==='verify').map(x=>({op:x.op,...x.a})));
   expect(c).toEqual([
     {op:'challenge',factorId:'fator-novo-1'},{op:'verify',factorId:'fator-novo-1',challengeId:'desafio-1',code:'999999'},
