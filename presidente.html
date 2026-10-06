@@ -44,6 +44,9 @@
    produto so. Paleta oficial em --dt-*; os tokens de uso (--bg, --ink, --acc...) apontam para ela.
    Estado (--warn, --bad, --ok) NAO muda: e leitura de semaforo, nao marca. */
 :root{
+ /* p4.22 (plano 83): escala tipografica unica, 5 degraus. Piso: 14 px no presidente e na seguranca,
+    12 px no bastidor. Tamanho novo entra aqui, nunca solto numa regra (o teste cobra). */
+ --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:28px;
  /* paleta oficial Dabli Tech */
  --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
  --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
@@ -59,7 +62,7 @@
  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs-3);line-height:1.45;-webkit-text-size-adjust:100%}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -67,30 +70,30 @@ a{color:var(--link)}
 ::selection{background:rgba(var(--acc-a),.3)}
 .hidden{display:none!important}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.mut{color:var(--mut);font-size:14px}
+.mut{color:var(--mut);font-size:var(--fs-2)}
 
 /* login */
 .login{max-width:380px;margin:12vh auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
-.login h1{margin:0 0 8px;font-size:22px}
+.login h1{margin:0 0 8px;font-size:var(--fs-4)}
 /* v71: entrada com a marca inteira (wordmark + slogan oficial) e o produto embaixo, como no index.html */
 .marca-login{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;text-align:center}
 .marca-login h1{margin:0}
-.marca-login .marca .dt{font-size:30px}
-.marca-login .slogan{font-size:12.5px;color:var(--mut);letter-spacing:.01em}
+.marca-login .marca .dt{font-size:var(--fs-5)}
+.marca-login .slogan{font-size:var(--fs-2);color:var(--mut);letter-spacing:.01em}
 .marca-login .slogan em{font-style:normal;font-weight:600}
 .marca-login .slogan .az{color:var(--dt-blue)}
 .marca-login .slogan .vi{color:var(--dt-violet)}
-.marca-login .prodl{margin-top:14px;font-size:11px;letter-spacing:3.4px;font-weight:600;color:var(--ink2);
+.marca-login .prodl{margin-top:14px;font-size:var(--fs-2);letter-spacing:3.4px;font-weight:600;color:var(--ink2);
  padding-top:12px;position:relative}
 .marca-login .prodl::before{content:"";position:absolute;top:0;left:50%;width:56px;height:2px;margin-left:-28px;
  border-radius:2px;background:var(--dt-grad)}
 /* acao principal da entrada no degrade da marca (no resto da tela .pri segue azul cheio) */
 .login .pri{background:var(--dt-grad);color:#fff}
 .login .pri:hover{filter:brightness(1.08)}
-.login label{font-size:14px;color:var(--mut)}
-.login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px}
-.login .msg{min-height:22px;font-size:14px;color:var(--warn)}
-.login .fator-txt{margin:0;font-size:15px;line-height:1.5;color:var(--ink2)}
+.login label{font-size:var(--fs-2);color:var(--mut)}
+.login input{height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:var(--fs-3)}
+.login .msg{min-height:22px;font-size:var(--fs-2);color:var(--warn)}
+.login .fator-txt{margin:0;font-size:var(--fs-3);line-height:1.5;color:var(--ink2)}
 
 /* casca */
 .app{min-height:100vh;display:flex}
@@ -104,97 +107,97 @@ a{color:var(--link)}
 /* MARCA: wordmark em texto Sora (Dabli Bold + Tech Light), divisor fino e o produto. Mesmas regras do
    index.html: sem simbolo, sem imagem (o guia proibe recriar o lettering). */
 .marca{display:inline-flex;align-items:baseline;gap:9px;letter-spacing:0;color:var(--ink);max-width:100%;overflow:hidden}
-.marca .dt{font-size:16px;line-height:1;white-space:nowrap;letter-spacing:-.01em}
+.marca .dt{font-size:var(--fs-3);line-height:1;white-space:nowrap;letter-spacing:-.01em}
 .marca .dt b{font-weight:700}
 .marca .dt span{font-weight:300}
-.marca .prod{font-size:10.5px;letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;
+.marca .prod{font-size:var(--fs-2);letter-spacing:2.6px;font-weight:600;color:var(--mut);text-transform:uppercase;
  padding-left:9px;border-left:1px solid var(--line2);white-space:nowrap;line-height:1.2}
 /* no topo do celular a marca e uma linha acima do titulo da aba; no desktop ela mora no trilho */
 .topo .marca{display:flex;margin-bottom:3px}
-.topo .marca .dt{font-size:14px}
-.topo .marca .prod{font-size:9.5px;letter-spacing:2.2px}
+.topo .marca .dt{font-size:var(--fs-2)}
+.topo .marca .prod{font-size:var(--fs-2);letter-spacing:2.2px}
 /* a 360 px o produto nao cabe ao lado do wordmark com os tres botoes do topo: fica so o wordmark */
 @media(max-width:380px){.topo .marca .prod{display:none}}
-.topo h1{margin:0;font-size:20px;font-weight:700}
-.topo .sub{font-size:12px;color:var(--mut)}
+.topo h1{margin:0;font-size:var(--fs-4);font-weight:700}
+.topo .sub{font-size:var(--fs-2);color:var(--mut)}
 .topo .sub.velho{color:var(--warn)}
 #atd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ico{width:var(--tap);height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .busca{padding:12px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px}
-.busca input{height:var(--tap);border-radius:12px;border:1px solid var(--acc);background:var(--card);padding:0 14px;font-size:16px}
+.busca input{height:var(--tap);border-radius:12px;border:1px solid var(--acc);background:var(--card);padding:0 14px;font-size:var(--fs-3)}
 main{flex:1;padding:16px 16px 110px;display:flex;flex-direction:column;gap:18px;max-width:1200px;width:100%}
 .pane{display:none;flex-direction:column;gap:18px}
 .pane.on{display:flex}
-h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
+h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 #novaVersao{flex:none;min-height:var(--tap);padding:10px 16px}
-.aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px}
+.aviso{border:1px solid var(--warn);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:var(--fs-2)}
 .pilha{display:flex;flex-direction:column;gap:8px}
 
 /* Hoje: frase de situacao + proximo passo em foco */
-.situacao{margin:0;font-size:18px;line-height:1.4;text-wrap:balance}
+.situacao{margin:0;font-size:var(--fs-4);line-height:1.4;text-wrap:balance}
 .situacao b{font-weight:600}
 .situacao .w{color:var(--warn)}
 .foco{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
-.foco .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--acc);font-weight:600}
-.foco .tit{font-size:21px;font-weight:600;line-height:1.3;text-wrap:balance}
+.foco .eyebrow{font-size:var(--fs-2);text-transform:uppercase;letter-spacing:.08em;color:var(--acc);font-weight:600}
+.foco .tit{font-size:var(--fs-4);font-weight:600;line-height:1.3;text-wrap:balance}
 /* p4.2 (04/10/2026): print do Igor no celular, aba Hoje, o fluxo 19 com 14 linhas de prosa no lugar do
    titulo. O banco ja corrigiu a causa (titulo curto na v_fila_base), mas a tela nao pode depender disso:
    em toda lista o titulo para em 2 linhas com reticencias, e o texto inteiro mora na folha do card.
    Sem -webkit-line-clamp (navegador antigo) o corte e por altura, sem reticencias. */
 .l2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
 @supports not (-webkit-line-clamp:2){.l2{display:block;line-height:1.35!important;max-height:2.7em}}
-.foco .porque{font-size:15px;color:var(--ink2)}
+.foco .porque{font-size:var(--fs-3);color:var(--ink2)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font-size:13px;background:var(--chip);color:var(--ink2);border-radius:999px;padding:4px 10px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip{font-size:var(--fs-2);background:var(--chip);color:var(--ink2);border-radius:999px;padding:4px 10px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .chip.w{color:var(--warn)} .chip.ok{color:var(--ok)}
 .acoes{display:flex;flex-wrap:wrap;gap:8px}
-.pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:15px;padding:0 18px;flex:1 1 150px}
-.sec{min-height:var(--tap);border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px;font-size:15px;flex:1 1 130px}
+.pri{min-height:var(--tap);border:0;border-radius:12px;background:var(--acc);color:var(--accInk);font-weight:700;font-size:var(--fs-3);padding:0 18px;flex:1 1 150px}
+.sec{min-height:var(--tap);border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px;font-size:var(--fs-3);flex:1 1 130px}
 .ordem{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .ordem button{min-height:60px;width:100%;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--sf);border:0;border-bottom:1px solid var(--line2);text-align:left}
 .ordem button:last-child{border-bottom:0}
 .ordem .o{font-family:var(--mono);color:var(--mut);width:18px;flex-shrink:0}
 .ordem .t{flex:1;min-width:0}
-.ordem .t small{display:block;color:var(--mut);font-size:13px}
+.ordem .t small{display:block;color:var(--mut);font-size:var(--fs-2)}
 /* a linha de meta (frente · vence · valor) e uma linha so, em toda lista */
 .ordem .t small,.linha-r .t small,.frente .t small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ordem .min{font-family:var(--mono);font-size:13px;color:var(--mut);white-space:nowrap}
+.ordem .min{font-family:var(--mono);font-size:var(--fs-2);color:var(--mut);white-space:nowrap}
 .atalhos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.atalho{min-height:76px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:14px;color:var(--ink2)}
-.atalho b{font-family:var(--mono);font-size:22px;color:var(--ink)}
+.atalho{min-height:76px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:var(--fs-2);color:var(--ink2)}
+.atalho b{font-family:var(--mono);font-size:var(--fs-4);color:var(--ink)}
 .atalho.w b{color:var(--warn)}
-.vazio{font-size:14px;color:var(--mut);padding:10px 2px}
+.vazio{font-size:var(--fs-2);color:var(--mut);padding:10px 2px}
 
 /* Fila (Kanban do Igor) */
-.wip{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);flex-wrap:wrap}
+.wip{display:flex;align-items:center;gap:10px;font-size:var(--fs-2);color:var(--ink2);flex-wrap:wrap}
 .wip .barra{flex:1;min-width:80px;height:8px;background:var(--chip);border-radius:6px;overflow:hidden}
 .wip .barra i{display:block;height:100%;background:var(--acc)}
 .wip.cheio .barra i{background:var(--warn)}
 .seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--card);border-radius:12px;padding:4px}
-.seg button{min-height:44px;border-radius:9px;border:0;background:transparent;color:var(--ink2);font-size:13px;font-weight:600;padding:0 4px}
+.seg button{min-height:44px;border-radius:9px;border:0;background:transparent;color:var(--ink2);font-size:var(--fs-2);font-weight:600;padding:0 4px}
 .seg button.on{background:var(--acc);color:var(--accInk)}
 .kanban{display:flex;flex-direction:column;gap:12px}
 .coluna{display:none;flex-direction:column;gap:8px}
 .coluna.on{display:flex}
-.coluna .ajuda{font-size:13px;color:var(--mut)}
-.coluna h3{display:none;margin:0;font-size:15px}
+.coluna .ajuda{font-size:var(--fs-2);color:var(--mut)}
+.coluna h3{display:none;margin:0;font-size:var(--fs-3)}
 .item{min-height:64px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;justify-content:center;text-align:left}
-.item .t{font-size:15px;line-height:1.3}
-.item .d{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--mut)}
+.item .t{font-size:var(--fs-3);line-height:1.3}
+.item .d{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:var(--fs-2);color:var(--mut)}
 .item .d .idade{margin-left:auto}
 .idade.w{color:var(--warn)}
-.rodape{font-size:13px;color:var(--mut);padding:8px 2px 0}
+.rodape{font-size:var(--fs-2);color:var(--mut);padding:8px 2px 0}
 
 /* Caixa */
 .grande{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
-.grande .v{font-family:var(--mono);font-size:34px;font-weight:600}
+.grande .v{font-family:var(--mono);font-size:var(--fs-5);font-weight:600}
 .grande .v.w{color:var(--warn)}
 .semanas{overflow-x:auto}
 .semanas svg{display:block;width:100%;max-width:720px;min-width:300px;height:auto}
 .linha-r{min-height:60px;width:100%;display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;text-align:left}
 .linha-r .t{flex:1;min-width:0}
-.linha-r .t small{display:block;color:var(--mut);font-size:13px}
+.linha-r .t small{display:block;color:var(--mut);font-size:var(--fs-2)}
 .linha-r .r{font-family:var(--mono);color:var(--ok);white-space:nowrap}
 .linha-r .r.z{color:var(--mut)}
 /* v71: o grafico das 13 semanas e desenhado no JS com as cores antigas em atributo; o CSS vence o
@@ -207,52 +210,52 @@ h2{margin:0;font-size:15px;font-weight:600;color:var(--ink2)}
 /* Frentes */
 .frente{min-height:64px;width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;text-align:left}
 .frente .t{flex:1;min-width:0}
-.frente .t small{display:block;color:var(--mut);font-size:13px}
-.frente .r{font-family:var(--mono);font-size:14px;color:var(--acc);white-space:nowrap}
+.frente .t small{display:block;color:var(--mut);font-size:var(--fs-2)}
+.frente .r{font-family:var(--mono);font-size:var(--fs-2);color:var(--acc);white-space:nowrap}
 .frente .r.z{color:var(--mut)}
 
 /* navegacao */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
   background:rgba(11,16,32,.97);backdrop-filter:blur(14px);border-top:1px solid var(--line2);padding-bottom:max(8px,env(safe-area-inset-bottom))}
-.nav button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--mut);font-size:12px;font-weight:600}
-.nav button .selo{font-family:var(--mono);font-size:15px;min-width:30px;height:28px;padding:0 6px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.nav button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--mut);font-size:var(--fs-2);font-weight:600}
+.nav button .selo{font-family:var(--mono);font-size:var(--fs-3);min-width:30px;height:28px;padding:0 6px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .nav button.on{color:var(--ink)} .nav button.on .selo{background:var(--chip)}
 
 /* detalhe do card: folha no celular, painel lateral no desktop */
 .veu{position:fixed;inset:0;background:rgba(6,9,20,.7);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .folha{width:100%;max-width:560px;background:var(--sf);border-radius:18px 18px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-height:88vh;overflow:auto}
-.folha h3{margin:0;font-size:19px;line-height:1.3;text-wrap:balance;overflow-wrap:anywhere}
+.folha h3{margin:0;font-size:var(--fs-4);line-height:1.3;text-wrap:balance;overflow-wrap:anywhere}
 /* p4.2: na folha, o contexto do card nasce em 3 linhas; "ver mais" abre o resto (bloco comum:recolhe) */
 .recolhe{margin:0;color:var(--ink2);overflow-wrap:anywhere;white-space:pre-line;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
 .recolhe.aberto{display:block;-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
 @supports not (-webkit-line-clamp:3){.recolhe{display:block;max-height:4.35em}.recolhe.aberto{max-height:none}}
-.ver-mais{align-self:flex-start;min-height:44px;min-width:44px;background:none;border:0;color:var(--link);font-size:14px;padding:0 2px;text-decoration:underline}
+.ver-mais{align-self:flex-start;min-height:44px;min-width:44px;background:none;border:0;color:var(--link);font-size:var(--fs-2);padding:0 2px;text-decoration:underline}
 .folha>.sec{flex:none}
 .bloco{display:flex;flex-direction:column;gap:4px}
 .bloco .rot.w{color:var(--warn)}
-.bloco .rot{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.bloco .rot{font-size:var(--fs-2);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
 .bloco p{margin:0;color:var(--ink2);overflow-wrap:anywhere}
-details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;display:flex;align-items:center}
+details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height:44px;display:flex;align-items:center}
 .campo{display:flex;flex-direction:column;gap:8px}
-.campo input,.campo textarea{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:10px 14px;font-size:16px}
+.campo input,.campo textarea{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:10px 14px;font-size:var(--fs-3)}
 .datas{display:flex;flex-wrap:wrap;gap:8px}
 .datas button{min-height:44px;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:0 14px}
 /* p4.10: a conta sugerida (ultima usada) e SUGESTAO, nao a acao principal. Antes usava .pri, que perde a
    cascata para .datas button (0,1,1 > 0,1,0): fundo do cartao com texto navy, contraste ~1,1:1, o chip sumia.
    Agora tem classe propria, contorno e fundo da cor de destaque e selo legivel, e o teste mede a cor desenhada. */
 .datas button.sug{border:2px solid var(--acc);background:rgba(var(--acc-a),.16);color:var(--ink);font-weight:600}
-.datas button.sug .selo{display:block;font-size:13px;font-weight:700;color:var(--link);line-height:1.2}
+.datas button.sug .selo{display:block;font-size:var(--fs-2);font-weight:700;color:var(--link);line-height:1.2}
 .peca{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.peca code{font-family:var(--mono);font-size:13px;background:var(--card);border-radius:8px;padding:6px 8px;overflow-wrap:anywhere}
+.peca code{font-family:var(--mono);font-size:var(--fs-2);background:var(--card);border-radius:8px;padding:6px 8px;overflow-wrap:anywhere}
 .peca a,.peca button{min-height:44px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:0 14px;text-decoration:none}
-.historico{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink2)}
+.historico{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-2);color:var(--ink2)}
 .historico li{display:flex;gap:10px}
 .historico .q{font-family:var(--mono);color:var(--mut);white-space:nowrap}
 .conv li>span:last-child{min-width:0;overflow-wrap:anywhere}
 .conv b{color:var(--ink);font-weight:600}
 .pri:disabled,.sec:disabled{opacity:.5;cursor:not-allowed}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:30;background:var(--chip);border:1px solid var(--line);border-radius:12px;
-  padding:6px 6px 6px 14px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);font-size:14px}
+  padding:6px 6px 6px 14px;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);font-size:var(--fs-2)}
 .toast button{min-height:44px;border-radius:9px;border:0;background:var(--acc);color:var(--accInk);font-weight:700;padding:0 14px}
 .toast.bad{border-color:var(--bad);color:var(--bad)}
 /* p4.3: ha quanto tempo o card espera o Igor (Linear Triage); selo unico de saude no topo (Statuspage) */
@@ -264,7 +267,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .saude span{overflow:hidden;text-overflow:ellipsis}
 .linha-r .cobrar{flex:none;min-width:88px}
 /* atalhos da folha (A, S, R) so aparecem onde ha teclado fisico */
-.teclas{display:none;font-size:13px;color:var(--mut)}
+.teclas{display:none;font-size:var(--fs-2);color:var(--mut)}
 .teclas kbd{font-family:var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px;color:var(--ink2)}
 @media (hover:hover) and (pointer:fine){.teclas{display:block}}
 
@@ -272,21 +275,21 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .folha.cheia{max-height:none;height:100%;border-radius:0}
 .voz-topo{display:flex;align-items:center;gap:12px}
 .voz-topo h3{flex:1}
-.voz-motor{font-size:13px;color:var(--mut)}
+.voz-motor{font-size:var(--fs-2);color:var(--mut)}
 .voz-mic{align-self:center;flex-shrink:0;width:112px;height:112px;border-radius:50%;border:2px solid var(--acc);background:var(--card);color:var(--acc);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:600}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:var(--fs-2);font-weight:600}
 .voz-mic[aria-pressed="true"]{background:var(--acc);color:var(--accInk)}
 .voz-mic:disabled{border-color:var(--line);color:var(--mut);cursor:not-allowed}
-.voz-estado{min-height:22px;text-align:center;font-size:14px;color:var(--ink2)}
+.voz-estado{min-height:22px;text-align:center;font-size:var(--fs-2);color:var(--ink2)}
 .voz-estado.bad{color:var(--bad)}
-.voz-txt{min-height:160px;flex:1;resize:vertical;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:12px 14px;font-size:16px;line-height:1.45}
+.voz-txt{min-height:160px;flex:1;resize:vertical;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:12px 14px;font-size:var(--fs-3);line-height:1.45}
 .voz-txt:focus{border-color:var(--acc)}
 .voz-acoes .sec{flex:0 0 96px}
 .voz-acoes .pri{white-space:nowrap;padding:0 12px}
 .voz-api{border-top:1px solid var(--line2);padding-top:6px}
 .voz-api .corpo{display:flex;flex-direction:column;gap:10px;padding-top:4px}
-.voz-api label{font-size:14px;color:var(--mut)}
-.voz-api input{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;min-width:0}
+.voz-api label{font-size:var(--fs-2);color:var(--mut)}
+.voz-api input{min-height:var(--tap);border-radius:12px;border:1px solid var(--line);background:var(--card);padding:0 14px;font-size:var(--fs-3);min-width:0}
 .ico[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
 @media (prefers-reduced-motion:no-preference){.voz-mic[aria-pressed="true"]{animation:pulsa 1.4s ease-in-out infinite}@keyframes pulsa{50%{box-shadow:0 0 0 10px rgba(var(--acc-a),.18)}}}
 
@@ -295,14 +298,14 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   .rail{display:flex;flex-direction:column;gap:6px;width:220px;flex-shrink:0;border-right:1px solid var(--line2);padding:24px 14px;background:var(--sf);position:sticky;top:0;height:100vh}
   /* no desktop a marca fica no alto do trilho (o topo da coluna mostra so a aba); produto embaixo */
   .rail .marca{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:0 10px 22px;margin-bottom:4px;position:relative}
-  .rail .marca .dt{font-size:20px}
+  .rail .marca .dt{font-size:var(--fs-4)}
   .rail .marca .prod{border-left:0;padding-left:0}
   .rail .marca::after{content:"";position:absolute;left:10px;bottom:10px;width:40px;height:2px;border-radius:2px;background:var(--dt-grad)}
   .topo .marca{display:none}
-  .rail button{min-height:var(--tap);display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:var(--ink2);font-size:15px;font-weight:600;text-align:left}
+  .rail button{min-height:var(--tap);display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:var(--ink2);font-size:var(--fs-3);font-weight:600;text-align:left}
   .rail button.on{background:var(--chip);color:var(--ink)}
-  .rail button .selo{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--mut)}
-  .rail .pe{margin-top:auto;font-size:12px;color:var(--mut);padding:0 10px;line-height:1.5}
+  .rail button .selo{margin-left:auto;font-family:var(--mono);font-size:var(--fs-2);color:var(--mut)}
+  .rail .pe{margin-top:auto;font-size:var(--fs-2);color:var(--mut);padding:0 10px;line-height:1.5}
   .rail .pe a{display:flex;align-items:center;min-height:44px}
   main{padding:24px 32px 40px}
   .toast{bottom:24px}
@@ -319,37 +322,37 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 /* estilo:mesa · p4.4 (05/10/2026): so as classes do modulo:mesa, todas com prefixo ms-. Nada aqui depende
    da largura da fonte: texto que nao cabe encolhe com reticencias ou quebra dentro do proprio botao. */
 .ms-raiz{display:flex;flex-direction:column;gap:14px;min-width:0}
-.ms-dia{margin:0;font-size:18px;line-height:1.4;text-wrap:balance;overflow-wrap:anywhere}
+.ms-dia{margin:0;font-size:var(--fs-4);line-height:1.4;text-wrap:balance;overflow-wrap:anywhere}
 .ms-dia b{font-weight:600}
-.ms-hora{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink2);max-width:460px;overflow-wrap:anywhere}
+.ms-hora{display:flex;flex-direction:column;gap:6px;font-size:var(--fs-2);color:var(--ink2);max-width:460px;overflow-wrap:anywhere}
 .ms-hora b.w{color:var(--warn)}
 .ms-regua{position:relative;display:block;height:8px;margin:4px 0 0;border-radius:6px;background:var(--chip)}
 .ms-regua i{position:absolute;top:-4px;width:4px;height:16px;margin-left:-2px;border-radius:2px;background:var(--ok)}
 .ms-regua i.w{background:var(--warn)}
-.ms-regua-rot{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mut)}
+.ms-regua-rot{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-2);color:var(--mut)}
 .ms-regua-rot span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ms-item,.ms-rel,.ms-saiu{min-height:64px;width:100%;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;justify-content:center;text-align:left}
 .ms-saiu{background:transparent;border-style:dashed}
-.ms-tit{font-size:15px;line-height:1.3;max-width:100%}
+.ms-tit{font-size:var(--fs-3);line-height:1.3;max-width:100%}
 .ms-um{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ms-meta{display:block;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.ms-meta2{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:13px;color:var(--mut);min-width:0}
+.ms-meta{display:block;font-size:var(--fs-2);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ms-meta2{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:var(--fs-2);color:var(--mut);min-width:0}
 .ms-rs{font-family:var(--mono);white-space:nowrap}
 .ms-rs.ok{color:var(--ok)}
 .ms-dias{white-space:nowrap}
 .ms-dias.w{color:var(--warn)}
 .ms-aprovada{margin:0}
 .ms-lote{width:100%}
-.ms-novo{font-size:12px;font-weight:700;line-height:1.5;color:var(--accInk);background:var(--acc);border-radius:999px;padding:0 8px}
+.ms-novo{font-size:var(--fs-2);font-weight:700;line-height:1.5;color:var(--accInk);background:var(--acc);border-radius:999px;padding:0 8px}
 .ms-mais{flex:none}
 .bloco.ms-baixa{gap:10px;border-top:1px solid var(--line2);padding-top:12px}
 .ms-baixa .pri{flex:none}
 .ms-canais{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.ms-canal{min-height:var(--tap);min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:6px 10px;font-size:14px;line-height:1.2;overflow-wrap:anywhere}
+.ms-canal{min-height:var(--tap);min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:6px 10px;font-size:var(--fs-2);line-height:1.2;overflow-wrap:anywhere}
 .ms-canal[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--accInk);font-weight:700}
-.campo .ms-arq{width:100%;min-width:0;min-height:var(--tap);padding:8px 10px;font-size:14px}
+.campo .ms-arq{width:100%;min-width:0;min-height:var(--tap);padding:8px 10px;font-size:var(--fs-2)}
 .ms-arq::file-selector-button{min-height:34px;margin-right:10px;border:1px solid var(--line);border-radius:9px;background:var(--chip);color:var(--ink);padding:0 12px;font:inherit}
-.ms-aviso{margin:0;color:var(--bad);font-size:14px;overflow-wrap:anywhere}
+.ms-aviso{margin:0;color:var(--bad);font-size:var(--fs-2);overflow-wrap:anywhere}
 .ms-aviso:empty{display:none}
 /* p4.5: botao da peca no topo da folha e o bloco "Sua decisao". Na folha (coluna flex) o .pri cresceria
    na altura pelo flex-basis: aqui ele fica flex:none. Aprovar ocupa a linha; ajuste e largar dividem a de baixo. */
@@ -365,24 +368,24 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 /* p4.12: Encerrar o dia (ritual de fim de dia), adiadas e a folha do relatorio */
 .ms-fecho{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;overflow-wrap:anywhere}
 .ms-fecho.limpa{border-color:var(--ok)}
-.ms-fecho-num{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--ink2)}
+.ms-fecho-num{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-2);color:var(--ink2)}
 .ms-fecho-num b{font-family:var(--mono);color:var(--ink)}
 .ms-barra{display:block;height:8px;border-radius:6px;background:var(--chip);overflow:hidden}
 .ms-barra i{display:block;height:100%;background:var(--ok)}
 .ms-fecho .pri,.ms-fecho .sec{flex:none}
-.ms-ritual{margin:0;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.ms-ritual{margin:0;font-size:var(--fs-2);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .ms-ritual-pe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ms-adiadas summary{min-height:var(--tap);display:flex;align-items:center;cursor:pointer;font-weight:600}
 .ms-adiadas .pilha,.ms-adiadas .ms-versoes{margin-top:8px}
 .ms-filtro{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .ms-filtro label{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0;max-width:100%}
-.ms-filtro select{min-height:var(--tap);max-width:100%;min-width:0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit;padding:0 12px;font-size:16px}
-.ms-filtro-n{width:100%;margin:0;font-size:14px}
+.ms-filtro select{min-height:var(--tap);max-width:100%;min-width:0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit;padding:0 12px;font-size:var(--fs-3)}
+.ms-filtro-n{width:100%;margin:0;font-size:var(--fs-2)}
 .ms-versoes{display:flex;flex-direction:column;gap:8px}
 .ms-versoes .sec{flex:none}
 /* fim estilo:mesa */
 /* estilo:demo · p4.12: aviso fixo de demonstracao no topo do conteudo */
-.demo-aviso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;color:var(--ink2);overflow-wrap:anywhere}
+.demo-aviso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:var(--fs-2);color:var(--ink2);overflow-wrap:anywhere}
 .demo-aviso b{color:var(--ink)}
 .demo-aviso span{flex:1 1 220px;min-width:0}
 .demo-aviso .sec{flex:none}
@@ -519,7 +522,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.21";
+const VERP="p4.22";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -683,7 +686,7 @@ function demoCliente(){
       return dias.length?"OK: ciencia em lote de "+dias.length+" dia(s) gravada, sem contagem da mesa":"OK: nenhum fechamento atrasado sem ciencia"; }};
   /* PDF e peca nao existem na demonstracao: o link abre uma pagina local que diz isso, sem sair do aparelho */
   const arquivo=(p,s)=>URL.createObjectURL(new Blob(['<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Documento fictício</title>'+
-    '<body style="font:16px/1.5 system-ui,sans-serif;padding:24px;background:#fff;color:#111"><h1 style="font-size:20px">Documento fictício</h1>'+
+    '<body style="font:16px/1.5 system-ui,sans-serif;padding:24px;background:#fff;color:#111"><h1 style="font-size:1.25em">Documento fictício</h1>'+
     '<p>Na demonstração os documentos não existem. No painel real, este toque abre o PDF guardado no armazenamento privado, por um link que vale '+(+s||300)+' segundos.</p>'+
     '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
   return {

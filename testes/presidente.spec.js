@@ -450,7 +450,9 @@ test('recibo honesto: com despertador ligado diz que acordou; sem token diz a pa
   await expect(page.locator('#atd')).toContainText('Atendente acordado');
   await expect(page.locator('#atd')).not.toHaveClass(/velho/);
   await page.setViewportSize({width:390, height:820});
-  expect(await page.locator('#atd').evaluate(e=>e.getBoundingClientRect().height), 'linha do atendente cabe numa linha a 390 px').toBeLessThan(20);
+  /* p4.22: o teto era 20 px fixos, medido com letra de 12 px; uma linha e menos de 1,8 vez o tamanho da letra */
+  const atd = await page.locator('#atd').evaluate(e=>({h:e.getBoundingClientRect().height, fs:parseFloat(getComputedStyle(e).fontSize)}));
+  expect(atd.h, 'linha do atendente cabe numa linha a 390 px').toBeLessThan(atd.fs*1.8);
   await page.evaluate(()=>{ window.__atd={...window.__atd,ultimo_despertar_em:'2026-10-01T00:00:00Z',http:401}; return atendenteEstado(); });
   await expect(page.locator('#atd'), 'POST recusado aparece, nao vira "acordado"').toContainText('HTTP 401');
 });
@@ -1970,5 +1972,50 @@ test('p4.21: codigo interno so no Historico; chip e aviso do ato falam pelo titu
   const aviso = await page.locator('#tmsg').innerText();
   expect(aviso, 'aviso pelo titulo').toContain('Card de exemplo');
   expect(aviso, 'sem codigo no aviso').not.toMatch(/\bt2\b/);
+  expect(erros).toEqual([]);
+});
+
+/* p4.22 (06/10/2026, plano 83): 16 tamanhos de letra soltos no presidente e 28 no bastidor; 17 de 45 textos da aba
+   Hoje tinham 12 ou 13 px. Agora sao 5 degraus em token (12/14/16/20/28), com piso de 14 px na tela do Igor e de
+   12 px no bastidor. O p4.21 reprova aqui. */
+test('p4.22: todo tamanho de letra sai da escala de 5 degraus; presidente e seguranca sem o degrau de 12 px', ()=>{
+  const fs = require('fs'), raiz = path.resolve(__dirname,'..');
+  for (const [arq, piso] of [['presidente.html',2],['seguranca.html',2],['index.html',1]]) {
+    const src = fs.readFileSync(path.join(raiz,arq),'utf8');
+    const raiz_ = src.match(/--fs-1:(\d+)px; --fs-2:(\d+)px; --fs-3:(\d+)px; --fs-4:(\d+)px; --fs-5:(\d+)px;/);
+    expect(raiz_ && raiz_.slice(1).map(Number), arq+': escala no :root').toEqual([12,14,16,20,28]);
+    const usos = [...src.matchAll(/font-size:\s*([^;}"']+)/g)].map(m=>m[1].trim());
+    const soltos = usos.filter(v=>!/^var\(--fs-[1-5]\)$/.test(v) && v!=='inherit' && !/^[\d.]+em$/.test(v));
+    expect(soltos, arq+': tamanho fora da escala').toEqual([]);
+    const abaixo = usos.filter(v=>{ const m=v.match(/^var\(--fs-(\d)\)$/); return m && +m[1]<piso; });
+    expect(abaixo, arq+': degrau abaixo do piso').toEqual([]);
+  }
+});
+
+test('p4.22: nenhum texto abaixo de 14 px nas cinco abas e na folha do presidente', async ({page})=>{
+  const erros = await abrir(page);
+  const medir = ()=>page.evaluate(()=>{
+    const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
+    const out=[]; let n=0;
+    for (const e of document.querySelectorAll('body *')) {
+      if (!vis(e)) continue;
+      const temTexto=[...e.childNodes].some(c=>c.nodeType===3&&c.textContent.trim());
+      if (!temTexto) continue;
+      n++;
+      const fs=parseFloat(getComputedStyle(e).fontSize);
+      if (fs<14) out.push(fs+'px '+e.tagName+'.'+e.className+' '+e.textContent.trim().slice(0,30));
+    }
+    return {n,out};
+  });
+  for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
+    await page.evaluate(a=>ir(a), aba);
+    if (aba==='mesa') await page.waitForSelector('#ms-raiz .ms-item');
+    const r = await medir();
+    expect(r.n, 'a aba '+aba+' tem texto medido').toBeGreaterThan(5);
+    expect(r.out, 'texto abaixo de 14 px em '+aba).toEqual([]);
+  }
+  await page.evaluate(()=>{ ir('hoje'); abrirFila(0); });
+  const f = await medir();
+  expect(f.out, 'texto abaixo de 14 px na folha').toEqual([]);
   expect(erros).toEqual([]);
 });
