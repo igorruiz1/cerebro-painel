@@ -1770,3 +1770,27 @@ test('Mesa p4.16: o filtro cabe a 360 px sem rolagem lateral e com alvo de toque
   expect(r.dentro).toBe(true);
   expect(erros).toEqual([]);
 });
+
+/* p4.17 (06/10/2026): o Igor aprovou 3 pecas de envio da Burbom e achou que nada tinha acontecido: a folha fechava
+   e a peca voltava igual, com o botao Aprovar. Agora a aprovada mostra "aprovada, falta enviar", a folha fica aberta
+   e desce ate "Ja enviei". O p4.16 reprova aqui. */
+test('Mesa p4.17: aprovar peca de envio deixa a folha aberta em "Já enviei" e marca a peça como aprovada', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.click('#msBtAprovar');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').map(c=>c.a))).toEqual([{p_doc:102,p_decisao:'aprovado',p_nota:null}]);
+  await expect(page.locator('#veu'), 'a folha continua aberta').toBeVisible();
+  await expect(page.locator('#msAprovada')).toContainText('Aprovada por você em');
+  await expect(page.locator('#msBtAprovar'), 'sem o botao de aprovar de novo').toHaveCount(0);
+  await expect(page.locator('#msBaixaBloco')).toBeVisible();
+  await expect(page.locator('#tmsg')).toContainText('Quando enviar, dê a baixa aqui');
+  /* a lista mostra o selo para a peca que o banco devolve aprovada */
+  await page.evaluate(()=>{ fecharFolha(); MS.dados.estoque[1].motivo='aprovado por voce em 06/10 16:11; falta enviar'; msRender(); });
+  await expect(page.locator('#ms-raiz .ms-item >> nth=1')).toContainText('aprovada, falta enviar');
+  await expect(page.locator('#ms-raiz .ms-item >> nth=0'), 'peca nao aprovada sem selo').not.toContainText('aprovada');
+  /* peca de leitura (aprovar) continua saindo da mesa: a folha fecha */
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#msBtAprovar');
+  await expect(page.locator('#veu')).toBeHidden();
+  expect(erros).toEqual([]);
+});
