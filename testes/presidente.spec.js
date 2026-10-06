@@ -414,9 +414,9 @@ test('voz pela API do aparelho: o audio vai para a URL guardada, o texto volta p
 test('pagina velha no cache oferece a versao nova; mesma versao nao mostra nada', async ({page})=>{
   await abrir(page);
   await expect(page.locator('#novaVersao')).toBeHidden();
-  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,text:async()=>'<script>const VERP="'+VERP+'";</script>'}); await checarVersao(); });
+  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,json:async()=>({presidente:VERP})}); await checarVersao(); });
   await expect(page.locator('#novaVersao'), 'mesma versao').toBeHidden();
-  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,text:async()=>'<script>const VERP="p9";</script>'}); await checarVersao(); });
+  await page.evaluate(async()=>{ window.fetch=async()=>({ok:true,json:async()=>({presidente:'p9'})}); await checarVersao(); });
   await expect(page.locator('#novaVersao')).toBeVisible();
   await expect(page.locator('#novaVersao')).toContainText('p9');
   const alt = await page.locator('#novaVersao').evaluate(e=>e.getBoundingClientRect().height);
@@ -1924,4 +1924,33 @@ test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; b
   await page.click('#msBtCiencia');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|ciencia)$/.test(c.n)).map(c=>c.n).slice(-2))).toEqual(['mesa_deliberar','mesa_ciencia']);
   expect(erros).toEqual([]);
+});
+
+/* p4.20 (06/10/2026, plano 85): a conferencia de versao baixava o presidente.html inteiro (186 KB) a cada carga, e
+   a carga roda depois de todo ato. Agora le o version.json so na abertura e quando a aba volta. O p4.19 reprova
+   aqui: o ato refazia o GET da pagina. */
+test('p4.20: um ato nao baixa a pagina de novo; a versao vem do version.json na abertura e ao voltar a aba', async ({page})=>{
+  await page.addInitScript(()=>{ window.__get=[]; const f=window.fetch.bind(window);
+    window.fetch=(u,...a)=>{ window.__get.push(String(u)); return f(u,...a); }; });
+  await abrir(page);
+  const gets = re=>page.evaluate(r=>window.__get.filter(u=>new RegExp(r).test(u)).length, re);
+  await expect.poll(()=>gets('version\\.json'), 'a abertura confere uma vez').toBe(1);
+  const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+  await page.click('#foco .pri');
+  await page.fill('#cv','e-mail do fiscal 08/10');
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'o ato recarrega').toBeGreaterThan(cargas0);
+  await page.waitForTimeout(200);
+  expect(await gets('presidente\\.html'), 'nunca baixa a pagina para conferir versao').toBe(0);
+  expect(await gets('version\\.json'), 'o ato nao confere a versao').toBe(1);
+  await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  await expect.poll(()=>gets('version\\.json'), 'a aba que volta confere de novo').toBe(2);
+});
+
+test('p4.20: version.json acompanha o VERP do presidente.html', ()=>{
+  const fs = require('fs'), raiz = path.resolve(__dirname,'..');
+  const v = JSON.parse(fs.readFileSync(path.join(raiz,'version.json'),'utf8'));
+  const verp = fs.readFileSync(path.join(raiz,'presidente.html'),'utf8').match(/const VERP="([^"]+)"/)[1];
+  expect(v.presidente, 'VERP novo sem o version.json faz a pagina oferecer a versao velha').toBe(verp);
 });
