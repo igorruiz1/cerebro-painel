@@ -56,6 +56,8 @@ página**, trocando a linha antiga pelo fato novo com a data.
   ~26 s local (2 workers); na CI o job leva ~1 min (51 a 61 s nas últimas
   execuções), dos quais ~26 s instalam o Chromium e ~19 s rodam a suíte.
 - Rodar local antes de empurrar: `npm run teste`.
+- Versão nova do `presidente.html`: `const VERP` e `version.json` mudam juntos. A página
+  confere a versão pelo `version.json`; esquecido, ela oferece ao Igor a versão velha (teste p4.20 cobra).
 
 ## Escrita
 
