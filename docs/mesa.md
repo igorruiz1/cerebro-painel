@@ -20,6 +20,17 @@ misturadas.
 - **Relatórios**: só a versão vigente de cada tipo+alvo. O toque abre a folha (ciência do dia, versões
   anteriores); o PDF sai do botão "Abrir o PDF".
 
+A p4.14 (06/10/2026, s03) põe Hoje e Mesa numa fila só, no molde da lista Hoje do Things e da caixa do Linear.
+Medido antes: nenhuma ligação entre peça e card no banco, e 5 a 6 de 48 peças eram o trabalho de um card aberto.
+
+- `mesa_item.tarefa_id` liga a peça ao card que é o mesmo trabalho; `fecha_tarefa` diz se a prova da peça conclui
+  o card. Liga por `mesa_ligar_card(doc, tarefa, fecha)`, na triagem das 21h (passo 1b da rotina mesa-do-igor).
+- Hoje mostra os cards do dia mais as peças novas e as 3 paradas de maior valor; adiada nunca entra. Peça ligada a
+  card de Hoje não repete: aparece dentro da folha do card. O tempo da peça entra na conta do dia (10 min ler,
+  aprovar ou decidir; 15 min enviar, assinar, entregar ou protocolar).
+- A baixa (`mesa_baixa_painel`) ou a aprovação que tira a peça da mesa chama `mesa_fechar_card_ligado`, que conclui o
+  card pelo `agir_nucleo` com a linha de prova, só se `fecha_tarefa`. Adiar, ajustar e largar não fecham card.
+
 ## Contrato com o banco
 
 Quatro RPC e dois buckets. Nada além disso.
@@ -37,7 +48,7 @@ Retorno de `mesa_painel`:
 
 ```
 { hoje: "AAAA-MM-DD",
-  estoque: [{id, frente, titulo, ato, dest, canal, rs, dias, motivo, copia, novo, peca, adiado_ate}],
+  estoque: [{id, frente, titulo, ato, dest, canal, rs, dias, motivo, copia, novo, peca, adiado_ate, tarefa, fecha_tarefa}],
   pendentes_hoje: number, adiadas_hoje: number, decididas_hoje: number,
   fechamentos: [{dia, ciente_em, pendentes, adiadas, decididas}],
   em_jogo: number,
