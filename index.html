@@ -1145,7 +1145,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v75";
+const VER="v76";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2378,8 +2378,10 @@ function qRecusar(origem,ref){
 const MIN_PADRAO=30, LIM_GESTO=90;
 function donoDe(chave){const k=(D.kdono||[]).find(x=>x.chave===chave)||(D.ev||[]).find(x=>x.chave===chave);return k&&k.dono?k.dono:null;}
 function quemMove(chave){const d=donoDe(chave);return d==="igor"?"você":d==="claude"?"a máquina":"sem dono no banco";}
-function minDe(it){ if(!it||it.origem!=="tarefa") return null;
-  const m=(D.min||[]).find(x=>String(x.id)===String(it.ref)); return m&&m.minutos_estimados!=null?+m.minutos_estimados:null;}
+function minDe(it){ if(!it) return null;
+  /* v76 (s859): pagar e receber tambem tem minutos, pela chave "fluxo:<id>" da fonte min */
+  const k=it.origem==="tarefa"?String(it.ref):it.origem+":"+it.ref;
+  const m=(D.min||[]).find(x=>String(x.id)===k); return m&&m.minutos_estimados!=null?+m.minutos_estimados:null;}
 function tempoTxt(lista){
   if(!lista||!lista.length) return "";
   let soma=0,sem=0; lista.forEach(it=>{const m=minDe(it); if(m==null){soma+=MIN_PADRAO;sem++;} else soma+=m;});
