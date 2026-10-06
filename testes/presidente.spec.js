@@ -1291,3 +1291,28 @@ test('o index.html (bastidor) passa pela mesma porta: sem o codigo nao carrega, 
   expect(await page.evaluate(()=>window.__cargas), 'uma carga depois do codigo').toBe(1);
   expect(erros).toEqual([]);
 });
+
+/* s859 05/10/2026: print do Igor 23h19 mostrou "7 sem estimativa", 5 deles pagamentos e recebimentos, e
+   "Sua hora R$ 0,00, abaixo do piso" no dia 5 do mes. O banco passou a mandar minutos de fluxo pela chave
+   fluxo:<id> e a hora em janela de 30 dias; a tela tem de usar os dois. */
+test('s859: pagamento conta minutos pela chave fluxo e nao pega os da tarefa de mesmo numero', async ({page})=>{
+  await abrir(page);
+  const sit = await page.evaluate(()=>{
+    D.fila=[{origem:'fluxo',ref:'9',camada_tela:'hoje',posicao:1,teto_tela:5,frente:'20-conenge',titulo:'Pagar parcela de exemplo',porque_agora:'vence em 1d',valor_txt:'R$ 2.000,00',acoes:[]},
+            {origem:'tarefa',ref:'9',camada_tela:'hoje',posicao:2,teto_tela:5,frente:'20-conenge',titulo:'Tarefa de mesmo numero',porque_agora:'vence em 1d',acoes:[]}];
+    D.exp=[]; D.min=[{id:'9',minutos_estimados:25},{id:'fluxo:9',minutos_estimados:10}];
+    render(); return document.getElementById('situacao').textContent;
+  });
+  expect(sit, 'nenhum passo sem estimativa').not.toContain('sem estimativa');
+  expect(sit, '25 + 10 min').toContain('cerca de 0,6 h');
+});
+
+test('s859: a hora da Mesa diz a janela de 30 dias e nao alarma dentro da regua', async ({page})=>{
+  await abrirMesa(page);
+  const txt = (await page.evaluate(()=>{
+    MS.dados.valor_hora={janela:'30 dias',recebido:15196.31,horas:77.6,por_hora:195.72,piso:63.03,teto:480};
+    msRender(); return document.getElementById('p-mesa').innerText;
+  })).replace(/\u00a0/g,' ');
+  expect(txt).toContain('Sua hora nos últimos 30 dias: R$ 195,72, dentro da régua');
+  expect(txt).not.toContain('abaixo do piso');
+});
