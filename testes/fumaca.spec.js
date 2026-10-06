@@ -1604,3 +1604,19 @@ test('o numero-mae de caixa e a 1a semana negativa da serie de 13 semanas, e o r
   expect(r.ab.toLowerCase()).toContain('fôlego'.toLowerCase().slice(0,1));
   expect(r.vazio, 'previsao ausente se declara').toContain('sem dado');
 });
+
+/* s859 05/10/2026: o lancamento do caixa entra na conta do dia pela chave fluxo:<id>, sem colidir com a tarefa de mesmo id */
+test('s859: fluxo conta seus minutos e nao pega os da tarefa de mesmo numero', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(([c1])=>{
+    const f={...c1, origem:'fluxo'};
+    D.fila=[f]; D.min=[{id:String(c1.ref),minutos_estimados:90},{id:'fluxo:'+c1.ref,minutos_estimados:10}];
+    D.cap={minutos_dia:300};
+    let err=null; try{ rAgora(); }catch(e){ err=String(e); }
+    return {err, txt:document.getElementById('h-fila1').textContent};
+  }, [CARD(1,'pagar parcela')]);
+  expect(r.err, 'rAgora() derrubou o script').toBe(null);
+  expect(r.txt, 'conta 10 min do fluxo, nao 90 da tarefa 1').toContain('10 de 300 min');
+  expect(r.txt).not.toContain('sem estimativa');
+});

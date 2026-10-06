@@ -486,7 +486,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.7";
+const VERP="p4.8";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -707,7 +707,9 @@ function hojeLista(){
   return ordenaClasse([...(D.fila||[]),...extra]);}
 /* fim comum:hoje */
 const minutos=()=>Object.fromEntries((D.min||[]).map(m=>[String(m.id),+m.minutos_estimados]));
-const minDe=f=>f.origem==="tarefa"?(minutos()[String(f.ref)]||null):null;
+/* p4.8 (s859): pagar e receber tambem tem minutos; a fonte min traz o lancamento como "fluxo:<id>",
+   e a chave por origem impede que o fluxo 9 pegue os minutos da tarefa 9. */
+const minDe=f=>{if(!f)return null;const k=f.origem==="tarefa"?String(f.ref):f.origem+":"+f.ref;return minutos()[k]||null;};
 const invDe=id=>(INV||[]).find(t=>String(t.id)===String(id));
 const corteDecidir=()=>{const v=kv(kpi("fila.aging_p95_dias"));return v!=null?Math.round(+v):30;};
 function colunaDe(t){
@@ -1530,10 +1532,11 @@ function msHoraHtml(d){
   let barra="";
   if(vh){
     const p=msTemRs(vh.por_hora)?+vh.por_hora:null, piso=msTemRs(vh.piso)?+vh.piso:null, teto=msTemRs(vh.teto)?+vh.teto:null;
-    if(p==null)partes.push("Sua hora ainda sem cálculo neste mês.");
+    const jan=vh.janela?" nos últimos "+vh.janela:"";
+    if(p==null)partes.push("Sua hora ainda sem cálculo"+(jan||" neste mês")+".");
     else{
       const abaixo=piso!=null&&p<piso, acima=teto!=null&&p>=teto;
-      partes.push(`Sua hora: <b class="num ${abaixo?"w":""}">${esc(msRs2(p))}</b>, ${abaixo?"abaixo do piso":acima?"no teto ou acima":"dentro da régua"}.`);
+      partes.push(`Sua hora${esc(jan)}: <b class="num ${abaixo?"w":""}">${esc(msRs2(p))}</b>, ${abaixo?"abaixo do piso":acima?"no teto ou acima":"dentro da régua"}.`);
       if(piso!=null&&teto!=null&&teto>piso){
         const pos=Math.max(0,Math.min(100,(p-piso)/(teto-piso)*100));
         barra=`<span class="ms-regua" role="img" aria-label="Valor da hora entre o piso e o teto"><i class="${abaixo?"w":""}" style="left:${pos.toFixed(1)}%"></i></span>`;
