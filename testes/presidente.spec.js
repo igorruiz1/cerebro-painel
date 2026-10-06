@@ -1678,3 +1678,95 @@ test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a p
   expect(dup).toEqual([]);
   expect(erros).toEqual([]);
 });
+
+/* p4.16 (06/10/2026, pedido do Igor): a prova do card tambem vai como print ou PDF, anexado ou colado (Ctrl+V).
+   O arquivo so sobe quando o ato vai ao banco (depois dos 6 s de desfazer), para o bucket privado mesa-provas,
+   e o caminho entra no texto da prova. O codigo p4.15 nao tinha campo de arquivo: estes testes reprovam nele. */
+test('Card p4.16: print anexado sobe para mesa-provas so no envio e o caminho entra na prova', async ({page})=>{
+  const erros = await abrir(page);
+  await page.click('#foco .pri');
+  await page.setInputFiles('#cvArq', {name:'print.PNG', mimeType:'image/png', buffer:Buffer.from('png')});
+  await expect(page.locator('#cvArqNome')).toContainText('print.PNG');
+  await page.fill('#cv','enviado ao fiscal');
+  await page.click('#campo .pri');
+  await expect(page.locator('#tmsg')).toContainText('Concluído com anexo');
+  let up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
+  expect(up, 'dentro dos 6 s nada sobe').toEqual([]);
+  await page.evaluate(()=>enviar());
+  up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
+  expect(up).toHaveLength(1);
+  expect(up[0]).toMatchObject({b:'mesa-provas',op:'upload',tipo:'image/png'});
+  expect(up[0].p).toMatch(/^\d{4}-\d{2}\/card_tarefa_2_\d+\.png$/);
+  const agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(agir).toEqual([{p_origem:'tarefa',p_ref:'2',p_verbo:'feita',p_valor:'enviado ao fiscal · anexo mesa-provas/'+up[0].p}]);
+  expect(erros).toEqual([]);
+});
+
+test('Card p4.16: print colado no campo basta como prova, sem texto', async ({page})=>{
+  const erros = await abrir(page);
+  await page.click('#foco .pri');
+  await page.evaluate(()=>{ const dt=new DataTransfer(); dt.items.add(new File(['x'],'image.png',{type:'image/png'}));
+    document.getElementById('cv').dispatchEvent(new ClipboardEvent('paste',{clipboardData:dt,bubbles:true,cancelable:true})); });
+  await expect(page.locator('#cvArqNome')).toContainText('print-colado.png');
+  await expect(page.locator('#cv'), 'o print nao vira texto no campo').toHaveValue('');
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  const r = await page.evaluate(()=>({up:window.__storage.filter(c=>c.op==='upload'), agir:window.__rpc.filter(c=>c.n==='agir').map(c=>c.a.p_valor)}));
+  expect(r.up).toHaveLength(1);
+  expect(r.agir).toEqual(['anexo mesa-provas/'+r.up[0].p]);
+  expect(erros).toEqual([]);
+});
+
+test('Card p4.16: desfazer nao sobe o print; upload que falha nao conclui o card', async ({page})=>{
+  const erros = await abrir(page);
+  await page.click('#foco .pri');
+  await page.setInputFiles('#cvArq', {name:'comprovante.pdf', mimeType:'application/pdf', buffer:Buffer.from('%PDF')});
+  await page.click('#campo .pri');
+  await page.click('#tbtn');
+  await page.waitForTimeout(100);
+  let r = await page.evaluate(()=>({up:window.__storage.filter(c=>c.op==='upload'), agir:window.__rpc.filter(c=>c.n==='agir')}));
+  expect(r, 'desfeito: nada sobe e nada grava').toEqual({up:[], agir:[]});
+  await page.evaluate(()=>{ sb.storage.from=()=>({upload:()=>Promise.resolve({data:null,error:{message:'sem rede'}})}); abrirFila(0); escolher('feita'); });
+  await page.setInputFiles('#cvArq', {name:'comprovante.pdf', mimeType:'application/pdf', buffer:Buffer.from('%PDF')});
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  await expect(page.locator('#tmsg')).toContainText('O print não subiu (sem rede). O card não foi concluído.');
+  r = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'));
+  expect(r, 'sem o arquivo, o ato nao vai ao banco').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa p4.16: ordena por data e filtra por frente, com a contagem certa', async ({page})=>{
+  const erros = await abrirMesa(page);
+  const ids = ()=>page.evaluate(()=>[...document.querySelectorAll('#ms-raiz .pilha .ms-item')].map(b=>+(b.getAttribute('onclick').match(/\d+/)||[0])[0]));
+  expect(await ids(), 'padrao: a ordem do banco').toEqual([101,102,103]);
+  await expect(page.locator('#msOrdem')).toHaveValue('valor');
+  await page.selectOption('#msOrdem','recentes');
+  expect(await ids()).toEqual([103,102,101]);
+  await page.selectOption('#msOrdem','antigas');
+  expect(await ids()).toEqual([101,102,103]);
+  await expect(page.locator('#msFrente option')).toHaveText(['Todas (3)','Contrato PJ (1)','Renda Alternativa (1)','Sem frente (1)']);
+  await page.selectOption('#msFrente','11-renda-alt');
+  expect(await ids()).toEqual([102]);
+  await expect(page.locator('#ms-raiz .ms-filtro-n')).toHaveText('Mostrando 1 de 3: só Renda Alternativa.');
+  await expect(page.locator('#ms-raiz .ms-dia'), 'o topo continua contando a mesa inteira').toContainText('3 peças esperam');
+  await page.selectOption('#msFrente','');
+  expect(await ids()).toHaveLength(3);
+  await expect(page.locator('#ms-raiz .ms-filtro-n')).toHaveCount(0);
+  const salvo = await page.evaluate(()=>{ try{ return [localStorage.getItem('mesa.ordem'),localStorage.getItem('mesa.frente')]; }catch(e){ return null; } });
+  if(salvo)expect(salvo, 'a escolha fica no aparelho').toEqual(['antigas','']);
+  expect(erros).toEqual([]);
+});
+
+test('Mesa p4.16: o filtro cabe a 360 px sem rolagem lateral e com alvo de toque de 44 px', async ({page})=>{
+  await page.setViewportSize({width:360, height:820});
+  const erros = await abrirMesa(page);
+  const r = await page.evaluate(()=>({larg:document.documentElement.scrollWidth,
+    alt:[...document.querySelectorAll('#msOrdem,#msFrente')].map(s=>Math.round(s.getBoundingClientRect().height)),
+    dentro:[...document.querySelectorAll('#msOrdem,#msFrente')].every(s=>s.getBoundingClientRect().right<=360)}));
+  expect(r.alt, "os dois controles existem").toHaveLength(2);
+  expect(r.larg).toBeLessThanOrEqual(360);
+  expect(Math.min(...r.alt)).toBeGreaterThanOrEqual(44);
+  expect(r.dentro).toBe(true);
+  expect(erros).toEqual([]);
+});
