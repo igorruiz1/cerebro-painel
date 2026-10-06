@@ -935,24 +935,29 @@ test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem env
 /* p4.9 (s880, 06/10/2026): o "caiu" gravava confirmado, status ABERTO, e o card voltava a tela (fluxos 251 e 19).
    Agora o banco oferece caiu -> recebido com campo "entidade": o toque pede a conta (PF, Ruiz e Dabli nao se
    misturam, trava 658), a ultima usada so pre-destaca e nada vai ao banco sem o toque explicito na conta. */
-test('caiu pede a conta: quatro contas, a ultima usada destacada, e o agir leva recebido com a conta tocada', async ({page})=>{
+test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada destacada, e o agir leva a conta tocada', async ({page})=>{
+  await page.setViewportSize({width:360, height:820});
   await page.addInitScript(()=>{
     const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
-    const ops=[{v:'RUIZ',rot:'Ruiz Engenharia'},{v:'DABLI',rot:'Dabli Tech'},{v:'PF',rot:'Igor PF'},{v:'IGV',rot:'IGV'}];
+    const ops=[['Sicredi','PF · Sicredi 28889-3'],['Bradesco','PF · Bradesco 631418-0'],['PagBank','PF · PagBank'],['Nomad','PF · Nomad (US$)'],
+      ['RUIZ_CORA_7702261-5','Ruiz · Cora 7702261-5'],['DABLI_CORA_7680065-8','Dabli · Cora 7680065-8'],['IGV_BB_2414-7','IGV · BB 2414-7'],
+      ['IGV_SICREDI_69676-2','IGV · Sicredi 69676-2'],['IGV_INTER','IGV · Inter'],['IGV_NUBANK','IGV · Nubank'],['REIDOPISO_ITAU_98645-6','Rei do Piso · Itaú 98645-6']]
+      .map(([v,rot])=>({v,rot}));
     window.__dados={fila:[{origem:'fluxo',ref:'19',camada_tela:'hoje',teto_tela:5,frente:'08-dabli-tech',titulo:'Receber parcela 1/5 da Brafor',data_ref:d(-1),dias_parado:1,
-      acoes:[{label:'caiu',verbo:'recebido',campo:'entidade',padrao:'DABLI',opcoes:ops},{campo:'date',label:'nova data',verbo:'repactuar'}]}]};
+      acoes:[{label:'caiu',verbo:'recebido',campo:'entidade',padrao:'DABLI_CORA_7680065-8',opcoes:ops},{campo:'date',label:'nova data',verbo:'repactuar'}]}]};
   });
   const erros = await abrir(page);
   await page.evaluate(()=>abrirFila(0,'recebido'));
   const contas = page.locator('#campo .contas button');
-  await expect(contas).toHaveCount(4);
+  await expect(contas).toHaveCount(11);
   await expect(page.locator('#campo .contas button.pri'), 'so a ultima usada vem destacada').toHaveCount(1);
-  await expect(page.locator('#campo .contas button.pri')).toHaveAttribute('data-conta','DABLI');
+  await expect(page.locator('#campo .contas button.pri')).toHaveAttribute('data-conta','DABLI_CORA_7680065-8');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360 px').toBe(true);
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir a escolha nao grava nada').toBe(0);
-  await page.click('#campo .contas button[data-conta="RUIZ"]');
+  await page.click('#campo .contas button[data-conta="RUIZ_CORA_7702261-5"]');
   await page.evaluate(()=>enviar());
   const ag = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
-  expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ'}]);
+  expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ_CORA_7702261-5'}]);
   expect(erros).toEqual([]);
 });
 
