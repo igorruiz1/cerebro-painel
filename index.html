@@ -934,6 +934,26 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
   <p id="lmsg" style="font-size:13.5px;margin-top:16px;min-height:20px"></p>
 </div>
 
+<!-- ===================== SEGUNDO FATOR (t1745) ===================== -->
+<div id="fator" class="login hidden">
+  <div class="marca-login"><h1 class="marca"><span class="dt"><b>Dabli</b> <span>Tech</span></span></h1>
+    <div class="prodl">CÉREBRO</div></div>
+  <div class="box" style="margin:20px 0 10px">
+    <div class="h">CÓDIGO DO APP AUTENTICADOR</div>
+    <p id="fatorTxt" style="font-size:13.5px;color:var(--ink2);margin:0 0 12px">Sua conta tem o segundo fator ligado. Abra o app autenticador e digite os 6 números que ele mostra agora.</p>
+    <div id="fatorCampo">
+      <input id="codFator" type="text" placeholder="000000" inputmode="numeric" autocomplete="one-time-code" maxlength="6" enterkeyhint="done"
+        style="letter-spacing:6px;text-align:center;font-size:20px"
+        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);if(this.value.length===6)entrarFator()"
+        onkeydown="if(event.key==='Enter')entrarFator()">
+      <button id="btFator" class="prim" style="margin-top:12px;width:100%" onclick="entrarFator()">Confirmar</button>
+    </div>
+    <button id="btFatorDeNovo" class="prim hidden" style="width:100%" onclick="portaFator()">Tentar de novo</button>
+  </div>
+  <button class="link" onclick="sair()">sair</button>
+  <p id="fmsg" role="status" style="font-size:13.5px;margin-top:16px;min-height:20px;color:var(--bad)"></p>
+</div>
+
 <!-- ===================== SENHA ===================== -->
 <div id="senha" class="login hidden">
   <h1 style="letter-spacing:4px;font-size:14px">SENHA DE ACESSO</h1>
@@ -1125,7 +1145,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v74";
+const VER="v75";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1189,6 +1209,33 @@ function alternarRecolhe(b){
   el.classList.toggle("aberto",abre); b.setAttribute("aria-expanded",abre?"true":"false");
   b.textContent=abre?"ver menos":"ver mais";}
 /* fim comum:recolhe */
+/* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
+/* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
+   (nivel aal1, proximo aal2) nao abre o painel: pede o codigo do app autenticador. Leitura que falha
+   ou estoura o teto NAO abre: a porta fica fechada e oferece tentar de novo. A porta e da tela; a
+   policy do banco que exige aal2 na escrita do caixa vem depois desta, nunca antes (risco de trancar). */
+const tetoFator=(f,rot)=>comTeto(Promise.resolve().then(f),LIMITE_ACAO,rot).catch(e=>({data:null,
+  error:{message:ehTeto(e)?"sem resposta em "+LIMITE_ACAO/1000+" s":(e&&e.message)||"falha de rede"}}));
+async function fatorPendente(){
+  const a=await tetoFator(()=>sb.auth.mfa.getAuthenticatorAssuranceLevel(),"nivel");
+  if(a.error) return {erro:"Não consegui ler o nível desta sessão ("+a.error.message+")."};
+  const n=a.data||{};
+  if(n.currentLevel==="aal2"||n.nextLevel!=="aal2") return {};
+  const f=await tetoFator(()=>sb.auth.mfa.listFactors(),"fatores");
+  if(f.error) return {erro:"Não consegui ler seus fatores ("+f.error.message+")."};
+  const v=((f.data&&f.data.totp)||[]).find(x=>x&&x.status==="verified");
+  return v?{fator:v.id}:{erro:"A conta pede o código do app, mas não achei o fator ativo."};
+}
+async function conferirFator(factorId,code){
+  const c=await tetoFator(()=>sb.auth.mfa.challenge({factorId}),"desafio");
+  if(c.error||!c.data) return {erro:"Não consegui pedir a confirmação ("+(c.error?c.error.message:"resposta vazia")+"). Tente de novo."};
+  const v=await tetoFator(()=>sb.auth.mfa.verify({factorId,challengeId:c.data.id,code}),"verificacao");
+  if(!v.error) return {};
+  const ruim=v.error.code==="mfa_verification_failed"||/invalid|expired/i.test(v.error.message||"");
+  return ruim?{erro:"Código não confere. Veja o código que está no app agora e digite de novo.",codigo:true}
+    :{erro:"Não consegui conferir ("+v.error.message+"). Tente de novo."};
+}
+/* fim comum:fator */
 function avisaTravou(rotulo, gravou){
   msg(gravou
     ? "A ação foi enviada, mas a tela não conseguiu conferir o resultado ("+rotulo+"). Recarregue a página: o efeito pode já estar gravado."
@@ -3789,8 +3836,36 @@ document.addEventListener("keydown",e=>{
 /* ---------- arranque ---------- */
 F.frente=pref("frente")||null;F.origem=pref("origem")||null;
 try{ if(localStorage.getItem("gavfil")==="1") gavetaFiltros(true); }catch(e){}
+/* t1745: toda abertura passa pela porta do segundo fator (bloco comum:fator); uma leitura em voo por vez */
+let ABERTO=false, FATOR=null, PORTA=null, CONFERINDO=false;
+const fm=t=>document.getElementById("fmsg").textContent=t;
+function abrirApp(){ if(ABERTO)return; ABERTO=true;
+  document.getElementById("fator").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");carregar();}
+function portaFator(){ if(ABERTO)return; if(!PORTA)PORTA=portaFator_().finally(()=>{PORTA=null;}); return PORTA; }
+async function portaFator_(){
+  fm("");
+  const r=await fatorPendente();
+  if(ABERTO)return;
+  if(!r.erro&&!r.fator){abrirApp();return;}
+  FATOR=r.fator||null;
+  document.getElementById("login").classList.add("hidden");document.getElementById("fator").classList.remove("hidden");
+  document.getElementById("fatorCampo").classList.toggle("hidden",!FATOR);
+  document.getElementById("btFatorDeNovo").classList.toggle("hidden",!!FATOR);
+  if(r.erro)fm(r.erro+" A tela fica fechada até conferir."); else document.getElementById("codFator").focus();
+}
+async function entrarFator(){
+  if(!FATOR||CONFERINDO)return;
+  const el=document.getElementById("codFator"), code=el.value.replace(/\D/g,"");
+  if(code.length!==6){fm("Digite os 6 números que o app mostra.");el.focus();return;}
+  CONFERINDO=true; document.getElementById("btFator").disabled=true; fm("Conferindo…");
+  const r=await conferirFator(FATOR,code);
+  CONFERINDO=false; document.getElementById("btFator").disabled=false;
+  if(r.erro){fm(r.erro);if(r.codigo){el.value="";el.focus();}return;}
+  fm(""); el.value=""; FATOR=null; abrirApp();
+}
 sb.auth.getSession().then(({data})=>{
-  if(data.session){document.getElementById("app").classList.remove("hidden");carregar();}
+  if(data.session)portaFator();
   else document.getElementById("login").classList.remove("hidden");});
 /* v60: so o LOGIN de verdade carrega por aqui. Antes, qualquer evento com sessao chamava
    carregar(): INITIAL_SESSION duplicava a abertura e TOKEN_REFRESHED (cerca de 1x por hora)
@@ -3800,7 +3875,8 @@ sb.auth.onAuthStateChange((ev,s)=>{
   const lg=document.getElementById("login");
   if(ev!=="SIGNED_IN"||!s||lg.classList.contains("hidden")) return;
   lg.classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");carregar();});
+  /* o callback roda dentro da trava do Auth: chamar o Auth ali pode pendurar, entao a porta sai no proximo giro */
+  setTimeout(portaFator,0);});
 
 /* v60 — A VOLTA AO APP ATUALIZA. Nao havia gatilho nenhum de retorno: o iPhone traz a pagina do
    segundo plano congelada, e a tela mostrava a carga de horas antes como se fosse de agora.
