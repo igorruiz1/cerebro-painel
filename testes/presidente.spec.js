@@ -804,7 +804,7 @@ test('ato na folha abre o proximo card de Hoje em menos de 300 ms, sem recarrega
   expect(r.dt, 'abre em ate 300 ms').toBeLessThan(300);
   expect(r.cargas, 'sem recarregar').toBe(0);
   expect(r.desfazer, 'o desfazer do ato continua na tela').toBe(true);
-  expect(r.toast).toContain('t2');
+  expect(r.toast, 'p4.21: o aviso diz o card pelo titulo').toContain('Card de exemplo');
   expect(r.medida.length).toBe(1);
   expect(r.medida[0]).toMatchObject({p_origem:'tarefa',p_ref:'2',p_ato:'s',p_modo:'presidente'});
   expect(Number.isInteger(r.medida[0].p_ms)).toBe(true);
@@ -829,7 +829,7 @@ test('o "Gravado." do ato anterior nao cobre o desfazer do ato seguinte', async 
   await page.evaluate(()=>{ escolher('repactuar'); document.querySelector('#campo .datas button').click(); });
   await page.waitForTimeout(200);
   await expect(page.locator('#tbtn'), 'desfazer do segundo ato a vista').toBeVisible();
-  await expect(page.locator('#tmsg')).toContainText('t5');
+  await expect(page.locator('#tmsg'), 'p4.21: o aviso diz o card pelo titulo').toContainText('Segundo card');
   expect(erros).toEqual([]);
 });
 
@@ -1953,4 +1953,22 @@ test('p4.20: version.json acompanha o VERP do presidente.html', ()=>{
   const v = JSON.parse(fs.readFileSync(path.join(raiz,'version.json'),'utf8'));
   const verp = fs.readFileSync(path.join(raiz,'presidente.html'),'utf8').match(/const VERP="([^"]+)"/)[1];
   expect(v.presidente, 'VERP novo sem o version.json faz a pagina oferecer a versao velha').toBe(verp);
+});
+
+/* p4.21 (06/10/2026, plano 86): o topo da folha mostrava "t2" num chip e o aviso do ato dizia "Concluí · t2". Codigo
+   interno nao e lingua do Igor: sai do topo e do aviso e fica so no Historico, onde ele o procura para falar com o
+   atendente. O p4.20 reprova aqui. */
+test('p4.21: codigo interno so no Historico; chip e aviso do ato falam pelo titulo', async ({page})=>{
+  const erros = await abrir(page);
+  await page.click('#foco .pri');
+  await expect(page.locator('#folhaTit')).toHaveText('Card de exemplo');
+  const topo = await page.locator('#folha .chips').innerText();
+  expect(topo, 'sem codigo no topo').not.toMatch(/\bt\s?2\b|\btarefa\s?2\b/);
+  await expect(page.locator('#folha .cod-interno'), 'o codigo mora no Historico').toHaveText('Código interno: t2');
+  await page.fill('#cv','e-mail do fiscal 08/10');
+  await page.click('#campo .pri');
+  const aviso = await page.locator('#tmsg').innerText();
+  expect(aviso, 'aviso pelo titulo').toContain('Card de exemplo');
+  expect(aviso, 'sem codigo no aviso').not.toMatch(/\bt2\b/);
+  expect(erros).toEqual([]);
 });
