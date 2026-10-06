@@ -1145,7 +1145,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:12px;margin:6px 0
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v76";
+const VER="v77";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -2195,7 +2195,8 @@ function abrirModal(tit,sub,campo,onOk,okLabel){
   document.getElementById("msub").innerHTML=sub||"";   // html confiavel: todo chamador monta sub com esc()
   document.getElementById("mcampo").innerHTML=
     campo==="texto"?`<textarea id="mval" placeholder="${esc(pendente&&pendente.ph||"escreva a sua posição")}"></textarea>`:
-    campo==="date"?`<input type="date" id="mval" value="${new Date(Date.now()+864e5*7).toISOString().slice(0,10)}">`:"";
+    campo==="date"?`<input type="date" id="mval" value="${new Date(Date.now()+864e5*7).toISOString().slice(0,10)}">`:
+    campo==="entidade"?`<select id="mval"><option value="">em que conta?</option>${((pendente&&pendente.opcoes)||[]).map(o=>`<option value="${esc(o.v)}"${pendente&&o.v===pendente.padrao?" selected":""}>${esc(o.rot)}${pendente&&o.v===pendente.padrao?" (última usada)":""}</option>`).join("")}</select>`:"";
   document.getElementById("mok").textContent=okLabel||"confirmar";
   document.getElementById("modal").classList.add("on");
   pendente=Object.assign(pendente||{},{fn:onOk,campo});
@@ -2287,7 +2288,8 @@ function cardFila(it){
        <button class="link" onclick="perguntar('${O}','${R}')">perguntar</button>
      </div>
      <div class="menu" id="m-${k}">
-       ${acts.map(a=>`<button class="sec" onclick="agir('${O}','${R}','${escAttr(a.verbo)}','${escAttr(a.campo||"")}','${escAttr(a.label)}')">${esc(a.label)}</button>`).join("")}
+       ${acts.map(a=>{ if(a.campo==="entidade")OPC_ENT[it.origem+"|"+it.ref+"|"+a.verbo]={opcoes:a.opcoes||[],padrao:a.padrao||null};
+         return `<button class="sec" onclick="agir('${O}','${R}','${escAttr(a.verbo)}','${escAttr(a.campo||"")}','${escAttr(a.label)}')">${esc(a.label)}</button>`;}).join("")}
      </div>
    </div></div>`;}
 /* ---------- v48: A ESCOLHA CHEGA NA FILA DE HOJE ----------
@@ -2980,8 +2982,11 @@ function agir(origem,ref,verbo,campo,label){
                       label+" em "+ref,el);
   if(!campo&&!(verbo==="feita"&&origem==="tarefa"))return go(null);
   if(!campo){campo="texto";pendente={ph:PROVA_PH,min:8,minMsg:PROVA_MSG};}
+  /* s880: caiu/paguei dizem a conta (PF, Ruiz e Dabli nao se misturam, trava 658); o banco recusa sem conta */
+  else if(campo==="entidade"){const e=OPC_ENT[origem+"|"+ref+"|"+verbo]||{};pendente={opcoes:e.opcoes||[],padrao:e.padrao||null};}
   else pendente={ph:campo==="texto"?"o que fica valendo":null};
-  abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>`,campo,go,label);}
+  abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>${campo==="entidade"?" · em que conta o dinheiro "+(verbo==="pago"?"saiu":"entrou")+"?":""}`,campo,go,label);}
+const OPC_ENT={};
 function perguntar(origem,ref){
   pendente={ph:"o que você quer saber, ou o que quer que eu faça"};
   abrirModal("Perguntar ao executor",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — a resposta chega na próxima passada.`,

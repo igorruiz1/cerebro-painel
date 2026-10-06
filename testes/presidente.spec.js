@@ -932,6 +932,30 @@ test('Cobrar em recebivel vencido pede o rascunho pela inbox, sem agir e sem env
   expect(erros).toEqual([]);
 });
 
+/* p4.9 (s880, 06/10/2026): o "caiu" gravava confirmado, status ABERTO, e o card voltava a tela (fluxos 251 e 19).
+   Agora o banco oferece caiu -> recebido com campo "entidade": o toque pede a conta (PF, Ruiz e Dabli nao se
+   misturam, trava 658), a ultima usada so pre-destaca e nada vai ao banco sem o toque explicito na conta. */
+test('caiu pede a conta: quatro contas, a ultima usada destacada, e o agir leva recebido com a conta tocada', async ({page})=>{
+  await page.addInitScript(()=>{
+    const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+    const ops=[{v:'RUIZ',rot:'Ruiz Engenharia'},{v:'DABLI',rot:'Dabli Tech'},{v:'PF',rot:'Igor PF'},{v:'IGV',rot:'IGV'}];
+    window.__dados={fila:[{origem:'fluxo',ref:'19',camada_tela:'hoje',teto_tela:5,frente:'08-dabli-tech',titulo:'Receber parcela 1/5 da Brafor',data_ref:d(-1),dias_parado:1,
+      acoes:[{label:'caiu',verbo:'recebido',campo:'entidade',padrao:'DABLI',opcoes:ops},{campo:'date',label:'nova data',verbo:'repactuar'}]}]};
+  });
+  const erros = await abrir(page);
+  await page.evaluate(()=>abrirFila(0,'recebido'));
+  const contas = page.locator('#campo .contas button');
+  await expect(contas).toHaveCount(4);
+  await expect(page.locator('#campo .contas button.pri'), 'so a ultima usada vem destacada').toHaveCount(1);
+  await expect(page.locator('#campo .contas button.pri')).toHaveAttribute('data-conta','DABLI');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir a escolha nao grava nada').toBe(0);
+  await page.click('#campo .contas button[data-conta="RUIZ"]');
+  await page.evaluate(()=>enviar());
+  const ag = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ'}]);
+  expect(erros).toEqual([]);
+});
+
 /* ---------- p4.4 (05/10/2026): aba Mesa ----------
    O banco ja guarda o estoque de pecas paradas esperando o Igor (mesa_painel) e aceita a baixa de envio
    (mesa_baixa_painel). A tela cobra tres coisas: codigo do banco nunca aparece cru (ato, canal, gaveta,
