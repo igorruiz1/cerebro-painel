@@ -84,6 +84,17 @@ const DUBLE = `(()=>{
 
 /* v71 · R7: o supabase-js tem integrity (SRI); corpo dublado no lugar do arquivo seria recusado pelo
    navegador. O duble entra antes da pagina (addInitScript) e a CDN e abortada, como no fumaca.spec.js. */
+/* p4.10: contraste WCAG medido no que a tela pinta, nao na classe. Sobe na arvore ate achar fundo opaco
+   (mistura as camadas translucidas) e compara com a cor do texto. Roda dentro da pagina (page.evaluate). */
+function contrasteDos(sel){
+  const rgb=s=>{const m=s.match(/[0-9.]+/g)||[0,0,0,0];return {r:+m[0],g:+m[1],b:+m[2],a:m[3]===undefined?1:+m[3]};};
+  const lum=c=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};return 0.2126*f(c.r)+0.7152*f(c.g)+0.0722*f(c.b);};
+  const fundo=el=>{const camadas=[];for(let e=el;e;e=e.parentElement){const c=rgb(getComputedStyle(e).backgroundColor);if(c.a>0){camadas.push(c);if(c.a>=1)break;}}
+    let base={r:255,g:255,b:255};for(const c of camadas.reverse()){base={r:c.r*c.a+base.r*(1-c.a),g:c.g*c.a+base.g*(1-c.a),b:c.b*c.a+base.b*(1-c.a)};}return base;};
+  return [...document.querySelectorAll(sel)].filter(e=>e.offsetParent&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))
+    .map(e=>{const cs=getComputedStyle(e);const t=rgb(cs.color),b=fundo(e);const tt={r:t.r*t.a+b.r*(1-t.a),g:t.g*t.a+b.g*(1-t.a),b:t.b*t.a+b.b*(1-t.a)};
+      const L1=lum(tt),L2=lum(b);const op=+cs.opacity;return {txt:e.textContent.trim().slice(0,40),razao:+(((Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05))*(op<1?op:1)).toFixed(2)};});
+}
 async function abrir(page){
   const erros=[];
   page.on('pageerror',e=>erros.push(String(e)));
@@ -950,14 +961,42 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
   await page.evaluate(()=>abrirFila(0,'recebido'));
   const contas = page.locator('#campo .contas button');
   await expect(contas).toHaveCount(11);
-  await expect(page.locator('#campo .contas button.pri'), 'so a ultima usada vem destacada').toHaveCount(1);
-  await expect(page.locator('#campo .contas button.pri')).toHaveAttribute('data-conta','DABLI_CORA_7680065-8');
+  await expect(page.locator('#campo .contas button.sug'), 'so a ultima usada vem destacada').toHaveCount(1);
+  await expect(page.locator('#campo .contas button.sug')).toHaveAttribute('data-conta','DABLI_CORA_7680065-8');
+  /* p4.10: classe no DOM nao prova destaque. Mede a cor DESENHADA: todo texto das contas passa 4,5:1 e a
+     sugerida tem fundo e borda diferentes das outras (o chip do IGV Sicredi sumiu com a classe certa) */
+  const med = await page.evaluate(contrasteDos, '#campo .contas button, #campo .contas button *');
+  expect(med.length, 'mediu as 11 contas e o selo').toBe(12);
+  expect(med.filter(m=>!(m.razao>=4.5)), 'texto das contas abaixo de 4,5:1 (NaN reprova)').toEqual([]);
+  const vis = await page.evaluate(()=>{const g=e=>{const c=getComputedStyle(e);return c.backgroundColor+'|'+c.borderTopColor;};
+    const s=document.querySelector('#campo .contas button.sug'), o=document.querySelector('#campo .contas button.sec');return [g(s),g(o)];});
+  expect(vis[0], 'a sugerida se distingue das outras').not.toBe(vis[1]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360 px').toBe(true);
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir a escolha nao grava nada').toBe(0);
   await page.click('#campo .contas button[data-conta="RUIZ_CORA_7702261-5"]');
   await page.evaluate(()=>enviar());
   const ag = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
   expect(ag).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ_CORA_7702261-5'}]);
+  expect(erros).toEqual([]);
+});
+
+/* p4.10 (06/10/2026): varredura de contraste. O chip da conta sugerida sumiu (1,09:1) com a classe certa no DOM,
+   porque uma regra mais especifica trocou o fundo e deixou o texto. A classe do defeito e cascata que pinta texto
+   escuro em fundo escuro: aqui todo texto de botao visivel, nas cinco abas e na folha do card, passa 4,5:1. */
+test('nenhum texto de botao abaixo de 4,5:1 nas cinco abas e na folha do card', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  const erros = await abrir(page);
+  const ruins = [];
+  for (const aba of ['hoje','fila','frentes','caixa','mesa']){
+    await page.evaluate(a=>ir(a), aba);
+    const m = await page.evaluate(contrasteDos, 'button, button *, a.btn');
+    ruins.push(...m.filter(x=>!(x.razao>=4.5)).map(x=>aba+': '+x.txt+' = '+x.razao));
+  }
+  await page.evaluate(()=>{ ir('hoje'); abrirFila(0); });
+  const f = await page.evaluate(contrasteDos, '#folha button, #folha button *');
+  expect(f.length, 'a folha tem botoes medidos').toBeGreaterThan(0);
+  ruins.push(...f.filter(x=>!(x.razao>=4.5)).map(x=>'folha: '+x.txt+' = '+x.razao));
+  expect(ruins).toEqual([]);
   expect(erros).toEqual([]);
 });
 
