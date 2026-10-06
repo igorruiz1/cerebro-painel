@@ -519,7 +519,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.20";
+const VERP="p4.21";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -1198,12 +1198,14 @@ function abrirInv(id){
   abrirCard({origem:"tarefa",ref:String(t.id),titulo:t.titulo||t.resumo,frente:t.frente,porque:f&&f.porque_agora,
     valor:f&&f.valor_txt,rec:f&&f.recomendacao,pronto:t.criterio_pronto,peca:f,acoes:f?juntar(acoesFila(f),acoesInv(t)):acoesInv(t),col:colunaDe(t)||"semana",idade:idadeTxt(t),min:minutos()[String(t.id)],espera:esperaInv(t)});
 }
+/* p4.21 (plano 86): codigo interno (t2, fluxo 31) so no Historico da folha. Chip e aviso falam pelo titulo. */
+const codInterno=c=>(c.origem==="tarefa"?"t":c.origem+" ")+c.ref;
 function abrirCard(c,verbo){
   F=c; c.t0=Date.now();
   const pri=acaoPrincipal(c.acoes,c.col), resto=c.acoes.filter(a=>!pri||a.verbo!==pri.verbo);
   const ri=recInfo(c.rec), rec=ri.texto, recRot=ri.data?(ri.velha?`Nota de ${ri.data}, há ${ri.dias} dias: pode estar vencida`:`Nota do executor de ${ri.data}`):"O executor recomenda";
   mostrarFolha(`<h3 id="folhaTit">${esc(c.titulo)}</h3>
-    <div class="chips">${c.espera?`<span class="chip espera ${c.espera.w?"w":""}">${esc(c.espera.txt)}</span>`:""}<span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}<span class="chip num">${c.origem==="tarefa"?"t":esc(c.origem)+" "}${esc(c.ref)}</span></div>
+    <div class="chips">${c.espera?`<span class="chip espera ${c.espera.w?"w":""}">${esc(c.espera.txt)}</span>`:""}<span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}</div>
     ${DESC_FONTE[c.origem]?`<div class="bloco" id="descBox"><span class="rot">Contexto</span><div id="desc"><p class="mut">carregando…</p></div></div>`:""}
     ${c.porque?`<div class="bloco"><span class="rot">Por que agora</span><p>${esc(c.porque)}</p></div>`:""}
     <div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>
@@ -1215,7 +1217,7 @@ function abrirCard(c,verbo){
     <div class="teclas">Teclado: <kbd>A</kbd> ${esc(pri?pri.rot:"ato principal")} · <kbd>S</kbd> nova data · <kbd>R</kbd> responder · <kbd>Esc</kbd> fechar</div>
     <div id="campo"></div>
     <div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
-    <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul></div>
+    <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul><p class="mut cod-interno">Código interno: ${esc(codInterno(c))}</p></div>
     <button class="sec" onclick="fecharFolha()">Fechar</button>`);
   historico(c); conversa(c); descricao(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
@@ -1347,7 +1349,7 @@ function toast(t,cls,comBotao,ms){
 function agir(verbo,valor,rot,arq){
   const c=F; if(!c)return;
   medirAto(c,atoDe(c,verbo));
-  pendurar({origem:c.origem,ref:c.ref,verbo,valor,...(arq?{arq}:{})},rot+" · "+(c.origem==="tarefa"?"t":"")+c.ref,c);
+  pendurar({origem:c.origem,ref:c.ref,verbo,valor,...(arq?{arq}:{})},rot+" · "+curto(c.titulo,60),c);
 }
 /* Todo ato da folha passa por aqui: grava o pendente anterior, fecha a folha, abre 6 s para desfazer e,
    se o card veio de Hoje, abre o proximo (p4.3). p.inbox: texto que vai pela inbox() em vez do agir(). */
@@ -1414,7 +1416,7 @@ function confirmarResposta(){
   const c=F, cv=document.getElementById("cv"), v=cv?cv.value.trim():""; if(!c)return;
   if(v.length<3){toast("Escreva a resposta antes de enviar.","bad",false,3000);if(cv)cv.focus();return;}
   medirAto(c,atoDe(c,"__resposta"));
-  pendurar({inbox:"[resposta "+c.origem+" "+c.ref+"] "+v,origem:c.origem,ref:c.ref},"Resposta · "+(c.origem==="tarefa"?"t":c.origem+" ")+c.ref,c);
+  pendurar({inbox:"[resposta "+c.origem+" "+c.ref+"] "+v,origem:c.origem,ref:c.ref},"Resposta · "+curto(c.titulo,60),c);
 }
 /* ---------- p4.3: Cobrar recebivel vencido (Mercury/Stripe) ----------
    Recebivel: fila de origem fluxo, natureza receber (c13i, mesmo id do fluxo_caixa) e data_ref antes de
@@ -1439,7 +1441,7 @@ function textoCobranca(ref){
 }
 function cobrar(ref){
   const c=F&&F.origem==="fluxo"&&String(F.ref)===String(ref)?F:null;
-  pendurar({inbox:textoCobranca(ref),origem:"fluxo",ref:String(ref)},"Pedir rascunho de cobrança · fluxo "+ref,c);
+  pendurar({inbox:textoCobranca(ref),origem:"fluxo",ref:String(ref)},"Pedir rascunho de cobrança"+(c?" · "+curto(c.titulo,60):""),c);
 }
 function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
   if(p.mesa){msVolta(p.mesa,false);toast("Desfeito. Nada foi gravado.",null,false,2600);return;}
