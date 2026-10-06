@@ -486,7 +486,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.8";
+const VERP="p4.9";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -927,7 +927,7 @@ function buscar(v){
 
 /* ---------- detalhe do card ---------- */
 /* As acoes vem do banco (fila: label/verbo/campo; inventario: rotulo/verbo/arg). Normalizo as duas. */
-const acoesFila=f=>(f.acoes||[]).filter(a=>a.verbo!=="escolher").map(a=>({verbo:a.verbo,rot:ROT[a.verbo]||a.label||a.verbo,campo:a.campo}));
+const acoesFila=f=>(f.acoes||[]).filter(a=>a.verbo!=="escolher").map(a=>({verbo:a.verbo,rot:ROT[a.verbo]||a.label||a.verbo,campo:a.campo,opcoes:a.opcoes,padrao:a.padrao}));
 const acoesInv=t=>(t.acoes||[]).filter(a=>a.verbo!=="escolher").map(a=>({verbo:a.verbo,rot:ROT[a.verbo]||a.rotulo||a.verbo,campo:a.arg}));
 /* fila e inventario oferecem cardapios diferentes para o mesmo card; o detalhe mostra a uniao, sem repetir verbo */
 const juntar=(a,b)=>a.concat(b.filter(x=>!a.some(y=>y.verbo===x.verbo)));
@@ -1020,6 +1020,11 @@ function escolher(verbo){
   }else if(verbo==="esperar"){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Com quem está a bola, e quando você cobra?</label><textarea id="cv" rows="2" placeholder="Ex.: fiscal da obra, cobrar em 2 dias"></textarea>
       <div class="datas">${[["em 2 dias",somaDias(2)],["próx. segunda",proxSegunda()],["em 1 semana",somaDias(7)]].map(o=>`<button onclick="confirmarEsperar('${o[1]}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div></div>`;
+  }else if(a.campo==="entidade"){
+    /* s880: dinheiro que entra ou sai diz a conta. PF, Ruiz e Dabli nao se misturam (trava 658); o banco recusa
+       recebido/pago sem conta. A sugerida vem do ultimo lancamento da frente e so pre-destaca: o toque e explicito. */
+    const op=(a.opcoes||[]).filter(o=>o&&o.v);
+    campo.innerHTML=`<div class="campo"><span class="mut">Em que conta o dinheiro ${verbo==="pago"?"saiu":"entrou"}? Caixa de empresa não se mistura com o seu.</span><div class="datas contas">${op.map(o=>`<button class="${o.v===a.padrao?"pri":"sec"}" data-conta="${esc(o.v)}" onclick="agir('${escAttr(verbo)}','${escAttr(o.v)}','${escAttr(a.rot+" na conta "+o.rot)}')">${esc(o.rot)}${o.v===a.padrao?' <span class="mut">última usada</span>':""}</button>`).join("")}</div></div>`;
   }else if(a.campo){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmar('${escAttr(verbo)}',1,'Escreva algo antes de enviar.')">Enviar</button></div>`;
   }else{ agir(verbo,null,a.rot); return; }

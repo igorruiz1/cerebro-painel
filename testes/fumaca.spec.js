@@ -1264,6 +1264,33 @@ test('feita no bastidor abre o campo da prova e prova curta nao vai ao banco', a
   expect(erros).toEqual([]);
 });
 
+/* v77 (s880, 06/10/2026): caiu e paguei dizem a conta (PF, Ruiz e Dabli nao se misturam, trava 658). O banco
+   recusa recebido/pago sem conta; a tela abre o seletor com as contas do cardapio, a ultima usada vem marcada
+   e sem escolha nada vai ao banco. */
+test('caiu da fila abre o seletor de conta e so grava com a conta escolhida', async ({page})=>{
+  const erros = await abrirComArgs(page);
+  const r = await page.evaluate(async()=>{
+    window.__n.args=[];
+    OPC_ENT['fluxo|19|recebido']={opcoes:[{v:'RUIZ',rot:'Ruiz Engenharia'},{v:'DABLI',rot:'Dabli Tech'},{v:'PF',rot:'Igor PF'}],padrao:'DABLI'};
+    agir('fluxo','19','recebido','entidade','caiu');
+    const sel=document.getElementById('mval');
+    const tipo=sel&&sel.tagName, n=sel?sel.options.length:0, marcada=sel&&sel.value;
+    sel.value='';
+    await confirmarModal();
+    const semConta=window.__n.args.filter(a=>a[0]==='agir').length;
+    document.getElementById('mval').value='RUIZ';
+    await confirmarModal();
+    if(typeof enviarPendente==='function') await enviarPendente();
+    return {tipo, n, marcada, semConta, args:window.__n.args.filter(a=>a[0]==='agir').map(a=>a[1])};
+  });
+  expect(r.tipo).toBe('SELECT');
+  expect(r.n, 'tres contas e a linha vazia').toBe(4);
+  expect(r.marcada, 'a ultima usada vem marcada').toBe('DABLI');
+  expect(r.semConta, 'sem conta nao chama agir').toBe(0);
+  expect(r.args).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ'}]);
+  expect(erros).toEqual([]);
+});
+
 /* s764 (02/10/2026): a secao ROTINAS le o dead-man pela porta do dono (rpc painel_cron_deadman), nao
    pela view definer; a view so e lida se a porta falhar. */
 test('o dead-man das rotinas chega pela porta do dono, com a view so de reserva', async ({page})=>{
