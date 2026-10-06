@@ -1644,6 +1644,16 @@ test('Hoje p4.14: entram as pecas novas e as 3 de maior valor; adiada e o resto 
   expect(erros).toEqual([]);
 });
 
+test('Hoje p4.15: peca sem ato (ainda nao triada) nao entra em Hoje, mesmo nova', async ({page})=>{
+  const erros = await abrir(page);
+  await expect.poll(()=>pecasNaHoje(page)).toHaveLength(2);
+  await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados));
+    const p=(id,o)=>Object.assign({id,frente:'20-contrato-pj',titulo:'Entrada '+id,ato:null,dest:null,canal:null,rs:null,dias:0,motivo:null,copia:null,novo:true,peca:null},o||{});
+    m.estoque=[p(301),p(302),p(303,{rs:50000,novo:false}),p(304,{ato:'ler',titulo:'Triada 304'})]; window.__mesa=m; msCarregar(); });
+  await expect.poll(()=>pecasNaHoje(page), 'so a triada entra').toEqual(['Triada 304']);
+  expect(erros).toEqual([]);
+});
+
 test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a peca; a baixa que conclui o card avisa e recarrega', async ({page})=>{
   const erros = await abrir(page);
   await expect.poll(()=>pecasNaHoje(page)).toHaveLength(2);
