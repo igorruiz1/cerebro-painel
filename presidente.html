@@ -303,6 +303,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
   .rail button.on{background:var(--chip);color:var(--ink)}
   .rail button .selo{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--mut)}
   .rail .pe{margin-top:auto;font-size:12px;color:var(--mut);padding:0 10px;line-height:1.5}
+  .rail .pe a{display:flex;align-items:center;min-height:44px}
   main{padding:24px 32px 40px}
   .toast{bottom:24px}
   .seg{display:none}
@@ -354,7 +355,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 .ms-sem-copia{margin:0;overflow-wrap:anywhere}
 .bloco.ms-decide{gap:10px;border-top:1px solid var(--line2);padding-top:12px}
 .ms-decisoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.ms-decisoes button{min-width:0;padding:6px 12px;line-height:1.2;overflow-wrap:anywhere}
+.ms-decisoes button{min-width:0;line-height:1.2;overflow-wrap:anywhere}
 .ms-decisoes .pri{grid-column:1/-1}
 .ms-decisoes .sec[aria-expanded="true"]{border-color:var(--acc);font-weight:700}
 .ms-nota[hidden]{display:none}
@@ -405,7 +406,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
     <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" onclick="ir('mesa')">Mesa<span class="selo" id="r-mesa"></span></button>
-    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><br><a href="index.html">bastidor da máquina</a><br><a href="seguranca.html">segurança</a><br><a href="#" onclick="sair();return false">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a href="index.html">bastidor da máquina</a><a href="seguranca.html">segurança</a><a href="#" onclick="sair();return false">sair</a></div>
   </nav>
 
   <div class="col">
@@ -491,7 +492,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:14px;min-height:44px;d
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.10";
+const VERP="p4.11";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -1029,7 +1030,7 @@ function escolher(verbo){
     /* s880: dinheiro que entra ou sai diz a conta. PF, Ruiz e Dabli nao se misturam (trava 658); o banco recusa
        recebido/pago sem conta. A sugerida vem do ultimo lancamento da frente e so pre-destaca: o toque e explicito. */
     const op=(a.opcoes||[]).filter(o=>o&&o.v);
-    campo.innerHTML=`<div class="campo"><span class="mut">Em que conta o dinheiro ${verbo==="pago"?"saiu":"entrou"}? Caixa de empresa não se mistura com o seu.</span><div class="datas contas">${op.map(o=>`<button class="${o.v===a.padrao?"sug":"sec"}"${o.v===a.padrao?' aria-describedby="selo-sug"':""} data-conta="${esc(o.v)}" onclick="agir('${escAttr(verbo)}','${escAttr(o.v)}','${escAttr(a.rot+" na conta "+o.rot)}')">${esc(o.rot)}${o.v===a.padrao?' <span class="selo" id="selo-sug">última usada</span>':""}</button>`).join("")}</div></div>`;
+    campo.innerHTML=`<div class="campo"><span class="mut">Em que conta o dinheiro ${verbo==="pago"?"saiu":"entrou"}? Caixa de empresa não se mistura com o seu.</span><div class="datas contas">${op.map(o=>`<button${o.v===a.padrao?' class="sug" aria-describedby="selo-sug"':""} data-conta="${esc(o.v)}" onclick="agir('${escAttr(verbo)}','${escAttr(o.v)}','${escAttr(a.rot+" na conta "+o.rot)}')">${esc(o.rot)}${o.v===a.padrao?' <span class="selo" id="selo-sug">última usada</span>':""}</button>`).join("")}</div></div>`;
   }else if(a.campo){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmar('${escAttr(verbo)}',1,'Escreva algo antes de enviar.')">Enviar</button></div>`;
   }else{ agir(verbo,null,a.rot); return; }
@@ -1047,8 +1048,19 @@ function confirmarEsperar(data){
   agir("esperar",data+"|"+quem,"Passou para "+curto(quem,30)+", cobrar "+diaCurto(data));
 }
 /* html confiavel: todo chamador monta a folha com esc()/escAttr() em cada valor do banco */
-function mostrarFolha(html,cls){VOZ.reabrir=false;vozParar(true);const f=document.getElementById("folha");f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;document.getElementById("veu").classList.remove("hidden");}
-function fecharFolha(){VOZ.reabrir=false;vozParar(true);document.getElementById("veu").classList.add("hidden");F=null;}
+/* p4.11: a folha e dialogo modal de verdade (WAI-ARIA APG): guarda quem abriu, o fundo fica inerte, o foco entra
+   no titulo, o Tab gira dentro dela e o Esc devolve o foco a quem abriu. Antes 30 de 40 Tabs saiam para tras do veu. */
+let FOLHA_ORIGEM=null;
+function mostrarFolha(html,cls){VOZ.reabrir=false;vozParar(true);const f=document.getElementById("folha"),veu=document.getElementById("veu");
+  if(veu.classList.contains("hidden"))FOLHA_ORIGEM=document.activeElement;
+  f.className="folha"+(cls?" "+cls:"");f.innerHTML=html;veu.classList.remove("hidden");document.getElementById("app").inert=true;
+  const t=document.getElementById("folhaTit")||f;t.setAttribute("tabindex","-1");t.focus({preventScroll:true});}
+function fecharFolha(){VOZ.reabrir=false;vozParar(true);document.getElementById("veu").classList.add("hidden");document.getElementById("app").inert=false;F=null;
+  const o=FOLHA_ORIGEM;FOLHA_ORIGEM=null;if(o&&o.isConnected&&typeof o.focus==="function")o.focus({preventScroll:true});}
+document.addEventListener("keydown",e=>{if(e.key!=="Tab"||document.getElementById("veu").classList.contains("hidden"))return;
+  const f=document.getElementById("folha");const q=[...f.querySelectorAll('button,a[href],input,textarea,select,summary,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.getClientRects().length);
+  if(!q.length)return;const a=document.activeElement,i=q.indexOf(a);
+  if(e.shiftKey&&(i<=0)){e.preventDefault();q[q.length-1].focus();}else if(!e.shiftKey&&(i===-1||i===q.length-1)){e.preventDefault();q[0].focus();}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("veu").classList.contains("hidden"))fecharFolha();});
 
 /* ---------- acoes: tudo passa por agir(), com 6 s para desfazer ---------- */

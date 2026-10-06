@@ -84,17 +84,7 @@ const DUBLE = `(()=>{
 
 /* v71 · R7: o supabase-js tem integrity (SRI); corpo dublado no lugar do arquivo seria recusado pelo
    navegador. O duble entra antes da pagina (addInitScript) e a CDN e abortada, como no fumaca.spec.js. */
-/* p4.10: contraste WCAG medido no que a tela pinta, nao na classe. Sobe na arvore ate achar fundo opaco
-   (mistura as camadas translucidas) e compara com a cor do texto. Roda dentro da pagina (page.evaluate). */
-function contrasteDos(sel){
-  const rgb=s=>{const m=s.match(/[0-9.]+/g)||[0,0,0,0];return {r:+m[0],g:+m[1],b:+m[2],a:m[3]===undefined?1:+m[3]};};
-  const lum=c=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};return 0.2126*f(c.r)+0.7152*f(c.g)+0.0722*f(c.b);};
-  const fundo=el=>{const camadas=[];for(let e=el;e;e=e.parentElement){const c=rgb(getComputedStyle(e).backgroundColor);if(c.a>0){camadas.push(c);if(c.a>=1)break;}}
-    let base={r:255,g:255,b:255};for(const c of camadas.reverse()){base={r:c.r*c.a+base.r*(1-c.a),g:c.g*c.a+base.g*(1-c.a),b:c.b*c.a+base.b*(1-c.a)};}return base;};
-  return [...document.querySelectorAll(sel)].filter(e=>e.offsetParent&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))
-    .map(e=>{const cs=getComputedStyle(e);const t=rgb(cs.color),b=fundo(e);const tt={r:t.r*t.a+b.r*(1-t.a),g:t.g*t.a+b.g*(1-t.a),b:t.b*t.a+b.b*(1-t.a)};
-      const L1=lum(tt),L2=lum(b);const op=+cs.opacity;return {txt:e.textContent.trim().slice(0,40),razao:+(((Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05))*(op<1?op:1)).toFixed(2)};});
-}
+const {contrasteDos} = require('./_contraste');
 async function abrir(page){
   const erros=[];
   page.on('pageerror',e=>erros.push(String(e)));
@@ -125,7 +115,7 @@ for (const largura of [360, 390, 1280]) {
       await page.evaluate(a=>ir(a), aba);
       const m = await page.evaluate(()=>{
         const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
-        const pequenos=[...document.querySelectorAll('button,input,textarea')].filter(vis)
+        const pequenos=[...document.querySelectorAll('button,input,textarea,summary,a[href]:not(.rodape a)')].filter(vis)
           .filter(e=>{const r=e.getBoundingClientRect();return r.height<44||r.width<44;})
           .map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim().slice(0,30));
         return {pequenos, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
@@ -969,7 +959,7 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
   expect(med.length, 'mediu as 11 contas e o selo').toBe(12);
   expect(med.filter(m=>!(m.razao>=4.5)), 'texto das contas abaixo de 4,5:1 (NaN reprova)').toEqual([]);
   const vis = await page.evaluate(()=>{const g=e=>{const c=getComputedStyle(e);return c.backgroundColor+'|'+c.borderTopColor;};
-    const s=document.querySelector('#campo .contas button.sug'), o=document.querySelector('#campo .contas button.sec');return [g(s),g(o)];});
+    const s=document.querySelector('#campo .contas button.sug'), o=document.querySelector('#campo .contas button:not(.sug)');return [g(s),g(o)];});
   expect(vis[0], 'a sugerida se distingue das outras').not.toBe(vis[1]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360 px').toBe(true);
   expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir a escolha nao grava nada').toBe(0);
@@ -983,20 +973,49 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
 /* p4.10 (06/10/2026): varredura de contraste. O chip da conta sugerida sumiu (1,09:1) com a classe certa no DOM,
    porque uma regra mais especifica trocou o fundo e deixou o texto. A classe do defeito e cascata que pinta texto
    escuro em fundo escuro: aqui todo texto de botao visivel, nas cinco abas e na folha do card, passa 4,5:1. */
-test('nenhum texto de botao abaixo de 4,5:1 nas cinco abas e na folha do card', async ({page})=>{
+test('nenhum texto abaixo de 4,5:1 nas cinco abas e na folha do card', async ({page})=>{
   await page.setViewportSize({width:390, height:844});
   const erros = await abrir(page);
   const ruins = [];
   for (const aba of ['hoje','fila','frentes','caixa','mesa']){
     await page.evaluate(a=>ir(a), aba);
-    const m = await page.evaluate(contrasteDos, 'button, button *, a.btn');
+    const m = await page.evaluate(contrasteDos, 'body *');
     ruins.push(...m.filter(x=>!(x.razao>=4.5)).map(x=>aba+': '+x.txt+' = '+x.razao));
   }
   await page.evaluate(()=>{ ir('hoje'); abrirFila(0); });
-  const f = await page.evaluate(contrasteDos, '#folha button, #folha button *');
-  expect(f.length, 'a folha tem botoes medidos').toBeGreaterThan(0);
+  const f = await page.evaluate(contrasteDos, '#folha *');
+  expect(f.length, 'a folha tem texto medido').toBeGreaterThan(0);
   ruins.push(...f.filter(x=>!(x.razao>=4.5)).map(x=>'folha: '+x.txt+' = '+x.razao));
   expect(ruins).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+/* p4.11 (06/10/2026): o mesmo nome de token com valor diferente e a mesma classe do chip que sumiu. --line e
+   --line2 estavam trocados entre o index e o presidente, e --warn, --r e --mono divergiam. Mesmo nome, mesmo valor. */
+test('tokens: o mesmo nome tem o mesmo valor no index, no presidente e na seguranca', async ()=>{
+  const fs=require('fs');
+  const raiz=f=>{const s=fs.readFileSync(path.resolve(__dirname,'..',f),'utf8');const b=s.slice(s.indexOf(':root{')+6);const corpo=b.slice(0,b.search(/\n\}/));
+    const o={};for(const m of corpo.replace(/\/\*[\s\S]*?\*\//g,'').matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/g))o[m[1]]=m[2].trim();return o;};
+  const [a,b,c]=['index.html','presidente.html','seguranca.html'].map(raiz);
+  expect(Object.keys(a).length, 'leu o :root do index').toBeGreaterThan(15);
+  expect(Object.keys(b).length, 'leu o :root do presidente').toBeGreaterThan(15);
+  const dif=[];for(const [x,y,n] of [[a,b,'index x presidente'],[b,c,'presidente x seguranca'],[a,c,'index x seguranca']])
+    for(const k of Object.keys(x)) if(k in y && x[k]!==y[k]) dif.push(n+': '+k+' '+x[k]+' != '+y[k]);
+  expect(dif).toEqual([]);
+});
+
+/* p4.11: a folha e dialogo modal. Abrir pelo teclado leva o foco para dentro, o Tab nao sai e o Esc devolve o foco. */
+test('folha modal: foco entra, 40 Tabs nao saem e o Esc devolve o foco a quem abriu', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  const erros = await abrir(page);
+  await page.evaluate(()=>{const b=document.querySelector('#foco .tit');b.setAttribute('tabindex','0');b.id=b.id||'abridor';b.focus();abrirFila(0);});
+  expect(await page.evaluate(()=>!!document.activeElement.closest('#folha')), 'foco entrou na folha').toBe(true);
+  expect(await page.evaluate(()=>document.getElementById('app').inert), 'fundo inerte').toBe(true);
+  let fora=0; for(let i=0;i<40;i++){ await page.keyboard.press(i%7===6?'Shift+Tab':'Tab'); if(!(await page.evaluate(()=>!!document.activeElement.closest('#folha')))) fora++; }
+  expect(fora, 'Tabs que sairam da folha').toBe(0);
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate(()=>document.getElementById('app').inert), 'fundo volta a ser usavel').toBe(false);
+  expect(await page.evaluate(()=>document.activeElement.id), 'foco volta a quem abriu').toBe(await page.evaluate(()=>document.querySelector('#foco .tit').id));
   expect(erros).toEqual([]);
 });
 
