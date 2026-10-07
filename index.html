@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v89";
+const VER="v90";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1246,7 +1246,18 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   filtraTudo:el=>filtraTudo(el.dataset.a1), ivEscolher:el=>ivEscolher(el.dataset.a1,el.dataset.a2),
   ivEnviar:el=>ivEnviar(...JSON.parse(el.dataset.a1)), ivAgir:el=>ivAgir(...JSON.parse(el.dataset.a1)),
   ivAdiar:el=>ivAdiar(...JSON.parse(el.dataset.a1)),
-  recarregarSecao:el=>recarregarSecao(el.dataset.a1,el.dataset.a2), abrirSecao:el=>abrirSecao(el.dataset.a1,el.dataset.a2)};
+  recarregarSecao:el=>recarregarSecao(el.dataset.a1,el.dataset.a2), abrirSecao:el=>abrirSecao(el.dataset.a1,el.dataset.a2),
+  /* v90 (87c, modulo 6 · fila): chips, card, botoes rapidos e barra do modo foco. Ctrl/Cmd+Enter no campo do
+     card registra, como o onkeydown fazia (sem segurar a tecla: o atalho global ja ignora quem digita).
+     sairFoco chama modoFoco(false): o modoFoco sem argumento alterna, e sair tem de desligar sempre. */
+  setFrente:el=>setFrente(el.dataset.a1), setOrigem:el=>setOrigem(el.dataset.a1), setNat:el=>setNat(el.dataset.a1),
+  registrar:el=>registrar(el.dataset.a1,el.dataset.a2,el.dataset.a3),
+  registrarAtalho:(el,ev)=>{ if((ev.metaKey||ev.ctrlKey)&&ev.key==="Enter") registrar(el.dataset.a1,el.dataset.a2,el.id); },
+  toggleMenu:el=>toggleMenu(el.dataset.a1), perguntar:el=>perguntar(el.dataset.a1,el.dataset.a2),
+  agir:el=>agir(...JSON.parse(el.dataset.a1)), faEscolher:el=>faEscolher(...JSON.parse(el.dataset.a1)),
+  qAceitar:el=>qAceitar(el.dataset.a1,el.dataset.a2), qAdiar:el=>qAdiar(el.dataset.a1,el.dataset.a2),
+  qRecusar:el=>qRecusar(el.dataset.a1,el.dataset.a2), qPronto:el=>qPronto(el.dataset.a1,el.dataset.a2,el.dataset.a3),
+  focarPasso:el=>focar(foco+Number(el.dataset.a1)), fAto:el=>fAto(el.dataset.a1), sairFoco:()=>modoFoco(false)};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -2157,16 +2168,16 @@ function montaFiltros(){
   const cf={},co={};
   U.forEach(it=>{const f=it.frente||"sem frente";cf[f]=(cf[f]||0)+1;co[it.origem]=(co[it.origem]||0)+1;});
   document.getElementById("chipsFrente").innerHTML=
-    Object.keys(cf).sort().map(f=>`<button class="chip" aria-pressed="${F.frente===f}" onclick="setFrente('${escAttr(f)}')">
+    Object.keys(cf).sort().map(f=>`<button class="chip" aria-pressed="${F.frente===f}" data-acao="setFrente" data-a1="${esc(f)}">
       ${esc(f.replace(/^\d+-/,""))}<span class="c">${cf[f]}</span></button>`).join("");
   const rot={tarefa:"tarefas",demanda:"demandas",fluxo:"caixa",gargalo:"gargalos"};
   document.getElementById("chipsOrigem").innerHTML=
-    Object.keys(co).sort().map(o=>`<button class="chip" aria-pressed="${F.origem===o}" onclick="setOrigem('${escAttr(o)}')">
+    Object.keys(co).sort().map(o=>`<button class="chip" aria-pressed="${F.origem===o}" data-acao="setOrigem" data-a1="${esc(o)}">
       ${esc(rot[o]||o)}<span class="c">${co[o]}</span></button>`).join("");
   const cn={};
   U.forEach(it=>{const n=natDe(it);if(n)cn[n]=(cn[n]||0)+1;});
   const en=document.getElementById("chipsNat");
-  if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip" aria-pressed="${F.nat===n}" onclick="setNat('${escAttr(n)}')">
+  if(en)en.innerHTML=Object.keys(cn).sort().map(n=>`<button class="chip" aria-pressed="${F.nat===n}" data-acao="setNat" data-a1="${esc(n)}">
       ${esc(n.replace(/^\d+\s/,""))}<span class="c">${cn[n]}</span></button>`).join("")
       ||'<span style="color:var(--dim);font-size:var(--fs-1)">sem natureza classificada nesta stack</span>';
   document.getElementById("btLimpar").style.display=(F.frente||F.origem||F.q||F.nat)?"inline-flex":"none";
@@ -2301,7 +2312,8 @@ function cardFila(it){
   const acts=(it.acoes||[]).filter(a=>a.verbo!=="deliberar");
   const k=uid(it.origem+it.ref);
   const p=partes(it.titulo_completo||it.titulo);
-  const O=escAttr(it.origem), R=escAttr(it.ref);
+  /* v90 (87c, modulo 6 · fila): origem e ref vao em data-a1/a2 por esc(); varios argumentos, numa lista JSON */
+  const O=esc(it.origem), R=esc(it.ref), lista=a=>`data-a1="${esc(JSON.stringify(a))}"`;
   return `<div class="card n${esc(it.nivel)}" id="c-${k}" data-o="${esc(it.origem)}" data-r="${esc(it.ref)}">
    <div class="meta" style="margin-bottom:6px">
      <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
@@ -2321,15 +2333,15 @@ function cardFila(it){
    ${it.ultima_pergunta?trocaVigente(it,k):""}
    <div class="resp">
      <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
-       onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')registrar('${O}','${R}','t-${k}')"></textarea>
+       data-ao-tecla="registrarAtalho" data-a1="${O}" data-a2="${R}"></textarea>
      <div class="resplin">
-       <button class="prim" onclick="registrar('${O}','${R}','t-${k}')">registrar</button>
-       ${acts.length?`<button class="mais" onclick="toggleMenu('${k}')" aria-expanded="false">outras ações</button>`:""}
-       <button class="link" onclick="perguntar('${O}','${R}')">perguntar</button>
+       <button class="prim" data-acao="registrar" data-a1="${O}" data-a2="${R}" data-a3="t-${k}">registrar</button>
+       ${acts.length?`<button class="mais" data-acao="toggleMenu" data-a1="${k}" aria-expanded="false">outras ações</button>`:""}
+       <button class="link" data-acao="perguntar" data-a1="${O}" data-a2="${R}">perguntar</button>
      </div>
      <div class="menu" id="m-${k}">
        ${acts.map(a=>{ if(a.campo==="entidade")OPC_ENT[it.origem+"|"+it.ref+"|"+a.verbo]={opcoes:a.opcoes||[],padrao:a.padrao||null};
-         return `<button class="sec" onclick="agir('${O}','${R}','${escAttr(a.verbo)}','${escAttr(a.campo||"")}','${escAttr(a.label)}')">${esc(a.label)}</button>`;}).join("")}
+         return `<button class="sec" data-acao="agir" ${lista([String(it.origem),String(it.ref),a.verbo,a.campo||"",a.label])}>${esc(a.label)}</button>`;}).join("")}
      </div>
    </div></div>`;}
 /* ---------- v48: A ESCOLHA CHEGA NA FILA DE HOJE ----------
@@ -2344,7 +2356,7 @@ function opcoesFila(it){
   if(!o||!Array.isArray(o.opcoes)||!o.opcoes.length) return "";
   const k=uid(it.origem+it.ref);
   return `<ul class="ivop">`+o.opcoes.map(x=>
-    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" onclick="faEscolher('${escAttr(it.origem)}','${escAttr(it.ref)}','${escAttr(x.label)}','c-${k}')">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
+    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" data-acao="faEscolher" data-a1="${esc(JSON.stringify([String(it.origem),String(it.ref),x.label,"c-"+k]))}">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
     +`</ul>`+(o.escolha?`<div class="ivesc">escolhido: <b>${esc(o.escolha)}</b></div>`:"");
 }
 /* ---------- v61 ONDA 1: DECIDIR SEM DIGITAR (t1454, doc 1201 secao 3.2) ----------
@@ -2371,15 +2383,15 @@ function achaIt(origem,ref){ return [...(D.fila||[]),...(D.exp||[]),...(D.depois
 const ATOS_PRONTO=[["feito","feito"],["enviado","enviei"],["refazer","refazer"],["descartar","descartar"]];
 function rapidos(it){
   const k=uid(it.origem+it.ref), t=tipoBand(it), rec=recOpcao(it);
-  const O=escAttr(it.origem), R=escAttr(String(it.ref)), bs=[];
-  if(rec) bs.push(`<button class="qk pri" onclick="qAceitar('${O}','${R}')">aceitar recomendação <kbd>A</kbd></button>`);
-  else if(t==="PRONTO") bs.push(`<button class="qk pri" onclick="qAceitar('${O}','${R}')" aria-expanded="false" aria-controls="qp-${k}">aceitar <kbd>A</kbd></button>`);
-  if(podeAdiar(it)) bs.push(`<button class="qk" onclick="qAdiar('${O}','${R}')">adiar 2 dias <kbd>S</kbd></button>`);
-  if(t==="PRONTO"||t==="DECISAO") bs.push(`<button class="qk neg" onclick="qRecusar('${O}','${R}')">recusar <kbd>R</kbd></button>`);
+  const O=esc(it.origem), R=esc(String(it.ref)), bs=[], or=`data-a1="${O}" data-a2="${R}"`;
+  if(rec) bs.push(`<button class="qk pri" data-acao="qAceitar" ${or}>aceitar recomendação <kbd>A</kbd></button>`);
+  else if(t==="PRONTO") bs.push(`<button class="qk pri" data-acao="qAceitar" ${or} aria-expanded="false" aria-controls="qp-${k}">aceitar <kbd>A</kbd></button>`);
+  if(podeAdiar(it)) bs.push(`<button class="qk" data-acao="qAdiar" ${or}>adiar 2 dias <kbd>S</kbd></button>`);
+  if(t==="PRONTO"||t==="DECISAO") bs.push(`<button class="qk neg" data-acao="qRecusar" ${or}>recusar <kbd>R</kbd></button>`);
   if(!bs.length) return "";
   const pr = t==="PRONTO"
     ? `<div class="qpr" id="qp-${k}"><span class="qprl">o que aconteceu com a peça?</span>`+ATOS_PRONTO.map(([a,l],i)=>
-        `<button class="qk" onclick="qPronto('${R}','${a}','c-${k}')">${l} <kbd>${i+1}</kbd></button>`).join("")+`</div>`
+        `<button class="qk" data-acao="qPronto" data-a1="${R}" data-a2="${a}" data-a3="c-${k}">${l} <kbd>${i+1}</kbd></button>`).join("")+`</div>`
     : "";
   return `<div class="qrow">${bs.join("")}</div>${pr}`;}
 function qAceitar(origem,ref){
@@ -2444,12 +2456,12 @@ function rFbar(){
   const c=cards();
   el.innerHTML=document.body.classList.contains("foco")&&c.length?`<div class="fbar" role="toolbar" aria-label="modo foco">
     <span class="fc">${foco+1} de ${c.length}</span>
-    <button type="button" onclick="focar(foco-1)" aria-label="card anterior">‹</button>
-    <button type="button" onclick="focar(foco+1)" aria-label="próximo card">›</button>
-    <button type="button" class="ok" onclick="fAto('a')">aceitar <span class="kbd">A</span></button>
-    <button type="button" onclick="fAto('s')">adiar 2 dias <span class="kbd">S</span></button>
-    <button type="button" onclick="fAto('r')">recusar <span class="kbd">R</span></button>
-    <button type="button" onclick="modoFoco(false)">sair <span class="kbd">Esc</span></button></div>`:"";}
+    <button type="button" data-acao="focarPasso" data-a1="-1" aria-label="card anterior">‹</button>
+    <button type="button" data-acao="focarPasso" data-a1="1" aria-label="próximo card">›</button>
+    <button type="button" class="ok" data-acao="fAto" data-a1="a">aceitar <span class="kbd">A</span></button>
+    <button type="button" data-acao="fAto" data-a1="s">adiar 2 dias <span class="kbd">S</span></button>
+    <button type="button" data-acao="fAto" data-a1="r">recusar <span class="kbd">R</span></button>
+    <button type="button" data-acao="sairFoco">sair <span class="kbd">Esc</span></button></div>`:"";}
 function fAto(k){const c=cardFocado(); if(!c) return; medirDecisao(c.dataset.o,c.dataset.r,k); (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
 function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO){fAto("s");return "s";} return null; }
 (function(){

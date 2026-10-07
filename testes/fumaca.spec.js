@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 21;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21 */
+const TETO_ON_INDEX = 1;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21; v90 fila: 1 (o exemplo no comentario do escAttr, que sai no fecho) */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
@@ -2023,4 +2023,71 @@ test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e 
   expect(r.vistos.adiar, '+7d: dias como numero').toEqual([[r.hostil,7,'iv-'], [r.hostil,7,'sv-']]);
   expect(r.vistos.secao).toEqual([['panorama','frentes']]);
   expect(r.vistos.recarga, 'selo velho oferece atualizar').toEqual([['panorama','caixa']]);
+});
+
+/* v90 (plano 87c, modulo 6 · fila, 07/10/2026): ultimo modulo do index. Chips de filtro, o card da fila
+   (registrar, Ctrl+Enter, outras acoes, perguntar, opcoes), os botoes rapidos (aceitar, adiar, recusar e os
+   4 atos da peca pronta) e a barra do modo foco saem do onclick/onkeydown. Classes cobradas: (1) origem e
+   ref com aspa chegam inteiros e como texto; (2) Ctrl+Enter registra e Enter sozinho nao; (3) "sair" do foco
+   DESLIGA (modoFoco(false)), nunca alterna; (4) o passo do foco chega como numero. A v89 reprova (on* na fila). */
+test('87c fila: chips, card, rapidos e modo foco sem on*; origem e ref com aspa chegam inteiros', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const ref = "7'1 \"x\" <b>", rot = "conta 'PF' \"já\"";
+    const nomes = ['setFrente','setOrigem','setNat','registrar','toggleMenu','perguntar','agir','faEscolher',
+                   'qAceitar','qAdiar','qRecusar','qPronto','fAto','focar','modoFoco'];
+    const vistos = {}; nomes.forEach(n=>{ vistos[n]=[]; window[n]=(...a)=>vistos[n].push(a); });
+    const acoes = [{verbo:'repactuar', label:'mudar prazo', campo:'data'}, {verbo:'pago', label:rot, campo:'entidade'}];
+    const it1 = {origem:'tarefa', ref, titulo:'card hostil', frente:"00-te'ste", nivel:1, acoes};
+    const it2 = {origem:'tarefa', ref:'t-pronto', titulo:'peca pronta', frente:'00-teste', nivel:1, acoes};
+    D.fila = [it1, it2]; D.exp = []; D.depois = [];
+    D.op = [{origem:'tarefa', ref, opcoes:[{label:rot, recomendada:true, consequencia:'c'}]}];
+    D.band = [{item_id:'t-pronto', tipo:'PRONTO'}];
+    D.nat = [{origem:'tarefa', ref, natureza:"9 nat'ureza"}];
+    let err=null;
+    try {
+      document.getElementById('chipsFrente').innerHTML=''; montaFiltros();
+      document.getElementById('fila1').innerHTML = cardFila(it1) + cardFila(it2);
+      foco = 1; document.body.classList.add('foco'); rFbar();
+    } catch(e){ err=String(e); }
+    const raiz = ()=>[...document.querySelectorAll('#chipsFrente *, #chipsOrigem *, #chipsNat *, #fila1 *, #fbar *')];
+    const inline=[], sem=[]; let n=0;
+    for (const el of raiz()) {
+      for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
+      for (const k of ['acao','aoTecla']) { const v=el.dataset[k]; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v);} } }
+    const q = s=>document.querySelector(s);
+    q("#chipsFrente [data-acao=setFrente]").click(); q('#chipsOrigem [data-acao=setOrigem]').click(); q('#chipsNat [data-acao=setNat]').click();
+    const c1 = document.querySelectorAll('#fila1 .card')[0], c2 = document.querySelectorAll('#fila1 .card')[1];
+    const ta = c1.querySelector('textarea');
+    ta.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter', bubbles:true}));               /* Enter sozinho: nada */
+    ta.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter', ctrlKey:true, bubbles:true}));  /* Ctrl+Enter registra */
+    c1.querySelector('[data-acao=registrar]').click();
+    c1.querySelector('[data-acao=toggleMenu]').click();
+    c1.querySelector('[data-acao=perguntar]').click();
+    c1.querySelectorAll('[data-acao=agir]')[1].click();
+    c1.querySelector('[data-acao=faEscolher]').click();
+    c1.querySelector('[data-acao=qAceitar]').click(); c1.querySelector('[data-acao=qAdiar]').click();
+    c2.querySelector('[data-acao=qRecusar]').click(); c2.querySelectorAll('[data-acao=qPronto]')[1].click();
+    for (const b of document.querySelectorAll('#fbar button')) b.click();
+    document.body.classList.remove('foco'); document.getElementById('fbar').innerHTML=''; document.getElementById('fila1').innerHTML='';
+    return {err, inline, sem, n, vistos, ref, rot, k1: c1.id.slice(2), k2: c2.id.slice(2)};
+  });
+  expect(r.err, 'montar a fila derrubou o script').toBe(null);
+  expect(r.inline, 'on* nos chips, no card ou na barra do foco').toEqual([]);
+  expect(r.sem, 'acao sem registro').toEqual([]);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(25);
+  const v = r.vistos;
+  expect([v.setFrente[0], v.setOrigem[0], v.setNat[0]], 'chips chegam inteiros').toEqual([["00-te'ste"], ['tarefa'], ["9 nat'ureza"]]);
+  expect(v.registrar, 'Ctrl+Enter e o botao registram; Enter sozinho nao').toEqual(
+    [['tarefa', r.ref, 't-'+r.k1], ['tarefa', r.ref, 't-'+r.k1]]);
+  expect(v.toggleMenu).toEqual([[r.k1]]);
+  expect(v.perguntar).toEqual([['tarefa', r.ref]]);
+  expect(v.agir, 'agir: cinco argumentos, campo e rotulo inteiros').toEqual([['tarefa', r.ref, 'pago', 'entidade', r.rot]]);
+  expect(v.faEscolher).toEqual([['tarefa', r.ref, r.rot, 'c-'+r.k1]]);
+  expect([v.qAceitar, v.qAdiar, v.qRecusar]).toEqual([[['tarefa', r.ref]], [['tarefa', r.ref]], [['tarefa', 't-pronto']]]);
+  expect(v.qPronto, 'segundo ato da peca pronta').toEqual([['t-pronto', 'enviado', 'c-'+r.k2]]);
+  expect(v.focar, 'passo do foco como numero').toEqual([[0], [2]]);
+  expect(v.fAto).toEqual([['a'], ['s'], ['r']]);
+  expect(v.modoFoco, 'sair desliga, nunca alterna').toEqual([[false]]);
 });
