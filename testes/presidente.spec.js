@@ -2073,3 +2073,27 @@ test('p4.22: nenhum texto abaixo de 14 px nas cinco abas e na folha do president
   expect(f.out, 'texto abaixo de 14 px na folha').toEqual([]);
   expect(erros).toEqual([]);
 });
+/* p4.24 (plano 82b, 07/10/2026): aba e coluna atuais se leem por aria-current e aria-selected,
+   que ja existiam ao lado da classe .on. Dois donos do mesmo estado: sobrou so o atributo. */
+test('82b: aba e coluna atuais se leem por atributo ARIA, sem classe .on', async ({page})=>{
+  await abrir(page);
+  const r = await page.evaluate(()=>{
+    ir('fila');
+    const nav = [...document.querySelectorAll('[data-aba]')];
+    const seg = [...document.querySelectorAll('#seg button')];
+    const sel = seg.filter(b=>b.getAttribute('aria-selected')==='true');
+    return {
+      atual: [...new Set(nav.filter(b=>b.getAttribute('aria-current')==='page').map(b=>b.dataset.aba))],
+      comClasse: document.querySelectorAll('[data-aba].on,#seg button.on').length,
+      nSeg: seg.length, nSel: sel.length,
+      fundoSel: sel[0] && getComputedStyle(sel[0]).backgroundColor,
+      fundoOutro: getComputedStyle(seg.find(b=>b!==sel[0])).backgroundColor
+    };
+  });
+  expect(r.atual).toEqual(['fila']);
+  expect(r.comClasse, 'nenhum estado de selecao por classe').toBe(0);
+  expect(r.nSeg, 'a fila desenhou as colunas').toBeGreaterThan(1);
+  expect(r.nSel).toBe(1);
+  expect(r.fundoSel, 'a coluna atual pinta --acc pelo aria-selected').toBe('rgb(47, 128, 255)');
+  expect(r.fundoOutro).not.toBe(r.fundoSel);
+});
