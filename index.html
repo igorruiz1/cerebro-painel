@@ -1127,7 +1127,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v81";
+const VER="v82";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1147,11 +1147,14 @@ let CARGAINCOMPLETA=false;                      // v45: a ultima carga voltou co
                  aspa fecha o argumento. escAttr escapa para o JS e depois para o HTML, nessa ordem;
      urlSegura(u) href/src: so https:// passa, o resto vira "#".
    Marcacao montada aqui dentro com pedacos ja escapados leva o comentario "html confiavel". */
-const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+/* comum:escapa · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const escAttr=s=>esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")
   .replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"));
 const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(s)?s:"#";};
-const rs=v=>v==null?"—":"R$ "+(+v).toLocaleString("pt-BR",{maximumFractionDigits:0});
+/* rs: valor ausente ou que nao e numero vira "—" (o index mostrava "R$ NaN"); sinal antes do R$; espaco comum */
+const rs=v=>v==null||isNaN(+v)?"—":(Math.round(+v)<0?"-":"")+"R$ "+Math.abs(Math.round(+v)).toLocaleString("pt-BR");
+/* fim comum:escapa */
 /* v73 · t1623: numero na tela sai em pt-BR pelo Intl (virgula decimal, ponto de milhar). toFixed solta
    "17.5d"; toFixed so serve para geometria de CSS e SVG, nunca para texto que o Igor le. */
 const NF1=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}),
