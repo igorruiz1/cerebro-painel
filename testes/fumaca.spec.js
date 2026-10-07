@@ -341,7 +341,8 @@ test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async 
     D.rw={dias_sobrevida_pior:9,dias_sobrevida:9,caixa_hoje:1,queima_dia_base:1};
     let err=null; try{ rAgora(); }catch(e){ err=String(e); }
     const t=k=>document.querySelector(`#faixa5 .f5[data-chave="${k}"]`);
-    const cor=k=>(t(k).querySelector('.spk path[stroke]')||{getAttribute:()=>null}).getAttribute('stroke');
+    /* p4.23 (plano 82a): a cor sai do token por style; o teste le a cor pintada, nao o atributo */
+    const cor=k=>{const p=t(k).querySelector('.spk path[style*="stroke"]');return p?getComputedStyle(p).stroke:null;};
     return {err,
       foraClasse:t("caixa.decisao_parada_rs").className, foraCor:cor("caixa.decisao_parada_rs"),
       foraTexto:t("caixa.decisao_parada_rs").querySelector('.e').textContent,
@@ -350,10 +351,11 @@ test('numero fora da meta nunca sai verde, mesmo dentro da banda normal', async 
   expect(r.err, 'rAgora() derrubou o script').toBe(null);
   expect(r.foraClasse, 'fora da meta dentro da banda').not.toContain('bem');
   expect(r.foraClasse).toContain('atn');
-  expect(r.foraCor, 'sparkline fora da meta nao pode ser verde').not.toBe('#30a46c');
+  expect(r.foraCor, 'a sparkline tem cor pintada').toMatch(/^rgb\(/);
+  expect(r.foraCor, 'sparkline fora da meta nao pode ser verde').not.toBe('rgb(48, 164, 108)');
   expect(r.foraTexto, 'a persistencia vai por escrito').toMatch(/fora da meta há \d+\+? d/);
   expect(r.naMetaClasse, 'na meta continua verde').toContain('bem');
-  expect(r.naMetaCor).toBe('#30a46c');
+  expect(r.naMetaCor).toBe('rgb(48, 164, 108)');
 });
 
 test('o selo de saude diz quantas fontes falham, e fica verde quando todas voltam', async ({page})=>{
