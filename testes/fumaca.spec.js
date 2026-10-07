@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 42;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42 */
+const TETO_ON_INDEX = 30;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30 */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
@@ -1873,4 +1873,93 @@ test('87c leituras: barra, linha e deliberacao sem on*; o ref com aspa chega int
   expect(r.vistos.enviaDelib, 'registrar entrega o ref inteiro').toEqual([r.hostil]);
   expect(r.fechada, 'cancelar fecha').toBe(true);
   expect(r.todas, 'selecionar todas').toBe(2);
+});
+
+/* v88 (plano 87c, modulo 4 · Agora, PF e correcao, 07/10/2026): meses do PF, botoes da correcao, aviso
+   do segundo plano, link da peca, vazio da Agora e o proprio rAgora saem do onclick. Duas classes:
+   (1) a correcao passava SEIS argumentos de tipos diferentes (numero, booleano, objeto, texto) dentro de
+   JS em atributo; agora vao como uma lista JSON em data-a1 e o tipo tem de voltar igual;
+   (2) modoFoco() sem argumento alterna, e o registro nao pode lhe passar o botao. A v87 reprova. */
+test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao chega com os seis argumentos e o tipo de cada um', async ({page})=>{
+  const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8').replace(/\r\n/g,'\n');
+  for (const f of ['rPF','cardCorrecao','avisoDepois','pecaLink','vazioAgora','rAgora']) {
+    const i = fonte.indexOf('\nfunction '+f+'('), j = fonte.indexOf('\nfunction ', i+10);
+    expect(i, 'achou '+f).toBeGreaterThan(0);
+    expect(fonte.slice(i,j).match(/\son[a-z]+\s*=\s*["']/gi), 'on*= em '+f).toBeNull();
+  }
+  const erros = await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const vistos = {corrigir:[], copiaPeca:[], verDepois:0, irAba:[], modoFoco:[], verTudo:[]};
+    window.corrigir = (...a)=>vistos.corrigir.push(a);
+    window.copiaPeca = b=>vistos.copiaPeca.push(b.tagName);
+    window.verDepois = ()=>{ vistos.verDepois++; };
+    window.irAba = p=>vistos.irAba.push(p);
+    window.modoFoco = (...a)=>vistos.modoFoco.push(a.length);
+    window.verTudo = (...a)=>vistos.verTudo.push(a.length);
+    const caixa = document.createElement('div'); document.body.appendChild(caixa);
+    caixa.innerHTML = cardCorrecao({dialogo_id:42, origem:'tarefa', ref:"t'1", objeto_resumo:'x', quando:'hoje',
+      sua_posicao:'a', o_que_o_motor_disse:'b',
+      acoes:[{rpc:'responder_correcao', arg:true, label:"aceito 'isto'"},
+             {rpc:'deliberar_correcao', arg:{nota:"o'1 \"x\""}, campo:'motivo', label:'deliberar', placeholder:'p"q <b>'},
+             {rpc:'responder_correcao', label:'sem arg'}]})
+      + pecaLink({artefato_path:"pasta/peca'1.pdf"});
+    D.cont = {depois:2, leituras:3}; D.rw = null;
+    caixa.innerHTML += vazioAgora();
+    const inline = [], sem = []; let n = 0;
+    for (const el of caixa.querySelectorAll('*')) {
+      for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
+      const v = el.dataset.acao; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v); } }
+    caixa.querySelectorAll('[data-acao="corrigir"]').forEach(b=>b.click());
+    caixa.querySelector('[data-acao="copiaPeca"]').click();
+    caixa.querySelector('[data-acao="verDepois"]').click();
+    caixa.querySelector('[data-acao="irAba"]').click();
+    const b = document.createElement('button'); b.dataset.acao='modoFoco'; caixa.appendChild(b); b.click();
+    const t = document.createElement('button'); t.dataset.acao='verTudo'; caixa.appendChild(t); t.click();
+    caixa.remove();
+    return {inline, sem, n, vistos};
+  });
+  expect(r.inline, 'on* na correcao, na peca e no vazio da Agora').toEqual([]);
+  expect(r.sem, 'acao sem registro').toEqual([]);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(7);
+  expect(r.vistos.corrigir, 'seis argumentos, cada um no seu tipo').toEqual([
+    [42,'responder_correcao',true,'',"aceito 'isto'",''],
+    [42,'deliberar_correcao',{nota:'o\'1 "x"'},'motivo','deliberar','p"q <b>'],
+    [42,'responder_correcao',null,'','sem arg','']]);
+  expect(r.vistos.copiaPeca, 'copiar recebe o proprio botao').toEqual(['BUTTON']);
+  expect(r.vistos.verDepois, 'segundo plano').toBe(1);
+  expect(r.vistos.irAba, 'esperando ciencia abre leituras').toEqual(['leituras']);
+  expect(r.vistos.modoFoco, 'modo foco sem argumento (alterna)').toEqual([0]);
+  expect(r.vistos.verTudo, 'ver tudo sem argumento').toEqual([0]);
+  expect(erros).toEqual([]);
+});
+
+/* v88: o titulo que abre (TTL_ATTR) e o mesmo na correcao e na fila. O onkeydown antigo fazia
+   stopPropagation para o atalho global nao ver o espaco; com a delegacao os dois ouvintes estao no
+   document, e a tecla tem de parar ali (stopImmediatePropagation). Classe: espaco no titulo rolando a
+   pagina ou disparando atalho, e titulo que deixa de abrir pelo teclado. */
+test('87c titulo: Enter e espaco abrem o titulo, outra tecla nao, e o atalho global nao ve a tecla', async ({page})=>{
+  const erros = await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const caixa = document.createElement('div'); document.body.appendChild(caixa);
+    caixa.innerHTML = `<div class="x"><div class="ttl" ${TTL_ATTR}>titulo</div></div>`;
+    const t = caixa.querySelector('.ttl'), c = t.parentNode;
+    let global = 0; const espia = ()=>{ global++; }; document.addEventListener('keydown', espia);
+    const tecla = k=>{ const ev = new KeyboardEvent('keydown',{key:k, bubbles:true, cancelable:true}); t.dispatchEvent(ev); return ev.defaultPrevented; };
+    const out = {};
+    out.a = [tecla('a'), c.classList.contains('aberto'), global];
+    out.enter = [tecla('Enter'), c.classList.contains('aberto'), t.getAttribute('aria-expanded'), global];
+    out.espaco = [tecla(' '), c.classList.contains('aberto'), global];
+    t.click(); out.clique = c.classList.contains('aberto');
+    document.removeEventListener('keydown', espia); caixa.remove();
+    out.inline = [...t.attributes].filter(a=>/^on/i.test(a.name)).map(a=>a.name);
+    return out;
+  });
+  expect(r.inline, 'on* no titulo').toEqual([]);
+  expect(r.a, 'outra tecla: nao abre, nao segura, o atalho ve').toEqual([false, false, 1]);
+  expect(r.enter, 'Enter abre e o atalho nao ve').toEqual([true, true, 'true', 1]);
+  expect(r.espaco, 'espaco fecha, sem rolar a pagina, e o atalho nao ve').toEqual([true, false, 1]);
+  expect(r.clique, 'clique abre').toBe(true);
+  expect(erros).toEqual([]);
 });

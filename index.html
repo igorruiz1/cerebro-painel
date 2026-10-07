@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v87";
+const VER="v88";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1230,7 +1230,16 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value),
   /* v87 (87c, modulo 3 · leituras e deliberacao): o ref vem de data-a1, escapado por esc() */
   leSel:el=>leSel(el.dataset.a1,el), leTodas:()=>leTodas(), marcarLote:()=>marcarLote(),
-  leVerTudo:()=>leVerTudo(), abreDelib:el=>abreDelib(el.dataset.a1), enviaDelib:el=>enviaDelib(el.dataset.a1)};
+  leVerTudo:()=>leVerTudo(), abreDelib:el=>abreDelib(el.dataset.a1), enviaDelib:el=>enviaDelib(el.dataset.a1),
+  /* v88 (87c, modulo 4 · Agora, PF e correcao). modoFoco SEM argumento: modoFoco(el) leria o botao
+     como "ligar" e nunca desligaria. */
+  pfEscolhe:el=>pfEscolhe(el.dataset.mes), corrigir:el=>corrigir(...JSON.parse(el.dataset.a1)),
+  verDepois:()=>verDepois(), copiaPeca:el=>copiaPeca(el), modoFoco:()=>modoFoco(), verTudo:()=>verTudo(),
+  /* titulo que abre (TTL_ATTR, correcao e fila): Enter ou espaco. O onkeydown fazia stopPropagation para
+     o atalho global (document, keydown) nao ver a tecla; aqui os dois ouvintes moram no document, e so
+     stopImmediatePropagation segura o que foi registrado DEPOIS do ligarAcoes. */
+  abreTitulo:(el,ev)=>{ if(ev.type==="keydown"){ if(ev.key!=="Enter"&&ev.key!==" ")return;
+    ev.preventDefault(); ev.stopImmediatePropagation(); } abreTitulo(el); }};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -2266,7 +2275,7 @@ function bloco(lbl,txt,cls,id){
 /* v72: o titulo recolhido abre pelo teclado tambem (Enter ou espaco), e diz se esta aberto */
 function abreTitulo(el){ const c=el.parentNode, abre=!c.classList.contains("aberto");
   c.classList.toggle("aberto",abre); el.setAttribute("aria-expanded",abre?"true":"false"); }
-const TTL_ATTR=`role="button" tabindex="0" aria-expanded="false" onclick="abreTitulo(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();abreTitulo(this)}"`;
+const TTL_ATTR=`role="button" tabindex="0" aria-expanded="false" data-acao="abreTitulo" data-ao-tecla="abreTitulo"`;
 /* v32 REGUA 19 (t890): card com dialogo aberto nao pode dizer so "aguardando o executor"
    sem prazo. Medido em 09/09/2026: o Igor deliberou nove vezes as 00h e recarregou seis
    vezes ate desistir, porque nada na tela dizia que a resposta so viria as 06h58. Reguas:
@@ -2523,7 +2532,7 @@ function rPF(){
     const est=r==null?"sem resultado operacional":r<0?"operacional negativo: o gasto passou a renda":"operacional positivo: a renda cobriu o gasto";
     const fin="financiamento" in x;
     const n=+x.n_lanc||0;
-    return '<button class="pfc'+(vazio?" vazio":r<0?" neg":"")+'" aria-pressed="'+(x.mes===sel)+'" data-mes="'+esc(x.mes)+'" onclick="pfEscolhe(this.dataset.mes)">'
+    return '<button class="pfc'+(vazio?" vazio":r<0?" neg":"")+'" aria-pressed="'+(x.mes===sel)+'" data-mes="'+esc(x.mes)+'" data-acao="pfEscolhe">'
       +'<div class="pfn">'+esc(pfMes(x.mes))+(x.mes===cur?' <span class="pfcur">em curso</span>':"")+'</div>'
       +(vazio
         ? '<div class="pfv">extrato ainda não lançado</div><div class="pfq">'+n+' lançamento'+(n===1?"":"s")+' no mês, nenhum de entrada ou saída</div>'
@@ -2604,9 +2613,10 @@ function cardCorrecao(c){
    <div class="acts">
      ${(c.acoes||[]).map((a,i)=>{
        const cls=i===0?"prim":(a.rpc==="deliberar_correcao"?"prim vio":"sec");
-       /* dialogo_id e arg sao valores JS (numero, booleano): entram como JSON, escapado para o atributo */
-       const js=v=>esc(JSON.stringify(v===undefined?null:v));
-       return `<button class="${cls}" onclick="corrigir(${js(c.dialogo_id)},'${escAttr(a.rpc)}',${js(a.arg)},'${escAttr(a.campo||"")}','${escAttr(a.label)}','${escAttr(a.placeholder||"")}')">${esc(a.label)}</button>`;
+       /* v88 (87c): os seis argumentos vao como UMA lista JSON em data-a1, escapada por esc(); o tipo
+          (numero, booleano, objeto) volta igual no JSON.parse. undefined vira null, como antes. */
+       const args=[c.dialogo_id,a.rpc,a.arg,a.campo||"",a.label,a.placeholder||""].map(v=>v===undefined?null:v);
+       return `<button class="${cls}" data-acao="corrigir" data-a1="${esc(JSON.stringify(args))}">${esc(a.label)}</button>`;
      }).join("")}
    </div></div>`;}
 const TETO=5; let semTeto=false;
@@ -2636,7 +2646,7 @@ function verDepois(){
 }
 function avisoDepois(){
   return DEPOIS_FALHA?`<div class="empty falha">O segundo plano não carregou (${esc(DEPOIS_FALHA)}). Isto não quer dizer que ele esteja vazio.
-    <button class="link" onclick="verDepois()">tentar de novo</button></div>`:"";}
+    <button class="link" data-acao="verDepois">tentar de novo</button></div>`:"";}
 
 /* v68 (f5, achado 1 da auditoria de 02/10/2026): CLASSES DE SERVICO do Kanban (David Anderson,
    Kanban, 2010). Medido em 02/10/2026 13:38: a tela "hoje" mostrava 0 das 74 tarefas abertas do
@@ -2697,7 +2707,7 @@ function pecaLink(it){
   const p=it&&it.artefato_path?String(it.artefato_path).trim():"";
   const okId=/^[A-Za-z0-9_-]{10,}$/.test(id);
   if(!okId&&!p) return "";
-  const cam=p?`<code class="pecap">${esc(p)}</code><button type="button" class="link" onclick="copiaPeca(this)">copiar caminho</button>`:"";
+  const cam=p?`<code class="pecap">${esc(p)}</code><button type="button" class="link" data-acao="copiaPeca">copiar caminho</button>`:"";
   return `<div class="peca">${okId?`<a class="pecaa" href="${esc(urlSegura("https://drive.google.com/open?id="+encodeURIComponent(id)))}" target="_blank" rel="noopener noreferrer">abrir peça</a>`:`<span class="lbl">peça</span>`}${cam}</div>`;}
 function selecionaPeca(c){
   if(!c) return; try{ const r=document.createRange(); r.selectNodeContents(c);
@@ -2758,8 +2768,8 @@ function vazioAgora(){
   const cx=(r&&r.dias_sobrevida!=null)?`<div class="vzl"><b>Caixa</b>
       <span class="tag ${r.dias_sobrevida_pior<30?"bad":"ok"}">${esc(r.dias_sobrevida)} dias</span>
       <span>${esc(r.dias_sobrevida_pior)} dias no pior caso</span></div>`:"";
-  const dep=c.depois?`<button class="link" onclick="verDepois()">ver os ${esc(c.depois)} em segundo plano</button>`:"";
-  const le=c.leituras?`<button class="link" onclick="irAba('leituras')">${esc(c.leituras)} esperando ciência</button>`:"";
+  const dep=c.depois?`<button class="link" data-acao="verDepois">ver os ${esc(c.depois)} em segundo plano</button>`:"";
+  const le=c.leituras?`<button class="link" data-acao="irAba" data-a1="leituras">${esc(c.leituras)} esperando ciência</button>`:"";
   /* o cabecalho da aba ja diz "nada precisa de voce hoje": repetir aqui era redundancia. */
   return `<div class="empty vazio">${prox}${cx}<div class="vza">${dep}${le}</div></div>`;
 }
@@ -2796,7 +2806,7 @@ function rAgora(){
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
   document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"")
-    +resumoClasse(vis)+tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" onclick="modoFoco()">modo foco <span class="kbd">F</span></button>':"");
+    +resumoClasse(vis)+tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" data-acao="modoFoco">modo foco <span class="kbd">F</span></button>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
   if(document.body.classList.contains("foco")){ const n=cards().length; if(n) focar(Math.max(0,Math.min(foco,n-1))); else modoFoco(false); }
@@ -2812,17 +2822,17 @@ function rAgora(){
   document.getElementById("estouro").innerHTML=(resto>0
     ? `<div class="estouro">Mostrando <b>${mostra.length} de ${vis.length}</b> itens que exigem você hoje.
         O teto é de exibição, não de existência.
-        <button onclick="verTudo()">ver os ${resto} restantes</button></div>` : "")
+        <button data-acao="verTudo">ver os ${resto} restantes</button></div>` : "")
    +(acima>0
     ? `<div class="estouro"><b>${acima}</b> ${acima>1?"cards estão":"card está"} em segundo plano porque HOJE encheu em <b>${esc(c.teto_tela)}</b>, que é o limite de atenção — não porque ${acima>1?"sejam":"seja"} menos urgente${acima>1?"s":""}. A capacidade de trabalho medida é <b>${esc(c.teto_wip)}</b> por Lei de Little.
-        <button onclick="verDepois()">ver quais</button></div>` : "");
+        <button data-acao="verDepois">ver quais</button></div>` : "");
   const dep=depRest;
   document.getElementById("fila2").innerHTML=avisoDepois()+(dep.length
     ? dep.filter(passa).map(cardFila).join("")
     : DEPOIS_FALHA ? ""
     : (D.depois||[]).length ? `<div class="empty">nada mais em segundo plano: o que vencia subiu para hoje.</div>`
     : (c.depois ? `<div class="empty">${esc(c.depois)} item(ns) em segundo plano.
-        <button class="link" onclick="verDepois()">carregar</button></div>`
+        <button class="link" data-acao="verDepois">carregar</button></div>`
       : `<div class="empty">nada em segundo plano.</div>`));
   foco=-1;   /* reset sem desenhar: contorno so aparece quando o dono aperta J ou K */
 }
