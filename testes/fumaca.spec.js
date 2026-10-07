@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 49;  /* v85 casca: 56; v86 painel e frentes: 49 */
+const TETO_ON_INDEX = 42;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42 */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
@@ -1821,4 +1821,56 @@ test('87c frentes: os seis desenhos do painel sem on*; o slug com aspa chega int
   expect(r.vistos.irParaFrente, 'matriz, frentes e small multiples entregam o slug inteiro').toEqual([r.hostil, r.hostil, r.hostil]);
   expect(r.t0 !== r.t1, 'o botao da faixa abre e recolhe').toBe(true);
   expect(r.vistos.verLoop, 'o seletor entrega a rodada').toEqual(["r'2"]);
+});
+
+/* v87 (plano 87c, modulo 3 · leituras e deliberacao, 07/10/2026): barra, linha, ver tudo e a caixa de
+   deliberar saem do onclick/onchange. O ref vem do banco e vai em data-a1 por esc(). A classe cobrada:
+   ref com aspa quebrando o argumento, e a caixa de deliberar (que nasce depois, dentro da linha) voltando
+   a trazer on*. A v86 reprova (on* nas leituras). */
+test('87c leituras: barra, linha e deliberacao sem on*; o ref com aspa chega inteiro', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const hostil = "o'1 \"x\" <b>";
+    const vistos = {enviaDelib:[], marcarLote:0};
+    window.enviaDelib = ref=>vistos.enviaDelib.push(ref);
+    window.marcarLote = ()=>{ vistos.marcarLote++; };
+    LE = [{ref:hostil, titulo:'peca hostil', tipo:'fato', frente:'00-teste', dias:0, dias_para_decurso:3},
+          {ref:'r-calma', titulo:'peca em dia', tipo:'fato', frente:'00-teste', dias:3, dias_para_decurso:9}];
+    SEL.clear(); LE_TUDO = 0;
+    let err=null; try { rLeituras(); } catch(e){ err=String(e); }
+    const raiz = ()=>[...document.querySelectorAll('#le-barra, #le-barra *, #leituras, #leituras *')];
+    const varrer = ()=>{ const inline=[], sem=[]; let n=0;
+      for (const el of raiz()) {
+        for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
+        for (const k of ['acao','aoMudar']) { const v=el.dataset[k]; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v);} } }
+      return {inline, sem, n}; };
+    const linhas0 = document.querySelectorAll('#leituras .lerow').length;
+    document.querySelector('#leituras [data-acao="leVerTudo"]').click();
+    const linhas1 = document.querySelectorAll('#leituras .lerow').length;
+    const cx = document.querySelector('#leituras .lerow input[type=checkbox]');
+    cx.click();
+    const marcou = SEL.has(hostil) && cx.checked;
+    document.querySelector('#le-barra [data-acao="marcarLote"]').click();
+    document.querySelector('#leituras [data-acao="abreDelib"]').click();
+    const caixa = document.getElementById('ld-'+hostil), aberta = caixa.classList.contains('on');
+    const v1 = varrer();                                  /* com a caixa de deliberar no DOM */
+    caixa.querySelector('[data-acao="enviaDelib"]').click();
+    caixa.querySelector('[data-acao="abreDelib"]').click();   /* cancelar fecha */
+    const fechada = !caixa.classList.contains('on');
+    document.querySelector('#le-barra [data-acao="leTodas"]').click();
+    const todas = SEL.size;
+    return {err, v1, linhas0, linhas1, marcou, aberta, fechada, todas, vistos, hostil};
+  });
+  expect(r.err, 'rLeituras derrubou o script').toBe(null);
+  expect(r.v1.inline, 'on* nas leituras e na caixa de deliberar').toEqual([]);
+  expect(r.v1.sem, 'acao sem registro').toEqual([]);
+  expect(r.v1.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(8);
+  expect([r.linhas0, r.linhas1], 'ver tudo traz a peca em dia').toEqual([1, 2]);
+  expect(r.marcou, 'o checkbox marca o ref inteiro').toBe(true);
+  expect(r.vistos.marcarLote, 'marcar em lote anda').toBe(1);
+  expect(r.aberta, 'deliberar abre a caixa do ref com aspa').toBe(true);
+  expect(r.vistos.enviaDelib, 'registrar entrega o ref inteiro').toEqual([r.hostil]);
+  expect(r.fechada, 'cancelar fecha').toBe(true);
+  expect(r.todas, 'selecionar todas').toBe(2);
 });
