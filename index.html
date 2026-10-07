@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v86";
+const VER="v87";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1227,7 +1227,10 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   confirmarModal:()=>confirmarModal(), desfazer:()=>desfazer(),
   /* v86 (87c, modulo 2 · painel e frentes): o argumento vem de data-a1, escapado por esc() */
   irAba:el=>irAba(el.dataset.a1), irParaFrente:el=>irParaFrente(el.dataset.a1),
-  alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value)};
+  alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value),
+  /* v87 (87c, modulo 3 · leituras e deliberacao): o ref vem de data-a1, escapado por esc() */
+  leSel:el=>leSel(el.dataset.a1,el), leTodas:()=>leTodas(), marcarLote:()=>marcarLote(),
+  leVerTudo:()=>leVerTudo(), abreDelib:el=>abreDelib(el.dataset.a1), enviaDelib:el=>enviaDelib(el.dataset.a1)};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -3034,10 +3037,10 @@ function leBarra(){
   b.innerHTML=LE.length
    ? `<b>${LE.length}</b> peça(s) esperando sua ciência
       <span class="spacer" style="flex:1"></span>
-      <button class="mais" onclick="leTodas()">${SEL.size===LE.length&&LE.length?"limpar seleção":"selecionar todas"}</button>
+      <button class="mais" data-acao="leTodas">${SEL.size===LE.length&&LE.length?"limpar seleção":"selecionar todas"}</button>
       <button class="prim" ${SEL.size?"":"disabled"}
         style="width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:var(--fs-2);opacity:${SEL.size?1:.4};cursor:${SEL.size?"pointer":"not-allowed"}"
-        onclick="marcarLote()">
+        data-acao="marcarLote">
         ${SEL.size?`marcar ${SEL.size} como lida${SEL.size===1?"":"s"}`:"marcar como lidas"}</button>`
    : `<b>zero</b> peças esperando sua ciência. Silêncio aqui é informação.`;}
 /* v53 · DIVULGAÇÃO PROGRESSIVA (t619). A aba deixa de ser depósito: na dobra sobe só
@@ -3049,7 +3052,7 @@ function leUrgente(x){return x.dias===0||(x.dias_para_decurso??99)<=1;}
 function leRow(x){
   return `<div class="lerow">
       <input type="checkbox" ${SEL.has(x.ref)?"checked":""} aria-label="marcar ${esc(x.ref)}"
-        onchange="leSel('${escAttr(x.ref)}',this)">
+        data-ao-mudar="leSel" data-a1="${esc(x.ref)}">
       <div class="cor">
         <div class="t">${esc(x.titulo)}</div>
         <div class="m"><span class="mono">#${esc(x.ref)}</span><span>${esc(x.tipo||"")}</span>
@@ -3058,7 +3061,7 @@ function leRow(x){
           <span>${x.dias_para_decurso>0?"decurso em "+esc(x.dias_para_decurso)+"d":"vence hoje por decurso"}</span></div>
         ${x.veredito?`<div class="v">${esc(x.veredito)}</div>`:""}
         <div class="acoesle">
-          <button onclick="abreDelib('${escAttr(x.ref)}')" id="bd-${esc(x.ref)}">deliberar</button>
+          <button data-acao="abreDelib" data-a1="${esc(x.ref)}" id="bd-${esc(x.ref)}">deliberar</button>
         </div>
         <div class="ledelib" id="ld-${esc(x.ref)}"></div>
       </div></div>`;}
@@ -3072,15 +3075,15 @@ function rLeituras(){
   const fora=ord.length-dobra.length;
   el.innerHTML=(dobra.length?dobra.map(leRow).join("")
       :`<div class="empty">nada fora de banda. ${ord.length} peça(s) esperando ciência, todas em dia.</div>`)
-   +(fora>0?`<button class="mais" style="width:100%;margin-top:8px" onclick="leVerTudo()">ver tudo (${fora} em dia, fora da dobra)</button>`:"");}
+   +(fora>0?`<button class="mais" style="width:100%;margin-top:8px" data-acao="leVerTudo">ver tudo (${fora} em dia, fora da dobra)</button>`:"");}
 function abreDelib(ref){
   const d=document.getElementById("ld-"+ref); if(!d)return;
   if(!d.innerHTML.trim()){
     d.innerHTML=`<textarea id="dt-${esc(ref)}" rows="3"
         placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
       <div class="acoesle">
-        <button class="prim" onclick="enviaDelib('${escAttr(ref)}')">registrar e marcar lida</button>
-        <button onclick="abreDelib('${escAttr(ref)}')">cancelar</button>
+        <button class="prim" data-acao="enviaDelib" data-a1="${esc(ref)}">registrar e marcar lida</button>
+        <button data-acao="abreDelib" data-a1="${esc(ref)}">cancelar</button>
       </div>`;}
   const abriu=!d.classList.contains("on");
   d.classList.toggle("on",abriu);
