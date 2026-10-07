@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v85";
+const VER="v86";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1224,7 +1224,10 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   onBusca:el=>onBusca(el.value), limpaBusca:()=>limpaBusca(), toggleChips:()=>toggleChips(),
   limparFiltros:()=>limparFiltros(), recarregarNovo:()=>recarregarNovo(),
   fundoModal:(el,ev)=>{if(ev.target===el)fecharModal();}, fecharModal:()=>fecharModal(),
-  confirmarModal:()=>confirmarModal(), desfazer:()=>desfazer()};
+  confirmarModal:()=>confirmarModal(), desfazer:()=>desfazer(),
+  /* v86 (87c, modulo 2 · painel e frentes): o argumento vem de data-a1, escapado por esc() */
+  irAba:el=>irAba(el.dataset.a1), irParaFrente:el=>irParaFrente(el.dataset.a1),
+  alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value)};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -3277,8 +3280,8 @@ function rHero(){
     <div class="t">${esc(t)}</div>
     <div class="s">${esc(sub)}</div>
     <div class="hchips">
-      <span class="hc" onclick="irAba('agora')"><b>${n1}</b> na fila de hoje</span>
-      ${cor?`<span class="hc" onclick="irAba('agora')"><b>${cor}</b> correção${cor>1?"ões":""} esperando</span>`:""}
+      <span class="hc" data-acao="irAba" data-a1="agora"><b>${n1}</b> na fila de hoje</span>
+      ${cor?`<span class="hc" data-acao="irAba" data-a1="agora"><b>${cor}</b> correção${cor>1?"ões":""} esperando</span>`:""}
       ${par>0?`<span class="hc"><b>${rs(par)}</b> parados por uma palavra</span>`:""}
       ${nivel?`<span class="hc">sistema no degrau <b>${nivel}</b> · elo ${esc(elo?elo.dimensao:"—")}${(()=>{const t=travasMat();const n=t?t.kpis.length:0;return n&&nivel<5?` · <b>${n}</b> KPI${n>1?"s":""} trava${n>1?"m":""} o ${nivel+1}`:"";})()}</span>`:""}
     </div></div>`;}
@@ -3418,7 +3421,7 @@ function rM9(){
     for(let col=1;col<=3;col++){
       const q=(lin-1)*3+col, z=zona(q), dentro=M.filter(m=>m.quadrante===q);
       h+=`<div class="cel ${z}"><span class="qn">${q}</span>`+
-         dentro.map(m=>`<span class="pt" onclick="irParaFrente('${escAttr(m.frente)}')"
+         dentro.map(m=>`<span class="pt" data-acao="irParaFrente" data-a1="${esc(m.frente)}"
              title="${esc(m.frente)}${m.quadrante_anterior?` — veio do quadrante ${esc(m.quadrante_anterior)}`:""}">
              ${seta(m.movimento)} ${esc(m.frente.replace(/^\d+-/,""))}</span>`).join("")+
          `<span class="zl">${dentro.length?"":rot[z]}</span></div>`;}}
@@ -3443,7 +3446,7 @@ function rFrentes(){
                : meu/Math.max(tot,1) >= .5 ? ["igor","gargalo é seu"]
                : ["claude","gargalo é meu"];
     const wr=100*(f.a_receber||0)/teto, wp=100*(f.a_pagar||0)/teto; const dsem=f.dias_sem_tocar, mv=dsem==null?["","sem registro"]:dsem<=1?["ok","andou hoje"]:dsem<=3?["ok","andou ha "+dsem+"d"]:dsem<=7?["med","parada ha "+dsem+"d"]:["bad","parada ha "+dsem+"d"];
-    return `<div class="fcard ${esc(f.status)}" onclick="irParaFrente('${escAttr(f.slug)}')">
+    return `<div class="fcard ${esc(f.status)}" data-acao="irParaFrente" data-a1="${esc(f.slug)}">
       <div class="fh"><span class="fn">${esc(f.slug.replace(/^\d+-/,""))}</span>
         <span class="tag ${mv[0]}" title="status declarado: ${esc(lb)}">${ic} ${esc(mv[1])}</span></div>
       <div class="fbar">
@@ -3481,7 +3484,7 @@ function rSmallMult(){
         const h=v/teto*H;
         return `<rect x="${(i*(bw+g)).toFixed(1)}" y="${(H-Math.max(h,v?1:0)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,v?1:0).toFixed(1)}" fill="${v?"var(--bl)":"var(--line2)"}"/>`;
       }).join("");
-      return `<div class="fcard ${esc(f.status||"")}" style="cursor:pointer" onclick="irParaFrente('${escAttr(f.slug)}')">
+      return `<div class="fcard ${esc(f.status||"")}" style="cursor:pointer" data-acao="irParaFrente" data-a1="${esc(f.slug)}">
         <div class="fh"><span class="fn">${esc(String(f.slug).replace(/^\d+-/,""))}</span>
           <span class="tag">${esc(f.fechadas_periodo||0)} fechados</span></div>
         <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img"
@@ -3624,7 +3627,7 @@ function rFaixa5(){
       <div class="e">${mt} · ${banda}</div>${quemQ(t)}</div>`;});
   el.innerHTML=`<div class="f5cab">quem move estes números: você, salvo onde o número diz outro dono</div>`+
     `<div class="faixa5" role="group" aria-label="os números do dia">${tiles.join("")}</div>`+
-    `<button class="f5mais" type="button" onclick="this.parentNode.classList.toggle('f5todos')">ver ou recolher os ${tiles.length} números do dia</button>`;}
+    `<button class="f5mais" type="button" data-acao="alternaFaixa5">ver ou recolher os ${tiles.length} números do dia</button>`;}
 /* v74 · t1624: o que saiu da faixa continua a um clique, com o mesmo dado de antes */
 function maisCaixa(){
   const ult=c=>{const r=(D.se||[]).find(x=>x.chave===c);return r&&r.serie&&r.serie.length?+r.serie[r.serie.length-1]:null;};
@@ -3705,7 +3708,7 @@ function rEvolucao(){
     <div class="lx">${esc(L.leitura)}</div>
     ${(L.achados||[]).map(a=>`<div class="ach">${esc(a)}</div>`).join("")}
     ${L.proxima?`<div class="ach" style="border-left:2px solid var(--vio)"><b style="color:var(--lil)">próxima:</b> ${esc(L.proxima)}</div>`:""}
-    ${D.loop.length>1?`<div style="margin-top:12px"><select onchange="verLoop(this.value)">
+    ${D.loop.length>1?`<div style="margin-top:12px"><select data-ao-mudar="verLoop">
       ${D.loop.map(l=>`<option value="${esc(l.rodada)}">${esc(l.data)} · ${esc(l.rodada)}</option>`).join("")}</select></div>`:""}
   </div>`:"";
   const min=(D.mat||[]).length?Math.min(...D.mat.map(m=>m.nivel)):null;
