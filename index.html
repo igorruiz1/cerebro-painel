@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v90";
+const VER="v91";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1141,7 +1141,8 @@ let CARGAINCOMPLETA=false;                      // v45: a ultima carga voltou co
 /* v71 · R7: TODO texto que vem do banco (snapshot, view, rpc, erro do Supabase) entra no HTML por um
    destes tres, conforme o CONTEXTO, e nunca cru — inclusive numero, que o banco pode mandar como texto:
      esc(x)      texto ou valor de atributo entre aspas duplas;
-     escAttr(x)  argumento JS entre aspas simples dentro de atributo: onclick="f('${escAttr(x)}')".
+     escAttr(x)  argumento JS entre aspas simples dentro de atributo de evento (handler inline).
+                 Desde a v90 o index nao tem handler inline; escAttr fica para o bloco comum.
                  esc() ali NAO serve: a aspa vira &#39;, o navegador decodifica antes de rodar o JS e a
                  aspa fecha o argumento. escAttr escapa para o JS e depois para o HTML, nessa ordem;
      urlSegura(u) href/src: so https:// passa, o resto vira "#".

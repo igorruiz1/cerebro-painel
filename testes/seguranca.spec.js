@@ -188,7 +188,11 @@ test('g. mesma tag do supabase-js e mesma CSP do presidente.html; login nunca cr
   const csp=s=>(s.match(/<meta http-equiv="Content-Security-Policy"[^>]*>/)||[])[0];
   expect(externos(seg), 'um script externo, igual ao do presidente').toEqual(externos(pres));
   expect(externos(seg).length).toBe(1);
-  expect(csp(seg), 'CSP igual').toBe(csp(pres));
+  /* 87 fecho (s1183, 07/10/2026): o script-src do presidente leva o hash do script dele e nao tem mais
+     'unsafe-inline'; o resto da politica continua igual nas duas paginas. */
+  const semScript = c=>(c||'').replace(/script-src [^;]*;\s*/,'');
+  expect(semScript(csp(seg)), 'CSP igual fora do script-src').toBe(semScript(csp(pres)));
+  expect(csp(seg)).toMatch(/script-src 'self' [^;]*https:\/\/cdn\.jsdelivr\.net/);
   expect(csp(seg)).toBeTruthy();
   for (const c of seg.match(/signInWithOtp\([^)]*\)/g)||[]) expect(c).toContain('shouldCreateUser:false');
   /* o segredo nao vai a console, armazenamento ou banco */

@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 1;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21; v90 fila: 1 (o exemplo no comentario do escAttr, que sai no fecho) */
+const TETO_ON_INDEX = 0;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21; v90 fila: 1; v91 fecho (s1183): 0, o exemplo no comentario do escAttr saiu. A v90 reprova aqui. */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
