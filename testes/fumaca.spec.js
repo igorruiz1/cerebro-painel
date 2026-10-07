@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 56;
+const TETO_ON_INDEX = 49;  /* v85 casca: 56; v86 painel e frentes: 49 */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
@@ -1777,4 +1777,48 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
   expect(r.dentro, 'clique dentro do modal nao fecha').toBe(0);
   expect(r.chamadas.fecharModal, 'clique no fundo fecha').toEqual([0]);
   expect(erros).toEqual([]);
+});
+
+/* v86 (plano 87c, modulo 2 · painel e frentes, 07/10/2026): heroi, matriz de 9, frentes, small multiples,
+   faixa de 5 e seletor de rodada saem do onclick. Aqui o argumento vem do banco (slug de frente), entao a
+   classe que se cobra e a da aspa: com onclick="f('${escAttr(x)}')" a aspa dependia do escape duplo; com
+   data-a1="${esc(x)}" o valor chega inteiro ao clique, seja qual for o texto. A v85 reprova (on* nos seis). */
+test('87c frentes: os seis desenhos do painel sem on*; o slug com aspa chega inteiro ao clique', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const hostil = "09-o'brien \"x\" <b>";
+    const vistos = {irAba:[], irParaFrente:[], verLoop:[]};
+    for (const k of Object.keys(vistos)) window[k] = v=>vistos[k].push(v);
+    D.fila=[{nivel:1}]; D.cor=[{}]; D.ev=[]; D.mat=[];
+    D.m9=[{frente:hostil, quadrante:9, movimento:"melhorou"}];
+    D.fr=[{slug:hostil, status:"verde", tarefas:1, a_receber:10}];
+    D.frs=[{slug:hostil, status:"verde", serie:[1,2], fechadas_periodo:3, pico:2, desde:"2026-10-01"}];
+    D.loop=[{rodada:"r1",recencia:1,titulo:"t",data:"01/10",leitura:"l"},{rodada:"r'2",recencia:2,titulo:"t2",data:"02/10",leitura:"l2"}];
+    D.se=[]; D.wip={ativos_ate_48h:1,teto:18,excedente:0}; D.garg=[];
+    D.rw={dias_sobrevida_pior:8,dias_sobrevida:32,caixa_hoje:100,queima_dia_base:10};
+    let err=null;
+    try { rHero(); rM9(); rFrentes(); rSmallMult(); rAgora(); rEvolucao(); } catch(e){ err=String(e); }
+    const alvo = ['#hero-dash','#m9','#frentes','#smallmult','#faixa5','#loop'];
+    const inline=[], sem=[]; let n=0;
+    for (const sel of alvo) for (const el of document.querySelectorAll(sel+','+sel+' *')) {
+      for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(sel+' '+el.tagName+' '+a.name);
+      for (const k of ['acao','aoMudar']) { const v=el.dataset[k]; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v);} } }
+    document.querySelector('#hero-dash .hc[data-acao="irAba"]').click();
+    document.querySelector('#m9 .pt').click();
+    document.querySelector('#frentes .fcard').click();
+    document.querySelector('#smallmult .fcard').click();
+    const f5=document.querySelector('#faixa5'), b=f5.querySelector('.f5mais');
+    const t0=f5.classList.contains('f5todos'); b.click(); const t1=f5.classList.contains('f5todos');
+    const sl=document.querySelector('#loop select'); sl.value="r'2"; sl.dispatchEvent(new Event('change',{bubbles:true}));
+    return {err, inline, sem, n, vistos, hostil, t0, t1};
+  });
+  expect(r.err, 'algum desenho derrubou o script').toBe(null);
+  expect(r.inline, 'on* nos seis desenhos').toEqual([]);
+  expect(r.sem, 'acao sem registro').toEqual([]);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(7);
+  expect(r.vistos.irAba, 'o atalho do heroi abre a aba').toEqual(['agora']);
+  expect(r.vistos.irParaFrente, 'matriz, frentes e small multiples entregam o slug inteiro').toEqual([r.hostil, r.hostil, r.hostil]);
+  expect(r.t0 !== r.t1, 'o botao da faixa abre e recolhe').toBe(true);
+  expect(r.vistos.verLoop, 'o seletor entrega a rodada').toEqual(["r'2"]);
 });
