@@ -565,10 +565,10 @@ const blocosComuns = arq => {
   for (const x of fonte.matchAll(/\/\* comum:([a-z]+) [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:\1 \*\//g)) m[x[1]] = x[2];
   return m;
 };
-test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhido e porta do segundo fator) e o mesmo byte a byte', async ()=>{
+test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhido, porta do segundo fator e escape) e o mesmo byte a byte', async ()=>{
   const a = blocosComuns('index.html'), b = blocosComuns('presidente.html');
-  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['fator','hoje','recolhe','teto']);
-  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['fator','hoje','recolhe','teto']);
+  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['escapa','fator','hoje','recolhe','teto']);
+  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['escapa','fator','hoje','recolhe','teto']);
   for (const k of Object.keys(a)) expect(b[k], `bloco comum:${k} divergiu`).toBe(a[k]);
 });
 
@@ -2096,4 +2096,25 @@ test('82b: aba e coluna atuais se leem por atributo ARIA, sem classe .on', async
   expect(r.nSel).toBe(1);
   expect(r.fundoSel, 'a coluna atual pinta --acc pelo aria-selected').toBe('rgb(47, 128, 255)');
   expect(r.fundoOutro).not.toBe(r.fundoSel);
+});
+
+/* v82 / p4.25 (plano 87a, 07/10/2026): esc, escAttr, urlSegura e rs moram num bloco comum:escapa,
+   igual byte a byte nas duas paginas, e em nenhum outro lugar. O rs do index mostrava "R$ NaN" para
+   valor que nao e numero; o do presidente ja dava "—". Dois donos do mesmo formato: sobrou um. */
+test('87a: escape e reais num bloco comum so, e rs nao mostra NaN', async ({page})=>{
+  const fs = require('fs');
+  const ler = a=>fs.readFileSync(path.resolve(__dirname,'..',a),'utf8');
+  const bloco = s=>(s.match(/\/\* comum:escapa [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:escapa \*\//)||[])[1];
+  const fora = s=>s.replace(/\/\* comum:escapa [\s\S]*?\/\* fim comum:escapa \*\//,'');
+  for (const a of ['index.html','presidente.html']) {
+    const s = ler(a), b = bloco(s);
+    expect(b, a+' tem o bloco comum:escapa').toBeTruthy();
+    for (const f of ['esc','escAttr','urlSegura','rs'])
+      expect(b, a+': '+f+' no bloco').toMatch(new RegExp('^const '+f+'=', 'm'));
+    expect(fora(s).match(/^\s*const (esc|escAttr|urlSegura|rs)\s*=\s*[a-z]\s*=>/gm), a+': definicao fora do bloco').toBeNull();
+  }
+  expect(bloco(ler('index.html'))).toBe(bloco(ler('presidente.html')));
+  await abrir(page);
+  const r = await page.evaluate(()=>[rs(NaN), rs('abc'), rs(null), rs(undefined), rs(12345.6), rs(-1234.4), rs('900')]);
+  expect(r).toEqual(['—','—','—','—','R$ 12.346','-R$ 1.234','R$ 900']);
 });
