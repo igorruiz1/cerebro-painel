@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v88";
+const VER="v89";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1239,7 +1239,14 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
      o atalho global (document, keydown) nao ver a tecla; aqui os dois ouvintes moram no document, e so
      stopImmediatePropagation segura o que foi registrado DEPOIS do ligarAcoes. */
   abreTitulo:(el,ev)=>{ if(ev.type==="keydown"){ if(ev.key!=="Enter"&&ev.key!==" ")return;
-    ev.preventDefault(); ev.stopImmediatePropagation(); } abreTitulo(el); }};
+    ev.preventDefault(); ev.stopImmediatePropagation(); } abreTitulo(el); },
+  /* v89 (87c, modulo 5 · Tudo e secoes): raia, ordem e faixa da Tudo; escolher, agir e +7d do inventario
+     e da sentinela (lista JSON em data-a1); secoes por data-a1/a2 */
+  raiaTudo:el=>raiaTudo(el.dataset.a1), ordenaTudo:el=>ordenaTudo(el.dataset.a1),
+  filtraTudo:el=>filtraTudo(el.dataset.a1), ivEscolher:el=>ivEscolher(el.dataset.a1,el.dataset.a2),
+  ivEnviar:el=>ivEnviar(...JSON.parse(el.dataset.a1)), ivAgir:el=>ivAgir(...JSON.parse(el.dataset.a1)),
+  ivAdiar:el=>ivAdiar(...JSON.parse(el.dataset.a1)),
+  recarregarSecao:el=>recarregarSecao(el.dataset.a1,el.dataset.a2), abrirSecao:el=>abrirSecao(el.dataset.a1,el.dataset.a2)};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -1322,14 +1329,14 @@ function rTudo(){
   if(ordbar) ordbar.innerHTML=
     `<span class="ordl">raia</span>`+
     [["todas","as duas"],["igor","suas"],["claude","minhas"]].map(([k,r])=>
-      `<button class="ordb" aria-pressed="${TUDOR===k}" onclick="raiaTudo('${k}')">${r}</button>`).join("")+
+      `<button class="ordb" aria-pressed="${TUDOR===k}" data-acao="raiaTudo" data-a1="${k}">${r}</button>`).join("")+
     `<span class="ordl">ordenar por</span>`+
     [["frente","frente"],["prazo","prazo"],["idade","mais parado"]].map(([k,r])=>
-      `<button class="ordb" aria-pressed="${TUDOORD===k}" onclick="ordenaTudo('${k}')">${r}</button>`).join("");
+      `<button class="ordb" aria-pressed="${TUDOORD===k}" data-acao="ordenaTudo" data-a1="${k}">${r}</button>`).join("");
   const nav=document.getElementById("nav-tudo");
   if(nav) nav.innerHTML=FX.map(([k,r])=>{
     const n=fxCount(k); if(!n&&k!=="todas")return "";
-    return `<button class="secbt" aria-pressed="${TUDOF===k}" onclick="filtraTudo('${k.replace(/'/g,"")}')">${r} <span class="n">${n}</span></button>`;
+    return `<button class="secbt" aria-pressed="${TUDOF===k}" data-acao="filtraTudo" data-a1="${esc(k)}">${r} <span class="n">${n}</span></button>`;
   }).join("");
   const alvoBruto = TUDOF==="todas" ? I : I.filter(x=>x.faixa===TUDOF);
   const esc2=t=>esc(String(t==null?"":t));
@@ -1391,7 +1398,7 @@ function grupoHTML(alvo,R,esc2){
     const linhas=rs.map(x=>{
       const pz = x.prazo ? String(x.prazo).slice(8,10)+"/"+String(x.prazo).slice(5,7) : "sem prazo";
       const atr = (x.atraso_dias!=null&&x.atraso_dias>0) ? ` <span class="atr">+${esc2(x.atraso_dias)}d</span>` : "";
-      const id = esc2(x.id), idJs = "'"+escAttr(x.id)+"'";
+      const id = esc2(x.id);
       return `<div class="ivrow" id="iv-${id}">
         <div class="ivm">
           <code>${id}</code>
@@ -1409,7 +1416,7 @@ function grupoHTML(alvo,R,esc2){
              ${(x.opcoes||x.recomendacao||x.criterio_pronto)
                ? `<details class="ivd"><summary>o que pesa nesta decisão</summary>
                    ${x.opcoes&&x.opcoes.length?`<ul class="ivop">`+x.opcoes.map(o=>
-                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" onclick="ivEscolher(${idJs},'${escAttr(o.label)}')">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
+                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" data-acao="ivEscolher" data-a1="${id}" data-a2="${esc2(o.label)}">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
                       +(x.escolha?`<div class="ivesc">escolhido: <b>${esc2(x.escolha)}</b></div>`:``):""}
                    ${x.recomendacao?`<div class="ivrec"><b>minha recomendação</b> ${esc2(x.recomendacao)}</div>`:""}
                    ${x.criterio_pronto?`<div class="ivcp"><b>pronto quando</b> ${esc2(x.criterio_pronto)}</div>`:""}
@@ -1537,19 +1544,20 @@ function execChip(x){
   return `<span class="ivnat ex-${x.executor_possivel}" title="${esc(e[1])}">${esc(e[0])}</span>`;
 }
 function botoesIv(x,esc2,pref){
-  const id="'"+escAttr(x.id)+"'";   /* argumento JS: o id vai entre aspas, nunca cru dentro do onclick */
-  const P="'"+(pref||"iv-")+"'";
+  /* v89 (87c, modulo 5 · Tudo e secoes): os argumentos vao como UMA lista JSON em data-a1, escapada por
+     esc(); o id segue texto, como ia entre aspas no onclick, e o +7d segue numero */
+  const ref=String(x.id), P=pref||"iv-", lista=a=>`data-a1="${esc(JSON.stringify(a))}"`;
   const acoes=Array.isArray(x.acoes)?x.acoes:[];
   if(!acoes.length) return `<span class="ivsem">o banco não oferece ação para este card</span>`;
   const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
   const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
     const rot=esc2(a.rotulo||a.verbo);
-    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" onclick="ivEnviar(${id},'${escAttr(a.verbo)}',null,'${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
+    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" data-acao="ivEnviar" ${lista([ref,a.verbo,null,a.rotulo||a.verbo,P])}>${rot}</button>`;
     const campo=a.arg==="data"?"date":"texto"; /* feita sem arg tambem cai aqui: abre o campo da prova */
-    return `<button class="${cls(a.verbo)}" onclick="ivAgir(${id},'${escAttr(a.verbo)}','${campo}','${escAttr(a.rotulo||a.verbo)}',${P})">${rot}</button>`;
+    return `<button class="${cls(a.verbo)}" data-acao="ivAgir" ${lista([ref,a.verbo,campo,a.rotulo||a.verbo,P])}>${rot}</button>`;
   });
   /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
-  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" onclick="ivAdiar(${id},7,${P})">+7d</button>`);
+  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" data-acao="ivAdiar" ${lista([ref,7,P])}>+7d</button>`);
   return bs.join("");
 }
 
@@ -1621,13 +1629,13 @@ function seloSecao(sup,id){
   const velho=min>=15;
   sl.className="selosec"+(velho?" velho":"");
   sl.innerHTML=`dados desta seção medidos ${min<1?"agora":"há "+min+" min"}`
-    +(velho?` <button onclick="recarregarSecao('${sup}','${id}')">atualizar</button>`:"");
+    +(velho?` <button data-acao="recarregarSecao" data-a1="${esc(sup)}" data-a2="${esc(id)}">atualizar</button>`:"");
 }
 async function recarregarSecao(sup,id){ await carregarSecao(id,true); seloSecao(sup,id); }
 function montaSecnav(sup){
   const el=document.getElementById("nav-"+sup); if(!el)return;
   el.innerHTML=SECOES[sup].map(([id,rot])=>
-    `<button class="secbt"${SECATIVA[sup]===id?' aria-current="true"':""} onclick="abrirSecao('${sup}','${id}')">${rot}</button>`).join("");
+    `<button class="secbt"${SECATIVA[sup]===id?' aria-current="true"':""} data-acao="abrirSecao" data-a1="${esc(sup)}" data-a2="${esc(id)}">${rot}</button>`).join("");
 }
 async function abrirSecao(sup,id){
   SECATIVA[sup]=id; montaSecnav(sup);

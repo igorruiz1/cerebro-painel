@@ -1724,7 +1724,7 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
-const TETO_ON_INDEX = 30;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30 */
+const TETO_ON_INDEX = 21;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21 */
 test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
@@ -1962,4 +1962,65 @@ test('87c titulo: Enter e espaco abrem o titulo, outra tecla nao, e o atalho glo
   expect(r.espaco, 'espaco fecha, sem rolar a pagina, e o atalho nao ve').toEqual([true, false, 1]);
   expect(r.clique, 'clique abre').toBe(true);
   expect(erros).toEqual([]);
+});
+
+/* v89 (plano 87c, modulo 5 · Tudo e secoes, 07/10/2026): raia, ordem e faixa da Tudo, as opcoes e os botoes
+   do inventario (os mesmos da sentinela, com outro prefixo) e a navegacao de secoes saem do onclick. Duas
+   classes: (1) id e rotulo que vem do banco com aspa quebravam o argumento e iam por escAttr; agora vao
+   em data-a1/a2 por esc(), ou numa lista JSON quando sao varios; (2) o tipo de cada argumento: o id seguia
+   como TEXTO (ia entre aspas), o +7d como NUMERO e o prefixo da superficie (iv- ou sv-) tem de chegar, senao
+   o desfazer tira a linha da aba errada. A v88 reprova (on* na Tudo). */
+test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e rotulo com aspa chegam inteiros', async ({page})=>{
+  await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const hostil = "9'1 \"x\" <b>", rot = "esp'era \"já\"";
+    const vistos = {raia:[], ordem:[], faixa:[], escolher:[], enviar:[], agir:[], adiar:[], secao:[], recarga:[]};
+    window.raiaTudo = k=>vistos.raia.push(k); window.ordenaTudo = k=>vistos.ordem.push(k);
+    window.filtraTudo = k=>vistos.faixa.push(k);
+    window.ivEscolher = (...a)=>vistos.escolher.push(a); window.ivEnviar = (...a)=>vistos.enviar.push(a);
+    window.ivAgir = (...a)=>vistos.agir.push(a); window.ivAdiar = (...a)=>vistos.adiar.push(a);
+    window.abrirSecao = (...a)=>vistos.secao.push(a); window.recarregarSecao = (...a)=>vistos.recarga.push(a);
+    const acoes = [{verbo:'esperar', arg:null, rotulo:rot}, {verbo:'feita', arg:null, rotulo:'concluir'},
+                   {verbo:'repactuar', arg:'data', rotulo:'repactuar'}];
+    D.invr = [];
+    D.inv = [{id:hostil, dono:'igor', faixa:'vencida', card_pronto:true, no_painel:true, frente:'00-teste',
+              prazo:'2026-10-01', titulo:'card hostil', opcoes:[{label:rot, recomendada:true, consequencia:'c'}], acoes}];
+    TUDOR = 'todas'; TUDOF = 'todas'; TUDOORD = 'frente';
+    let err=null; try { rTudo(); } catch(e){ err=String(e); }
+    const sv = document.createElement('div'); sv.id = 'sv-teste';
+    sv.innerHTML = botoesIv({id:hostil, acoes}, esc, 'sv-'); document.body.appendChild(sv);
+    montaSecnav('panorama'); SECQUANDO['caixa'] = Date.now()-20*60000; seloSecao('panorama','caixa');
+    const raiz = ()=>[...document.querySelectorAll('#ord-tudo *, #nav-tudo *, #tudo-lista *, #sv-teste *, #nav-panorama *, #selo-panorama *')];
+    const inline=[], sem=[]; let n=0;
+    for (const el of raiz()) {
+      for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
+      const v=el.dataset.acao; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v);} }
+    document.querySelector('#ord-tudo [data-acao="raiaTudo"][data-a1="igor"]').click();
+    document.querySelector('#ord-tudo [data-acao="ordenaTudo"][data-a1="idade"]').click();
+    document.querySelector('#nav-tudo [data-acao="filtraTudo"][data-a1="vencida"] .n').click();  /* clique no numero dentro do botao */
+    document.querySelector('#tudo-lista [data-acao="ivEscolher"]').click();
+    for (const pre of ['#tudo-lista', '#sv-teste']) {
+      document.querySelector(pre+' [data-acao="ivEnviar"]').click();
+      document.querySelector(pre+' [data-acao="ivAgir"]').click();
+      document.querySelector(pre+' [data-acao="ivAdiar"]').click();
+    }
+    document.querySelector('#nav-panorama [data-acao="abrirSecao"][data-a2="frentes"]').click();
+    document.querySelector('#selo-panorama [data-acao="recarregarSecao"]').click();
+    sv.remove();
+    return {err, inline, sem, n, vistos, hostil, rot};
+  });
+  expect(r.err, 'rTudo derrubou o script').toBe(null);
+  expect(r.inline, 'on* na Tudo, no inventario ou nas secoes').toEqual([]);
+  expect(r.sem, 'acao sem registro').toEqual([]);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(20);
+  expect([r.vistos.raia, r.vistos.ordem, r.vistos.faixa]).toEqual([['igor'], ['idade'], ['vencida']]);
+  expect(r.vistos.escolher, 'escolher entrega id e rotulo inteiros').toEqual([[r.hostil, r.rot]]);
+  expect(r.vistos.enviar, 'enviar: id texto, verbo, valor nulo, rotulo e o prefixo de cada superficie').toEqual(
+    [[r.hostil,'esperar',null,r.rot,'iv-'], [r.hostil,'esperar',null,r.rot,'sv-']]);
+  expect(r.vistos.agir, 'feita sem arg abre o campo da prova').toEqual(
+    [[r.hostil,'feita','texto','concluir','iv-'], [r.hostil,'feita','texto','concluir','sv-']]);
+  expect(r.vistos.adiar, '+7d: dias como numero').toEqual([[r.hostil,7,'iv-'], [r.hostil,7,'sv-']]);
+  expect(r.vistos.secao).toEqual([['panorama','frentes']]);
+  expect(r.vistos.recarga, 'selo velho oferece atualizar').toEqual([['panorama','caixa']]);
 });
