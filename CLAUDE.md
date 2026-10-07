@@ -58,6 +58,8 @@ página**, trocando a linha antiga pelo fato novo com a data.
 - Rodar local antes de empurrar: `npm run teste`.
 - Versão nova do `presidente.html`: `const VERP` e `version.json` mudam juntos. A página
   confere a versão pelo `version.json`; esquecido, ela oferece ao Igor a versão velha (teste p4.20 cobra).
+- Mexeu no `<script>` do `presidente.html`: `node scripts/csp-hash.mjs` antes do commit. A CSP autoriza só o hash
+  daquele script, sem `unsafe-inline` (fecho do plano 87, 07/10/2026); hash velho = página em branco (teste "87 fecho" cobra).
 
 ## Escrita
 

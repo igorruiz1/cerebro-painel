@@ -2199,3 +2199,24 @@ test('p4.27: folego e pior semana com variacao de 7 dias; o toque abre a lista q
   expect(avisos, 'lista que nao fecha com o numero acusa').toEqual([1,1]);
   expect(erros).toEqual([]);
 });
+
+/* 87 fecho (s1183, 07/10/2026): o presidente roda sem 'unsafe-inline' em script-src. A CSP autoriza so o hash do
+   unico script inline; mexeu no script, rode `node scripts/csp-hash.mjs`. O hash sai do texto em LF, como o
+   navegador calcula depois de normalizar o CRLF do working tree. A p4.27 reprova aqui. */
+test('87 fecho: CSP do presidente sem unsafe-inline e com o hash do script que roda', async ({page})=>{
+  const fs = require('fs'), crypto = require('crypto');
+  const s = fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8').replace(/\r\n?/g,'\n');
+  const csp = (s.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)"/)||[])[1];
+  expect(csp, 'achou a CSP (teste sem alvo passa vazio)').toBeTruthy();
+  const scriptSrc = (csp.match(/script-src ([^;]*)/)||[])[1];
+  expect(scriptSrc, 'achou o script-src').toBeTruthy();
+  expect(scriptSrc, 'sem unsafe-inline').not.toContain("'unsafe-inline'");
+  const inl = [...s.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  expect(inl.length, 'um script inline so').toBe(1);
+  expect(inl[0][1].length, 'o script inline tem corpo').toBeGreaterThan(100000);
+  const h = crypto.createHash('sha256').update(inl[0][1],'utf8').digest('base64');
+  expect(scriptSrc, 'hash do script atual: rode node scripts/csp-hash.mjs').toContain(`'sha256-${h}'`);
+  const erros = await abrir(page);
+  expect(await page.evaluate(()=>typeof VERP), 'o script rodou sob a CSP').toBe('string');
+  expect(erros).toEqual([]);
+});
