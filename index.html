@@ -1127,7 +1127,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v82";
+const VER="v83";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1155,6 +1155,20 @@ const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s
 /* rs: valor ausente ou que nao e numero vira "—" (o index mostrava "R$ NaN"); sinal antes do R$; espaco comum */
 const rs=v=>v==null||isNaN(+v)?"—":(Math.round(+v)<0?"-":"")+"R$ "+Math.abs(Math.round(+v)).toLocaleString("pt-BR");
 /* fim comum:escapa */
+/* comum:acao · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
+/* acao por atributo (plano 87b): data-acao no clique; data-ao-digitar, -mudar, -tecla e -colar nos outros
+   eventos; argumentos em data-a1..a3. Cada tela passa a SUA lista fechada: nome fora dela nao roda e acusa. */
+function ligarAcoes(acoes){
+  [["click","acao"],["input","aoDigitar"],["change","aoMudar"],["keydown","aoTecla"],["paste","aoColar"]].forEach(([tipo,chave])=>{
+    const sel="[data-"+chave.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())+"]";
+    document.addEventListener(tipo,ev=>{
+      const el=ev.target&&ev.target.closest?ev.target.closest(sel):null; if(!el)return;
+      const nome=el.dataset[chave];
+      if(!Object.prototype.hasOwnProperty.call(acoes,nome)){console.error("acao desconhecida: "+nome);return;}
+      if(tipo==="click"&&el.tagName==="A"&&el.getAttribute("href")==="#")ev.preventDefault();
+      acoes[nome](el,ev);});
+  });}
+/* fim comum:acao */
 /* v73 · t1623: numero na tela sai em pt-BR pelo Intl (virgula decimal, ponto de milhar). toFixed solta
    "17.5d"; toFixed so serve para geometria de CSS e SVG, nunca para texto que o Igor le. */
 const NF1=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}),
@@ -1187,13 +1201,17 @@ function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf
 /* comum:recolhe · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* texto longo nasce recolhido: o CSS de cada tela diz quantas linhas, o botao diz o estado (aria-expanded) */
 function botaoRecolhe(alvo){
-  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" onclick="alternarRecolhe(this)">ver mais</button>`;}
+  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" data-acao="alternarRecolhe">ver mais</button>`;}
 function alternarRecolhe(b){
   const el=document.getElementById(b.getAttribute("aria-controls")); if(!el) return;
   const abre=b.getAttribute("aria-expanded")!=="true";
   el.classList.toggle("aberto",abre); b.setAttribute("aria-expanded",abre?"true":"false");
   b.textContent=abre?"ver menos":"ver mais";}
 /* fim comum:recolhe */
+/* v83 (plano 87b): o botao do bloco comum:recolhe ja vem por data-acao. Os onclick do resto deste
+   arquivo migram para ACOES um modulo por vez (plano 87c); ate la os dois convivem. */
+const ACOES={alternarRecolhe:el=>alternarRecolhe(el)};
+ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
    (nivel aal1, proximo aal2) nao abre o painel: pede o codigo do app autenticador. Leitura que falha
