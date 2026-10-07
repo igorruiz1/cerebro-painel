@@ -1,0 +1,29 @@
+# Caca de segredo em todo push e toda proposta de mudanca.
+#
+# Por que existe: o repo e publico desde 07/10/2026 (s1156) e o historico precisou ser reescrito
+# com git filter-repo para tirar nome de cliente e numero de conta. O teste i do seguranca.spec.js
+# trava os nomes conhecidos por hash; este job trava a CLASSE: chave, token e senha que ninguem
+# listou ainda. Vermelho aqui bloqueia o merge como a fumaca.
+name: segredos
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historico inteiro: segredo apagado no commit seguinte continua publico
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false

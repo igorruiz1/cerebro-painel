@@ -1,0 +1,9 @@
+# Regras padrao do gitleaks, mais uma excecao medida.
+title = "cerebro-painel"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Chave publicavel do Supabase: publica por desenho, quem protege o dado e a RLS no banco"
+regexes = ['''sb_publishable_[A-Za-z0-9_-]+''']
