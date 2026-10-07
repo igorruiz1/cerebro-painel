@@ -945,7 +945,7 @@ test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico esc
     const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',
       nivel:3,acoes:[{verbo:'repactuar',campo:'date',label:'nova data'}],titulo:'item '+ref,titulo_completo:'item '+ref});
     /* a camada hoje do banco, na ordem do peso: a demanda que vence em 3 dias vem primeiro */
-    D.fila=[it('demanda','Cliente-audios',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
+    D.fila=[it('demanda','demanda-exemplo',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
             it('tarefa','1517',4,70,dia(0)),it('tarefa','1424',5,70,dia(0))];
     D.exp=[it('tarefa','1334',9,70,dia(-7),'depois')];   /* a EKOS que o peso deixou no segundo plano */
     D.depois=[it('tarefa','1334',9,70,dia(-7),'depois'),it('tarefa','1600',12,60,dia(2),'depois')];
@@ -966,7 +966,7 @@ test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico esc
   expect(r.ordem[0], 'a vencida ha 7 dias abre a fila').toBe('1334');
   expect(r.ordem.slice(1,4), 'as que vencem hoje vem antes da demanda de daqui a 3 dias').toEqual(['1545','1517','1424']);
   expect(r.ordem.length, 'o teto de 5 continua valendo').toBe(5);
-  expect(r.ordem.indexOf('Cliente-audios'), 'a demanda de peso maior que vence em 3 dias fica atras das que vencem').toBe(4);
+  expect(r.ordem.indexOf('demanda-exemplo'), 'a demanda de peso maior que vence em 3 dias fica atras das que vencem').toBe(4);
   expect(r.ordem, 'o item sem prazo cai abaixo do corte').not.toContain('32');
   expect(r.ekos, 'a classe vai escrita no card').toBe('urgente · vencida há 7d');
   expect(r.hoje).toBe('data fixa · vence hoje');
@@ -975,7 +975,7 @@ test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico esc
   expect(r.fila2, 'a promovida sai do segundo plano, a futura fica').toEqual(['1600']);
   expect(r.aba, 'o contador da aba conta a tarefa promovida').toBe('6');
   expect(r.achou, 'A, S e R acham o card promovido').toBe(true);
-  expect(r.semExp, 'sem a chave exp a tela ordena o que tem, sem derrubar').toEqual(['1545','1517','1424','Cliente-audios','32']);
+  expect(r.semExp, 'sem a chave exp a tela ordena o que tem, sem derrubar').toEqual(['1545','1517','1424','demanda-exemplo','32']);
 });
 
 test('o card abre a peca pronta: Drive pelo id, caminho copiavel, e id forjado nao vira link', async ({page})=>{

@@ -580,7 +580,7 @@ const CASO_HOJE = ()=>{
   const dia=n=>{const d=new Date(); d.setDate(d.getDate()+n); return ivData(d);};
   const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',teto_tela:5,
     nivel:3,frente:'20-contrato-pj',acoes:[{label:'feita',verbo:'feita'}],titulo:'item '+ref,titulo_completo:'item '+ref});
-  return {fila:[it('demanda','Cliente-audios',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
+  return {fila:[it('demanda','demanda-exemplo',1,75,dia(3)),it('fluxo','32',2,72,null),it('tarefa','1545',3,70,dia(0)),
                 it('tarefa','1517',4,70,dia(0)),it('tarefa','1424',5,70,dia(0))],
           exp:[it('tarefa','1334',9,70,dia(-7),'depois')]};
 };
@@ -1835,7 +1835,7 @@ test('Mesa p4.16: o filtro cabe a 360 px sem rolagem lateral e com alvo de toque
   expect(erros).toEqual([]);
 });
 
-/* p4.17 (06/10/2026): o Igor aprovou 3 pecas de envio da Cliente e achou que nada tinha acontecido: a folha fechava
+/* p4.17 (06/10/2026): o Igor aprovou 3 pecas de envio de um cliente e achou que nada tinha acontecido: a folha fechava
    e a peca voltava igual, com o botao Aprovar. Agora a aprovada mostra "aprovada, falta enviar", a folha fica aberta
    e desce ate "Ja enviei". O p4.16 reprova aqui. */
 test('Mesa p4.17: aprovar peca de envio deixa a folha aberta em "Já enviei" e marca a peça como aprovada', async ({page})=>{

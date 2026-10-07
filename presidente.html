@@ -1946,7 +1946,7 @@ const msHoras=h=>(+h).toLocaleString("pt-BR",{maximumFractionDigits:1})+" h";
 const msParada=d=>d==null||d===""||isNaN(+d)?"sem data de entrada":(+d<=0?"parada desde hoje":"parada há "+Math.floor(+d)+" d");
 const msFrente=f=>f?nomeFrente(f):"";
 /* p4.17 (06/10/2026): peca de envio aprovada fica na mesa ate a baixa, e a tela nao mostrava a diferenca (o Igor
-   aprovou 3 pecas da Cliente e achou que nada tinha acontecido). O banco (mesa_deliberar) grava em mesa_item.motivo
+   aprovou 3 pecas de um cliente e achou que nada tinha acontecido). O banco (mesa_deliberar) grava em mesa_item.motivo
    exatamente "aprovado por voce em DD/MM HH:MI; falta <ato>" para enviar/assinar/entregar/protocolar. */
 const MS_ATO_SAIDA=new Set(["enviar","assinar","entregar","protocolar"]);
 const msAprovEm=p=>{const m=String(p&&p.motivo||"").match(/^aprovado por voce em (\d{2}\/\d{2} \d{2}:\d{2}); falta /i);return m?m[1]:null;};
