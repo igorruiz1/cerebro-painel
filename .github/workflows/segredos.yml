@@ -6,10 +6,16 @@
 # listou ainda. Vermelho aqui bloqueia o merge como a fumaca.
 name: segredos
 
+# Push e PR leem so os commits novos (medido no 1o run: "1 commits scanned"). O historico inteiro e lido
+# na rodada semanal e no botao Run workflow (workflow_dispatch): segredo apagado num commit seguinte
+# continua publico no historico.
 on:
   push:
     branches: ["**"]
   pull_request:
+  schedule:
+    - cron: "17 10 * * 1"   # segunda 06:17 em Cuiaba
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # historico inteiro: segredo apagado no commit seguinte continua publico
+          fetch-depth: 0   # sem isso a rodada semanal so enxerga o ultimo commit
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
