@@ -381,12 +381,12 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
   <input id="em" type="email" autocomplete="username" inputmode="email">
   <label for="pw">Senha</label>
   <input id="pw" type="password" autocomplete="current-password">
-  <button class="pri" onclick="entrarSenha()">Entrar</button>
-  <button class="sec" onclick="pedirCodigo()">Receber código por e-mail</button>
+  <button class="pri" data-acao="entrarSenha">Entrar</button>
+  <button class="sec" data-acao="pedirCodigo">Receber código por e-mail</button>
   <div id="codigoBox" class="hidden" style="display:flex;flex-direction:column;gap:8px">
     <label for="cod">Código recebido</label>
     <input id="cod" inputmode="numeric" autocomplete="one-time-code">
-    <button class="pri" onclick="entrarCodigo()">Confirmar código</button>
+    <button class="pri" data-acao="entrarCodigo">Confirmar código</button>
   </div>
   <div id="lmsg" class="msg" role="status"></div>
 </div>
@@ -397,49 +397,49 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
   <div id="fatorCampo" style="display:flex;flex-direction:column;gap:8px">
     <label for="codFator">Código do app</label>
     <input id="codFator" inputmode="numeric" autocomplete="one-time-code" maxlength="6" enterkeyhint="done"
-      oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);if(this.value.length===6)entrarFator()"
-      onkeydown="if(event.key==='Enter')entrarFator()">
-    <button id="btFator" class="pri" onclick="entrarFator()">Confirmar</button>
+      data-ao-digitar="fatorDigitou"
+      data-ao-tecla="fatorEnter">
+    <button id="btFator" class="pri" data-acao="entrarFator">Confirmar</button>
   </div>
-  <button id="btFatorDeNovo" class="pri hidden" onclick="portaFator()">Tentar de novo</button>
-  <button class="sec" onclick="sair()">Sair</button>
+  <button id="btFatorDeNovo" class="pri hidden" data-acao="portaFator">Tentar de novo</button>
+  <button class="sec" data-acao="sair">Sair</button>
   <div id="fmsg" class="msg" role="status"></div>
 </div>
 
 <div id="app" class="app hidden">
   <nav class="rail" aria-label="Destinos">
     <div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div>
-    <button data-aba="hoje" onclick="ir('hoje')">Hoje<span class="selo" id="r-hoje"></span></button>
-    <button data-aba="fila" onclick="ir('fila')">Fila<span class="selo" id="r-fila"></span></button>
-    <button data-aba="caixa" onclick="ir('caixa')">Caixa<span class="selo" id="r-caixa"></span></button>
-    <button data-aba="frentes" onclick="ir('frentes')">Frentes<span class="selo" id="r-frentes"></span></button>
-    <button data-aba="mesa" onclick="ir('mesa')">Mesa<span class="selo" id="r-mesa"></span></button>
-    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" onclick="demoEntrar();return false">demonstração</a><a class="so-real" href="#" onclick="sair();return false">sair</a></div>
+    <button data-aba="hoje" data-acao="ir" data-a1="hoje">Hoje<span class="selo" id="r-hoje"></span></button>
+    <button data-aba="fila" data-acao="ir" data-a1="fila">Fila<span class="selo" id="r-fila"></span></button>
+    <button data-aba="caixa" data-acao="ir" data-a1="caixa">Caixa<span class="selo" id="r-caixa"></span></button>
+    <button data-aba="frentes" data-acao="ir" data-a1="frentes">Frentes<span class="selo" id="r-frentes"></span></button>
+    <button data-aba="mesa" data-acao="ir" data-a1="mesa">Mesa<span class="selo" id="r-mesa"></span></button>
+    <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
   </nav>
 
   <div class="col">
     <header class="topo">
       <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><div class="sub saude" id="saude"></div><div class="sub" id="fresco">carregando</div><div class="sub" id="atd" aria-live="polite"></div></div>
-      <button class="ico" id="micTopo" aria-label="Falar uma instrução" onclick="abrirVoz()">
+      <button class="ico" id="micTopo" aria-label="Falar uma instrução" data-acao="abrirVoz">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
-      <button class="ico" aria-label="Buscar card ou frente" onclick="alternarBusca()">
+      <button class="ico" aria-label="Buscar card ou frente" data-acao="alternarBusca">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       </button>
-      <button class="ico" aria-label="Recarregar" onclick="carregar(true)">
+      <button class="ico" aria-label="Recarregar" data-acao="recarregar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
       </button>
     </header>
     <div id="busca" class="busca hidden">
       <label for="q" class="mut">Número do card, palavra do título ou nome da frente</label>
-      <input id="q" type="search" oninput="buscar(this.value)" autocomplete="off">
+      <input id="q" type="search" data-ao-digitar="buscar" autocomplete="off">
       <div id="qres" class="pilha"></div>
     </div>
 
     <main>
-      <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><button type="button" class="sec" onclick="demoSair()">Sair da demonstração</button></div>
+      <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><button type="button" class="sec" data-acao="demoSair">Sair da demonstração</button></div>
       <div id="falha" class="aviso hidden" role="alert"></div>
-      <button id="novaVersao" class="pri hidden" onclick="atualizarPainel()"></button>
+      <button id="novaVersao" class="pri hidden" data-acao="atualizarPainel"></button>
 
       <section class="pane on" id="p-hoje" aria-label="Hoje">
         <p class="situacao" id="situacao">carregando…</p>
@@ -483,25 +483,25 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
         <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
       </section>
 
-      <div class="rodape so-real"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a> · <a href="#" onclick="demoEntrar();return false">Modo demonstração</a></div>
+      <div class="rodape so-real"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a></div>
     </main>
   </div>
 
   <nav class="nav" aria-label="Destinos">
-    <button data-aba="hoje" onclick="ir('hoje')"><span class="selo" id="n-hoje"></span><span>Hoje</span></button>
-    <button data-aba="fila" onclick="ir('fila')"><span class="selo" id="n-fila"></span><span>Fila</span></button>
-    <button data-aba="caixa" onclick="ir('caixa')"><span class="selo" id="n-caixa">R$</span><span>Caixa</span></button>
-    <button data-aba="frentes" onclick="ir('frentes')"><span class="selo" id="n-frentes"></span><span>Frentes</span></button>
-    <button data-aba="mesa" onclick="ir('mesa')"><span class="selo" id="n-mesa"></span><span>Mesa</span></button>
+    <button data-aba="hoje" data-acao="ir" data-a1="hoje"><span class="selo" id="n-hoje"></span><span>Hoje</span></button>
+    <button data-aba="fila" data-acao="ir" data-a1="fila"><span class="selo" id="n-fila"></span><span>Fila</span></button>
+    <button data-aba="caixa" data-acao="ir" data-a1="caixa"><span class="selo" id="n-caixa">R$</span><span>Caixa</span></button>
+    <button data-aba="frentes" data-acao="ir" data-a1="frentes"><span class="selo" id="n-frentes"></span><span>Frentes</span></button>
+    <button data-aba="mesa" data-acao="ir" data-a1="mesa"><span class="selo" id="n-mesa"></span><span>Mesa</span></button>
   </nav>
 </div>
 
-<div id="veu" class="veu hidden" onclick="if(event.target===this)fecharFolha()"><div class="folha" id="folha" role="dialog" aria-modal="true" aria-labelledby="folhaTit"></div></div>
-<div id="toast" class="toast hidden" role="status"><span id="tmsg"></span><button id="tbtn" class="hidden" onclick="desfazer()">desfazer</button></div>
+<div id="veu" class="veu hidden" data-acao="veuFora"><div class="folha" id="folha" role="dialog" aria-modal="true" aria-labelledby="folhaTit"></div></div>
+<div id="toast" class="toast hidden" role="status"><span id="tmsg"></span><button id="tbtn" class="hidden" data-acao="desfazer">desfazer</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.25";
+const VERP="p4.26";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -702,7 +702,7 @@ function ehTeto(e){ return e && typeof e.message==="string" && e.message.indexOf
 /* comum:recolhe · igual byte a byte no index.html; testes/presidente.spec.js confere */
 /* texto longo nasce recolhido: o CSS de cada tela diz quantas linhas, o botao diz o estado (aria-expanded) */
 function botaoRecolhe(alvo){
-  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" onclick="alternarRecolhe(this)">ver mais</button>`;}
+  return `<button type="button" class="ver-mais" aria-expanded="false" aria-controls="${esc(alvo)}" data-acao="alternarRecolhe">ver mais</button>`;}
 function alternarRecolhe(b){
   const el=document.getElementById(b.getAttribute("aria-controls")); if(!el) return;
   const abre=b.getAttribute("aria-expanded")!=="true";
@@ -752,6 +752,20 @@ const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s
 /* rs: valor ausente ou que nao e numero vira "—" (o index mostrava "R$ NaN"); sinal antes do R$; espaco comum */
 const rs=v=>v==null||isNaN(+v)?"—":(Math.round(+v)<0?"-":"")+"R$ "+Math.abs(Math.round(+v)).toLocaleString("pt-BR");
 /* fim comum:escapa */
+/* comum:acao · igual byte a byte no index.html; testes/presidente.spec.js confere */
+/* acao por atributo (plano 87b): data-acao no clique; data-ao-digitar, -mudar, -tecla e -colar nos outros
+   eventos; argumentos em data-a1..a3. Cada tela passa a SUA lista fechada: nome fora dela nao roda e acusa. */
+function ligarAcoes(acoes){
+  [["click","acao"],["input","aoDigitar"],["change","aoMudar"],["keydown","aoTecla"],["paste","aoColar"]].forEach(([tipo,chave])=>{
+    const sel="[data-"+chave.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())+"]";
+    document.addEventListener(tipo,ev=>{
+      const el=ev.target&&ev.target.closest?ev.target.closest(sel):null; if(!el)return;
+      const nome=el.dataset[chave];
+      if(!Object.prototype.hasOwnProperty.call(acoes,nome)){console.error("acao desconhecida: "+nome);return;}
+      if(tipo==="click"&&el.tagName==="A"&&el.getAttribute("href")==="#")ev.preventDefault();
+      acoes[nome](el,ev);});
+  });}
+/* fim comum:acao */
 const mil=v=>v==null||isNaN(+v)?"—":(Math.abs(+v)>=1000?"R$ "+((+v)/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":rs(v));
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
@@ -761,6 +775,31 @@ const ddmm=s=>{const p=String(s||"").slice(0,10).split("-");return p.length===3?
 const DIAS=["dom","seg","ter","qua","qui","sex","sáb"];
 const diaCurto=s=>{const d=new Date(String(s).slice(0,10)+"T12:00:00");return isNaN(d)?"":DIAS[d.getDay()]+" "+ddmm(s);};
 const semNumero=t=>String(t||"").replace(/^\d+\s+/,"");
+/* p4.26 (plano 87b, 07/10/2026): nenhum handler inline (on*=) no HTML. O elemento declara a acao em
+   data-acao (clique), data-ao-digitar, data-ao-mudar, data-ao-tecla ou data-ao-colar, e os argumentos em data-a1..a3,
+   escapados por esc() como qualquer atributo. ligarAcoes (bloco comum:acao) poe um ouvinte por evento
+   no document e despacha para ACOES, a lista fechada do que a tela faz: nome fora dela nao roda.
+   Sem JavaScript dentro de atributo, escAttr deixa de ser preciso aqui e o unsafe-inline pode sair. */
+const ACOES={
+  entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msEncerrar:()=>msEncerrar(),msCienciaLote:()=>msCienciaLote(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msRitualParar:()=>msRitualParar(),
+  fatorDigitou:el=>{el.value=el.value.replace(/\D/g,"").slice(0,6);if(el.value.length===6)entrarFator();},
+  fatorEnter:(el,ev)=>{if(ev.key==="Enter")entrarFator();},
+  demoEntrar:()=>demoEntrar(), recarregar:()=>carregar(true), buscar:el=>buscar(el.value),
+  veuFora:(el,ev)=>{if(ev.target===el)fecharFolha();}, alternarRecolhe:el=>alternarRecolhe(el),
+  ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
+  abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
+  abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
+  cobrar:el=>cobrar(el.dataset.a1), escolher:el=>escolher(el.dataset.a1),
+  provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1),
+  agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
+  confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
+  vozDigitou:el=>vozDigitou(el.value), msFiltrar:()=>msFiltrar(), msRelatorio:el=>msRelatorio(+el.dataset.a1),
+  msTodosRel:()=>{MS.todosRel=true;msRender();}, msDecidir:el=>msDecidir(el.dataset.a1), msMotivo:el=>msMotivo(el.dataset.a1),
+  msEscolherCanal:el=>msEscolherCanal(el.dataset.a1), msRitualPular:()=>msRitualProx(false),
+  msCiencia:el=>el.dataset.a1===undefined?msCiencia():msCiencia(el.dataset.a1),
+  msRelPdf:el=>msRelPdf(+el.dataset.a1,+el.dataset.a2)
+};
+ligarAcoes(ACOES);
 const nomeFrente=s=>{const a=(ARV||[]).find(x=>x.nivel===1&&x.no===s);return a&&a.rotulo?semNumero(a.rotulo):String(s||"").replace(/^\d+-/,"").replace(/-/g," ");};
 /* Recomendacao com carimbo da maquina ("[atendente-1 16/09 04h] ...", "SUA DELIBERACAO (12/09 01:01): ...").
    O banco nao data esse texto (rec_gerada_em vazio), entao a data sai do carimbo. Medido em 02/10/2026:
@@ -992,7 +1031,7 @@ function renderHoje(){
   const foco=document.getElementById("foco");
   if(!h.length&&pz.length){ focoPeca(foco,pz); }
   else if(!h.length){
-    foco.innerHTML=`<span class="eyebrow">Hoje está limpo</span><div class="tit">Nada pede você agora.</div><div class="porque">Aproveite para olhar os parados: Fila, coluna Decidir.</div><div class="acoes"><button class="sec" onclick="irColuna('decidir')">Ver os parados</button></div>`;
+    foco.innerHTML=`<span class="eyebrow">Hoje está limpo</span><div class="tit">Nada pede você agora.</div><div class="porque">Aproveite para olhar os parados: Fila, coluna Decidir.</div><div class="acoes"><button class="sec" data-acao="irColuna" data-a1="decidir">Ver os parados</button></div>`;
     document.getElementById("ordemBox").classList.add("hidden");
   }else{
     const f=h[0], m=minDe(f), es=esperaFila(f);
@@ -1001,10 +1040,10 @@ function renderHoje(){
       <div class="tit l2">${esc(f.titulo_completo||f.titulo)}</div>
       <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}${pecasDoCard(f.origem,f.ref).length?`<span class="chip">com peça da Mesa</span>`:""}</div>
       ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque l2">${esc(curto(ri.texto,160))}</div>`:"";})()}
-      <div class="acoes">${pri?`<button class="pri" onclick="abrirFila(0,'${escAttr(pri.verbo)}')">${esc(pri.rot)}</button>`:""}<button class="sec" onclick="abrirFila(0)">Mais ações</button></div>`;
+      <div class="acoes">${pri?`<button class="pri" data-acao="abrirFila" data-a1="0" data-a2="${esc(pri.verbo)}">${esc(pri.rot)}</button>`:""}<button class="sec" data-acao="abrirFila" data-a1="0">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",nPassos<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f), es=esperaFila(f);
-      return `<button onclick="abrirFila(${i+1})"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${pecasDoCard(f.origem,f.ref).length?"com peça · ":""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("")
+      return `<button data-acao="abrirFila" data-a1="${i+1}"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${pecasDoCard(f.origem,f.ref).length?"com peça · ":""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("")
       +pz.map((p,i)=>linhaPeca(p,h.length+i+1)).join("");
   }
   const c=(D.cont||[])[0]||{}, cob=aCobrar();
@@ -1014,7 +1053,7 @@ function renderHoje(){
     {n:INV?contar("semana"):"…",t:"vencem nesta semana",c:"semana"},
     cob.length?{n:mil(cob.reduce((s,x)=>s+(+x.valor_igor||0),0)),t:"a receber com data passada",aba:"caixa",w:true}
               :{n:c.depois!=null?c.depois:"…",t:"em segundo plano, fora de hoje",c:"semana"}];
-  document.getElementById("atalhos").innerHTML=at.map(a=>`<button class="atalho ${a.w?"w":""}" onclick="${a.aba?`ir('${a.aba}')`:`irColuna('${a.c}')`}"><b>${esc(a.n)}</b><span>${esc(a.t)}</span></button>`).join("");
+  document.getElementById("atalhos").innerHTML=at.map(a=>`<button class="atalho ${a.w?"w":""}" ${a.aba?`data-acao="ir" data-a1="${esc(a.aba)}"`:`data-acao="irColuna" data-a1="${esc(a.c)}"`}><b>${esc(a.n)}</b><span>${esc(a.t)}</span></button>`).join("");
 }
 /* p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so, no molde da lista Hoje do Things e da caixa do Linear: uma fila,
    acao propria por tipo. Entram em Hoje, depois dos cards, as pecas da Mesa que nasceram hoje e as 3 paradas de maior
@@ -1034,20 +1073,20 @@ function pecasHoje(){
   return novas.concat(valor);
 }
 function linhaPeca(p,n){
-  return `<button class="peca-hoje" onclick="msAbrirId(${+p.id})"><span class="o">${n}</span><span class="t"><span class="l2">${esc(p.titulo||"peça sem título")}</span><small><span class="espera ${+p.dias>=7?"w":""}">peça da Mesa · ${esc(msAto(p.ato))}</span> · ${esc(msFrente(p.frente)||"sem frente")}${msTemRs(p.rs)?" · "+esc(rs(p.rs)):""}</small></span><span class="min">${pecaMin(p)} min</span></button>`;
+  return `<button class="peca-hoje" data-acao="msAbrirId" data-a1="${+p.id}"><span class="o">${n}</span><span class="t"><span class="l2">${esc(p.titulo||"peça sem título")}</span><small><span class="espera ${+p.dias>=7?"w":""}">peça da Mesa · ${esc(msAto(p.ato))}</span> · ${esc(msFrente(p.frente)||"sem frente")}${msTemRs(p.rs)?" · "+esc(rs(p.rs)):""}</small></span><span class="min">${pecaMin(p)} min</span></button>`;
 }
 function focoPeca(foco,pz){
   const p=pz[0];
   foco.innerHTML=`<span class="eyebrow">Próximo passo · peça da Mesa · ${pecaMin(p)} min</span>
     <div class="tit l2">${esc(p.titulo||"peça sem título")}</div>
     <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${chipDinheiro(msTemRs(p.rs)?rs(p.rs):null)}</div>
-    <div class="acoes"><button class="pri" onclick="msAbrirId(${+p.id})">Decidir a peça</button></div>`;
+    <div class="acoes"><button class="pri" data-acao="msAbrirId" data-a1="${+p.id}">Decidir a peça</button></div>`;
   document.getElementById("ordemBox").classList.toggle("hidden",pz.length<2);
   document.getElementById("ordem").innerHTML=pz.slice(1).map((x,i)=>linhaPeca(x,i+2)).join("");
 }
 function pecasLigadasHtml(c){
   const ps=pecasDoCard(c.origem,c.ref); if(!ps.length)return "";
-  return `<div class="bloco"><span class="rot">Peça da Mesa ligada a este card</span>${ps.map(p=>`<button type="button" class="sec ms-ligada" onclick="msAbrirId(${+p.id})">${esc(p.titulo||"peça sem título")}</button><span class="mut">${esc(msCap(msAto(p.ato)))}${p.fecha_tarefa?". A baixa ou a aprovação desta peça conclui este card.":". Concluir a peça não fecha este card."}</span>`).join("")}</div>`;
+  return `<div class="bloco"><span class="rot">Peça da Mesa ligada a este card</span>${ps.map(p=>`<button type="button" class="sec ms-ligada" data-acao="msAbrirId" data-a1="${+p.id}">${esc(p.titulo||"peça sem título")}</button><span class="mut">${esc(msCap(msAto(p.ato)))}${p.fecha_tarefa?". A baixa ou a aprovação desta peça conclui este card.":". Concluir a peça não fecha este card."}</span>`).join("")}</div>`;
 }
 const curto=(s,n)=>{s=String(s||"");return s.length>n?s.slice(0,n).replace(/\s+\S*$/,"")+"…":s;};
 const chipDinheiro=v=>v?`<span class="chip ok">${esc(v)}</span>`:`<span class="chip">sem dinheiro ligado</span>`;
@@ -1064,7 +1103,7 @@ function renderFila(){
   w.innerHTML=`<span>Em curso hoje <b class="num">${h.length}/${teto}</b></span><span class="barra"><i style="width:${Math.min(100,h.length/teto*100)}%"></i></span><span class="mut">${h.length>=teto?"cheio: termine antes de puxar outro":"cabe mais um"}</span>`;
   if(!INV){kb.innerHTML=`<div class="vazio">carregando a fila…</div>`;seg.innerHTML="";return;}
   COLS[2].a="Parados há "+corteDecidir()+" dias ou mais, ou sem prazo. Dê uma data ou largue.";
-  seg.innerHTML=COLS.map(c=>`<button role="tab" aria-selected="${c.id===COL}" onclick="COL='${c.id}';renderFila()">${c.r} ${contar(c.id)}</button>`).join("");
+  seg.innerHTML=COLS.map(c=>`<button role="tab" aria-selected="${c.id===COL}" data-acao="coluna" data-a1="${esc(c.id)}">${c.r} ${contar(c.id)}</button>`).join("");
   kb.innerHTML=COLS.map(c=>{
     const itens=INV.filter(t=>colunaDe(t)===c.id).sort((a,b)=>String(a.prazo||"9").localeCompare(String(b.prazo||"9")));
     return `<div class="coluna ${c.id===COL?"on":""}"><h3>${c.h} <span class="mut num">${itens.length}</span></h3><div class="ajuda">${esc(c.a)}</div>
@@ -1081,7 +1120,7 @@ function idadeTxt(t){
 }
 function itemInv(t){
   const p=+t.parado_dias||0, atras=t.status==="aguardando_terceiro"&&t.prazo&&t.prazo<somaDias(0), es=esperaInv(t);
-  return `<button class="item" onclick="abrirInv(${+t.id})"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
+  return `<button class="item" data-acao="abrirInv" data-a1="${+t.id}"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
 }
 
 /* ---------- Caixa ---------- */
@@ -1096,14 +1135,14 @@ function renderCaixa(){
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
   document.getElementById("cobrarBox").innerHTML=`<h2>A receber com data passada</h2>`+(cob.length
-    ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span>${x.id!=null?`<button class="sec cobrar" onclick="cobrar('${escAttr(x.id)}')">Cobrar</button>`:""}</div>`).join("")
+    ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span>${x.id!=null?`<button class="sec cobrar" data-acao="cobrar" data-a1="${esc(x.id)}">Cobrar</button>`:""}</div>`).join("")
     :`<div class="vazio">Ninguém te deve com data passada.</div>`);
   const el=document.getElementById("alavancas");
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const fr=ARV.filter(a=>a.nivel===1&&+a.margem_30d>0).sort((a,b)=>b.margem_30d-a.margem_30d);
   el.innerHTML=fr.length?fr.map(a=>{
     const prox=INV.filter(t=>t.frente===a.no&&t.dono==="igor"&&t.status==="pendente").sort((x,y)=>String(x.prazo||"9").localeCompare(String(y.prazo||"9")))[0];
-    return `<button class="linha-r" onclick="${prox?`abrirInv(${+prox.id})`:`abrirFrente('${escAttr(a.no)}')`}"><span class="t"><span class="l2">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}</span><small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
+    return `<button class="linha-r" ${prox?`data-acao="abrirInv" data-a1="${+prox.id}"`:`data-acao="abrirFrente" data-a1="${esc(a.no)}"`}><span class="t"><span class="l2">${esc(prox?prox.titulo||prox.resumo:"Sem passo seu aberto")}</span><small>${esc(nomeFrente(a.no))}${prox?"":" · abrir a frente"}</small></span><span class="r">+${mil(a.margem_30d)}</span></button>`;}).join("")
     :`<div class="vazio">Nenhuma frente com margem a receber em 30 dias.</div>`;
   const fora=ARV.filter(a=>a.nivel===1&&+a.margem_30d<=0&&+a.margem_total>0);
   if(fora.length)el.innerHTML+=`<div class="mut">Fora dos 30 dias: ${fora.map(a=>esc(nomeFrente(a.no))+" "+mil(a.margem_total)).join(" · ")}.</div>`;
@@ -1127,7 +1166,7 @@ function renderFrentes(){
   if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const cont={};INV.forEach(t=>{if(t.status!=="feita")cont[t.frente]=(cont[t.frente]||0)+1;});
   const fr=ARV.filter(a=>a.nivel===1).sort((a,b)=>(+b.margem_30d)-(+a.margem_30d)||(cont[b.no]||0)-(cont[a.no]||0)).filter(a=>+a.margem_30d!==0||cont[a.no]);
-  el.innerHTML=fr.map(a=>`<button class="frente" onclick="abrirFrente('${escAttr(a.no)}')"><span class="t"><b>${esc(nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
+  el.innerHTML=fr.map(a=>`<button class="frente" data-acao="abrirFrente" data-a1="${esc(a.no)}"><span class="t"><b>${esc(nomeFrente(a.no))}</b><small>${plural(cont[a.no]||0,"card aberto","cards abertos")}</small></span><span class="r ${+a.margem_30d>0?"":"z"}">${+a.margem_30d>0?mil(a.margem_30d):(+a.margem_total>0?"fora de 30 d":"sem receita")}</span></button>`).join("");
 }
 function abrirFrente(slug){
   const a=(ARV||[]).find(x=>x.nivel===1&&x.no===slug)||{no:slug};
@@ -1137,7 +1176,7 @@ function abrirFrente(slug){
     <div class="chips"><span class="chip ${+a.margem_30d>0?"ok":""}">${+a.margem_30d>0?"margem 30 d "+mil(a.margem_30d):"sem margem em 30 d"}</span>${+a.margem_total>0?`<span class="chip">margem total ${mil(a.margem_total)}</span>`:""}<span class="chip">${plural(seus.length,"card seu","cards seus")}</span>${exec?`<span class="chip">${exec} do executor</span>`:""}</div>
     ${a.veredito?`<div class="bloco"><span class="rot">Situação</span><p>${esc(a.veredito)}</p></div>`:""}
     <div class="pilha">${seus.map(itemInv).join("")||`<div class="vazio">Nenhum card seu aberto nesta frente.</div>`}</div>
-    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
 }
 
 function renderSelos(){
@@ -1197,22 +1236,22 @@ function abrirCard(c,verbo){
     ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
     ${pecaHtml(c.peca)}
     ${pecasLigadasHtml(c)}
-    ${c.cobra?`<div class="bloco"><span class="rot w">Venceu em ${esc(ddmm(c.cobra.venc))} e não entrou</span><div class="acoes"><button class="pri" id="btCobrar" onclick="cobrar('${escAttr(c.ref)}')">Cobrar</button></div><span class="mut">Pede ao atendente um rascunho curto ao pagador. Nada é enviado sem você.</span></div>`:""}
+    ${c.cobra?`<div class="bloco"><span class="rot w">Venceu em ${esc(ddmm(c.cobra.venc))} e não entrou</span><div class="acoes"><button class="pri" id="btCobrar" data-acao="cobrar" data-a1="${esc(c.ref)}">Cobrar</button></div><span class="mut">Pede ao atendente um rascunho curto ao pagador. Nada é enviado sem você.</span></div>`:""}
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.map(a=>botaoAcao(a,"sec")).join("")}</div>`:`<div class="vazio">O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor.</div>`}
     <div class="teclas">Teclado: <kbd>A</kbd> ${esc(pri?pri.rot:"ato principal")} · <kbd>S</kbd> nova data · <kbd>R</kbd> responder · <kbd>Esc</kbd> fechar</div>
     <div id="campo"></div>
     <div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
     <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul><p class="mut cod-interno">Código interno: ${esc(codInterno(c))}</p></div>
-    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
   historico(c); conversa(c); descricao(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
 }
-const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" onclick="escolher('${escAttr(a.verbo)}')">${esc(a.rot)}</button>`;
+const botaoAcao=(a,cls)=>`<button class="${cls}" data-verbo="${esc(a.verbo)}" data-acao="escolher" data-a1="${esc(a.verbo)}">${esc(a.rot)}</button>`;
 /* Peca pronta junto da acao (mesma defesa do index.html: id so vira link com forma de id do Drive). */
 function pecaHtml(it){
   const id=it&&it.artefato_drive_id?String(it.artefato_drive_id).trim():"", p=it&&it.artefato_path?String(it.artefato_path).trim():"";
   const okId=/^[A-Za-z0-9_-]{10,}$/.test(id); if(!okId&&!p)return "";
-  return `<div class="bloco"><span class="rot">Peça pronta</span><div class="peca">${okId?`<a href="${esc(urlSegura("https://drive.google.com/open?id="+encodeURIComponent(id)))}" target="_blank" rel="noopener noreferrer">abrir no Drive</a>`:""}${p?`<code id="pecap">${esc(p)}</code><button type="button" onclick="copiar()">copiar caminho</button>`:""}</div></div>`;
+  return `<div class="bloco"><span class="rot">Peça pronta</span><div class="peca">${okId?`<a href="${esc(urlSegura("https://drive.google.com/open?id="+encodeURIComponent(id)))}" target="_blank" rel="noopener noreferrer">abrir no Drive</a>`:""}${p?`<code id="pecap">${esc(p)}</code><button type="button" data-acao="copiar">copiar caminho</button>`:""}</div></div>`;
 }
 function copiar(){const c=document.getElementById("pecap");if(!c)return;const t=c.textContent;
   const sel=()=>{try{const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}toast("Caminho selecionado.",null,false,2000);};
@@ -1249,27 +1288,27 @@ function escolher(verbo){
        no campo. O arquivo so sobe quando o ato vai ao banco, depois dos 6 s de desfazer, para o bucket privado
        mesa-provas (o mesmo da baixa da Mesa); o caminho entra no texto da prova, que o banco ja exige. */
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">O que aconteceu? Link, protocolo ou "e-mail do fiscal 08/10". Peça pronta não fecha o card: ela precisa ter saído e ter volta.</label>
-      <textarea id="cv" rows="2" onpaste="provaColar(event)" placeholder="Escreva, ou cole aqui o print (Ctrl+V)"></textarea>
-      <label for="cvArq" class="mut">Print ou comprovante (opcional)</label><input id="cvArq" class="ms-arq" type="file" accept="image/*,application/pdf" onchange="provaEscolher(this)">
+      <textarea id="cv" rows="2" data-ao-colar="provaColar" placeholder="Escreva, ou cole aqui o print (Ctrl+V)"></textarea>
+      <label for="cvArq" class="mut">Print ou comprovante (opcional)</label><input id="cvArq" class="ms-arq" type="file" accept="image/*,application/pdf" data-ao-mudar="provaEscolher">
       <span id="cvArqNome" class="mut" aria-live="polite"></span>
-      <button class="pri" onclick="confirmarProva('${escAttr(verbo)}')">Concluir com esta prova</button></div>`;
+      <button class="pri" data-acao="confirmarProva" data-a1="${esc(verbo)}">Concluir com esta prova</button></div>`;
   }else if(verbo==="repactuar"||(a.campo==="date"||a.campo==="data")){
     const op=[["amanhã",somaDias(1)],["+3 dias",somaDias(3)],["próx. segunda",proxSegunda()],["+2 semanas",somaDias(14)]];
-    campo.innerHTML=`<div class="campo"><span class="mut">${esc(a.rot)}</span><div class="datas">${op.map(o=>`<button onclick="agir('${escAttr(verbo)}','${o[1]}','${escAttr(a.rot+" para "+diaCurto(o[1]))}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div>
-      <label for="cv" class="mut">ou escolha o dia</label><input id="cv" type="date" min="${somaDias(0)}" value="${somaDias(7)}"><button class="sec" onclick="confirmar('${escAttr(verbo)}',10,'Escolha uma data.')">Usar esta data</button></div>`;
+    campo.innerHTML=`<div class="campo"><span class="mut">${esc(a.rot)}</span><div class="datas">${op.map(o=>`<button data-acao="agir" data-a1="${esc(verbo)}" data-a2="${esc(o[1])}" data-a3="${esc(a.rot+" para "+diaCurto(o[1]))}">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div>
+      <label for="cv" class="mut">ou escolha o dia</label><input id="cv" type="date" min="${somaDias(0)}" value="${somaDias(7)}"><button class="sec" data-acao="confirmar" data-a1="${esc(verbo)}" data-a2="10" data-a3="Escolha uma data.">Usar esta data</button></div>`;
   }else if(verbo==="arquivar"){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Por que largar? Uma linha basta: fica registrado que a decisão foi sua.</label><textarea id="cv" rows="2"></textarea>
-      <button class="pri" onclick="confirmar('arquivar',5,'Diga o motivo em pelo menos 5 letras.')">Largar este card</button></div>`;
+      <button class="pri" data-acao="confirmar" data-a1="arquivar" data-a2="5" data-a3="Diga o motivo em pelo menos 5 letras.">Largar este card</button></div>`;
   }else if(verbo==="esperar"){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Com quem está a bola, e quando você cobra?</label><textarea id="cv" rows="2" placeholder="Ex.: fiscal da obra, cobrar em 2 dias"></textarea>
-      <div class="datas">${[["em 2 dias",somaDias(2)],["próx. segunda",proxSegunda()],["em 1 semana",somaDias(7)]].map(o=>`<button onclick="confirmarEsperar('${o[1]}')">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div></div>`;
+      <div class="datas">${[["em 2 dias",somaDias(2)],["próx. segunda",proxSegunda()],["em 1 semana",somaDias(7)]].map(o=>`<button data-acao="confirmarEsperar" data-a1="${esc(o[1])}">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div></div>`;
   }else if(a.campo==="entidade"){
     /* s880: dinheiro que entra ou sai diz a conta. PF, Ruiz e Dabli nao se misturam (trava 658); o banco recusa
        recebido/pago sem conta. A sugerida vem do ultimo lancamento da frente e so pre-destaca: o toque e explicito. */
     const op=(a.opcoes||[]).filter(o=>o&&o.v);
-    campo.innerHTML=`<div class="campo"><span class="mut">Em que conta o dinheiro ${verbo==="pago"?"saiu":"entrou"}? Caixa de empresa não se mistura com o seu.</span><div class="datas contas">${op.map(o=>`<button${o.v===a.padrao?' class="sug" aria-describedby="selo-sug"':""} data-conta="${esc(o.v)}" onclick="agir('${escAttr(verbo)}','${escAttr(o.v)}','${escAttr(a.rot+" na conta "+o.rot)}')">${esc(o.rot)}${o.v===a.padrao?' <span class="selo" id="selo-sug">última usada</span>':""}</button>`).join("")}</div></div>`;
+    campo.innerHTML=`<div class="campo"><span class="mut">Em que conta o dinheiro ${verbo==="pago"?"saiu":"entrou"}? Caixa de empresa não se mistura com o seu.</span><div class="datas contas">${op.map(o=>`<button${o.v===a.padrao?' class="sug" aria-describedby="selo-sug"':""} data-conta="${esc(o.v)}" data-acao="agir" data-a1="${esc(verbo)}" data-a2="${esc(o.v)}" data-a3="${esc(a.rot+" na conta "+o.rot)}">${esc(o.rot)}${o.v===a.padrao?' <span class="selo" id="selo-sug">última usada</span>':""}</button>`).join("")}</div></div>`;
   }else if(a.campo){
-    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmar('${escAttr(verbo)}',1,'Escreva algo antes de enviar.')">Enviar</button></div>`;
+    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">${esc(a.rot)}</label><textarea id="cv" rows="3"></textarea><button class="pri" data-acao="confirmar" data-a1="${esc(verbo)}" data-a2="1" data-a3="Escreva algo antes de enviar.">Enviar</button></div>`;
   }else{ agir(verbo,null,a.rot); return; }
   const cv=document.getElementById("cv"); if(cv&&cv.tagName==="TEXTAREA")cv.focus();
 }
@@ -1394,7 +1433,7 @@ function teclaFolha(k){
 /* responder sem o verbo deliberar: o texto vai pela inbox(), com o card no comeco para o atendente achar */
 function responder(){
   const campo=document.getElementById("campo"); if(!F||!campo)return;
-  campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Responder ao atendente sobre este card</label><textarea id="cv" rows="3"></textarea><button class="pri" onclick="confirmarResposta()">Enviar resposta</button></div>`;
+  campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Responder ao atendente sobre este card</label><textarea id="cv" rows="3"></textarea><button class="pri" data-acao="confirmarResposta">Enviar resposta</button></div>`;
   document.getElementById("cv").focus();
 }
 function confirmarResposta(){
@@ -1511,13 +1550,13 @@ function abrirVoz(texto){
   const motor=m==="api"?"Transcrição pela sua API ("+esc(hostDe(api.url))+")":m==="navegador"?"Transcrição grátis do navegador":"Este navegador não transcreve voz";
   mostrarFolha(`
     <div class="voz-topo"><h3 id="folhaTit">Falar uma instrução</h3>
-      <button class="ico" aria-label="Fechar" onclick="fecharFolha()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <button class="ico" aria-label="Fechar" data-acao="fecharFolha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="voz-motor" id="vozMotor">${motor} · painel ${VERP}</div>
-    <button class="voz-mic" id="vozMic" aria-pressed="false" onclick="vozAlternar()"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
+    <button class="voz-mic" id="vozMic" aria-pressed="false" data-acao="vozAlternar"${m?"":" disabled"}>${MIC_SVG}<span id="vozMicTxt">${m?"Tocar e falar":"Sem transcrição"}</span></button>
     <div class="voz-estado" id="vozEstado" role="status" aria-live="polite">${m?"":"Use o microfone do teclado do celular no campo abaixo, ou ligue a sua API."}</div>
     <label for="vozTxt" class="mut">O que vai para o Claude. Corrija antes de enviar.</label>
-    <textarea id="vozTxt" class="voz-txt" oninput="vozDigitou(this.value)" placeholder="Ex.: reagendar a vistoria da obra para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
-    <div class="acoes voz-acoes"><button class="pri" onclick="vozEnviar()">Enviar ao Claude</button><button class="sec" onclick="vozLimpar()">Limpar</button></div>
+    <textarea id="vozTxt" class="voz-txt" data-ao-digitar="vozDigitou" placeholder="Ex.: reagendar a vistoria da obra para quinta e me lembrar de cobrar o laudo L1.">${esc(VOZ.rascunho)}</textarea>
+    <div class="acoes voz-acoes"><button class="pri" data-acao="vozEnviar">Enviar ao Claude</button><button class="sec" data-acao="vozLimpar">Limpar</button></div>
     <div class="mut" id="vozDestino">${esc(destinoTxt())}${m==="navegador"?" O navegador manda o áudio ao serviço de voz do fabricante (Apple ou Google) para transcrever; o painel não guarda áudio.":""}${m==="api"?" O áudio vai só para a sua API e não fica guardado aqui.":""}</div>
     <details class="voz-api"><summary>API de transcrição deste aparelho${api?" · ligada":""}</summary><div class="corpo">
       <div class="mut">Para quando a sua API existir. Fica guardada só neste aparelho, nunca no repositório. Sem chave, o painel manda o seu login e a API confere que é você.</div>
@@ -1525,7 +1564,7 @@ function abrirVoz(texto){
       <input id="vozUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://…" value="${esc(api?api.url:"")}">
       <label for="vozKey">Chave (opcional)</label>
       <input id="vozKey" type="password" autocomplete="off" placeholder="${api&&api.chave?"guardada · digite para trocar":"vazio usa o seu login"}">
-      <div class="acoes"><button class="sec" onclick="vozSalvarApi()">Guardar neste aparelho</button>${api?'<button class="sec" onclick="vozEsquecerApi()">Esquecer a API</button>':""}</div>
+      <div class="acoes"><button class="sec" data-acao="vozSalvarApi">Guardar neste aparelho</button>${api?'<button class="sec" data-acao="vozEsquecerApi">Esquecer a API</button>':""}</div>
       <div class="mut">Contrato: POST do áudio para o endereço; resposta {"texto": "…"}. Detalhes em docs/instrucao-por-audio.md.</div>
     </div></details>
     <div class="bloco"><span class="rot">Suas últimas instruções</span><ul class="historico conv" id="vozResp"><li class="mut">carregando…</li></ul></div>`,"cheia");
@@ -1799,8 +1838,8 @@ function msFiltroHtml(pend,adi){
   if(pend.length+adi.length<2)return "";
   const cont={}; pend.forEach(p=>{const k=p.frente||""; cont[k]=(cont[k]||0)+1;}); adi.forEach(p=>{const k=p.frente||""; if(!(k in cont))cont[k]=0;});
   const fr=Object.keys(cont).sort((a,b)=>msFrenteRot(a).localeCompare(msFrenteRot(b),"pt-BR"));
-  return `<div class="ms-filtro"><label for="msOrdem" class="mut">Ordem <select id="msOrdem" onchange="msFiltrar()">${MS_ORDENS.map(o=>`<option value="${o[0]}"${o[0]===MS.ordem?" selected":""}>${esc(o[1])}</option>`).join("")}</select></label>
-    <label for="msFrente" class="mut">Frente <select id="msFrente" onchange="msFiltrar()"><option value="">Todas (${esc(pend.length)})</option>${fr.map(k=>`<option value="${esc(k)}"${k===MS.frente?" selected":""}>${esc(msFrenteRot(k))} (${esc(cont[k])})</option>`).join("")}</select></label></div>`;
+  return `<div class="ms-filtro"><label for="msOrdem" class="mut">Ordem <select id="msOrdem" data-ao-mudar="msFiltrar">${MS_ORDENS.map(o=>`<option value="${o[0]}"${o[0]===MS.ordem?" selected":""}>${esc(o[1])}</option>`).join("")}</select></label>
+    <label for="msFrente" class="mut">Frente <select id="msFrente" data-ao-mudar="msFiltrar"><option value="">Todas (${esc(pend.length)})</option>${fr.map(k=>`<option value="${esc(k)}"${k===MS.frente?" selected":""}>${esc(msFrenteRot(k))} (${esc(cont[k])})</option>`).join("")}</select></label></div>`;
 }
 const msFrenteRot=k=>k?msCap(msFrente(k)):"Sem frente";
 const msPl=(n,a,b)=>n+" "+(+n===1?a:b);
@@ -1861,7 +1900,7 @@ const msHora=t=>{const x=new Date(t);return isNaN(x)?"":x.toLocaleTimeString("pt
 const msFechDia=dia=>MS.dados&&Array.isArray(MS.dados.fechamentos)?MS.dados.fechamentos.find(f=>String(f.dia).slice(0,10)===String(dia).slice(0,10)):null;
 const msFechDe=r=>r&&r.tipo==="dia"?msFechDia(r.alvo):null;
 function msItemHtml(p){
-  return `<button class="ms-item" onclick="msAbrirId(${+p.id})">
+  return `<button class="ms-item" data-acao="msAbrirId" data-a1="${+p.id}">
       <span class="ms-tit l2">${esc(p.titulo||"peça sem título")}</span>
       <span class="ms-meta">${esc(msCap(msAto(p.ato)))}${p.dest?" para "+esc(p.dest):""}${p.frente?" · "+esc(msFrente(p.frente)):""}</span>
       <span class="ms-meta2"><span class="ms-rs ${msTemRs(p.rs)?"ok":""}">${msTemRs(p.rs)?esc(rs(p.rs)):"sem valor"}</span>${p.adiado_ate?`<span class="ms-dias">volta em ${esc(msAlvo(p.adiado_ate))}</span>`:`<span class="ms-dias ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>`}${p.novo===true?`<span class="ms-novo">nova</span>`:""}${msAprovEm(p)?`<span class="ms-novo">aprovada, falta ${esc(p.ato==="enviar"?"enviar":msAto(p.ato))}</span>`:""}${p.tarefa!=null?`<span class="ms-dias">com card</span>`:""}</span>
@@ -1872,9 +1911,9 @@ function msFechoHtml(d,pend,adi){
   const num=`<span class="ms-fecho-num"><span><b>${esc(pend.length)}</b> ${pend.length===1?"pendente":"pendentes"}</span><span><b>${esc(dec)}</b> ${dec===1?"decidida":"decididas"} hoje</span><span><b>${esc(adi.length)}</b> ${adi.length===1?"adiada":"adiadas"}</span></span>
     <span class="ms-barra" role="img" aria-label="${esc(pct)}% da mesa decidida hoje"><i style="width:${pct}%"></i></span>`;
   if(f) return `<div class="ms-fecho ${+f.pendentes===0?"limpa":""}"><b>Dia encerrado às ${esc(msHora(f.ciente_em))}${+f.pendentes===0?": mesa limpa.":", com "+esc(msPl(f.pendentes,"peça pendente","peças pendentes"))+"."}</b>${num}
-    ${pend.length?`<button type="button" class="sec" id="msBtEncerrar" onclick="msEncerrar()">Decidir as ${esc(pend.length)} que ficaram</button>`:""}</div>`;
+    ${pend.length?`<button type="button" class="sec" id="msBtEncerrar" data-acao="msEncerrar">Decidir as ${esc(pend.length)} que ficaram</button>`:""}</div>`;
   return `<div class="ms-fecho ${pend.length?"":"limpa"}"><b>${pend.length?"Para limpar a mesa hoje: "+esc(msPl(pend.length,"peça pede","peças pedem"))+" uma decisão sua.":"Mesa limpa. Falta só a sua ciência do dia."}</b>${num}
-    <button type="button" class="pri" id="msBtEncerrar" onclick="msEncerrar()">${pend.length?"Encerrar o dia ("+esc(pend.length)+")":"Dar ciência e encerrar o dia"}</button></div>`;
+    <button type="button" class="pri" id="msBtEncerrar" data-acao="msEncerrar">${pend.length?"Encerrar o dia ("+esc(pend.length)+")":"Dar ciência e encerrar o dia"}</button></div>`;
 }
 function msRelMeta(r){
   const p=[];
@@ -1911,10 +1950,10 @@ function msRender(){
   const topo=relIdx.filter(o=>lado(o)==="topo"), lidos=relIdx.filter(o=>lado(o)==="lido"), arq=relIdx.filter(o=>lado(o)==="arq");
   const atrasados=relIdx.filter(o=>o.r.tipo==="dia"&&!msFechDe(o.r)&&diaDe(o)<hojeD).length;
   const relVis=MS.todosRel?topo:topo.slice(0,MS_REL_VISIVEIS);
-  const relBt=o=>`<button class="ms-rel" onclick="msRelatorio(${o.i})"><span class="ms-tit ms-um">${esc((MS_REL[o.r.tipo]||"Relatório")+" "+msAlvo(o.r.alvo))}</span><span class="ms-meta">${esc(msRelMeta(o.r))}</span></button>`;
+  const relBt=o=>`<button class="ms-rel" data-acao="msRelatorio" data-a1="${o.i}"><span class="ms-tit ms-um">${esc((MS_REL[o.r.tipo]||"Relatório")+" "+msAlvo(o.r.alvo))}</span><span class="ms-meta">${esc(msRelMeta(o.r))}</span></button>`;
   MS.rel=rel;
-  const loteH=atrasados?`<button type="button" class="sec ms-lote" id="msBtLote" onclick="msCienciaLote()">Dar ciência em lote (${esc(msPl(atrasados,"dia atrasado","dias atrasados"))})</button><p class="ms-aviso" id="msAvisoLote" role="alert"></p>`:"";
-  const relH=`<h2>Relatórios</h2>${loteH}<div class="pilha">${topo.length?relVis.map(relBt).join(""):`<div class="vazio">${rel.length?"Nenhum relatório esperando sua ciência.":"Nenhum relatório gerado ainda."}</div>`}${topo.length>relVis.length?`<button class="sec ms-mais" onclick="MS.todosRel=true;msRender()">Mostrar todos (${topo.length})</button>`:""}</div>`
+  const loteH=atrasados?`<button type="button" class="sec ms-lote" id="msBtLote" data-acao="msCienciaLote">Dar ciência em lote (${esc(msPl(atrasados,"dia atrasado","dias atrasados"))})</button><p class="ms-aviso" id="msAvisoLote" role="alert"></p>`:"";
+  const relH=`<h2>Relatórios</h2>${loteH}<div class="pilha">${topo.length?relVis.map(relBt).join(""):`<div class="vazio">${rel.length?"Nenhum relatório esperando sua ciência.":"Nenhum relatório gerado ainda."}</div>`}${topo.length>relVis.length?`<button class="sec ms-mais" data-acao="msTodosRel">Mostrar todos (${topo.length})</button>`:""}</div>`
     +(lidos.length?`<details class="ms-adiadas" id="msLidos"><summary>Lidos (${esc(lidos.length)})</summary><div class="pilha">${lidos.map(relBt).join("")}</div></details>`:"")
     +(arq.length?`<details class="ms-adiadas" id="msArquivo"><summary>Arquivo, mais de 31 dias (${esc(arq.length)})</summary><p class="mut">O banco não recebe ciência destes um a um. A ciência em lote cobre todos.</p><div class="pilha">${arq.map(relBt).join("")}</div></details>`:"");
   raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p>${msFechoHtml(d,pend,adi)}${msHoraHtml(d)}<h2>Esperando você</h2>${msFiltroHtml(pend,adi)}${filtroN}<div class="pilha">${lista}</div>${adiH}${saiuH}${relH}`;
@@ -1954,34 +1993,34 @@ function msAbrirP(p){
   const r=MS.ritual, amanha=somaDias(1), aprov=msAprovEm(p);
   mostrarFolha(`${r?`<p class="ms-ritual">Encerrar o dia · ${esc(r.i+1)} de ${esc(r.ids.length)}</p>`:""}<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
     <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}${p.adiado_ate?`<span class="chip">adiada até ${esc(msAlvo(p.adiado_ate))}</span>`:""}</div>
-    ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" onclick="msAbrirPeca()">Abrir a peça</button>`:`<p class="mut ms-sem-copia">A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.</p>`}
+    ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" data-acao="msAbrirPeca">Abrir a peça</button>`:`<p class="mut ms-sem-copia">A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.</p>`}
     <div class="bloco"><span class="rot">Para quem</span><p>${p.dest?esc(p.dest)+".":"Sem destinatário escrito."}${p.canal?" Previsto por "+esc(msCanal(p.canal))+".":""}</p></div>
     <div class="bloco"><span class="rot">Valor</span><p class="${msTemRs(p.rs)?"num":""}">${msTemRs(p.rs)?esc(msRs2(p.rs)):"sem valor"}</p></div>
     <div class="bloco"><span class="rot">O que falta</span><p>${p.motivo?esc(p.motivo):"Sem motivo escrito."}</p></div>
     <div class="bloco ms-decide"><span class="rot">Sua decisão</span>
       ${aprov?`<p class="ms-aprovada" id="msAprovada"><b>Aprovada por você em ${esc(aprov)}.</b> Falta ${esc(p.ato==="enviar"?"enviar":msAto(p.ato))}: quando sair, dê a baixa em "Já enviei", logo abaixo.</p>`:""}
       <div class="ms-decisoes" role="group" aria-label="Sua decisão">
-        ${aprov?"":`<button type="button" class="pri" id="msBtAprovar" onclick="msDecidir('aprovado')">Aprovar</button>`}
-        <button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" onclick="msMotivo('ajustar')">Pedir ajuste</button>
-        <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" onclick="msMotivo('adiar')">Adiar</button>
-        <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" onclick="msMotivo('largar')">Largar</button>
+        ${aprov?"":`<button type="button" class="pri" id="msBtAprovar" data-acao="msDecidir" data-a1="aprovado">Aprovar</button>`}
+        <button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" data-acao="msMotivo" data-a1="ajustar">Pedir ajuste</button>
+        <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" data-acao="msMotivo" data-a1="adiar">Adiar</button>
+        <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" data-acao="msMotivo" data-a1="largar">Largar</button>
       </div>
       <span class="mut">Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa. Adiar tira da conta de hoje até a data.</span>
-      <div class="campo ms-nota" id="msNotaAjustar" hidden><label for="msTxtAjustar" class="mut">O que ajustar</label><textarea id="msTxtAjustar" rows="3"></textarea><button type="button" class="pri" id="msBtAjustar" onclick="msDecidir('ajustar')">Enviar pedido</button></div>
-      <div class="campo ms-nota" id="msNotaAdiar" hidden><label for="msTxtAdiar" class="mut">Volta para a mesa em</label><input id="msTxtAdiar" type="date" min="${amanha}" max="${somaDias(30)}" value="${amanha}"><button type="button" class="pri" id="msBtAdiar" onclick="msDecidir('adiar')">Adiar</button></div>
-      <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que largar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" onclick="msDecidir('largar')">Confirmar</button></div>
+      <div class="campo ms-nota" id="msNotaAjustar" hidden><label for="msTxtAjustar" class="mut">O que ajustar</label><textarea id="msTxtAjustar" rows="3"></textarea><button type="button" class="pri" id="msBtAjustar" data-acao="msDecidir" data-a1="ajustar">Enviar pedido</button></div>
+      <div class="campo ms-nota" id="msNotaAdiar" hidden><label for="msTxtAdiar" class="mut">Volta para a mesa em</label><input id="msTxtAdiar" type="date" min="${amanha}" max="${somaDias(30)}" value="${amanha}"><button type="button" class="pri" id="msBtAdiar" data-acao="msDecidir" data-a1="adiar">Adiar</button></div>
+      <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que largar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" data-acao="msDecidir" data-a1="largar">Confirmar</button></div>
       <p class="ms-aviso" id="msAvisoDec" role="alert"></p>
     </div>
     <div class="bloco ms-baixa" id="msBaixaBloco"><span class="rot">Já enviei</span>
       <span class="mut">Por onde saiu?</span>
-      <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="false" onclick="msEscolherCanal('${esc(c)}')">${esc(n)}</button>`).join("")}</div>
+      <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="false" data-acao="msEscolherCanal" data-a1="${esc(c)}">${esc(n)}</button>`).join("")}</div>
       <div class="campo"><label for="msDest" class="mut">Para quem</label><input id="msDest" type="text" autocomplete="off" value="${esc(p.dest||"")}"></div>
       <div class="campo"><label for="msArq" class="mut">Print ou comprovante (opcional)</label><input id="msArq" class="ms-arq" type="file" accept="image/*,application/pdf"></div>
       <p class="ms-aviso" id="msAviso" role="alert"></p>
-      <button class="pri" id="msBt" onclick="msBaixa()">Dar baixa</button>
+      <button class="pri" id="msBt" data-acao="msBaixa">Dar baixa</button>
       <span class="mut">Sem print, a baixa vira declaração sua, com data e hora.</span>
     </div>
-    ${r?`<div class="ms-ritual-pe"><button type="button" class="sec" onclick="msRitualProx(false)">Pular</button><button type="button" class="sec" onclick="msRitualParar()">Parar</button></div>`:`<button class="sec" onclick="fecharFolha()">Fechar</button>`}`);
+    ${r?`<div class="ms-ritual-pe"><button type="button" class="sec" data-acao="msRitualPular">Pular</button><button type="button" class="sec" data-acao="msRitualParar">Parar</button></div>`:`<button class="sec" data-acao="fecharFolha">Fechar</button>`}`);
 }
 function msEscolherCanal(c){
   if(!MS_CANAL_NOME[c])return;
@@ -2121,14 +2160,14 @@ function msRelatorio(i){
       :`<div class="bloco"><span class="rot">Sua ciência</span><p id="msCiDada">Dada em ${esc(ddmm(f.ciente_em))} às ${esc(msHora(f.ciente_em))}: ${esc(msPl(+f.pendentes||0,"peça pendente","peças pendentes"))}, ${esc(msPl(+f.adiadas||0,"adiada","adiadas"))} e ${esc(msPl(+f.decididas||0,"decisão","decisões"))} no dia.</p></div>`)
     :foraJanela
     ?`<div class="bloco"><span class="rot">Sua ciência</span><p class="mut" id="msCiFora">Mais de 31 dias: o banco não recebe ciência deste dia sozinho. Use "Dar ciência em lote" na lista de relatórios.</p></div>`
-    :`<div class="bloco"><span class="rot">Sua ciência</span><p class="mut">${passado?"Dia passado: a ciência grava que você leu; a mesa daquele dia não se reconstrói.":"Leu o fechamento? A ciência fica gravada com o que ainda está na mesa agora."}</p><button type="button" class="pri" id="msBtCiencia" onclick="msCiencia('${escAttr(dia)}')">Dar ciência deste dia</button><p class="ms-aviso" id="msAvisoCi" role="alert"></p></div>`;
+    :`<div class="bloco"><span class="rot">Sua ciência</span><p class="mut">${passado?"Dia passado: a ciência grava que você leu; a mesa daquele dia não se reconstrói.":"Leu o fechamento? A ciência fica gravada com o que ainda está na mesa agora."}</p><button type="button" class="pri" id="msBtCiencia" data-acao="msCiencia" data-a1="${esc(dia)}">Dar ciência deste dia</button><p class="ms-aviso" id="msAvisoCi" role="alert"></p></div>`;
   mostrarFolha(`<h3 id="folhaTit">${esc((MS_REL[r.tipo]||"Relatório")+" "+msAlvo(r.alvo))}</h3>
     <div class="chips"><span class="chip">versão ${esc(r.versao||"sem número")}</span>${r.tipo==="dia"?(f?`<span class="chip ok">ciente</span>`:`<span class="chip w">sem ciência</span>`):""}</div>
-    ${r.path?`<button type="button" class="pri ms-abrir" id="msRelPdf" onclick="msRelPdf(${i},-1)">Abrir o PDF</button>`:`<p class="mut">Este relatório ainda não tem arquivo.</p>`}
+    ${r.path?`<button type="button" class="pri ms-abrir" id="msRelPdf" data-acao="msRelPdf" data-a1="${i}" data-a2="-1">Abrir o PDF</button>`:`<p class="mut">Este relatório ainda não tem arquivo.</p>`}
     ${ciencia}
-    ${recente?`<button type="button" class="sec" onclick="msEncerrar()">Decidir as peças da mesa agora</button>`:""}
-    ${ant.length?`<details class="ms-adiadas"><summary>Versões anteriores (${esc(ant.length)})</summary><div class="ms-versoes">${ant.map((a,j)=>`<button type="button" class="sec" onclick="msRelPdf(${i},${j})">Versão ${esc(a.versao||"sem número")}, substituída</button>`).join("")}</div></details>`:""}
-    <button class="sec" onclick="fecharFolha()">Fechar</button>`);
+    ${recente?`<button type="button" class="sec" data-acao="msEncerrar">Decidir as peças da mesa agora</button>`:""}
+    ${ant.length?`<details class="ms-adiadas"><summary>Versões anteriores (${esc(ant.length)})</summary><div class="ms-versoes">${ant.map((a,j)=>`<button type="button" class="sec" data-acao="msRelPdf" data-a1="${i}" data-a2="${j}">Versão ${esc(a.versao||"sem número")}, substituída</button>`).join("")}</div></details>`:""}
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
 }
 function msRelPdf(i,j){
   const r=MS.rel[i], a=r&&j>=0?(r.anteriores||[])[j]:r, p=a&&a.path;
@@ -2155,9 +2194,9 @@ function msResumo(){
   mostrarFolha(`<h3 id="folhaTit">Encerrar o dia</h3>
     <p>${esc(txt)} ${ficam?esc(msPl(ficam,"peça fica","peças ficam"))+" na mesa para amanhã.":"A mesa fica limpa."}</p>
     <p class="mut">A ciência grava o dia com o que ficou. Amanhã a Mesa começa desta conta.</p>
-    <button type="button" class="pri" id="msBtCiencia" onclick="msCiencia()">Dar ciência e encerrar o dia</button>
+    <button type="button" class="pri" id="msBtCiencia" data-acao="msCiencia">Dar ciência e encerrar o dia</button>
     <p class="ms-aviso" id="msAvisoCi" role="alert"></p>
-    <button type="button" class="sec" onclick="msRitualParar()">Voltar à mesa</button>`);
+    <button type="button" class="sec" data-acao="msRitualParar">Voltar à mesa</button>`);
 }
 async function msCiencia(dia){
   if(MS.gravando)return;

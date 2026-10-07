@@ -565,10 +565,10 @@ const blocosComuns = arq => {
   for (const x of fonte.matchAll(/\/\* comum:([a-z]+) [^\n]*\*\/\r?\n([\s\S]*?)\/\* fim comum:\1 \*\//g)) m[x[1]] = x[2];
   return m;
 };
-test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhido, porta do segundo fator e escape) e o mesmo byte a byte', async ()=>{
+test('o codigo comum das duas telas (regra de Hoje, teto de tempo, texto recolhido, porta do segundo fator, escape e acao) e o mesmo byte a byte', async ()=>{
   const a = blocosComuns('index.html'), b = blocosComuns('presidente.html');
-  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['escapa','fator','hoje','recolhe','teto']);
-  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['escapa','fator','hoje','recolhe','teto']);
+  expect(Object.keys(a).sort(), 'blocos no index.html').toEqual(['acao','escapa','fator','hoje','recolhe','teto']);
+  expect(Object.keys(b).sort(), 'blocos no presidente.html').toEqual(['acao','escapa','fator','hoje','recolhe','teto']);
   for (const k of Object.keys(a)) expect(b[k], `bloco comum:${k} divergiu`).toBe(a[k]);
 });
 
@@ -1800,7 +1800,7 @@ test('Card p4.16: desfazer nao sobe o print; upload que falha nao conclui o card
 
 test('Mesa p4.16: ordena por data e filtra por frente, com a contagem certa', async ({page})=>{
   const erros = await abrirMesa(page);
-  const ids = ()=>page.evaluate(()=>[...document.querySelectorAll('#ms-raiz .pilha .ms-item')].map(b=>+(b.getAttribute('onclick').match(/\d+/)||[0])[0]));
+  const ids = ()=>page.evaluate(()=>[...document.querySelectorAll('#ms-raiz .pilha .ms-item')].map(b=>+b.dataset.a1));
   expect(await ids(), 'padrao: a ordem do banco').toEqual([101,102,103]);
   await expect(page.locator('#msOrdem')).toHaveValue('valor');
   await page.selectOption('#msOrdem','recentes');
@@ -2117,4 +2117,37 @@ test('87a: escape e reais num bloco comum so, e rs nao mostra NaN', async ({page
   await abrir(page);
   const r = await page.evaluate(()=>[rs(NaN), rs('abc'), rs(null), rs(undefined), rs(12345.6), rs(-1234.4), rs('900')]);
   expect(r).toEqual(['—','—','—','—','R$ 12.346','-R$ 1.234','R$ 900']);
+});
+
+/* p4.26 (plano 87b, 07/10/2026): nenhum handler inline no presidente. A acao mora em data-acao e
+   afins, o argumento em data-a1..a3 (escapado por esc), e o registro ACOES e a lista fechada do que a
+   tela faz. Sem JS dentro de atributo, a aspa hostil nao tem onde fechar argumento, e o unsafe-inline
+   pode sair do script-src no fecho do plano 87. */
+test('87b: nenhum handler inline no presidente; toda acao da tela esta no registro e o clique anda', async ({page})=>{
+  const fs = require('fs');
+  const fonte = fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  expect(fonte.match(/\son[a-z]+\s*=\s*["']/gi), 'on*= no fonte').toBeNull();
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{
+    const inline = new Set(), sem = new Set(); let n = 0;
+    const varrer = ()=>{ for (const el of document.querySelectorAll('*')) {
+      for (const a of el.attributes) if (/^on/i.test(a.name)) inline.add(el.tagName+' '+a.name);
+      for (const k of ['acao','aoDigitar','aoMudar','aoTecla','aoColar']) { const v = el.dataset[k];
+        if (v !== undefined) { n++; if (!Object.prototype.hasOwnProperty.call(ACOES, v)) sem.add(v); } } } };
+    for (const aba of ['hoje','fila','caixa','frentes','mesa']) { ir(aba); varrer(); }
+    abrirFila(0); varrer(); fecharFolha();
+    ir('hoje');
+    document.querySelector('[data-acao="ir"][data-a1="fila"]').click();
+    const aberta = document.querySelector('[data-aba="fila"]').getAttribute('aria-current');
+    const seg = [...document.querySelectorAll('#seg button')], alvo = seg[seg.length-1];
+    alvo.click();  /* o clique redesenha a fila: o botao certo se le de novo */
+    const depois = [...document.querySelectorAll('#seg button')];
+    return {inline:[...inline], sem:[...sem], n, aberta, coluna:depois[depois.length-1].getAttribute('aria-selected')};
+  });
+  expect(r.inline, 'atributo on* no DOM desenhado').toEqual([]);
+  expect(r.sem, 'acao sem registro').toEqual([]);
+  expect(r.n, 'varreu as acoes das cinco abas e da folha').toBeGreaterThan(20);
+  expect(r.aberta, 'o clique delegado troca a aba').toBe('page');
+  expect(r.coluna, 'o clique delegado troca a coluna da fila').toBe('true');
+  expect(erros).toEqual([]);
 });
