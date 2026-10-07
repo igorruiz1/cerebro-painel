@@ -203,3 +203,30 @@ test('h. o presidente.html leva a pagina nova pelo rodape do trilho e da coluna'
   expect(pres).toMatch(/<div class="rodape( so-real)?">[^\n]*<a href="seguranca\.html">/);
   expect(ler('seguranca.html')).toMatch(/<a [^>]*href="presidente\.html"/);
 });
+
+/* i. s1156 (07/10/2026): repositorio publico sem dado real. Nenhum arquivo versionado cita os clientes e as 7 contas
+   bancarias que vazaram ate a p4.11 (o historico foi limpo com git filter-repo na mesma data). A lista vai em SHA-256,
+   como a do teste da demonstracao, para nao vazar ela mesma. Conta entra como "digitos-digito"; nome, como palavra
+   sem acento e em minuscula. Nome ou conta nova: gerar o hash do mesmo jeito e acrescentar. */
+test('i. nenhum arquivo versionado cita cliente real ou conta bancaria real', async ()=>{
+  const crypto = require('crypto');
+  const {execSync} = require('child_process');
+  const h = t=>crypto.createHash('sha256').update(t).digest('hex').slice(0,16);
+  const PROIBIDOS = new Set(['fe7870a244a2000b','b748ad66d73dd832','4135aa9dc1b842a6','3a476a05128038e1','9064e6cd770c5a94',
+    'ba015adb39a28a98','95c1beeed6102e63','bfc61013891c375f','5ecc8f8936a67fc2','119e3fa68fb36ae0','7fe752db339cecd0']);
+  const raiz = path.resolve(__dirname, '..');
+  const arquivos = execSync('git ls-files', {cwd: raiz, encoding: 'utf8'}).split('\n')
+    .filter(f=>/\.(html|js|mjs|css|md|json|yml|yaml|txt)$/.test(f));
+  expect(arquivos.length, 'git ls-files listou os arquivos').toBeGreaterThan(5);
+  const varrer = (texto, lista)=>{
+    const t = texto.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(), r = [];
+    for (const w of new Set(t.split(/[^a-z0-9]+/))) if (w && lista.has(h(w))) r.push(h(w));
+    for (const c of new Set(t.match(/\b\d{4,7}-\d\b/g) || [])) if (lista.has(h(c))) r.push(h(c));
+    return r;
+  };
+  const achados = arquivos.flatMap(f=>varrer(fs.readFileSync(path.join(raiz, f), 'utf8'), PROIBIDOS).map(x=>f + ': ' + x));
+  expect(achados, 'dado real em arquivo versionado (mostrado so o hash)').toEqual([]);
+  /* o detector detecta: nome e conta ficticios, postos numa lista de teste, sao achados com acento e caixa alta */
+  const ficticia = new Set([h('zzclienteficticio'), h('1234567-8')]);
+  expect(varrer('Obra do ZZClienteFictício, conta 1234567-8.', ficticia).length, 'o detector acha nome e conta').toBe(2);
+});
