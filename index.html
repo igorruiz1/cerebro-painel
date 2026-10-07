@@ -14,33 +14,12 @@
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="tokens.css?v=6a2c7588">
 <style>
 /* v71 (03/10/2026) — DESIGN SYSTEM DABLI TECH. O painel passa a ser produto da Dabli Tech.
    Fonte: guia de identidade visual (05_Marca/Identidade/Guias). Paleta oficial em --dt-*;
    os tokens de uso (--bg, --ink, --acc...) apontam para ela. Semaforo (vermelho/ambar/verde)
    e eixo diverging dos graficos NAO mudam: sao leitura de estado, nao marca. */
-:root{
- /* p4.22 (plano 83): escala tipografica unica, 5 degraus. Piso: 14 px no presidente e na seguranca,
-    12 px no bastidor. Tamanho novo entra aqui, nunca solto numa regra (o teste cobra). */
- --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:28px;
- /* paleta oficial Dabli Tech */
- --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
- --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
- /* tipografia oficial: Sora (Regular, Medium, SemiBold, Bold) */
- --font:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
- /* superficies derivadas do Midnight Navy (degraus de luminosidade, mesmo matiz) */
- --bg:var(--dt-navy); --surface:#0F1629; --card:#121A2F; --card2:#18223B; --raise:#1E2A47;
- --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate); --dim:#8795AE; --line:#2C3A5A; --line2:#1F2A44;
- --red:#e5484d; --yel:#f5a623; --grn:#30a46c; --acc:var(--dt-blue); --vio:var(--dt-violet);
- --ok:#6ee7a8; --bad:#ff8a8f; --warn:#ffb547; --lil:#B9A2FA;
- /* fundo de item selecionado: azul da marca sobre o navy */
- --acc-bg:#132A57; --acc-a:47,128,255; --vio-bg:#221A47; --vio-bg2:#2C2160;
- --r:14px; --r2:16px; --r-s:9px;
- /* eixo diverging dos graficos — RdBu, validado: dE 26,4 protan / 33,1 normal.
-    vermelho x verde reprova em deuteranopia (dE 4,9), entao verde so no semaforo, com rotulo. */
- --rd:#e5484d; --bl:#4c8dff; --nt:#6b7a94;
-}
 *{box-sizing:border-box}
 /* v23 (25/08/2026) — SELO DE FRESCOR. Recomendacao 8 do benchmark de mercado:
    num painel de decisao de caixa, dado velho com aparencia de novo e pior que tela vazia.
@@ -53,9 +32,9 @@
 .fresc b{font-weight:650}
 .fresc.ok{background:var(--card);color:var(--mut)}
 .fresc.ok .dot{background:var(--grn)}
-.fresc.late{background:rgba(245,166,35,.10);border-color:rgba(245,166,35,.42);color:var(--warn)}
+.fresc.late{background:rgba(var(--yel-a),.10);border-color:rgba(var(--yel-a),.42);color:var(--warn)}
 .fresc.late .dot{background:var(--yel)}
-.fresc.dead{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.5);color:var(--bad)}
+.fresc.dead{background:rgba(var(--red-a),.12);border-color:rgba(var(--red-a),.5);color:var(--bad)}
 .fresc.dead .dot{background:var(--red)}
 .fresc .sep{color:var(--dim)}
 /* Orcamento de alertas: a regua da aviacao — silencio e o estado normal.
@@ -69,7 +48,7 @@ button,input,select,textarea{font-family:inherit}
 ::selection{background:rgba(var(--acc-a),.3)}
 
 /* ---------- CABEÇALHO ---------- */
-.top{position:sticky;top:0;z-index:30;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);
+.top{position:sticky;top:0;z-index:30;background:rgba(var(--navy-a),.96);backdrop-filter:blur(10px);
  border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
 /* filete da marca: o degrade azul > violeta do guia, 1 px na base do topo */
 .top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--dt-grad);opacity:.55}
@@ -105,7 +84,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
  min-height:34px;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--acc);background:var(--raise)}
 .btn:active{transform:translateY(1px)}
-.btn.on{border-color:var(--acc);color:#fff;background:var(--acc-bg)}
+.btn.on{border-color:var(--acc);color:var(--on-acc-bg);background:var(--acc-bg)}
 .tabs{max-width:1180px;margin:0 auto;padding:10px 18px 0;display:flex;gap:2px;overflow-x:auto;
  scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -115,8 +94,8 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
 .tab:hover{color:var(--ink2)}
 .tab.on{color:var(--ink);border-bottom-color:var(--acc)}
 .tab .n{margin-left:6px;font-size:var(--fs-1);padding:1px 6px;border-radius:10px;background:var(--card2);color:var(--mut)}
-.tab .n.hot{background:#3a1d1f;color:var(--bad)}
-.tab .n.warn{background:#3a3320;color:var(--warn)}
+.tab .n.hot{background:var(--bad-bg);color:var(--on-bad-bg)}
+.tab .n.warn{background:var(--warn-bg);color:var(--on-warn-bg)}
 
 /* ---------- FILTROS ---------- */
 .filtros{max-width:1180px;margin:0 auto;padding:10px 18px 12px;display:none;gap:8px;
@@ -135,7 +114,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
  padding:5px 11px;font-size:var(--fs-1);cursor:pointer;white-space:nowrap;transition:all .12s;min-height:30px;
  display:inline-flex;align-items:center;gap:5px}
 .chip:hover{border-color:var(--line2);color:var(--ink2)}
-.chip.on{background:var(--acc-bg);border-color:var(--acc);color:#fff}
+.chip.on{background:var(--acc-bg);border-color:var(--acc);color:var(--on-acc-bg)}
 .chip .c{font-size:var(--fs-1);opacity:.75;font-variant-numeric:tabular-nums}
 .fsep{width:1px;height:22px;background:var(--line);margin:0 2px}
 .flabel{font-size:var(--fs-1);letter-spacing:1.4px;color:var(--dim);font-weight:600;margin-right:2px}
@@ -168,7 +147,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
 .m9wrap{background:var(--card);border-radius:var(--r2);padding:16px 16px 12px}
 .m9{display:grid;grid-template-columns:26px repeat(3,1fr);grid-template-rows:repeat(3,minmax(92px,auto)) 24px;gap:3px}
 .m9 .cel{background:var(--card2);border-radius:7px;padding:8px 9px 7px;position:relative;min-height:92px}
-.m9 .cel.fuga{background:rgba(229,72,77,.12);box-shadow:inset 0 0 0 1px rgba(229,72,77,.32)}
+.m9 .cel.fuga{background:rgba(var(--red-a),.12);box-shadow:inset 0 0 0 1px rgba(var(--red-a),.32)}
 .m9 .cel.alvo{background:rgba(var(--acc-a),.12);box-shadow:inset 0 0 0 1px rgba(var(--acc-a),.32)}
 .m9 .cel.eq{box-shadow:inset 0 0 0 1px var(--line2)}
 .m9 .qn{position:absolute;right:8px;top:6px;font-size:var(--fs-1);color:var(--dim);font-variant-numeric:tabular-nums}
@@ -183,7 +162,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
 .m9leg i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
 
 .hchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
-.hc{background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:20px;
+.hc{background:rgba(var(--branco-a),.06);border:1px solid var(--line2);border-radius:20px;
  padding:5px 12px;font-size:var(--fs-1);color:var(--ink2);cursor:pointer;transition:border-color .12s}
 .hc:hover{border-color:var(--acc)}
 .hc b{color:var(--ink);font-variant-numeric:tabular-nums}
@@ -201,7 +180,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
  font-variant-numeric:tabular-nums}
 .fmeta{font-size:var(--fs-1);color:var(--dim);margin-top:8px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .dono{font-size:var(--fs-1);font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
-.dono.igor{background:#3a2a12;color:#f5c26b}.dono.claude{background:#12283a;color:#8fc4f5}
+.dono.igor{background:var(--igor-bg);color:var(--on-igor-bg)}.dono.claude{background:var(--claude-bg);color:var(--on-claude-bg)}
 .dono.livre{background:var(--card2);color:var(--dim)}
 
 /* v26: renomeada de .fbar para .filtbar. O nome colidia com a barra de progresso do card
@@ -216,23 +195,23 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
    available, refresh"). Recarrega com cache-bust porque o Pages serve a versao anterior por
    alguns minutos e um reload simples devolveria a mesma tela velha. */
 #velha{display:none;align-items:center;gap:10px;flex-wrap:wrap;
-  background:#3a2a12;border:1px solid var(--yel);border-radius:10px;
+  background:var(--igor-bg);border:1px solid var(--yel);border-radius:10px;
   padding:10px 13px;margin:0 0 12px;font-size:var(--fs-2);color:var(--ink)}
 #velha.on{display:flex}
 #velha b{color:var(--yel)}
-#velha button{background:var(--yel);color:#1b1405;border:0;border-radius:8px;
+#velha button{background:var(--yel);color:var(--on-yel);border:0;border-radius:8px;
   padding:7px 13px;font-size:var(--fs-2);font-weight:600;font-family:inherit;cursor:pointer;min-height:34px}
 /* v44: "carga incompleta" e vermelho, nao amarelo. Tela desatualizada e um incomodo;
    tela que mostra menos do que existe e uma MENTIRA, e a pior delas foi medida em
    16/09/2026: a fila de hoje voltou vazia por falha de rede e o painel escreveu
    "nada precisa de voce hoje" com 16 cards abertos no banco. */
 #falhou{display:none;align-items:center;gap:10px;flex-wrap:wrap;
-  background:#3a1416;border:1px solid var(--bad);border-radius:10px;
-  padding:10px 13px;margin:0 0 12px;font-size:var(--fs-2);color:var(--ink)}
+  background:var(--falha-bg);border:1px solid var(--bad);border-radius:10px;
+  padding:10px 13px;margin:0 0 12px;font-size:var(--fs-2);color:var(--on-falha-bg)}
 #falhou.on{display:flex}
 #falhou b{color:var(--bad)}
 #falhou small{color:var(--mut);font-family:var(--mono);font-size:var(--fs-1);flex:1 1 100%}
-#falhou button{background:var(--bad);color:#fff;border:0;border-radius:8px;
+#falhou button{background:var(--bad);color:var(--on-bad);border:0;border-radius:8px;
   padding:7px 13px;font-size:var(--fs-2);font-weight:600;font-family:inherit;cursor:pointer;min-height:34px}
 /* v26: estado vazio de AGORA. Sem alarme, sem cor de alerta no container: e estado,
    nao ocorrencia. Cada linha e um instrumento, e as saidas ficam embaixo. */
@@ -245,7 +224,7 @@ h1{font-size:var(--fs-1);letter-spacing:3.4px;margin:0;color:var(--mut);font-wei
 .btfil{display:inline-flex;white-space:nowrap}
 .btfil .cav{display:inline-block;transition:transform .15s}
 .btfil.abre .cav{transform:rotate(180deg)}
-.btfil .fn{background:var(--acc);color:#fff;border-radius:20px;font-size:var(--fs-1);font-weight:700;
+.btfil .fn{background:var(--acc);color:var(--on-acc);border-radius:20px;font-size:var(--fs-1);font-weight:700;
  padding:1px 6px;min-width:17px;text-align:center}
 
 main{max-width:1180px;margin:0 auto;padding:20px 18px 100px}
@@ -256,19 +235,19 @@ h2:first-child{margin-top:0}
 h2 .s{color:var(--dim);letter-spacing:0;font-size:var(--fs-1);font-weight:400;text-transform:none}
 
 /* ---------- HERO ---------- */
-.runway{background:linear-gradient(135deg,#172650 0%,var(--card) 65%);border:1px solid var(--line2);
+.runway{background:linear-gradient(135deg,var(--acc-deep) 0%,var(--card) 65%);border:1px solid var(--line2);
   border-left:4px solid var(--acc);border-radius:12px;padding:13px 15px;margin-bottom:12px}
 .runway.warn{border-left-color:var(--yel)} .runway.crit{border-left-color:var(--red);
-  background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 65%)}
+  background:linear-gradient(135deg,var(--bad-bg) 0%,var(--card) 65%)}
 .runway .rt{font-size:var(--fs-4);font-weight:600;letter-spacing:-.3px}
 .runway .rt b{font-variant-numeric:tabular-nums}
 .runway .rs{font-size:var(--fs-2);color:var(--ink2);margin-top:5px}
 .runway .rl{font-size:var(--fs-1);color:var(--warn);margin-top:7px;line-height:1.45}
 .runway .rbar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:10px;background:var(--card2)}
 .runway .rbar i{display:block;height:100%}
-.hero{background:linear-gradient(135deg,#12321f 0%,var(--card) 60%);border-left:4px solid var(--grn);
+.hero{background:linear-gradient(135deg,var(--ok-bg) 0%,var(--card) 60%);border-left:4px solid var(--grn);
  border-radius:var(--r2);padding:18px 20px;margin-bottom:16px}
-.hero.alert{background:linear-gradient(135deg,#3a1d1f 0%,var(--card) 60%);border-left-color:var(--red)}
+.hero.alert{background:linear-gradient(135deg,var(--bad-bg) 0%,var(--card) 60%);border-left-color:var(--red)}
 .hero .t{font-size:var(--fs-4);font-weight:600;letter-spacing:-.3px}
 .hero .s{font-size:var(--fs-2);color:var(--ink2);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 /* v58 (t623): A FAIXA DOS CINCO SEGUNDOS. Seis numeros no topo, cada um com sparkline, banda,
@@ -300,10 +279,10 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:var(--fs-1);font-weight:400;te
 .meta{font-size:var(--fs-1);color:var(--mut);display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .tag{display:inline-flex;align-items:center;font-size:var(--fs-1);font-weight:600;padding:2px 8px;
  border-radius:20px;background:var(--card2);color:var(--mut);white-space:nowrap}
-.tag.f{background:#1a2438;color:#9db6e8}
-.tag.ok{background:#12321f;color:var(--ok)}
-.tag.bad{background:#3a1d1f;color:var(--bad)}
-.tag.med{background:#3a3320;color:var(--warn)}
+.tag.f{background:var(--info-bg);color:var(--on-info-bg)}
+.tag.ok{background:var(--ok-bg);color:var(--on-ok-bg)}
+.tag.bad{background:var(--bad-bg);color:var(--on-bad-bg)}
+.tag.med{background:var(--warn-bg);color:var(--on-warn-bg)}
 .tag.vio{background:var(--vio-bg);color:var(--lil)}
 .rs{color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums}
 .txt{font-size:var(--fs-2);color:var(--ink2);background:var(--card2);border-radius:10px;
@@ -318,9 +297,9 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:var(--fs-1);font-weight:400;te
 .txt.vio{border-left:2px solid var(--vio)}
 .txt.vio .lbl{color:var(--lil)}
 .acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.prim{background:#12321f;border:1px solid var(--grn);color:var(--ok);border-radius:9px;
+.prim{background:var(--ok-bg);border:1px solid var(--grn);color:var(--on-ok-bg);border-radius:9px;
  padding:9px 15px;font-size:var(--fs-2);font-weight:600;cursor:pointer;min-height:38px;transition:background .12s}
-.prim:hover{background:#174028}
+.prim:hover{background:var(--ok-bg-hover);color:var(--on-ok-bg-hover)}
 .prim.vio{background:var(--vio-bg);border-color:var(--vio);color:var(--lil)}
 .prim.vio:hover{background:var(--vio-bg2)}
 .sec{background:var(--card2);border:1px solid var(--line2);color:var(--ink2);border-radius:9px;
@@ -333,7 +312,7 @@ h2 .s{color:var(--dim);letter-spacing:0;font-size:var(--fs-1);font-weight:400;te
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
 .g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px}
 .kpi{background:var(--card);border-radius:var(--r);padding:14px 15px;border:1px solid transparent}
-.kpi.dentro{border-color:rgba(48,163,108,.28)}.kpi.fora{border-color:rgba(229,72,77,.28)}
+.kpi.dentro{border-color:rgba(var(--grn-a),.28)}.kpi.fora{border-color:rgba(var(--red-a),.28)}
 .kpi .k{font-size:var(--fs-1);color:var(--dim);font-family:var(--mono);margin-bottom:3px}
 .kpi .r{font-size:var(--fs-2);color:var(--mut);margin-bottom:8px;line-height:1.35}
 .kpi .n{font-size:var(--fs-5);font-weight:650;line-height:1;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
@@ -352,25 +331,25 @@ table{width:100%;border-collapse:collapse;font-size:var(--fs-2)}
 td,th{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left}
 th{font-size:var(--fs-1);letter-spacing:1.2px;color:var(--mut);font-weight:600}
 tr:last-child td{border-bottom:0}
-tbody tr:hover{background:rgba(255,255,255,.02)}
-.mono{font-family:var(--mono);font-size:var(--fs-1);color:#a8c0e8;white-space:nowrap}
+tbody tr:hover{background:rgba(var(--branco-a),.02)}
+.mono{font-family:var(--mono);font-size:var(--fs-1);color:var(--codigo);white-space:nowrap}
 .right{text-align:right;font-variant-numeric:tabular-nums}
 .empty{color:var(--mut);font-size:var(--fs-2);padding:26px 16px;text-align:center;background:var(--card);
  border-radius:var(--r);border:1px dashed var(--line2)}
 .foot{margin-top:34px;font-size:var(--fs-1);color:var(--dim);border-top:1px solid var(--line);
  padding-top:16px;line-height:1.7}
-code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:var(--fs-1);color:#a8c0e8}
+code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:var(--fs-1);color:var(--codigo)}
 .loop{background:linear-gradient(135deg,var(--vio-bg) 0%,var(--card) 58%);border-left:4px solid var(--vio);
  border-radius:var(--r2);padding:20px 22px;margin-bottom:14px}
-.loop .t{font-size:var(--fs-4);font-weight:600;color:#c8bcff;letter-spacing:-.3px}
+.loop .t{font-size:var(--fs-4);font-weight:600;color:var(--vio-ink);letter-spacing:-.3px}
 .loop .s{font-size:var(--fs-2);color:var(--mut);margin:5px 0 12px}
 .loop .lx{font-size:var(--fs-2);color:var(--ink2)}
-.ach{font-size:var(--fs-2);color:var(--ink2);background:rgba(0,0,0,.22);border-radius:9px;padding:9px 12px;margin-top:7px}
+.ach{font-size:var(--fs-2);color:var(--ink2);background:rgba(var(--preto-a),.22);border-radius:9px;padding:9px 12px;margin-top:7px}
 select{background:var(--card);border:1px solid var(--line2);color:var(--ink);border-radius:9px;
  padding:6px 10px;font-size:var(--fs-1);min-height:34px}
 
 /* ---------- MODAL ---------- */
-.modal{position:fixed;inset:0;background:rgba(6,9,20,.74);backdrop-filter:blur(3px);z-index:60;
+.modal{position:fixed;inset:0;background:rgba(var(--scrim-a),.74);backdrop-filter:blur(3px);z-index:60;
  display:none;align-items:center;justify-content:center;padding:20px}
 .modal.on{display:flex}
 .mbox{background:var(--surface);border:1px solid var(--line2);border-radius:var(--r2);
@@ -385,7 +364,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 /* ---------- TOAST ---------- */
 .log{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--raise);
  border:1px solid var(--line2);border-radius:11px;padding:12px 18px;font-size:var(--fs-2);display:none;
- z-index:70;box-shadow:0 10px 34px rgba(0,0,0,.5);max-width:calc(100% - 36px)}
+ z-index:70;box-shadow:0 10px 34px rgba(var(--preto-a),.5);max-width:calc(100% - 36px)}
 .log.on{display:block}
 .log.bad{border-color:var(--red);color:var(--bad)}
 .log.ok{border-color:var(--grn);color:var(--ok)}
@@ -410,7 +389,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 .marca-login .prodl::before{content:"";position:absolute;top:0;left:50%;width:56px;height:2px;margin-left:-28px;
  border-radius:2px;background:var(--dt-grad)}
 /* acao principal da entrada na cor da marca (o .prim verde segue sendo "feito" no resto do painel) */
-.login .prim{background:var(--dt-grad);border:0;color:#fff}
+.login .prim{background:var(--dt-grad);border:0;color:var(--on-grad)}
 .login .prim:hover{filter:brightness(1.08);background:var(--dt-grad)}
 .hidden{display:none!important}
 @media(max-width:640px){
@@ -431,15 +410,15 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
  .fchips{display:none}
  .fchips.abre{display:flex;position:absolute;left:0;right:0;top:100%;z-index:29;
   background:var(--surface);border-bottom:1px solid var(--line2);
-  box-shadow:0 14px 28px rgba(0,0,0,.5);padding:12px 13px 14px;
+  box-shadow:0 14px 28px rgba(var(--preto-a),.5);padding:12px 13px 14px;
   max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
  .fsep{display:none}
 }
 
 .avisoapp{background:rgba(var(--acc-a),.10);border:1px solid var(--acc);border-radius:12px;
  padding:12px 15px;margin:0 0 14px;font-size:var(--fs-2);line-height:1.5;color:var(--ink2);text-align:left}
-.avisoapp b{color:#fff}
-.alertalink{background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.42);color:var(--warn);
+.avisoapp b{color:var(--branco)}
+.alertalink{background:rgba(var(--yel-a),.10);border:1px solid rgba(var(--yel-a),.42);color:var(--warn);
  border-radius:9px;padding:9px 12px;margin:8px 0 0;font-size:var(--fs-1);line-height:1.5;text-align:left}
 /* ---------- v25 onda B: quatro superficies, uma por momento de uso ----------
    Shneiderman: panorama primeiro, filtrar e aproximar depois, detalhe sob demanda.
@@ -450,7 +429,7 @@ select{background:var(--card);border:1px solid var(--line2);color:var(--ink);bor
 .secbt{background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:20px;
  padding:7px 14px;font-size:var(--fs-1);font-family:inherit;cursor:pointer;white-space:nowrap;min-height:34px}
 .secbt:hover{border-color:var(--line2);color:var(--ink2)}
-.secbt.on{background:var(--acc-bg);border-color:var(--acc);color:#fff;font-weight:600}
+.secbt.on{background:var(--acc-bg);border-color:var(--acc);color:var(--on-acc-bg);font-weight:600}
 /* 02/09/2026: .sec era usada por DUAS coisas, a secao navegavel e o botao secundario.
    A regra generica apagava todo button.sec: o menu "outras acoes" abria vazio, o cancelar
    do modal sumia e os 3 caminhos alternativos de login ficavam invisiveis. Escopo em section. */
@@ -478,7 +457,7 @@ section.sec.on{display:block}
 .mais:hover{border-color:var(--acc);color:var(--ink)}
 .menu{display:none;gap:6px;flex-wrap:wrap;margin-top:8px}
 .menu.on{display:flex}
-.estouro{background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.42);color:var(--warn);
+.estouro{background:rgba(var(--yel-a),.10);border:1px solid rgba(var(--yel-a),.42);color:var(--warn);
  border-radius:var(--r);padding:11px 14px;font-size:var(--fs-2);margin-top:10px;
  display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .estouro button{background:none;border:0;color:var(--acc);font-size:var(--fs-2);font-family:inherit;
@@ -488,7 +467,7 @@ section.sec.on{display:block}
  align-items:center;flex-wrap:wrap;font-size:var(--fs-2)}
 .lerow{display:flex;gap:11px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
  border-radius:var(--r);padding:11px 13px;margin-bottom:7px}
-.lerow.sel{border-color:var(--acc);background:#14203F}
+.lerow.sel{border-color:var(--acc);background:var(--sel-bg);color:var(--on-sel-bg)}
 .lerow input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;accent-color:var(--acc);flex:0 0 20px}
 .lerow .cor{flex:1;min-width:0}
 .lerow .t{font-size:var(--fs-2);line-height:1.4;color:var(--ink)}
@@ -496,7 +475,7 @@ section.sec.on{display:block}
 .lerow .v{font-size:var(--fs-2);color:var(--ink2);margin-top:5px;border-left:2px solid var(--vio);padding-left:9px}
 .desf{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));
  background:var(--raise);border:1px solid var(--acc);border-radius:11px;padding:11px 15px;
- display:none;gap:14px;align-items:center;z-index:60;font-size:var(--fs-2);box-shadow:0 8px 28px rgba(0,0,0,.55)}
+ display:none;gap:14px;align-items:center;z-index:60;font-size:var(--fs-2);box-shadow:0 8px 28px rgba(var(--preto-a),.55)}
 .desf.on{display:flex}
 .desf button{background:none;border:0;color:var(--acc);font-weight:650;font-size:var(--fs-2);
  font-family:inherit;cursor:pointer;padding:4px}
@@ -533,7 +512,7 @@ section.sec.on{display:block}
      nao parecia navegacao. Agora a coluna NASCE da contagem real de abas: acrescentar ou
      tirar destino nao volta a quebrar a barra. */
   .tabs{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;max-width:none;
-    background:rgba(11,16,32,.97);backdrop-filter:blur(14px);
+    background:rgba(var(--navy-a),.97);backdrop-filter:blur(14px);
     border-top:1px solid var(--line2);
     padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px));
     display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;overflow:visible}
@@ -585,7 +564,7 @@ section.sec.on{display:block}
 .lerow .acoesle button{background:none;border:1px solid var(--line2);color:var(--mut);
   border-radius:8px;padding:6px 11px;font-size:var(--fs-1);font-family:inherit;cursor:pointer;min-height:34px}
 .lerow .acoesle button:hover{border-color:var(--acc);color:var(--ink)}
-.lerow .acoesle button.prim{background:#12321f;border-color:var(--grn);color:var(--ok);font-weight:600}
+.lerow .acoesle button.prim{background:var(--ok-bg);border-color:var(--grn);color:var(--on-ok-bg);font-weight:600}
 
 /* ---------- INVENTARIO · v36 (15/09/2026) ----------
    A v35 desenhou a aba TUDO como TABELA de 7 colunas. No celular ela estourava na horizontal
@@ -607,7 +586,7 @@ section.sec.on{display:block}
 .iva{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap}
 .ivb{background:var(--card2);color:var(--ink2);border:1px solid var(--line2);border-radius:8px;
  padding:5px 9px;font-size:var(--fs-1);line-height:1;cursor:pointer;min-height:30px;white-space:nowrap}
-.ivb:hover{border-color:var(--acc);color:#fff}
+.ivb:hover{border-color:var(--acc);color:var(--branco)}
 .ivb.pri{color:var(--ok)}
 .ivb.neg{color:var(--bad)}
 /* ---------- RAIA · v41 (16/09/2026) ----------
@@ -628,7 +607,7 @@ section.sec.on{display:block}
 .ivnat.ex-ninguem{color:var(--bad)}
 /* SENTINELA · v43: a severidade e a primeira coisa que o olho pega, nao a data */
 .sevb{border-radius:6px;padding:2px 7px;font-size:var(--fs-1);letter-spacing:.05em;text-transform:uppercase}
-.sevb.s1{background:rgba(229,72,77,.18);color:var(--bad)}
+.sevb.s1{background:rgba(var(--red-a),.18);color:var(--bad)}
 .sevb.s2{background:rgba(var(--acc-a),.16);color:var(--acc)}
 .sevb.s3{background:var(--card2);color:var(--dim)}
 .ivrow.sev1{border-left:3px solid var(--bad)}
@@ -701,7 +680,7 @@ section.sec.on{display:block}
 }
 
 /* ---------- v39 · ESCOLHA E ORDEM ---------- */
-.ivop li.esc{border-left-color:var(--grn);background:rgba(48,164,108,.10)}
+.ivop li.esc{border-left-color:var(--grn);background:rgba(var(--grn-a),.10)}
 .opb{display:block;width:100%;text-align:left;background:none;border:0;padding:0;
   color:var(--ink);font-size:var(--fs-1);font-weight:600;cursor:pointer;line-height:1.4}
 .opb:hover{color:var(--acc)}
@@ -731,13 +710,13 @@ section.sec.on{display:block}
 .qk{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
  padding:8px 12px;font-size:var(--fs-2);min-height:40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .qk:hover{border-color:var(--acc)}
-.qk.pri{border-color:var(--acc);background:var(--acc-bg);color:#fff}
+.qk.pri{border-color:var(--acc);background:var(--acc-bg);color:var(--on-acc-bg)}
 .qk.neg{color:var(--bad)}
 .qk kbd{font-family:inherit;font-size:var(--fs-1);font-weight:600;line-height:1;color:var(--mut);border:1px solid var(--line2);border-radius:4px;padding:2px 5px}
 .qpr{display:none;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px;padding:10px;border:1px dashed var(--line2);border-radius:10px}
 .qpr.on{display:flex}
 .qprl{font-size:var(--fs-1);color:var(--mut);width:100%}
-.btgav .fn{margin-left:4px;font-size:var(--fs-1);padding:1px 6px;border-radius:10px;background:var(--acc);color:#fff}
+.btgav .fn{margin-left:4px;font-size:var(--fs-1);padding:1px 6px;border-radius:10px;background:var(--acc);color:var(--on-acc)}
 .filtros.on:not(.gav){display:none}
 @media(hover:none){.qk kbd{display:none}}
 @media(min-width:641px){
@@ -770,12 +749,12 @@ section.sec.on{display:block}
 .sub{background:var(--card2);color:var(--mut);border:1px solid var(--line2);border-radius:99px;
  padding:6px 14px;font-size:var(--fs-1);min-height:34px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .sub:hover{border-color:var(--acc)}
-.sub.on{color:#fff;border-color:var(--acc);background:var(--acc-bg)}
+.sub.on{color:var(--on-acc-bg);border-color:var(--acc);background:var(--acc-bg)}
 .sub[hidden]{display:none}
 .sub .n{font-size:var(--fs-1);padding:1px 6px;border-radius:10px;background:var(--raise);color:var(--mut)}
 .sub .n:empty{display:none}
-.sub .n.hot{background:#3a1d1f;color:var(--bad)}
-.sub .n.warn{background:#3a3320;color:var(--warn)}
+.sub .n.hot{background:var(--bad-bg);color:var(--on-bad-bg)}
+.sub .n.warn{background:var(--warn-bg);color:var(--on-warn-bg)}
 .f5 .v .teto{font-size:.62em;color:var(--mut);margin-left:1px;font-weight:500}
 /* contador vazio nao desenha pilula; no celular a linha segue reservada pela altura minima */
 .tab .n:empty{background:none;padding:0;margin-left:0}
@@ -1063,7 +1042,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <div class="pane" id="p-panorama">
   <div class="secnav" id="nav-panorama"></div>
   <section class="sec" id="s-caixa"><div id="frescor"></div><div id="delta"></div><div id="runway"></div><div id="caixa13"></div><div id="funil"></div><div id="hero-dash"></div><h2>O PLACAR <span class="s">cada barra contra a própria meta, nunca contra a barra do lado</span></h2><div id="placar"></div></section>
-  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(229,72,77,.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(76,141,255,.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
+  <section class="sec" id="s-frentes"><h2>MATRIZ 9Q <span class="s">esforço sobe, resultado vai à direita. Em cima e à esquerda você trabalha muito e colhe pouco</span></h2><div class="m9wrap"><div class="m9" id="m9"></div><div class="m9leg"><span><i style="background:rgba(var(--red-a),.55)"></i>FUGA: células 1, 2 e 4</span><span><i style="background:var(--line2)"></i>EQUILÍBRIO: diagonal 7-5-3</span><span><i style="background:rgba(var(--bl-a),.55)"></i>ALVO: células 6, 8 e 9</span><span style="color:var(--dim)">▲ subiu · ▼ caiu · = parado &nbsp;|&nbsp; toque numa frente para filtrar</span></div></div><h2>AS FRENTES, DE HELICÓPTERO <span class="s">ordenadas por risco: vencida primeiro, depois dinheiro em jogo</span></h2><div class="fgrid" id="frentes"></div><h2>CADA FRENTE NO MESMO EIXO <span class="s">cards fechados por dia. Mesma escala em todas, entao a altura compara de verdade</span></h2><div id="smallmult"></div><h2>FAIXA DE CADA FRENTE <span class="s">A recebe trabalho novo, B só corre o relógio, C está congelada</span></h2><div class="card" style="border-left-color:var(--line);overflow-x:auto"><table id="faixas"></table></div></section>
   <section class="sec" id="s-insights"><h2>INSIGHTS DE GESTÃO <span class="s">cada linha nasce de uma condição medida e some quando ela deixa de valer</span></h2><div id="insights"></div><h2>DE QUEM É A FILA, DE VERDADE</h2><div class="g4" id="automacao"></div><div class="card" style="border-left-color:var(--line);margin-top:10px;overflow-x:auto"><table id="semi"></table></div><div class="foot"><b>A / S / M</b>. <b>A</b>utomável: o ato é meu ou do banco · <b>S</b>emi: eu entrego pronto, você só aprova ou envia · <b>M</b>: só você, por credencial, assinatura, presença, voz, relação ou decisão. Toda tarefa M tem o verbo nomeado; sem verbo, não é M.</div></section>
 </div>
 
@@ -1148,7 +1127,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v79";
+const VER="v80";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -3507,17 +3486,17 @@ function spark(serie,meta,dir,w,h,p10,p90){
      verde so NA META; fora da meta e ambar; vermelho continua reservado a FORA DO NORMAL. */
   const estado = foraBanda ? "anomalia" : okMeta===false ? "atencao" : okMeta===true ? "normal"
                : (foraBanda===false ? "normal" : "neutro");
-  const col = estado==="neutro"?"#8b98ae":estado==="normal"?"#30a46c":estado==="atencao"?"#f5a623":"#e5484d";
+  const col = estado==="neutro"?"var(--spk-neutro)":estado==="normal"?"var(--grn)":estado==="atencao"?"var(--yel)":"var(--red)";
   const yb1=temBanda?Y(+p90):0, yb2=temBanda?Y(+p10):0;
-  const banda = temBanda ? `<rect x="0" y="${Math.min(yb1,yb2).toFixed(1)}" width="${w}" height="${Math.max(1,Math.abs(yb2-yb1)).toFixed(1)}" fill="#8b98ae" opacity=".16"/>` : "";
+  const banda = temBanda ? `<rect x="0" y="${Math.min(yb1,yb2).toFixed(1)}" width="${w}" height="${Math.max(1,Math.abs(yb2-yb1)).toFixed(1)}" style="fill:var(--spk-neutro)" opacity=".16"/>` : "";
   const rot = temBanda ? `série de ${s.length} pontos, faixa normal de ${(+p10).toLocaleString("pt-BR")} a ${(+p90).toLocaleString("pt-BR")}, ${foraBanda?"fora do normal":"dentro do normal"}`
                        : `série de ${s.length} ponto(s)`;
   return `<svg width="${w}" height="${h}" role="img" aria-label="${rot}"><title>${rot}</title>
     ${banda}
-    ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" stroke="#5d6b82" stroke-width="1" stroke-dasharray="3 3"/>`:""}
-    <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" fill="${col}" stroke="#161d2b" stroke-width="2"/>
-    ${estado==="anomalia"?`<path d="M${(X(s.length-1)-3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${(X(s.length-1)+3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${X(s.length-1).toFixed(1)} ${(Y(last)-3.2).toFixed(1)} Z" fill="${col}"/>`:""}</svg>`;}
+    ${meta!=null?`<line x1="0" y1="${Y(+meta).toFixed(1)}" x2="${w}" y2="${Y(+meta).toFixed(1)}" style="stroke:var(--spk-meta)" stroke-width="1" stroke-dasharray="3 3"/>`:""}
+    <path d="${d}" fill="none" style="stroke:${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(s.length-1).toFixed(1)}" cy="${Y(last).toFixed(1)}" r="4" style="fill:${col};stroke:var(--spk-anel)" stroke-width="2"/>
+    ${estado==="anomalia"?`<path d="M${(X(s.length-1)-3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${(X(s.length-1)+3.2).toFixed(1)} ${(Y(last)-8).toFixed(1)} L${X(s.length-1).toFixed(1)} ${(Y(last)-3.2).toFixed(1)} Z" style="fill:${col}"/>`:""}</svg>`;}
 
 /* v29 — A SERIE VIAJA COM A CHAVE. Qualquer secao que saiba a chave do KPI desenha a sparkline
    sem ser reescrita: le v_painel_serie, carregada sob demanda em D.se. Devolve string vazia
