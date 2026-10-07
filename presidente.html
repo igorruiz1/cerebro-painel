@@ -501,7 +501,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.24";
+const VERP="p4.25";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -744,11 +744,14 @@ const D={}; let INV=null, ARV=null, ABA="hoje", COL="semana", PEND=null, F=null,
 /* v71 · R7: texto do banco entra no HTML por esc() (texto e atributo entre aspas duplas), por escAttr()
    quando e argumento JS entre aspas simples dentro de onclick (esc ali deixa a aspa voltar como &#39;,
    que o navegador decodifica antes de rodar o JS), e por urlSegura() em href. Igual ao index.html. */
+/* comum:escapa · igual byte a byte no index.html; testes/presidente.spec.js confere */
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const escAttr=s=>esc(String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")
   .replace(/\r/g,"\\r").replace(/\n/g,"\\n").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"));
 const urlSegura=u=>{const s=String(u==null?"":u).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(s)?s:"#";};
-const rs=v=>v==null||isNaN(+v)?"—":(+v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+/* rs: valor ausente ou que nao e numero vira "—" (o index mostrava "R$ NaN"); sinal antes do R$; espaco comum */
+const rs=v=>v==null||isNaN(+v)?"—":(Math.round(+v)<0?"-":"")+"R$ "+Math.abs(Math.round(+v)).toLocaleString("pt-BR");
+/* fim comum:escapa */
 const mil=v=>v==null||isNaN(+v)?"—":(Math.abs(+v)>=1000?"R$ "+((+v)/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":rs(v));
 const pad=n=>String(n).padStart(2,"0");
 const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
