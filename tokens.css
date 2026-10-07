@@ -1,0 +1,48 @@
+/* tokens.css (p4.23, plano 82a, 06/10/2026): fonte unica de cor, letra e raio das tres paginas.
+   Antes eram tres :root copiados a mao; dois nomes ja tinham divergido (p4.11). As paginas ligam
+   este arquivo com ?v=<md5 8> do conteudo em LF, e o teste cobra que o carimbo bate. */
+:root{
+ /* p4.22 (plano 83): escala tipografica unica, 5 degraus. Piso: 14 px no presidente e na seguranca,
+    12 px no bastidor. Tamanho novo entra aqui, nunca solto numa regra (o teste cobra). */
+ --fs-1:12px; --fs-2:14px; --fs-3:16px; --fs-4:20px; --fs-5:28px;
+ /* paleta oficial Dabli Tech */
+ --dt-navy:#0B1020; --dt-blue:#2F80FF; --dt-violet:#8B5CF6; --dt-ice:#F4F7FB; --dt-slate:#94A3B8;
+ --dt-grad:linear-gradient(90deg,#2F80FF 0%,#8B5CF6 100%);
+ /* tipografia oficial: Sora (Regular, Medium, SemiBold, Bold) */
+ --font:"Sora",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+ /* superficies derivadas do Midnight Navy (degraus de luminosidade, mesmo matiz) */
+ --bg:var(--dt-navy); --surface:#0F1629; --card:#121A2F; --card2:#18223B; --raise:#1E2A47;
+ --ink:var(--dt-ice); --ink2:#CBD5E3; --mut:var(--dt-slate); --dim:#8795AE; --line:#2C3A5A; --line2:#1F2A44;
+ --red:#e5484d; --yel:#f5a623; --grn:#30a46c; --acc:var(--dt-blue); --vio:var(--dt-violet);
+ --ok:#6ee7a8; --bad:#ff8a8f; --warn:#ffb547; --lil:#B9A2FA;
+ /* fundo de item selecionado: azul da marca sobre o navy */
+ --acc-bg:#132A57; --acc-a:47,128,255; --vio-bg:#221A47; --vio-bg2:#2C2160;
+ --r:14px; --r2:16px; --r-s:9px;
+ /* eixo diverging dos graficos — RdBu, validado: dE 26,4 protan / 33,1 normal.
+    vermelho x verde reprova em deuteranopia (dE 4,9), entao verde so no semaforo, com rotulo. */
+ --rd:#e5484d; --bl:#4c8dff; --nt:#6b7a94;
+ /* nomes que so o presidente e a seguranca usam (mesmo valor dos irmaos do index: --sf = --surface, --chip = --raise) */
+ --sf:#0F1629; --chip:#1E2A47; --link:#7AAEFF; --tap:48px;
+ /* texto sobre o azul cheio: navy da 5,1:1; branco dava 3,7:1 e reprova */
+ --accInk:var(--dt-navy);
+ /* p4.23 (plano 82a): cor de papel. Fundo --X e texto --on-X andam em par; o teste mede cada par (>= 4,5:1).
+    Cor nova entra aqui, nunca solta numa regra: o teste conta cor literal nas tres paginas. */
+ --branco:#FFFFFF;
+ --on-acc:var(--accInk); --on-acc-bg:var(--branco); --on-grad:var(--branco);
+ --on-bad:var(--dt-navy); --on-yel:#1B1405;
+ --bad-bg:#3A1D1F; --on-bad-bg:var(--bad);
+ --warn-bg:#3A3320; --on-warn-bg:var(--warn);
+ --ok-bg:#12321F; --on-ok-bg:var(--ok); --ok-bg-hover:#174028; --on-ok-bg-hover:var(--ok);
+ --igor-bg:#3A2A12; --on-igor-bg:#F5C26B;
+ --claude-bg:#12283A; --on-claude-bg:#8FC4F5;
+ --info-bg:#1A2438; --on-info-bg:#9DB6E8;
+ --falha-bg:#3A1416; --on-falha-bg:var(--ink);
+ --sel-bg:#14203F; --on-sel-bg:var(--ink);
+ --acc-deep:#172650; --codigo:#A8C0E8; --vio-ink:#C8BCFF;
+ /* sparkline do bastidor */
+ --spk-neutro:#8B98AE; --spk-meta:#5D6B82; --spk-anel:#161D2B;
+ /* canais RGB para transparencia: rgba(var(--X-a),.10). Mesmo idioma do --acc-a */
+ --yel-a:245,166,35; --red-a:229,72,77; --grn-a:48,164,108; --bl-a:76,141,255;
+ --navy-a:11,16,32; --scrim-a:6,9,20; --branco-a:255,255,255; --preto-a:0,0,0;
+}

@@ -996,16 +996,68 @@ test('nenhum texto abaixo de 4,5:1 nas cinco abas e na folha do card', async ({p
 
 /* p4.11 (06/10/2026): o mesmo nome de token com valor diferente e a mesma classe do chip que sumiu. --line e
    --line2 estavam trocados entre o index e o presidente, e --warn, --r e --mono divergiam. Mesmo nome, mesmo valor. */
-test('tokens: o mesmo nome tem o mesmo valor no index, no presidente e na seguranca', async ()=>{
+/* p4.23 (plano 82a): o p4.11 comparava tres :root copiados a mao. Agora a fonte e uma so (tokens.css): a classe
+   "mesmo nome, valor diferente" morre por construcao. O teste cobra que nenhuma pagina volta a declarar token
+   proprio e que as tres ligam o tokens.css com o carimbo do conteudo atual (senao o Pages serve o velho). */
+test('tokens: as tres paginas ligam o mesmo tokens.css, com carimbo atual, e nenhuma declara token proprio', async ()=>{
+  const fs=require('fs'), crypto=require('crypto');
+  const tok=fs.readFileSync(path.resolve(__dirname,'..','tokens.css'),'utf8').replace(/\r\n/g,'\n');
+  const v8=crypto.createHash('md5').update(tok,'utf8').digest('hex').slice(0,8);
+  const nomes=[...tok.replace(/\/\*[\s\S]*?\*\//g,'').matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)].map(m=>m[1]);
+  expect(nomes.length, 'leu o tokens.css').toBeGreaterThan(60);
+  expect(nomes.filter((n,i)=>nomes.indexOf(n)!==i), 'nome repetido no tokens.css').toEqual([]);
+  for (const arq of ['index.html','presidente.html','seguranca.html']) {
+    const s=fs.readFileSync(path.resolve(__dirname,'..',arq),'utf8');
+    expect(s.match(/<link rel="stylesheet" href="tokens\.css\?v=([0-9a-f]{8})">/)?.[1], arq+': carimbo do tokens.css').toBe(v8);
+    const proprios=[...s.matchAll(/:root\{([^}]*)\}/g)].flatMap(m=>[...m[1].matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)].map(x=>x[1])).filter(n=>n!=='--topo');
+    expect(proprios, arq+': token declarado fora do tokens.css').toEqual([]);
+  }
+});
+
+/* p4.23: arquivo ligado que nao carrega nao da erro, da pagina sem cor. A prova e a cor pintada nas tres. */
+test('p4.23: o tokens.css chega pintado nas tres paginas (fundo navy, letra ice)', async ({page})=>{
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  for (const arq of ['index.html','presidente.html','seguranca.html']) {
+    await page.goto('file://' + path.resolve(__dirname, '..', arq));
+    const c = await page.evaluate(()=>{const s=getComputedStyle(document.body);return [s.backgroundColor,s.color,getComputedStyle(document.documentElement).getPropertyValue('--on-bad-bg').trim()];});
+    expect(c, arq).toEqual(['rgb(11, 16, 32)','rgb(244, 247, 251)','#ff8a8f']);
+  }
+});
+
+/* p4.23 (plano 82a): 94 cores soltas nas tres paginas (71 no bastidor). Cor entra no tokens.css com nome de papel;
+   na pagina, so var(). Ficam tres excecoes medidas: a meta theme-color (o navegador nao le var) e as duas cores da
+   janela solta do PDF de demonstracao, que nasce sem folha de estilo. O p4.22 reprova aqui. */
+test('p4.23: zero cor literal nas tres paginas, fora as tres excecoes medidas', ()=>{
   const fs=require('fs');
-  const raiz=f=>{const s=fs.readFileSync(path.resolve(__dirname,'..',f),'utf8');const b=s.slice(s.indexOf(':root{')+6);const corpo=b.slice(0,b.search(/\n\}/));
-    const o={};for(const m of corpo.replace(/\/\*[\s\S]*?\*\//g,'').matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/g))o[m[1]]=m[2].trim();return o;};
-  const [a,b,c]=['index.html','presidente.html','seguranca.html'].map(raiz);
-  expect(Object.keys(a).length, 'leu o :root do index').toBeGreaterThan(15);
-  expect(Object.keys(b).length, 'leu o :root do presidente').toBeGreaterThan(15);
-  const dif=[];for(const [x,y,n] of [[a,b,'index x presidente'],[b,c,'presidente x seguranca'],[a,c,'index x seguranca']])
-    for(const k of Object.keys(x)) if(k in y && x[k]!==y[k]) dif.push(n+': '+k+' '+x[k]+' != '+y[k]);
-  expect(dif).toEqual([]);
+  const COR=/(?<![&\w])#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?(?:[0-9a-fA-F]{2})?\b|rgba?\(\s*\d|hsla?\(\s*\d/g;
+  const EXC=['<meta name="theme-color" content="#0B1020">','background:#fff;color:#111','<p style="color:#444">'];
+  for (const arq of ['index.html','presidente.html','seguranca.html']) {
+    let s=fs.readFileSync(path.resolve(__dirname,'..',arq),'utf8');
+    for (const e of EXC) s=s.split(e).join('');
+    const soltas=[...s.matchAll(COR)].map(m=>{const l=s.slice(0,m.index).split('\n').length;return l+': '+s.slice(m.index,m.index+24);});
+    expect(soltas, arq+': cor literal fora do tokens.css').toEqual([]);
+  }
+});
+
+/* p4.23 (plano 82a): fundo --X e texto --on-X andam em par. Cada par mede pelo menos 4,5:1 (WCAG AA, texto normal).
+   Medido antes: branco sobre --acc dava 3,7:1 e branco sobre --bad 2,3:1; os dois passaram ao navy. --on-grad fica
+   fora da conta: o fundo e um degrade, e o contraste dele e medido na tela pelo teste de login. */
+test('p4.23: todo par --X / --on-X do tokens.css passa 4,5:1', ()=>{
+  const fs=require('fs');
+  const tok=fs.readFileSync(path.resolve(__dirname,'..','tokens.css'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'');
+  const v={};for(const m of tok.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/g))v[m[1]]=m[2].trim();
+  const res=n=>{let x=v[n];for(let i=0;i<9&&x&&/^var\(/.test(x);i++)x=v[x.slice(4,-1)];return x;};
+  const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(u=>u<=.03928?u/12.92:((u+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2];};
+  const pares=Object.keys(v).filter(n=>n.startsWith('--on-')&&n!=='--on-grad');
+  expect(pares.length, 'pares lidos').toBeGreaterThan(12);
+  const ruins=[];
+  for (const on of pares) {
+    const fundo='--'+on.slice(5), a=res(fundo), b=res(on);
+    if (!/^#[0-9a-fA-F]{6}$/.test(a||'') || !/^#[0-9a-fA-F]{6}$/.test(b||'')) { ruins.push(on+': par sem cor solida ('+a+' / '+b+')'); continue; }
+    const [L1,L2]=[lum(a),lum(b)], r=(Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05);
+    if (r<4.5) ruins.push(on+' sobre '+fundo+': '+r.toFixed(2)+':1');
+  }
+  expect(ruins).toEqual([]);
 });
 
 /* p4.11: a folha e dialogo modal. Abrir pelo teclado leva o foco para dentro, o Tab nao sai e o Esc devolve o foco. */
@@ -1980,10 +2032,12 @@ test('p4.21: codigo interno so no Historico; chip e aviso do ato falam pelo titu
    12 px no bastidor. O p4.21 reprova aqui. */
 test('p4.22: todo tamanho de letra sai da escala de 5 degraus; presidente e seguranca sem o degrau de 12 px', ()=>{
   const fs = require('fs'), raiz = path.resolve(__dirname,'..');
+  /* p4.23: a escala mora no tokens.css, que as tres paginas ligam (teste de carimbo acima) */
+  const tok = fs.readFileSync(path.join(raiz,'tokens.css'),'utf8');
+  const raiz_ = tok.match(/--fs-1:(\d+)px; --fs-2:(\d+)px; --fs-3:(\d+)px; --fs-4:(\d+)px; --fs-5:(\d+)px;/);
+  expect(raiz_ && raiz_.slice(1).map(Number), 'escala no tokens.css').toEqual([12,14,16,20,28]);
   for (const [arq, piso] of [['presidente.html',2],['seguranca.html',2],['index.html',1]]) {
     const src = fs.readFileSync(path.join(raiz,arq),'utf8');
-    const raiz_ = src.match(/--fs-1:(\d+)px; --fs-2:(\d+)px; --fs-3:(\d+)px; --fs-4:(\d+)px; --fs-5:(\d+)px;/);
-    expect(raiz_ && raiz_.slice(1).map(Number), arq+': escala no :root').toEqual([12,14,16,20,28]);
     const usos = [...src.matchAll(/font-size:\s*([^;}"']+)/g)].map(m=>m[1].trim());
     const soltos = usos.filter(v=>!/^var\(--fs-[1-5]\)$/.test(v) && v!=='inherit' && !/^[\d.]+em$/.test(v));
     expect(soltos, arq+': tamanho fora da escala').toEqual([]);
