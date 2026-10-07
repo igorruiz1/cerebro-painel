@@ -886,31 +886,31 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
   <div class="box" style="margin:20px 0 10px">
     <input id="em" type="email" placeholder="e-mail" autocomplete="username" inputmode="email">
     <input id="pw" type="password" placeholder="senha" autocomplete="current-password" style="margin-top:9px"
-      onkeydown="if(event.key==='Enter')comSenha()">
-    <button class="prim" style="margin-top:12px;width:100%" onclick="comSenha()">Entrar</button>
+      data-ao-tecla="comSenha">
+    <button class="prim" style="margin-top:12px;width:100%" data-acao="comSenha">Entrar</button>
     <p>Este é o caminho que <b>nunca sai desta janela</b>: serve no atalho da tela de início e dentro do app do Claude.
        <b>Sem senha ainda?</b> Entre uma vez pelo navegador, onde você já está logado, e clique em <b>senha</b> no topo.</p>
   </div>
-  <button class="link" onclick="esqueciSenha()">esqueci minha senha</button>
-  <button class="link" onclick="document.getElementById('alt').classList.toggle('hidden')">outras formas de entrar</button>
+  <button class="link" data-acao="esqueciSenha">esqueci minha senha</button>
+  <button class="link" data-acao="outrasFormas">outras formas de entrar</button>
   <div id="alt" class="hidden" style="display:grid;gap:10px;margin-top:8px">
     <div class="box"><div class="h">LINK POR E-MAIL</div>
-      <button class="sec" style="width:100%" onclick="entrar()">Receber link</button>
+      <button class="sec" style="width:100%" data-acao="entrar">Receber link</button>
       <p>O provedor grátis limita a poucos envios por hora e bloqueia o resto em silêncio.</p>
       <div class="alertalink"><b>Atenção:</b> o link do e-mail abre no seu <b>navegador padrão</b>.
         Se você está dentro do app do Claude, a sessão nasce no navegador e <b>não volta para esta janela</b>.
         Aqui, use a senha, ou copie o endereço do link e cole no campo abaixo.</div></div>
     <div class="box"><div class="h">COLAR O LINK RECEBIDO</div>
-      <button class="prim" style="width:100%;padding:14px;font-size:var(--fs-3)" onclick="colarDoClipboard()">
+      <button class="prim" style="width:100%;padding:14px;font-size:var(--fs-3)" data-acao="colarDoClipboard">
         Colar da área de transferência e entrar</button>
       <p>No e-mail, clique com o <b>botão direito</b> em "Sign in" e escolha <b>copiar endereço do link</b>.
          Não clique nele: é de uso único e abre no navegador.</p>
       <input id="colado" type="text" placeholder="ou cole o link aqui, se preferir" autocomplete="off" spellcheck="false">
-      <button class="sec" style="width:100%;margin-top:9px" onclick="colar()">Entrar com este link</button></div>
+      <button class="sec" style="width:100%;margin-top:9px" data-acao="colar">Entrar com este link</button></div>
     <div class="box"><div class="h">CÓDIGO DE 6 DÍGITOS</div>
       <input id="cod" type="text" placeholder="000000" inputmode="numeric" maxlength="6"
         style="letter-spacing:6px;text-align:center;font-size:var(--fs-4)">
-      <button class="sec" style="width:100%;margin-top:9px" onclick="codigo()">Entrar com o código</button>
+      <button class="sec" style="width:100%;margin-top:9px" data-acao="codigo">Entrar com o código</button>
       <p>Só funciona quando o template de e-mail do Supabase incluir <b>{{ .Token }}</b>. Não depende de SMTP próprio.</p></div>
   </div>
   <p id="lmsg" style="font-size:var(--fs-2);margin-top:16px;min-height:20px"></p>
@@ -926,13 +926,12 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
     <div id="fatorCampo">
       <input id="codFator" type="text" placeholder="000000" inputmode="numeric" autocomplete="one-time-code" maxlength="6" enterkeyhint="done"
         style="letter-spacing:6px;text-align:center;font-size:var(--fs-4)"
-        oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);if(this.value.length===6)entrarFator()"
-        onkeydown="if(event.key==='Enter')entrarFator()">
-      <button id="btFator" class="prim" style="margin-top:12px;width:100%" onclick="entrarFator()">Confirmar</button>
+        data-ao-digitar="fatorDigito" data-ao-tecla="entrarFator">
+      <button id="btFator" class="prim" style="margin-top:12px;width:100%" data-acao="entrarFator">Confirmar</button>
     </div>
-    <button id="btFatorDeNovo" class="prim hidden" style="width:100%" onclick="portaFator()">Tentar de novo</button>
+    <button id="btFatorDeNovo" class="prim hidden" style="width:100%" data-acao="portaFator">Tentar de novo</button>
   </div>
-  <button class="link" onclick="sair()">sair</button>
+  <button class="link" data-acao="sair">sair</button>
   <p id="fmsg" role="status" style="font-size:var(--fs-2);margin-top:16px;min-height:20px;color:var(--bad)"></p>
 </div>
 
@@ -944,11 +943,11 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
   <div class="box">
     <input id="np1" type="password" placeholder="nova senha (mínimo 8)" autocomplete="new-password">
     <input id="np2" type="password" placeholder="repita a senha" autocomplete="new-password" style="margin-top:9px"
-      onkeydown="if(event.key==='Enter')salvarSenha()">
-    <button class="prim" style="margin-top:12px;width:100%" onclick="salvarSenha()">Salvar senha</button>
+      data-ao-tecla="salvarSenha">
+    <button class="prim" style="margin-top:12px;width:100%" data-acao="salvarSenha">Salvar senha</button>
   </div>
   <p id="smsg" style="font-size:var(--fs-2);margin-top:14px;min-height:20px"></p>
-  <button class="link" onclick="fecharSenha()">voltar ao painel</button>
+  <button class="link" data-acao="fecharSenha">voltar ao painel</button>
 </div>
 
 <!-- ===================== APP ===================== -->
@@ -958,18 +957,18 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
     <h1 class="marca" title="Cérebro · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Cérebro</span></h1><span class="ver" id="selo-ver">—</span><span class="saude" id="saude" role="status"></span>
     <span class="spacer"></span>
     <span class="deg" id="degrau"></span>
-    <button class="btn btgav" id="btGav" onclick="gavetaFiltros()" title="buscar e filtrar (/)" aria-label="buscar e filtrar" aria-expanded="false" aria-controls="filtros">⌕<span class="fn" id="gavN" style="display:none"></span></button>
+    <button class="btn btgav" id="btGav" data-acao="gavetaFiltros" title="buscar e filtrar (/)" aria-label="buscar e filtrar" aria-expanded="false" aria-controls="filtros">⌕<span class="fn" id="gavN" style="display:none"></span></button>
     <!-- s764 (02/10/2026): o banco nunca recebeu ping do presidente.html: a raiz abre o bastidor e
          nada aqui levava a ele. A porta para o front stage fica visivel no topo. -->
     <a class="btn pres" href="presidente.html" title="abrir o front stage do presidente" aria-label="abrir o presidente"><span class="lg">presidente</span><span class="sm" aria-hidden="true">⌂</span></a>
-    <button class="btn" onclick="carregar()" title="recarregar" aria-label="recarregar">↻</button>
-    <button class="btn some" onclick="abrirSenha()" title="definir senha">senha</button>
-    <button class="btn some" onclick="sair()">sair</button>
-    <button class="btmais" onclick="maisTopo()" aria-label="mais opções" title="mais">⋯</button>
+    <button class="btn" data-acao="carregar" title="recarregar" aria-label="recarregar">↻</button>
+    <button class="btn some" data-acao="abrirSenha" title="definir senha">senha</button>
+    <button class="btn some" data-acao="sair">sair</button>
+    <button class="btmais" data-acao="maisTopo" aria-label="mais opções" title="mais">⋯</button>
   </div>
   <div class="maisbar" id="maisbar">
-    <button class="btn" onclick="abrirSenha()">senha</button>
-    <button class="btn" onclick="sair()">sair</button>
+    <button class="btn" data-acao="abrirSenha">senha</button>
+    <button class="btn" data-acao="sair">sair</button>
   </div>
   <div class="tabs" id="tabs">
     <button class="tab" data-g="decidir" aria-current="true"><span class="tl">DECIDIR</span><span class="n" id="n-g-decidir"></span></button>
@@ -981,10 +980,10 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
       <div class="busca">
         <span class="lupa">⌕</span>
         <input id="q" type="search" placeholder="buscar" autocomplete="off"
-          oninput="onBusca(this.value)">
-        <button class="x" onclick="limpaBusca()" id="qx" style="display:none" aria-label="limpar">×</button>
+          data-ao-digitar="onBusca">
+        <button class="x" data-acao="limpaBusca" id="qx" style="display:none" aria-label="limpar">×</button>
       </div>
-      <button class="btn btfil" id="btFil" onclick="toggleChips()" aria-expanded="false" aria-controls="fchips"
+      <button class="btn btfil" id="btFil" data-acao="toggleChips" aria-expanded="false" aria-controls="fchips"
         >filtros<span class="fn" id="fnAtivos" style="display:none"></span><span class="cav">⌄</span></button>
     </div>
     <div class="fchips" id="fchips">
@@ -996,14 +995,14 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
       <div class="fsep"></div>
       <span class="flabel">NATUREZA <span style="font-weight:400;text-transform:none">o que o card exige de você</span></span>
       <div class="chips" id="chipsNat"></div>
-      <button class="btn" id="btLimpar" onclick="limparFiltros()" style="display:none">limpar filtros</button>
+      <button class="btn" id="btLimpar" data-acao="limparFiltros" style="display:none">limpar filtros</button>
     </div>
   </div>
 </div>
 
 <main>
-<div id="velha"><b>Tela desatualizada.</b><span id="velhatxt"></span><button onclick="recarregarNovo()">recarregar</button></div>
-<div id="falhou"><b>Carga incompleta.</b><span id="falhoutxt"></span><button onclick="carregar()">tentar de novo</button><small id="falhoudet"></small></div>
+<div id="velha"><b>Tela desatualizada.</b><span id="velhatxt"></span><button data-acao="recarregarNovo">recarregar</button></div>
+<div id="falhou"><b>Carga incompleta.</b><span id="falhoutxt"></span><button data-acao="carregar">tentar de novo</button><small id="falhoudet"></small></div>
   
 
   <nav class="subnav" id="subnav" aria-label="seções da aba">
@@ -1110,24 +1109,24 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 </main></div>
 
 <!-- ===================== MODAL ===================== -->
-<div class="modal" id="modal" onclick="if(event.target===this)fecharModal()">
+<div class="modal" id="modal" data-acao="fundoModal">
   <div class="mbox">
     <h3 id="mtit"></h3>
     <div class="sub" id="msub"></div>
     <div id="mcampo"></div>
     <div class="mact">
-      <button class="sec" onclick="fecharModal()">cancelar</button>
-      <button class="prim" id="mok" onclick="confirmarModal()">confirmar</button>
+      <button class="sec" data-acao="fecharModal">cancelar</button>
+      <button class="prim" id="mok" data-acao="confirmarModal">confirmar</button>
     </div>
   </div>
 </div>
-<div class="desf" id="desf"><span id="desfmsg"></span><button onclick="desfazer()">desfazer</button></div>
+<div class="desf" id="desf"><span id="desfmsg"></span><button data-acao="desfazer">desfazer</button></div>
 <div class="log" id="log"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v83";
+const VER="v85";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1209,8 +1208,23 @@ function alternarRecolhe(b){
   b.textContent=abre?"ver menos":"ver mais";}
 /* fim comum:recolhe */
 /* v83 (plano 87b): o botao do bloco comum:recolhe ja vem por data-acao. Os onclick do resto deste
-   arquivo migram para ACOES um modulo por vez (plano 87c); ate la os dois convivem. */
-const ACOES={alternarRecolhe:el=>alternarRecolhe(el)};
+   arquivo migram para ACOES um modulo por vez (plano 87c); ate la os dois convivem.
+   v85 (87c, modulo 1 · casca): login, segundo fator, senha, topo, filtros, modal e desfazer. Toda
+   entrada chama a funcao SEM argumento, como o onclick fazia: carregar(el) ou gavetaFiltros(el)
+   leriam o botao como parametro. soEnter: o mesmo nome serve ao clique e ao Enter do campo. */
+const soEnter=f=>(el,ev)=>{if(ev.type==="keydown"&&ev.key!=="Enter")return; f();};
+const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
+  comSenha:soEnter(()=>comSenha()), esqueciSenha:()=>esqueciSenha(),
+  outrasFormas:()=>document.getElementById("alt").classList.toggle("hidden"),
+  entrar:()=>entrar(), colarDoClipboard:()=>colarDoClipboard(), colar:()=>colar(), codigo:()=>codigo(),
+  fatorDigito:el=>{el.value=el.value.replace(/\D/g,"").slice(0,6); if(el.value.length===6)entrarFator();},
+  entrarFator:soEnter(()=>entrarFator()), portaFator:()=>portaFator(), sair:()=>sair(),
+  salvarSenha:soEnter(()=>salvarSenha()), fecharSenha:()=>fecharSenha(), abrirSenha:()=>abrirSenha(),
+  gavetaFiltros:()=>gavetaFiltros(), carregar:()=>carregar(), maisTopo:()=>maisTopo(),
+  onBusca:el=>onBusca(el.value), limpaBusca:()=>limpaBusca(), toggleChips:()=>toggleChips(),
+  limparFiltros:()=>limparFiltros(), recarregarNovo:()=>recarregarNovo(),
+  fundoModal:(el,ev)=>{if(ev.target===el)fecharModal();}, fecharModal:()=>fecharModal(),
+  confirmarModal:()=>confirmarModal(), desfazer:()=>desfazer()};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
