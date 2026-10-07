@@ -86,7 +86,7 @@ test('o atalho de teclado alcanca TODAS as abas, nao um numero escrito a mao', a
   const n = await page.evaluate(()=>document.querySelectorAll('.tab').length);
   for(let i=1;i<=n;i++){
     await page.keyboard.press(String(i));
-    const ativa = await page.evaluate(()=>document.querySelector('.tab.on')?.dataset.g);
+    const ativa = await page.evaluate(()=>document.querySelector('.tab[aria-current="true"]')?.dataset.g);
     const esperada = await page.evaluate(i=>document.querySelectorAll('.tab')[i-1].dataset.g, i);
     expect(esperada, 'a aba declara o grupo').toBeTruthy();
     expect(ativa, `tecla ${i} de ${n}`).toBe(esperada);
@@ -823,7 +823,7 @@ test('modo foco mostra um card por vez, anda com os botoes e sai com Esc', async
     const antes=vis();
     modoFoco(true);
     const um=vis(), cont=document.querySelector('#fbar .fc').textContent;
-    const topo=Math.round(document.querySelector('#fila1 .card.atual').getBoundingClientRect().top);
+    const topo=Math.round(document.querySelector('#fila1 .card[aria-current="true"]').getBoundingClientRect().top);
     document.querySelectorAll('#fbar button')[1].click();
     const cont2=document.querySelector('#fbar .fc').textContent;
     const faixaVisivel=getComputedStyle(document.getElementById('faixa5')).display!=='none';
@@ -1143,7 +1143,7 @@ test('Resultado PF: tres meses, mes sem extrato nao vira zero, top 5 contra a me
     out.c0=c[0].textContent; out.c1=c[1].textContent; out.c2=c[2].textContent;
     out.c1neg=c[1].classList.contains('neg'); out.c2neg=c[2].classList.contains('neg');
     out.c0vazio=c[0].classList.contains('vazio');
-    out.sel=c.filter(x=>x.classList.contains('on')).map(x=>x.dataset.mes);
+    out.sel=c.filter(x=>x.getAttribute('aria-pressed')==='true').map(x=>x.dataset.mes);
     out.cab=document.getElementById('pf-h-classes').textContent;
     out.nota=(document.querySelector('#pf-classes .pfnota')||{}).textContent||'';
     const g=[...document.querySelectorAll('#pf-classes .pfg')];
@@ -1664,4 +1664,55 @@ test('s859: fluxo conta seus minutos e nao pega os da tarefa de mesmo numero', a
   expect(r.err, 'rAgora() derrubou o script').toBe(null);
   expect(r.txt, 'conta 10 min do fluxo, nao 90 da tarefa 1').toContain('10 de 300 min');
   expect(r.txt).not.toContain('sem estimativa');
+});
+/* v81 / p4.24 (plano 82b, 07/10/2026): estado de SELECAO mora em atributo ARIA (aria-current,
+   aria-pressed, aria-selected, aria-expanded) ou no checked nativo, nunca em classe. A classe .on
+   so sobra para VISIBILIDADE, e a lista abaixo e fechada: selecao nova com .on, .sel ou .atual
+   reprova aqui. Assim leitor de tela, CSS e teste leem o mesmo dono do estado. */
+const VISIBILIDADE_ON = ['filtros','velha','falhou','pane','modal','log','sec','menu','desf','maisbar','ledelib','qpr','coluna'];
+test('82b: .on, .sel e .atual no CSS so de visibilidade, nas tres paginas', async ()=>{
+  const fs = require('fs');
+  const fora = [];
+  let regras = 0;
+  for (const arq of ['index.html','presidente.html','seguranca.html']) {
+    const s = fs.readFileSync(path.resolve(__dirname,'..',arq),'utf8');
+    const css = [...s.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n').replace(/\/\*[\s\S]*?\*\//g,'');
+    for (const m of css.matchAll(/([\w-]+)?\.(on|sel|atual)(?![\w-])/g)) {
+      regras++;
+      if (!(m[2]==='on' && VISIBILIDADE_ON.includes(m[1]))) fora.push(arq+': '+m[0]);
+    }
+  }
+  expect(regras, 'achou as regras de visibilidade (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(14);
+  expect(fora, 'estado de selecao por classe; use atributo ARIA').toEqual([]);
+});
+
+test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', async ({page})=>{
+  await abrir(page);
+  await page.keyboard.press('2');
+  const r = await page.evaluate(()=>{
+    const tabs = [...document.querySelectorAll('.tab')];
+    const subs = [...document.querySelectorAll('#subnav .sub:not([hidden])')];
+    const le = document.getElementById('leituras');
+    le.innerHTML = leRow({ref:'t-82b', titulo:'linha de teste', tipo:'fato', frente:'00-teste', dias:1, dias_para_decurso:3});
+    const row = le.querySelector('.lerow'), cx = row.querySelector('input[type=checkbox]');
+    const borda0 = getComputedStyle(row).borderTopColor;
+    cx.click();
+    return {
+      atual: tabs.filter(t=>t.getAttribute('aria-current')==='true').map(t=>t.dataset.g),
+      esperada: tabs[1].dataset.g,
+      comClasse: document.querySelectorAll('.tab.on,.sub.on,.chip.on,.secbt.on,.ordb.on,.pfc.on,.btn.on,.lerow.sel,.card.atual').length,
+      subAtual: subs.filter(s=>s.getAttribute('aria-current')==='page').length,
+      corAtual: getComputedStyle(tabs[1]).color, corOutra: getComputedStyle(tabs[0]).color,
+      borda0, borda1: getComputedStyle(row).borderTopColor,
+      marcada: document.querySelectorAll('#leituras .lerow:has(input[type=checkbox]:checked)').length
+    };
+  });
+  expect(r.atual, 'uma aba atual, a da tecla').toEqual([r.esperada]);
+  expect(r.comClasse, 'nenhum estado de selecao por classe').toBe(0);
+  expect(r.subAtual, 'uma secao atual na aba').toBe(1);
+  expect(r.corAtual, 'a aba atual pinta --ink pelo atributo').toBe('rgb(244, 247, 251)');
+  expect(r.corOutra).not.toBe(r.corAtual);
+  expect(r.marcada, 'a linha marcada se acha pelo checked').toBe(1);
+  expect(r.borda1, 'linha marcada ganha a borda --acc pelo checked').toBe('rgb(47, 128, 255)');
+  expect(r.borda0).not.toBe(r.borda1);
 });
