@@ -37,6 +37,8 @@ const DUBLE = `(()=>{
   const dados={fila,exp:[],cont:[{depois:2}],rw:[{dias_sobrevida_pior:16,entrada_provavel_30d:1000,saida_firme_30d:500}],
     se:[{chave:'fila.aging_p95_dias',serie:[30]}],cap:[{minutos_dia:120}],min:[{id:2,minutos_estimados:25}],
     c13:sem,c13i:[{id:31,natureza:'receber',vencido:true,valor_igor:1400,descricao:'Laudo L1',data_venc:hoje,frente_slug:'11-renda-alt'}],
+    /* p4.27: sem leitura de 7 dias atras por padrao; o teste do plano 89 troca por window.__dados */
+    var7:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2149,5 +2151,51 @@ test('87b: nenhum handler inline no presidente; toda acao da tela esta no regist
   expect(r.n, 'varreu as acoes das cinco abas e da folha').toBeGreaterThan(20);
   expect(r.aberta, 'o clique delegado troca a aba').toBe('page');
   expect(r.coluna, 'o clique delegado troca a coluna da fila').toBe('true');
+  expect(erros).toEqual([]);
+});
+
+/* p4.27 (plano 89, 07/10/2026): numero com contexto, no molde do painel da Stripe. O folego da frase do Hoje e do
+   topo do Caixa diz quanto andou contra a semana anterior (v_painel_variacao_7d, chave var7) e o toque abre a lista
+   que o compoe; o saldo da pior semana tambem. A classe que se cobra: numero sem a lista que o explica e numero cuja
+   lista nao fecha com ele. A p4.26 reprova: o numero era <b>, sem toque e sem variacao. */
+test('p4.27: folego e pior semana com variacao de 7 dias; o toque abre a lista que fecha com o numero', async ({page})=>{
+  await page.addInitScript(()=>{
+    const p=n=>String(n).padStart(2,'0'), dd=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());};
+    const it=(id,natureza,dia,semana,valor_igor,descricao,status,peso)=>({id,natureza,data_venc:dd(dia),vencido:dia<0,semana,valor_igor,descricao,frente_slug:'20-contrato-pj',status:status||'confirmado',peso:peso==null?1:peso});
+    const c13i=[it(41,'receber',-1,1,1400,'Laudo L1'),it(42,'receber',9,2,10000,'Proposta incerta','incerto',0.5),it(43,'receber',52,8,5000,'Entrada fora da pior semana'),
+      it(51,'pagar',3,1,30000,'Folha de exemplo'),it(52,'pagar',-2,1,1500,'Fornecedor incerto','incerto'),it(53,'pagar',10,2,8311.19,'Aluguel de exemplo'),it(54,'pagar',45,7,2000,'Seguro fora dos 30 dias')];
+    let acum=36271; const c13=[1,2,3,4,5,6,7].map(k=>{ const w=c13i.filter(x=>x.semana===k);
+      acum+=w.reduce((t,x)=>t+(x.natureza==='receber'?x.valor_igor*(x.status==='incerto'?x.peso:1):-x.valor_igor),0)-2800;
+      return {semana:k,inicio:dd(7*(k-1)),saldo_base:Math.round(acum*100)/100,sai_firme:500,caixa_hoje:36271,custo_vida:2800}; });
+    window.__dados={c13,c13i,rw:[{dias_sobrevida_pior:13,caixa_hoje:36271,saida_firme_30d:38311.19,saida_incerta_30d:1500,custo_vida_pf:12000}],
+      var7:[{metrica:'caixa.sobrevida_dias',agora:13,ha_7d:8,data_base:'2026-09-30'},{metrica:'caixa.menor_saldo_13s',agora:null,ha_7d:null,data_base:null}]};
+  });
+  const erros = await abrir(page);
+  const sit = page.locator('#situacao');
+  await expect(sit, 'a frase diz quanto o folego andou').toContainText('13 dias no pior cenário, +5 dias desde 30/09');
+  await sit.locator('button[data-acao="abrirFolego"]').click();
+  const folha = page.locator('#folha');
+  await expect(folha.locator('#folhaTit')).toHaveText('O caixa aguenta 13 dias no pior cenário');
+  await expect(folha, 'a variacao vai junto na folha').toContainText('+5 dias desde 30/09');
+  await expect(folha, 'so os pagamentos dos 30 dias, com a soma da conta').toContainText('3 pagamentos até');
+  await expect(folha).toContainText('R$ 39.811');
+  await expect(folha).not.toContainText('Seguro fora dos 30 dias');
+  await expect(folha.locator('.aviso'), 'lista e conta fecham').toHaveCount(0);
+  await page.evaluate(()=>{ fecharFolha(); ir('caixa'); });
+  const topo = page.locator('#caixaTopo');
+  await expect(topo.locator('button[data-acao="abrirFolego"]')).toHaveText('13 dias');
+  await expect(topo, 'menor saldo sem base de 7 dias diz que nao ha base').toContainText('sem leitura de 7 dias atrás');
+  await topo.locator('button[data-acao="abrirPiorSemana"]').click();
+  await expect(folha.locator('#folhaTit')).toContainText('-R$ 18.740');
+  await expect(folha, 'a conta da pior semana fecha no saldo').toContainText('menos o custo de vida de 7 semanas');
+  await expect(folha.locator('.aviso')).toHaveCount(0);
+  await expect(folha).toContainText('2 entradas');
+  await expect(folha).toContainText('4 saídas');
+  await expect(folha, 'item depois da pior semana fica fora').not.toContainText('Entrada fora da pior semana');
+  await expect(folha, 'incerta mostra o peso').toContainText('incerta, conta 50%');
+  /* a guarda: conta e lista que nao fecham sao ditas, nunca caladas */
+  const avisos = await page.evaluate(()=>{ fecharFolha(); D.rw[0].saida_firme_30d=40000; abrirFolego(); const a=document.querySelectorAll('#folha .aviso').length;
+    fecharFolha(); D.c13[6].saldo_base=-20000; abrirPiorSemana(); return [a, document.querySelectorAll('#folha .aviso').length]; });
+  expect(avisos, 'lista que nao fecha com o numero acusa').toEqual([1,1]);
   expect(erros).toEqual([]);
 });

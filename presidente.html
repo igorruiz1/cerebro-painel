@@ -121,6 +121,13 @@ h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 .situacao{margin:0;font-size:var(--fs-4);line-height:1.4;text-wrap:balance}
 .situacao b{font-weight:600}
 .situacao .w{color:var(--warn)}
+/* p4.27 (plano 89): o numero e botao e abre a lista que o compoe; ao lado, quanto andou em 7 dias */
+.numero{min-height:44px;min-width:44px;display:inline-flex;align-items:center;vertical-align:middle;padding:0 6px;margin:0 -2px;border:0;border-radius:9px;background:transparent;color:var(--ink);font-weight:600;text-decoration:underline dotted;text-underline-offset:5px;text-align:left}
+.numero:hover{background:var(--chip)}
+.numero.w{color:var(--warn)}
+.var7{font-size:var(--fs-2);color:var(--mut);white-space:nowrap}
+.var7.ok{color:var(--ok)} .var7.w{color:var(--warn)}
+.linha-r .r.sai{color:var(--ink2)}
 .foco{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .foco .eyebrow{font-size:var(--fs-2);text-transform:uppercase;letter-spacing:.08em;color:var(--acc);font-weight:600}
 .foco .tit{font-size:var(--fs-4);font-weight:600;line-height:1.3;text-wrap:balance}
@@ -501,7 +508,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.26";
+const VERP="p4.27";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -578,13 +585,46 @@ function demoBase(){
     {nivel:1,no:"05-cobranca",rotulo:"Cobrança de cliente",margem_30d:0,margem_total:48000,itens:2,veredito:"Acordo proposto; a outra parte pediu 15 dias."},
     {nivel:1,no:"07-financas-pf",rotulo:"Finanças pessoais",margem_30d:0,margem_total:0,itens:1},
     {nivel:1,no:"00-sistema",rotulo:"Sistema (memória e rotinas)",margem_30d:0,margem_total:0,itens:1}];
-  const saldos=[38200,31000,44500,39800,27600,35100,52300,47000,41800,58900,53200,61000,66400];
-  const c13=saldos.map((s,i)=>({semana:i+1,inicio:seg(i),fim:seg(i),saldo_base:s,saldo_pior:Math.round(s*0.62),sai_firme:i===0?6400:5200+i*120,entra_firme:i%2?9000:3000,
-    caixa_hoje:38200,custo_vida:9000,sai_incerta:800,entra_incerta:4000,entra_incerta_ponderada:2400,sai_vencida_na_semana1:0,entra_vencida_na_semana1:0,
-    semana_mais_apertada_base:i===4,semana_mais_apertada_pior:i===4}));
-  const c13i=[{id:601,natureza:"receber",vencido:true,valor_igor:6500,descricao:"Saldo do laudo estrutural do Edifício Ipê",data_venc:dd(-9),frente_slug:"11-consultoria",semana:1,peso:1,status:"confirmado"},
-    {id:602,natureza:"receber",vencido:true,valor_igor:2300,descricao:"Reembolso da ART da obra residencial",data_venc:dd(-3),frente_slug:"04-obra-residencial",semana:1,peso:1,status:"confirmado"},
-    {id:603,natureza:"receber",vencido:false,valor_igor:12000,descricao:"Medição 7 do contrato de engenharia",data_venc:dd(12),frente_slug:"20-contrato-pj",semana:2,peso:0.9,status:"confirmado"}];
+  /* p4.27 (plano 89): o caixa da demonstracao nasce dos itens, como no banco (saldo da semana = caixa de hoje +
+     entradas, a incerta pelo peso, - saidas - custo de vida da semana, acumulado), e caixa() refaz semanas e folego
+     a cada carga: pagar a parcela na demonstracao tira a linha da lista e a conta continua fechando. */
+  const CX=38200, CV=9000, CVS=Math.round(CV*7/30*100)/100, DS=(new Date().getDay()+6)%7;
+  const it=(id,natureza,dia,valor_igor,descricao,frente_slug,status,peso)=>({id,natureza,data_venc:dd(dia),vencido:dia<0,semana:Math.max(1,Math.floor((dia+DS)/7)+1),
+    valor_igor,descricao,frente_slug,status:status||"confirmado",peso:peso==null?1:peso});
+  const c13i=[it(601,"receber",-9,6500,"Saldo do laudo estrutural do Edifício Ipê","11-consultoria"),
+    it(602,"receber",-3,2300,"Reembolso da ART da obra residencial","04-obra-residencial"),
+    it(502,"receber",0,9400,"2ª parcela do laudo da Clínica Horizonte","11-consultoria","incerto",0.7),
+    it(603,"receber",12,12000,"Medição 7 do contrato de engenharia","20-contrato-pj"),
+    it(604,"receber",40,18000,"Entrada da reforma da sede da Construtora Aurora","11-consultoria","incerto",0.5),
+    it(605,"receber",42,12000,"Medição 8 do contrato de engenharia","20-contrato-pj"),
+    it(606,"receber",72,12000,"Medição 9 do contrato de engenharia","20-contrato-pj"),
+    it(501,"pagar",0,1850,"Parcela 3 de 6 do financiamento do carro","07-financas-pf"),
+    it(611,"pagar",2,6400,"Folha da equipe de campo","20-contrato-pj"),
+    it(612,"pagar",9,3800,"Aluguel do escritório","11-consultoria"),
+    it(613,"pagar",11,2900,"Fornecedor de aço da obra residencial","04-obra-residencial","incerto"),
+    it(614,"pagar",23,6400,"Folha da equipe de campo","20-contrato-pj"),
+    it(615,"pagar",29,3300,"Impostos do mês","11-consultoria"),
+    it(616,"pagar",31,1850,"Parcela 4 de 6 do financiamento do carro","07-financas-pf"),
+    it(617,"pagar",39,3800,"Aluguel do escritório","11-consultoria"),
+    it(618,"pagar",51,6400,"Folha da equipe de campo","20-contrato-pj"),
+    it(619,"pagar",58,4700,"Fornecedor de concreto da obra residencial","04-obra-residencial","incerto"),
+    it(620,"pagar",69,3800,"Aluguel do escritório","11-consultoria"),
+    it(621,"pagar",79,6400,"Folha da equipe de campo","20-contrato-pj")];
+  const caixa=its=>{
+    const cent=v=>Math.round(v*100)/100; let acum=CX, acumP=CX;
+    const c13=Array.from({length:13},(_,i)=>{ const w=its.filter(x=>x.semana===i+1), soma=f=>cent(w.filter(f).reduce((t,x)=>t+x.valor_igor*pesoCx(x),0));
+      const ef=soma(x=>x.natureza==="receber"&&x.status!=="incerto"), ei=soma(x=>x.natureza==="receber"&&x.status==="incerto"),
+        sf=soma(x=>x.natureza==="pagar"&&x.status!=="incerto"), si=soma(x=>x.natureza==="pagar"&&x.status==="incerto");
+      acum=cent(acum+ef+ei-sf-si-CVS); acumP=cent(acumP+ef-sf-si-CVS);
+      return {semana:i+1,inicio:seg(i),fim:seg(i),saldo_base:acum,saldo_pior:acumP,sai_firme:sf,sai_incerta:si,entra_firme:ef,entra_incerta_ponderada:ei,caixa_hoje:CX,custo_vida:CVS}; });
+    const ate=dd(30), s30=f=>cent(its.filter(x=>x.data_venc<=ate&&f(x)).reduce((t,x)=>t+x.valor_igor*(x.natureza==="receber"?pesoCx(x):1),0));
+    const sf30=s30(x=>x.natureza==="pagar"&&x.status!=="incerto"), si30=s30(x=>x.natureza==="pagar"&&x.status==="incerto"), e30=s30(x=>x.natureza==="receber");
+    return {c13,rw:[{caixa_hoje:CX,saida_firme_30d:sf30,saida_incerta_30d:si30,entrada_provavel_30d:e30,custo_vida_pf:CV,
+      dias_sobrevida_pior:Math.floor(CX/((sf30+si30+CV)/30)),dias_sobrevida:Math.floor(CX/Math.max(1,(sf30+si30+CV-e30)/30))}]};
+  };
+  const cx0=caixa(c13i), c13=cx0.c13;
+  const var7=[{metrica:"caixa.sobrevida_dias",ha_7d:cx0.rw[0].dias_sobrevida_pior-4,data_base:dd(-7)},
+    {metrica:"caixa.menor_saldo_13s",ha_7d:Math.round(Math.min(...c13.map(x=>x.saldo_base))+2600),data_base:dd(-7)}];
   const se=[{chave:"fila.aging_p95_dias",serie:[21],direcao:"menor_melhor",situacao_banda:"normal"}];
   const mo=[{nome:"backup-cerebro",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(5)},{nome:"fechamento-do-dia",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)},
     {nome:"triagem-da-mesa",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)}];
@@ -593,7 +633,7 @@ function demoBase(){
     {id:"fluxo:501",minutos_estimados:5},{id:"fluxo:502",minutos_estimados:10}];
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
     cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
-    rw:[{dias_sobrevida_pior:48,dias_sobrevida:96,caixa_hoje:38200,entrada_provavel_30d:41000,saida_firme_30d:22600,custo_vida_pf:9000}]};
+    rw:cx0.rw, var7};
   const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,tarefa:null,fecha_tarefa:false,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
   const mes=dd(-new Date().getDate()).slice(0,7);
   const mesa={em_jogo:0,horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
@@ -616,7 +656,7 @@ function demoBase(){
       {tipo:"estoque",alvo:dd(-4),versao:"01",titulo:"Estoque parado",path:"demo/estoque.pdf",anteriores:[]}],
     fechamentos:[{dia:dd(-2),ciente_em:new Date(Date.now()-2*864e5+3*36e5).toISOString(),pendentes:2,adiadas:1,decididas:7},
       {dia:dd(-3),ciente_em:new Date(Date.now()-3*864e5+3*36e5).toISOString(),pendentes:0,adiadas:0,decididas:5}]};
-  return {dados,inv,arv,mesa,dd};
+  return {dados,inv,arv,mesa,dd,caixa};
 }
 function demoCliente(){
   let db=null; const B=()=>db||(db=demoBase());
@@ -630,7 +670,7 @@ function demoCliente(){
     return copia(Object.assign({},m,{hoje:h,pendentes_hoje:m.estoque.filter(p=>!p.adiado_ate).length,adiadas_hoje:m.estoque.filter(p=>p.adiado_ate).length,
       em_jogo:m.estoque.reduce((s,p)=>s+(+p.rs||0),0)})); };
   const RPC={
-    painel_carga:()=>({dados:copia(B().dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}),
+    painel_carga:()=>{ const b=B(); Object.assign(b.dados,b.caixa(b.dados.c13i)); return {dados:copia(b.dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}; },
     agir:a=>{ const o=a.p_origem, r=String(a.p_ref), v=a.p_verbo, b=B();
       if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
       else if(v==="repactuar"||v==="esperar"){ const t=b.inv.find(x=>String(x.id)===r);
@@ -685,8 +725,9 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    exp entra no p4.1: a tarefa vencida ou de hoje que o banco deixou no segundo plano sobe para Hoje,
    pela mesma regra do index.html (bloco comum:hoje abaixo).
    fresc, mo e eb entram no p4.3 para o selo de saude: ja estavam no snapshot (o index.html le as tres),
-   entao o selo nao pede mudanca no banco. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb"];
+   entao o selo nao pede mudanca no banco.
+   var7 entra no p4.27 (plano 89): v_painel_variacao_7d, a leitura de 7 dias atras do folego e do menor saldo. */
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -789,7 +830,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), escolher:el=>escolher(el.dataset.a1),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1024,7 +1065,8 @@ function renderHoje(){
   const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0)+pz.reduce((s,p)=>s+pecaMin(p),0), semMin=mins.filter(m=>m==null).length;
   const dias=rw.dias_sobrevida_pior;
   const fr=[];
-  if(dias!=null)fr.push(`O caixa aguenta <b class="${dias<30?"w":""}">${esc(dias)} dias</b> no pior cenário.`);
+  if(dias!=null){const v=var7("caixa.sobrevida_dias",dias,n=>plural(n,"dia","dias"));
+    fr.push(`O caixa aguenta <button type="button" class="numero ${dias<30?"w":""}" data-acao="abrirFolego">${esc(dias)} dias</button> no pior cenário${v?`, <span class="var7 ${v.cls}">${esc(v.txt)}</span>`:""}.`);}
   const hh=m=>(Math.round(m/6)/10).toLocaleString("pt-BR"), passa=soma-cap;
   fr.push(nPassos?`Hoje ${nPassos===1?"é":"são"} <b>${plural(nPassos,"passo","passos")}</b>${pz.length?` (${plural(pz.length,"peça da Mesa","peças da Mesa")})`:""}, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
   document.getElementById("situacao").innerHTML=fr.join(" ");
@@ -1125,13 +1167,65 @@ function itemInv(t){
 
 /* ---------- Caixa ---------- */
 const aCobrar=()=>(D.c13i||[]).filter(x=>x.natureza==="receber"&&(x.vencido===true||x.vencido==="true")).sort((a,b)=>(+b.valor_igor)-(+a.valor_igor));
+/* p4.27 (plano 89, 07/10/2026): numero com contexto, no molde do painel da Stripe: quanto o numero andou contra
+   a semana anterior, e o toque abre a lista que o compoe. A base e v_painel_variacao_7d (chave var7): a ultima
+   leitura de evolucao entre hoje-10 e hoje-7. A diferenca e contra o numero que a TELA mostra, nao contra a
+   ultima leitura gravada, para a frase nao se contradizer. Sem leitura na janela volta null e a tela diz que
+   nao ha base: nunca inventa. */
+function var7(metrica,agora,fmt){
+  const v=(D.var7||[]).find(x=>x.metrica===metrica);
+  if(!v||v.ha_7d==null||agora==null||isNaN(+v.ha_7d)||isNaN(+agora))return null;
+  const dif=Math.round((+agora)-(+v.ha_7d)), desde=ddmm(v.data_base);
+  if(!dif)return {txt:"igual a "+desde,cls:""};
+  return {txt:(dif>0?"+":"-")+fmt(Math.abs(dif))+" desde "+desde,cls:dif>0?"ok":"w"};
+}
+const porData=(a,b)=>String(a.data_venc||"9").localeCompare(String(b.data_venc||"9"))||(+b.valor_igor)-(+a.valor_igor);
+const pesoCx=x=>x.natureza==="receber"&&x.status==="incerto"?(+x.peso||0):1;
+function linhaCx(x){
+  const sai=x.natureza==="pagar", inc=x.status==="incerto";
+  return `<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${x.vencido===true||x.vencido==="true"?"venceu":"vence"} ${esc(ddmm(x.data_venc))}${inc?(sai?" · incerto":" · incerta, conta "+Math.round(pesoCx(x)*100)+"%"):""} · ${esc(nomeFrente(x.frente_slug))}</small></span><span class="r ${sai?"sai":""}">${sai?"-":"+"}${rs(x.valor_igor)}</span></div>`;
+}
+const chipVar7=v=>v?`<span class="chip ${v.cls}">${esc(v.txt)}</span>`:`<span class="chip">sem leitura de 7 dias atrás</span>`;
+/* O folego no pior cenario e caixa_hoje / ((saida_firme_30d + saida_incerta_30d + custo_vida_pf) / 30), da v_runway.
+   Medido em 07/10/2026: os pagamentos dessa queima sao todos linhas do c13i (29, soma igual a firme + incerta),
+   entao a lista monta aqui sem consulta nova. Se a soma da lista nao bater com a da conta, a folha diz. */
+function abrirFolego(){
+  const rw=(D.rw||[])[0]||{}, d=rw.dias_sobrevida_pior; if(d==null)return;
+  const ate=somaDias(30), its=(D.c13i||[]).filter(x=>x.natureza==="pagar"&&String(x.data_venc||"").slice(0,10)<=ate).sort(porData);
+  const soma=its.reduce((t,x)=>t+(+x.valor_igor||0),0), usou=(+rw.saida_firme_30d||0)+(+rw.saida_incerta_30d||0), cv=+rw.custo_vida_pf||0;
+  mostrarFolha(`<h3 id="folhaTit">O caixa aguenta ${esc(plural(d,"dia","dias"))} no pior cenário</h3>
+    <div class="chips">${chipVar7(var7("caixa.sobrevida_dias",d,n=>plural(n,"dia","dias")))}</div>
+    <div class="bloco"><span class="rot">A conta</span><p>Pior cenário: nenhuma entrada chega. O caixa de hoje, <span class="num">${rs(rw.caixa_hoje)}</span>, dividido pelo gasto de cada dia, <span class="num">${rs((usou+cv)/30)}</span>: os pagamentos dos próximos 30 dias, <span class="num">${rs(usou)}</span>, mais o custo de vida do mês, <span class="num">${rs(cv)}</span>, divididos por 30.</p></div>
+    ${Math.abs(soma-usou)>=1?`<div class="aviso">A lista soma ${rs(soma)} e a conta usou ${rs(usou)}: há pagamento numa e não na outra. Não decida pela lista antes de recarregar.</div>`:""}
+    <div class="bloco"><span class="rot">${esc(plural(its.length,"pagamento","pagamentos"))} até ${esc(ddmm(ate))} · ${rs(soma)}</span><div class="pilha">${its.map(linhaCx).join("")||`<div class="vazio">Nenhum pagamento nos próximos 30 dias.</div>`}</div></div>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
+/* Saldo da semana k = caixa de hoje + soma ate k de (entrada firme + entrada incerta x peso - saidas - custo de vida
+   da semana). Medido em 07/10/2026 contra v_caixa_13_semanas: fecha no centavo nas 13 semanas; o custo_vida do c13
+   ja e o da semana (mensal x 7/30). */
+function abrirPiorSemana(){
+  const s=(D.c13||[]).slice().sort((a,b)=>a.semana-b.semana), base=s.map(x=>+x.saldo_base); if(!s.length)return;
+  const iMin=base.indexOf(Math.min(...base)), ate=+s[iMin].semana, rw=(D.rw||[])[0]||{};
+  const cx=s[0].caixa_hoje!=null?+s[0].caixa_hoje:+rw.caixa_hoje||0;
+  const its=(D.c13i||[]).filter(x=>+x.semana<=ate), ent=its.filter(x=>x.natureza==="receber").sort(porData), sai=its.filter(x=>x.natureza==="pagar").sort(porData);
+  const sEnt=ent.reduce((t,x)=>t+(+x.valor_igor||0)*pesoCx(x),0), sSai=sai.reduce((t,x)=>t+(+x.valor_igor||0),0);
+  const cv=s.slice(0,iMin+1).reduce((t,x)=>t+(+x.custo_vida||0),0), calc=cx+sEnt-sSai-cv;
+  mostrarFolha(`<h3 id="folhaTit">Pior semana: a de ${esc(ddmm(s[iMin].inicio))}, saldo de ${rs(base[iMin])}</h3>
+    <div class="chips">${chipVar7(var7("caixa.menor_saldo_13s",base[iMin],rs))}</div>
+    <div class="bloco"><span class="rot">A conta</span><p>Caixa de hoje <span class="num">${rs(cx)}</span>, mais as entradas até essa semana, <span class="num">${rs(sEnt)}</span> (a incerta conta pelo peso), menos as saídas, <span class="num">${rs(sSai)}</span>, menos o custo de vida de ${esc(plural(iMin+1,"semana","semanas"))}, <span class="num">${rs(cv)}</span>: <span class="num">${rs(calc)}</span>.</p></div>
+    ${Math.abs(calc-base[iMin])>=1?`<div class="aviso">A lista dá ${rs(calc)} e a previsão diz ${rs(base[iMin])}: há item numa e não na outra. Não decida pela lista antes de recarregar.</div>`:""}
+    <div class="bloco"><span class="rot">${esc(plural(ent.length,"entrada","entradas"))} · ${rs(sEnt)}</span><div class="pilha">${ent.map(linhaCx).join("")||`<div class="vazio">Nenhuma entrada até essa semana.</div>`}</div></div>
+    <div class="bloco"><span class="rot">${esc(plural(sai.length,"saída","saídas"))} · ${rs(sSai)}</span><div class="pilha">${sai.map(linhaCx).join("")||`<div class="vazio">Nenhuma saída até essa semana.</div>`}</div></div>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
 function renderCaixa(){
   const rw=(D.rw||[])[0]||{}, d=rw.dias_sobrevida_pior, s=(D.c13||[]).slice().sort((a,b)=>a.semana-b.semana);
   const base=s.map(x=>+x.saldo_base), iMin=base.length?base.indexOf(Math.min(...base)):-1;
-  const s1=s[0];
+  const s1=s[0], vd=d==null?null:var7("caixa.sobrevida_dias",d,n=>plural(n,"dia","dias")), vs=iMin<0?null:var7("caixa.menor_saldo_13s",base[iMin],rs);
+  const sem7=`<span class="var7">sem leitura de 7 dias atrás</span>`, var7Html=v=>v?`<span class="var7 ${v.cls}">${esc(v.txt)}</span>`:sem7;
   document.getElementById("caixaTopo").innerHTML=`<span class="mut">Se nada do que é incerto entrar, o caixa aguenta</span>
-    <span class="v ${d!=null&&d<30?"w":""}">${d==null?"—":esc(plural(d,"dia","dias"))}</span>
-    <span class="mut">Meta: 90 dias.${iMin>=0?` Pior semana: a de ${ddmm(s[iMin].inicio)}, saldo de <span class="num">${rs(base[iMin])}</span>.`:""}${s1&&s1.sai_firme!=null?` Saem <span class="num">${rs(s1.sai_firme)}</span> nesta semana.`:""}</span>`;
+    <span>${d==null?`<span class="v">—</span>`:`<button type="button" class="v numero ${d<30?"w":""}" data-acao="abrirFolego">${esc(plural(d,"dia","dias"))}</button> ${var7Html(vd)}`}</span>
+    <span class="mut">Meta: 90 dias.${iMin>=0?` Pior semana: a de ${ddmm(s[iMin].inicio)}, saldo de <button type="button" class="numero num" data-acao="abrirPiorSemana">${rs(base[iMin])}</button> ${var7Html(vs)}.`:""}${s1&&s1.sai_firme!=null?` Saem <span class="num">${rs(s1.sai_firme)}</span> nesta semana.`:""}</span>`;
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
   document.getElementById("cobrarBox").innerHTML=`<h2>A receber com data passada</h2>`+(cob.length
