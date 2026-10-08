@@ -1,6 +1,8 @@
 # cerebro-painel
 
-O artefato é o `index.html`. O resto do repo existe para testá-lo e documentá-lo.
+Os artefatos são o `presidente.html`, a casa (o `manifest.json` abre nele), e o `index.html`, o
+bastidor da máquina (aberto pelo rodapé do presidente). O resto do repo existe para testá-los e
+documentá-los. A régua de mercado do presidente está em `docs/canone.md`.
 
 ## Antes de escrever qualquer linha
 
@@ -52,12 +54,14 @@ página**, trocando a linha antiga pelo fato novo com a data.
 - Merge por **squash**.
 - CI `fumaça` verde antes do merge — sem exceção. Ela roda em todo push e toda
   proposta de mudança e existe porque quatro versões do painel caíram pela mesma
-  classe de defeito. Medido em 04/10/2026 com 79 testes: `npm run teste` leva
-  ~26 s local (2 workers); na CI o job leva ~1 min (51 a 61 s nas últimas
-  execuções), dos quais ~26 s instalam o Chromium e ~19 s rodam a suíte.
+  classe de defeito. Medido em 08/10/2026 com 181 testes (p4.30): `npm run teste`
+  leva ~78 s local (2 workers). Em 04/10, com 79 testes, eram ~26 s local e ~1 min
+  de job na CI.
 - Rodar local antes de empurrar: `npm run teste`.
 - Versão nova do `presidente.html`: `const VERP` e `version.json` mudam juntos. A página
   confere a versão pelo `version.json`; esquecido, ela oferece ao Igor a versão velha (teste p4.20 cobra).
+- Versão nova do `presidente.html`: remedir as réguas de `docs/canone.md` e gravar
+  `painel.presidente_canone24_pct` na `evolucao` (o plano 106 automatiza).
 - Mexeu no `<script>` do `presidente.html`: `node scripts/csp-hash.mjs` antes do commit. A CSP autoriza só o hash
   daquele script, sem `unsafe-inline` (fecho do plano 87, 07/10/2026); hash velho = página em branco (teste "87 fecho" cobra).
 
