@@ -183,7 +183,8 @@ test('verbo do banco nunca aparece cru: feita, repactuar, deliberar e arquivar v
   for (const cru of ['feita','repactuar','deliberar','arquivar']) expect(botoes, 'verbo cru '+cru).not.toContain(cru);
   expect(botoes).toContain('concluí');
   expect(botoes).toContain('mudar data');
-  expect(botoes).toContain('quero uma recomendação');
+  expect(botoes).toContain('pedir análise');
+  expect(botoes).toContain('dar minha posição');
 });
 
 test('concluir sem prova escrita nao chama o banco; com prova, grava depois do prazo de desfazer', async ({page})=>{
@@ -487,7 +488,7 @@ test('resposta chega sozinha: evento do Realtime avisa e redesenha a conversa do
   await expect(page.locator('#tmsg')).toHaveText('limpo');
 });
 
-test('fio curto: 3 trocas em 7 dias no card desligam o "Quero uma recomendação"', async ({page})=>{
+test('fio curto: 3 trocas em 7 dias no card desligam o "Pedir análise"', async ({page})=>{
   await page.addInitScript(t=>{ window.__tab={dialogo:[1,2,3].map(i=>({id:i,pergunta:'pergunta '+i,resposta:'resposta '+i,perguntado_em:t,respondido_em:t}))}; }, AGORA());
   await abrir(page);
   await page.evaluate(()=>abrirFila(0));
@@ -847,11 +848,11 @@ test('teclado na folha: A ato principal, S nova data, R responder, e nada disso 
   await page.keyboard.press('s');
   await expect(page.locator('#campo .datas button')).toHaveCount(4);
   await page.keyboard.press('r');
-  await expect(page.locator('#campo label')).toHaveText('Quero uma recomendação');
+  await expect(page.locator('#campo label')).toHaveText('Pedir análise');
   await expect(page.locator('#cv')).toBeFocused();
   await page.keyboard.type('sra');
   await expect(page.locator('#cv'), 'letra digitada no campo e texto, nao atalho').toHaveValue('sra');
-  await expect(page.locator('#campo label')).toHaveText('Quero uma recomendação');
+  await expect(page.locator('#campo label')).toHaveText('Pedir análise');
   await page.locator('#folhaTit').click();
   await page.keyboard.press('a');
   await expect(page.locator('#campo .pri')).toHaveText('Concluir com esta prova');
@@ -2273,4 +2274,44 @@ test('95 rotulo: nota de card de ato diz "Próximo passo"; so card de decisao di
   await expect(page.locator('#folha')).not.toContainText('O executor recomenda');
   await page.evaluate(()=>{fecharFolha();D.fila.forEach(f=>f.tipo_card='decisao');abrirFila(0);});
   await expect(page.locator('#folha')).toContainText('O executor recomenda');
+});
+
+/* p4.30 (plano 96, s1226 08/10/2026): "Quero uma recomendacao" chamava deliberar, que o banco grava como POSICAO
+   do Igor e o atendente executa: o pedido virava ordem. Agora "Pedir análise" vai pela pedir_analise() e volta
+   como opcoes ratificaveis; "Dar minha posição" e o deliberar de verdade. Com opcoes na folha, os dois saem e a
+   posicao fica no "Nenhuma serve" do Retifico. */
+test('96 Pedir análise vai pela pedir_analise, nunca pelo agir; so depois do prazo de desfazer', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  await page.click('#folha [data-verbo="deliberar"]');
+  await expect(page.locator('#campo label')).toHaveText('Pedir análise');
+  await page.fill('#cv','Vale assinar agora ou esperar o saldo?');
+  await page.click('#campo .pri');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='pedir_analise'||c.n==='agir')), 'nada antes do desfazer').toEqual([]);
+  await page.evaluate(()=>enviar());
+  const r = await page.evaluate(()=>({pa:window.__rpc.filter(c=>c.n==='pedir_analise').map(c=>c.a), agir:window.__rpc.filter(c=>c.n==='agir')}));
+  expect(r.pa).toEqual([{p_origem:'tarefa',p_ref:'2',p_texto:'Vale assinar agora ou esperar o saldo?'}]);
+  expect(r.agir, 'pedido de analise nao e posicao').toEqual([]);
+});
+
+test('96 Dar minha posição grava deliberar pelo agir; com opcoes na folha, a posicao sai do Retifico', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  await page.click('#folha button:has-text("Dar minha posição")');
+  await page.fill('#cv','Assina so com o saldo do dia');
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  let agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(agir).toEqual([{p_origem:'tarefa',p_ref:'2',p_verbo:'deliberar',p_valor:'Assina so com o saldo do dia'}]);
+  await page.evaluate(c=>{INV.push(c);abrirInv(8);}, CARD_DECISAO);
+  await expect(page.locator('#folha [data-verbo="deliberar"]'), 'com opcoes, Pedir análise sai').toHaveCount(0);
+  await expect(page.locator('#folha [data-acao="posicao"]'), 'so o Retifico leva a posicao').toHaveCount(0);
+  await page.locator('#folha #decide button:has-text("Retifico")').click();
+  await page.click('#campo button:has-text("Nenhuma serve")');
+  await expect(page.locator('#campo label')).toContainText('vale como ordem');
+  await page.fill('#cv','Nenhuma: renegociar o prazo');
+  await page.click('#campo .pri');
+  await page.evaluate(()=>enviar());
+  agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(agir[1]).toEqual({p_origem:'tarefa',p_ref:'8',p_verbo:'deliberar',p_valor:'Nenhuma: renegociar o prazo'});
 });
