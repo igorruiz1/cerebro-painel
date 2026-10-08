@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Mesma CSP do presidente.html, byte a byte (testes/seguranca.spec.js confere). O QR do segundo fator
-     chega como data: URL de SVG e entra por img-src data:. -->
+<!-- Mesma CSP do presidente.html fora do script-src (testes/seguranca.spec.js confere). O script-src
+     daqui ainda aceita 'unsafe-inline', que o presidente fechou por hash em 07/10 (plano 87); o plano 102
+     fecha esta pagina igual. O QR do segundo fator chega como data: URL de SVG e entra por img-src data:. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <meta name="referrer" content="no-referrer">
