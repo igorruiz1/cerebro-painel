@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Mesma CSP do presidente.html fora do script-src (testes/seguranca.spec.js confere). O script-src
-     daqui ainda aceita 'unsafe-inline', que o presidente fechou por hash em 07/10 (plano 87); o plano 102
-     fecha esta pagina igual. O QR do segundo fator chega como data: URL de SVG e entra por img-src data:. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<!-- Mesma CSP do presidente.html fora do script-src (testes/seguranca.spec.js confere). O script-src autoriza
+     so o hash do script desta pagina, sem 'unsafe-inline' (plano 102, 08/10/2026, igual ao fecho do plano 87 no
+     presidente): mexeu no script, rode node scripts/csp-hash.mjs. O QR do segundo fator chega como data: URL de
+     SVG e entra por img-src data:. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-kEdh+AX7jAxiVAljT3yhxigm6cFWcNuh6a9WKuShzYE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <meta name="referrer" content="no-referrer">
 <title>Segurança · Dabli Tech</title>
@@ -100,12 +101,12 @@ main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-widt
   <input id="em" type="email" autocomplete="username" inputmode="email">
   <label for="pw">Senha</label>
   <input id="pw" type="password" autocomplete="current-password">
-  <button class="pri" onclick="entrarSenha()">Entrar</button>
-  <button class="sec" onclick="pedirCodigo()">Receber código por e-mail</button>
+  <button class="pri" data-acao="entrarSenha">Entrar</button>
+  <button class="sec" data-acao="pedirCodigo">Receber código por e-mail</button>
   <div id="codigoBox" class="hidden" style="display:flex;flex-direction:column;gap:8px">
     <label for="cod">Código recebido</label>
     <input id="cod" inputmode="numeric" autocomplete="one-time-code">
-    <button class="pri" onclick="entrarCodigo()">Confirmar código</button>
+    <button class="pri" data-acao="entrarCodigo">Confirmar código</button>
   </div>
   <div id="lmsg" class="msg" role="status"></div>
   <a class="sec" href="presidente.html">Entrar pelo painel</a>
@@ -131,12 +132,12 @@ main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-widt
 
     <section class="cartao hidden" id="ativarBox" aria-label="Ativar segundo fator">
       <p>Com o segundo fator, entrar pede a senha e mais um código de 6 números. O código muda a cada 30 segundos no app do seu celular.</p>
-      <button class="pri" id="btAtivar" onclick="ativar()">Ativar segundo fator</button>
+      <button class="pri" id="btAtivar" data-acao="ativar">Ativar segundo fator</button>
     </section>
 
     <section class="cartao hidden" id="metadeBox" aria-label="Ativação pela metade">
       <p>Uma ativação ficou pela metade. Recomece para gerar um QR novo.</p>
-      <button class="pri" id="btRecomecar" onclick="recomecar()">Recomeçar</button>
+      <button class="pri" id="btRecomecar" data-acao="recomecar">Recomeçar</button>
     </section>
 
     <section class="cartao hidden" id="qrBox" aria-label="Ler o QR">
@@ -147,12 +148,12 @@ main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-widt
       </ol>
       <img id="qr" class="qr" alt="QR do segundo fator para o app autenticador">
       <p class="mut">Sem câmera? Digite este código no app:</p>
-      <div class="segredo"><code id="segredo"></code><button class="sec" id="btCopiar" onclick="copiar()">Copiar</button></div>
+      <div class="segredo"><code id="segredo"></code><button class="sec" id="btCopiar" data-acao="copiar">Copiar</button></div>
       <div class="campo">
         <label for="cod6">Código de 6 números que o app mostra</label>
-        <input id="cod6" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" oninput="soNumeros(this)" onkeydown="if(event.key==='Enter')confirmar()">
+        <input id="cod6" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" data-ao-digitar="soNumeros" data-ao-tecla="enterConfirmar">
       </div>
-      <button class="pri" id="btConfirmar" onclick="confirmar()">Confirmar</button>
+      <button class="pri" id="btConfirmar" data-acao="confirmar">Confirmar</button>
       <div id="qmsg" class="msg" role="status"></div>
     </section>
 
@@ -160,9 +161,9 @@ main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-widt
       <p>Esta sessão entrou sem o código do app. Digite o código para confirmar que é você.</p>
       <div class="campo">
         <label for="codSobe">Código de 6 números que o app mostra</label>
-        <input id="codSobe" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" oninput="soNumeros(this)" onkeydown="if(event.key==='Enter')subirNivel()">
+        <input id="codSobe" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" data-ao-digitar="soNumeros" data-ao-tecla="enterSubir">
       </div>
-      <button class="pri" id="btSubir" onclick="subirNivel()">Confirmar código</button>
+      <button class="pri" id="btSubir" data-acao="subirNivel">Confirmar código</button>
       <div id="smsg" class="msg" role="status"></div>
     </section>
 
@@ -176,7 +177,7 @@ main{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px;max-widt
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERS="s2";
+const VERS="s3";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 const sb=supabase.createClient(URL_,KEY_);
@@ -316,6 +317,33 @@ async function subirNivel(){
   msg.textContent="";
   await lerEstado();
 }
+
+/* ---------- acoes (plano 102, s1274 08/10/2026): nenhum handler inline ----------
+   O elemento declara a acao em data-acao, data-ao-digitar ou data-ao-tecla; ligarAcoes (bloco comum:acao, igual
+   byte a byte ao do presidente) despacha para ACOES, a lista fechada do que esta pagina faz. Sem JavaScript em
+   atributo, a CSP autoriza so o hash do script desta pagina, sem 'unsafe-inline'. */
+/* comum:acao · igual byte a byte no index.html; testes/presidente.spec.js confere */
+/* acao por atributo (plano 87b): data-acao no clique; data-ao-digitar, -mudar, -tecla e -colar nos outros
+   eventos; argumentos em data-a1..a3. Cada tela passa a SUA lista fechada: nome fora dela nao roda e acusa. */
+function ligarAcoes(acoes){
+  [["click","acao"],["input","aoDigitar"],["change","aoMudar"],["keydown","aoTecla"],["paste","aoColar"]].forEach(([tipo,chave])=>{
+    const sel="[data-"+chave.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())+"]";
+    document.addEventListener(tipo,ev=>{
+      const el=ev.target&&ev.target.closest?ev.target.closest(sel):null; if(!el)return;
+      const nome=el.dataset[chave];
+      if(!Object.prototype.hasOwnProperty.call(acoes,nome)){console.error("acao desconhecida: "+nome);return;}
+      if(tipo==="click"&&el.tagName==="A"&&el.getAttribute("href")==="#")ev.preventDefault();
+      acoes[nome](el,ev);});
+  });}
+/* fim comum:acao */
+const ACOES={
+  entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),
+  ativar:()=>ativar(),recomecar:()=>recomecar(),copiar:()=>copiar(),confirmar:()=>confirmar(),subirNivel:()=>subirNivel(),
+  soNumeros:el=>soNumeros(el),
+  enterConfirmar:(el,ev)=>{if(ev.key==="Enter")confirmar();},
+  enterSubir:(el,ev)=>{if(ev.key==="Enter")subirNivel();}
+};
+ligarAcoes(ACOES);
 
 /* ---------- partida: a sessao salva pelo presidente.html vale aqui ---------- */
 let INICIADO=false;

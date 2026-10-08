@@ -9,6 +9,7 @@
      f. fator nao verificado (ativacao abandonada) oferece "Recomeçar", que tira so ele;
      g. mesma tag do supabase-js e mesma CSP do presidente.html, e o segredo nunca vai ao console;
      h. o presidente.html leva a pagina nova pelo rodape.
+     102. CSP sem 'unsafe-inline' (hash do script), nenhum on*= e toda acao pelo registro, Enter e filtro inclusive.
    O cliente e dublado como no presidente.spec.js: a CDN e abortada e o duble entra antes da pagina. */
 const {test, expect} = require('@playwright/test');
 const path = require('path');
@@ -195,8 +196,12 @@ test('g. mesma tag do supabase-js e mesma CSP do presidente.html; login nunca cr
   expect(csp(seg)).toMatch(/script-src 'self' [^;]*https:\/\/cdn\.jsdelivr\.net/);
   expect(csp(seg)).toBeTruthy();
   for (const c of seg.match(/signInWithOtp\([^)]*\)/g)||[]) expect(c).toContain('shouldCreateUser:false');
-  /* o segredo nao vai a console, armazenamento ou banco */
-  expect(seg).not.toMatch(/console\.(log|info|warn|error|debug)/);
+  /* o segredo nao vai a console, armazenamento ou banco. 102: o bloco comum:acao (igual ao do presidente) tem um
+     console.error que imprime so o nome da acao, atributo estatico do HTML; o segredo entra por textContent e nunca
+     vira data-*. A varredura vale fora do bloco, e o bloco so pode ter essa chamada. */
+  const blocoAcao = (seg.match(/\/\* comum:acao [\s\S]*?\/\* fim comum:acao \*\//)||[''])[0];
+  expect(blocoAcao.match(/console\.\w+\([^)]*\)/g)||[], 'console no bloco comum:acao').toEqual(['console.error("acao desconhecida: "+nome)']);
+  expect(seg.replace(blocoAcao,'')).not.toMatch(/console\.(log|info|warn|error|debug)/);
   expect(seg).not.toMatch(/localStorage\.|sessionStorage\.|indexedDB\.|\.rpc\(|\.from\(/);
 });
 
@@ -233,4 +238,45 @@ test('i. nenhum arquivo versionado cita cliente real ou conta bancaria real', as
   /* o detector detecta: nome e conta ficticios, postos numa lista de teste, sao achados com acento e caixa alta */
   const ficticia = new Set([h('zzclienteficticio'), h('1234567-8')]);
   expect(varrer('Obra do ZZClienteFictício, conta 1234567-8.', ficticia).length, 'o detector acha nome e conta').toBe(2);
+});
+
+/* 102 (s1274, 08/10/2026): a pagina do segundo fator e a mais sensivel do painel e era a unica com 'unsafe-inline'
+   no script-src depois do fecho do plano 87 no presidente. Agora a CSP autoriza so o hash do script desta pagina;
+   os 12 handlers inline viraram data-acao/-ao-digitar/-ao-tecla despachados pelo bloco comum:acao, o mesmo do
+   presidente byte a byte. Mexeu no script, rode node scripts/csp-hash.mjs. A versao s2 reprova aqui. */
+test('102: CSP da seguranca sem unsafe-inline, com o hash do script; nenhum on*= e toda acao anda pelo registro', async ({page})=>{
+  const crypto = require('crypto');
+  const s = ler('seguranca.html').replace(/\r\n?/g,'\n');
+  const scriptSrc = ((s.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)"/)||[])[1]||'').match(/script-src ([^;]*)/);
+  expect(scriptSrc, 'achou o script-src (teste sem alvo passa vazio)').toBeTruthy();
+  expect(scriptSrc[1], 'sem unsafe-inline').not.toContain("'unsafe-inline'");
+  const inl = [...s.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  expect(inl.length, 'um script inline so').toBe(1);
+  const h = crypto.createHash('sha256').update(inl[0][1],'utf8').digest('base64');
+  expect(scriptSrc[1], 'hash do script atual: rode node scripts/csp-hash.mjs').toContain(`'sha256-${h}'`);
+  expect(s.match(/\son[a-z]+\s*=\s*["']/gi), 'on*= no fonte').toBeNull();
+  const bloco = f=>(ler(f).replace(/\r\n?/g,'\n').match(/\/\* comum:acao [^\n]*\*\/\n([\s\S]*?)\/\* fim comum:acao \*\//)||[])[1];
+  expect(bloco('seguranca.html'), 'tem o bloco comum:acao').toBeTruthy();
+  expect(bloco('seguranca.html'), 'bloco comum:acao igual ao do presidente').toBe(bloco('presidente.html'));
+
+  /* o script roda sob a CSP e o registro cobre toda acao declarada */
+  const {erros, consola} = await abrir(page);
+  const r = await page.evaluate(()=>{ const sem=[]; let n=0;
+    for (const el of document.querySelectorAll('*')) { for (const a of el.attributes) if (/^on/i.test(a.name)) sem.push(el.tagName+' '+a.name);
+      for (const k of ['acao','aoDigitar','aoTecla']) { const v=el.dataset[k]; if (v!==undefined) { n++; if (!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v); } } }
+    return {sem, n, vers: typeof VERS}; });
+  expect(r.vers, 'o script rodou sob a CSP').toBe('string');
+  expect(r.sem, 'on* no DOM ou acao sem registro').toEqual([]);
+  expect(r.n, 'as 12 acoes da pagina').toBe(12);
+
+  /* o clique, o filtro de digitos e o Enter andam pelo despachante */
+  await page.click('#btAtivar');
+  await expect(page.locator('#qrBox')).toBeVisible();
+  await page.locator('#cod6').pressSequentially('12a3-456');
+  await expect(page.locator('#cod6'), 'so digitos, ate 6').toHaveValue('123456');
+  await page.locator('#cod6').press('Enter');
+  await expect(page.locator('#prontoBox'), 'Enter confirma').toBeVisible();
+  expect(await ops(page)).toContain('verify');
+  expect(erros).toEqual([]);
+  expect(consola.filter(t=>/acao desconhecida|Content Security Policy/i.test(t))).toEqual([]);
 });
