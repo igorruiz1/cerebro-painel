@@ -2220,3 +2220,57 @@ test('87 fecho: CSP do presidente sem unsafe-inline e com o hash do script que r
   expect(await page.evaluate(()=>typeof VERP), 'o script rodou sob a CSP').toBe('string');
   expect(erros).toEqual([]);
 });
+
+/* p4.29 (plano 95, s1226 08/10/2026): card com opcoes gravadas e uma recomendada mostra Recomendo, Ratifico e
+   Retifico. Ratifico grava a recomendada pela escolher(); Retifico mostra as outras e grava a tocada; os dois
+   esperam os 6 s de desfazer. Antes a tela filtrava o verbo escolher: 7 cards com opcoes nao andavam por aqui. */
+const CARD_DECISAO = {id:8,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:null,parado_dias:2,titulo:'Card com opcoes',
+  acoes:[{verbo:'deliberar',rotulo:'deliberar',arg:'texto'}],escolha:null,
+  opcoes:[{label:'Assinar agora',recomendada:true,consequencia:'Fecha hoje; custo zero.'},
+    {label:'Adiar uma semana',consequencia:'Mais 7 dias parado.'},{label:'Largar',consequencia:'Sai do plano.'}]};
+
+test('95 decisao: Ratifico grava a opcao recomendada pela escolher, so depois do prazo de desfazer', async ({page})=>{
+  await page.setViewportSize({width:360, height:800});
+  await abrir(page);
+  await page.evaluate(c=>{INV.push(c);abrirInv(8);}, CARD_DECISAO);
+  const bloco = page.locator('#folha #decide');
+  await expect(bloco).toContainText('Recomendo');
+  await expect(bloco).toContainText('Assinar agora');
+  for (const nome of ['Ratifico','Retifico']) {
+    const h = await bloco.locator(`button:has-text("${nome}")`).evaluate(b=>b.getBoundingClientRect().height);
+    expect(h, nome+' abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  }
+  await bloco.locator('button:has-text("Ratifico")').click();
+  let esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher'));
+  expect(esc, 'nada grava antes do desfazer').toEqual([]);
+  await page.evaluate(()=>enviar());
+  esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher').map(c=>c.a));
+  expect(esc).toEqual([{p_ref:'8',p_opcao:'Assinar agora'}]);
+});
+
+test('95 decisao: Retifico mostra as outras opcoes e grava a tocada; sem recomendada ou ja escolhido, nao ha bloco', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(c=>{INV.push(c);abrirInv(8);}, CARD_DECISAO);
+  await page.locator('#folha #decide button:has-text("Retifico")').click();
+  const ops = page.locator('#campo .opcoes button');
+  await expect(ops).toHaveCount(2);
+  await expect(page.locator('#campo')).toContainText('Nenhuma serve');
+  await ops.nth(0).click();
+  await page.evaluate(()=>enviar());
+  const esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher').map(c=>c.a));
+  expect(esc).toEqual([{p_ref:'8',p_opcao:'Adiar uma semana'}]);
+  await page.evaluate(c=>{INV.push({...c,id:9,escolha:'Largar'});INV.push({...c,id:10,opcoes:c.opcoes.map(o=>({...o,recomendada:false}))});}, CARD_DECISAO);
+  for (const id of [9,10]) {
+    await page.evaluate(i=>abrirInv(i), id);
+    await expect(page.locator('#folha #decide'), 'card '+id).toHaveCount(0);
+  }
+});
+
+test('95 rotulo: nota de card de ato diz "Próximo passo"; so card de decisao diz "O executor recomenda"', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{D.fila.forEach(f=>f.tipo_card='ato');abrirFila(0);});
+  await expect(page.locator('#folha')).toContainText('Próximo passo');
+  await expect(page.locator('#folha')).not.toContainText('O executor recomenda');
+  await page.evaluate(()=>{fecharFolha();D.fila.forEach(f=>f.tipo_card='decisao');abrirFila(0);});
+  await expect(page.locator('#folha')).toContainText('O executor recomenda');
+});
