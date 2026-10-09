@@ -1,7 +1,7 @@
 {
   "name": "cerebro-painel",
   "private": true,
-  "description": "Painel do Cerebro Igor. O artefato e o index.html; isto aqui so existe para testa-lo.",
-  "scripts": { "teste": "playwright test" },
+  "description": "Painel do Cerebro Igor. Os artefatos sao o presidente.html (a casa) e o index.html (o bastidor); isto aqui existe para testa-los e medi-los.",
+  "scripts": { "teste": "playwright test", "canone": "node scripts/canone.mjs" },
   "devDependencies": { "@playwright/test": "1.56.1" }
 }
