@@ -41,6 +41,8 @@ const DUBLE = `(()=>{
     var7:[],
     /* p4.31: grupo Cobrar vazio por padrao; o teste do grupo troca por window.__dados */
     cob3:[],
+    /* p4.32: fatia de sessoes da frente do sistema; vazia por padrao, o teste do plano 113 troca */
+    est:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2386,5 +2388,27 @@ test('p4.31 nenhum id repetido no DOM vivo depois das cinco abas e da folha', as
     return [...dup];
   });
   expect(rep, 'id repetido no DOM').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+/* p4.32 (plano 113 = B2 do plano 101, s1274 08/10/2026): o teto de estrutura a vista. Medido em 08/10: 68% das sessoes
+   humanas de 7 dias foram na frente do proprio sistema, contra o teto de 25%. A linha dessa frente dizia "sem receita" e
+   escondia o custo; agora diz a fatia de sessoes e acende acima do teto. A frente vem da chave est (o banco diz qual e),
+   nunca de um slug escrito no HTML. A p4.31 reprova: a linha seguia "sem receita". */
+test('p4.32 frentes: a frente do sistema mostra a fatia de sessoes de 7 d e acende acima do teto; a folha diz a conta', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>{ ARV.push({nivel:1,no:'00-memoria',rotulo:'Sistema',margem_30d:0,margem_total:0});
+    D.est=[{sessoes_7d:85,mem_7d:58,pct:68.2,teto:25,acima:true,frente:'00-memoria'}]; ir('frentes'); renderFrentes(); });
+  const linha = page.locator('#frentesLista button.frente', {hasText:'Sistema'});
+  await expect(linha, 'a frente do sistema aparece mesmo sem card').toHaveCount(1);
+  await expect(linha.locator('.r')).toHaveText('68% das sessões em 7 d');
+  await expect(linha.locator('.r'), 'acima do teto acende').toHaveClass(/\bw\b/);
+  await expect(page.locator('#frentesLista .r', {hasText:'das sessões'}), 'so a frente do sistema mostra sessoes; as outras seguem com margem').toHaveCount(1);
+  await linha.click();
+  await expect(page.locator('#folha .chips'), 'a folha diz a conta e o teto').toContainText('58 de 85 sessões em 7 d · teto 25%');
+  await page.evaluate(()=>{ fecharFolha(); D.est=[{sessoes_7d:85,mem_7d:10,pct:11.8,teto:25,acima:false,frente:'00-memoria'}]; renderFrentes(); });
+  await expect(linha.locator('.r'), 'abaixo do teto nao acende').not.toHaveClass(/\bw\b/);
+  const pc = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves);
+  expect(pc, 'a carga pede a chave est').toContain('est');
   expect(erros).toEqual([]);
 });
