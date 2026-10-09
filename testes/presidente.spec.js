@@ -45,6 +45,8 @@ const DUBLE = `(()=>{
     est:[],
     /* p4.33: ritmo de 7 dias; vazio por padrao, o teste do plano 114 troca */
     rit:[],
+    /* p4.35: sem pergunta da vespera aberta por padrao; o teste do plano 68 troca */
+    vesp:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2486,5 +2488,74 @@ test('p4.34 concluir: card cujo criterio pede ato externo nao ganha prova pronta
   await expect(page.locator('#campo')).toContainText('pede ato externo');
   await expect(page.locator('#cv')).toBeVisible();
   await expect(page.locator('#cvArq')).toBeAttached();
+  expect(erros).toEqual([]);
+});
+
+/* p4.35 (plano 68, s1275 09/10/2026): grupo Vence amanha no Hoje. A pergunta da vespera (aviso_vespera, decisao do Igor na
+   s880) nascia na bandeja, que so o index.html le; a casa nunca a mostrou. Medido em 09/10: as perguntas de 08/10 e 09/10
+   passaram do dia sem resposta e 16 cards estavam vencidos. A classe que se cobra: vespera muda (pergunta aberta que a tela
+   nao mostra), data nova que grava sem desfazer e "Mantenho" que nao responde a pergunta do banco. A p4.34 reprova: nao ha
+   #vespBox nem a chave vesp na carga. */
+const VESP = [
+  {origem:'tarefa',ref:'41',frente:'11-renda-alt',titulo:'Card que vence amanha',prazo:'2026-10-10',vesp_id:'90'},
+  {origem:'tarefa',ref:'42',frente:'20-contrato-pj',titulo:'Outro card de amanha',prazo:'2026-10-10',vesp_id:'90'}];
+test('p4.35 vespera: uma linha no Hoje; nova data na folha grava repactuar so depois do desfazer; Mantenho responde a pergunta', async ({page})=>{
+  await page.setViewportSize({width:390, height:800});
+  await page.addInitScript(v=>{ window.__dados={vesp:v}; }, VESP);
+  const erros = await abrir(page);
+  const pc = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves);
+  expect(pc, 'a carga pede a chave vesp').toContain('vesp');
+  const box = page.locator('#vespBox');
+  await expect(box).toBeVisible();
+  await expect(box.locator('.cob3'), 'no Hoje e uma linha so, para nao inchar a tela (teste 106)').toHaveCount(1);
+  await expect(box).toContainText('2 cards vencem amanhã, ');
+  await expect(box).toContainText('10/10');
+  await expect(box).toContainText('Card que vence amanha · Outro card de amanha');
+  for (const b of await box.locator('button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  const ruins = (await page.evaluate(contrasteDos, '#vespBox *')).filter(m=>m.razao<4.5);
+  expect(ruins, 'texto do grupo abaixo de 4,5:1').toEqual([]);
+  const atos = ()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'||c.n==='escolher').map(c=>({n:c.n,a:c.a})));
+  await box.locator('button:has-text("Mudar datas")').click();
+  await expect(page.locator('#folhaTit')).toContainText('Vence amanhã');
+  const linhas = page.locator('#folha .fonte.vesp');
+  await expect(linhas).toHaveCount(2);
+  for (const b of await page.locator('#folha button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao da folha abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  const sw = await page.evaluate(()=>document.documentElement.scrollWidth);
+  expect(sw, 'sem rolagem horizontal a 390').toBeLessThanOrEqual(390);
+  /* nenhuma data oferecida e amanha ou antes: repactuar para o mesmo dia nao decide nada */
+  const datas = await page.locator('#folha [data-acao="vespData"]').evaluateAll(bs=>bs.map(b=>b.dataset.a2));
+  const amanha = await page.evaluate(()=>somaDias(1));
+  for (const d of datas) expect(d > amanha, 'data oferecida depois de amanha').toBe(true);
+  const d3 = await page.evaluate(()=>somaDias(3));
+  await expect(linhas.nth(0).locator('[data-acao="vespData"]').first(), 'o primeiro botao e +3 dias, com o dia escrito').toHaveText(await page.evaluate(()=>diaCurto(somaDias(3))));
+  await linhas.nth(0).locator('[data-acao="vespData"]').first().click();
+  await expect(linhas, 'a folha volta com o card que falta').toHaveCount(1);
+  await expect(box).toContainText('1 card vence amanhã');
+  expect(await atos(), 'nada grava antes do desfazer').toEqual([]);
+  await page.locator('#tbtn').click();
+  await expect(linhas, 'desfazer devolve o card a folha').toHaveCount(2);
+  await expect(box).toContainText('2 cards vencem amanhã');
+  await linhas.nth(0).locator('[data-acao="vespData"]').first().click();
+  await page.evaluate(()=>enviar());
+  expect(await atos()).toEqual([{n:'agir',a:{p_origem:'tarefa',p_ref:'41',p_verbo:'repactuar',p_valor:d3}}]);
+  /* a carga de volta ainda traz o 41 (o duble nao muda): o FEITOS segura ate o banco confirmar */
+  await page.evaluate(()=>fecharFolha());
+  await box.locator('button:has-text("Mantenho as datas")').click();
+  await expect(box, 'Mantenho fecha o grupo na hora').toBeHidden();
+  await page.evaluate(()=>enviar());
+  const esc = (await atos()).filter(x=>x.n==='escolher');
+  expect(esc, 'Mantenho responde a pergunta da vespera pela escolher()').toEqual([{n:'escolher',a:{p_ref:'90',p_opcao:'Mantenho as datas'}}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.35 vespera: snapshot sem a chave vesp esconde o grupo e diz que a parte nao chegou; linha sem pergunta nao aparece', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['vesp']; });
+  const erros = await abrir(page);
+  await expect(page.locator('#falha'), 'chave faltando vira aviso, nunca silencio').toContainText('vesp');
+  await expect(page.locator('#vespBox')).toBeHidden();
+  await page.evaluate(()=>{ D.vesp=[{origem:'tarefa',ref:'41',titulo:'Sem pergunta aberta',prazo:'2026-10-10',vesp_id:null}]; renderVespera(); });
+  await expect(page.locator('#vespBox'), 'sem pergunta aberta nao ha o que manter').toBeHidden();
   expect(erros).toEqual([]);
 });

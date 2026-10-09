@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+G2qiz/gcMCV3mhM8LMbhF93zLTQenX3wr0rg9njrPw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nc+pNwJezmmc++Hz75UGzzq8XVa1DU/rfb7STT+OHXE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -157,6 +157,10 @@ h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 .cob3{display:flex;flex-direction:column;gap:8px;padding:10px 16px;background:var(--sf);border-bottom:1px solid var(--line2)}
 .cob3:last-child{border-bottom:0}
 .cob3 .bts{display:flex;flex-wrap:wrap;gap:8px}
+.cob3 .t b{display:block}
+.fonte.vesp{flex-wrap:wrap}
+.fonte.vesp .t{flex-basis:100%}
+.fonte.vesp .bts{display:flex;flex-wrap:wrap;gap:8px}
 .ordem .o{font-family:var(--mono);color:var(--mut);width:18px;flex-shrink:0}
 .ordem .t{flex:1;min-width:0}
 .ordem .t small{display:block;color:var(--mut);font-size:var(--fs-2)}
@@ -490,6 +494,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
             <h2>Também pede você</h2>
             <div class="atalhos" id="atalhos"></div>
             <div class="pilha hidden" id="cob3Box"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
+            <div class="pilha hidden" id="vespBox"><div class="cob3l" id="vespLista"></div></div>
           </div>
         </div>
       </section>
@@ -537,7 +542,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.34";
+const VERP="p4.35";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -662,7 +667,9 @@ function demoBase(){
     {id:"fluxo:501",minutos_estimados:5},{id:"fluxo:502",minutos_estimados:10}];
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
     cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
-    rw:cx0.rw, var7, rit:[{fechados_7d:23,fechados_7d_ant:19}], est:[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}],
+    rw:cx0.rw, var7, rit:[{fechados_7d:23,fechados_7d_ant:19}],
+    vesp:[{origem:"tarefa",ref:"303",frente:"08-startup",titulo:"Fazer o check-in semanal de três linhas com o sócio",prazo:dd(1),vesp_id:"319"},
+      {origem:"tarefa",ref:"304",frente:"04-obra-residencial",titulo:"Aprovar a troca do revestimento da área gourmet",prazo:dd(1),vesp_id:"319"}], est:[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}],
     cob3:[{origem:"tarefa",ref:"307",frente:"20-contrato-pj",titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",terceiro:"Fiscalização de exemplo",retorno_esperado:dd(-2),dias:2,
       rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(-2).slice(8,10)+"/"+dd(-2).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."},
       {origem:"tarefa",ref:"312",frente:"04-obra-residencial",titulo:"Receber da gráfica o orçamento das placas da obra",terceiro:"Gráfica de exemplo",retorno_esperado:dd(0),dias:0,
@@ -709,8 +716,10 @@ function demoCliente(){
       else if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
       else if(v==="repactuar"||v==="esperar"){ const t=b.inv.find(x=>String(x.id)===r);
         if(t){ if(v==="repactuar")t.prazo=a.p_valor; else t.status="aguardando_terceiro"; t.parado_dias=0; }
-        b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); }
+        b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); b.dados.vesp=(b.dados.vesp||[]).filter(x=>String(x.ref)!==r); }
       return "OK: "+v+" (demonstração)"; },
+    escolher:a=>{ const b=B(); if((b.dados.vesp||[]).some(x=>String(x.vesp_id)===String(a.p_ref)))b.dados.vesp=[];
+      return "ESCOLHIDO: "+a.p_opcao+" (demonstração)"; },
     inbox:()=>"ANOTADO. Demonstração: nada foi gravado.",
     mesa_painel:mesaVista,
     mesa_deliberar:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc), nota=String(a.p_nota||"").trim(), h=B().dd(0);
@@ -760,8 +769,9 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    pela mesma regra do index.html (bloco comum:hoje abaixo).
    fresc, mo e eb entram no p4.3 para o selo de saude: ja estavam no snapshot (o index.html le as tres),
    entao o selo nao pede mudanca no banco.
-   var7 entra no p4.27 (plano 89): v_painel_variacao_7d, a leitura de 7 dias atras do folego e do menor saldo. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit"];
+   var7 entra no p4.27 (plano 89): v_painel_variacao_7d, a leitura de 7 dias atras do folego e do menor saldo.
+   vesp entra no p4.35 (plano 68): v_painel_vespera, os cards de amanha enquanto a pergunta da vespera esta aberta. */
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -864,7 +874,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1), concluirCom:el=>agir(el.dataset.a1,el.dataset.a2,"Concluído"),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1156,7 +1166,7 @@ function renderHoje(){
     {n:INV?contar("semana"):"…",t:"vencem nesta semana",c:"semana"},
     cob.length?{n:mil(cob.reduce((s,x)=>s+(+x.valor_igor||0),0)),t:"a receber com data passada",aba:"caixa",w:true}
               :{n:c.depois!=null?c.depois:"…",t:"em segundo plano, fora de hoje",c:"semana"}];
-  renderCobrar();
+  renderCobrar(); renderVespera();
   document.getElementById("atalhos").innerHTML=at.map(a=>`<button class="atalho ${a.w?"w":""}" ${a.aba?`data-acao="ir" data-a1="${esc(a.aba)}"`:`data-acao="irColuna" data-a1="${esc(a.c)}"`}><b>${esc(a.n)}</b><span>${esc(a.t)}</span></button>`).join("");
 }
 /* p4.31 (plano 112 = A2 do plano 101; s1274, 08/10/2026): grupo Cobrar no Hoje, no molde da lista Aguardando do GTD.
@@ -1186,6 +1196,50 @@ function cobreiAgora(ref){
   FEITOS.add("tarefa|"+String(ref));
   pendurar({origem:"tarefa",ref:String(ref),verbo:"cobrar",valor:null,cob3:true},"Cobrei · "+curto(x.titulo,60),null);
   renderCobrar();
+}
+/* p4.35 (plano 68; s1275, 09/10/2026): grupo Vence amanhã no Hoje. A pergunta da véspera (aviso_vespera, decisão do Igor
+   na s880: "vencida nunca fica muda") nascia na bandeja, que só o index.html lia; a casa nunca a mostrou. Medido em 09/10:
+   as perguntas de 08/10 e 09/10 passaram do dia sem resposta e 16 cards estavam vencidos. Molde: o replanejar do dia
+   seguinte do Todoist e do Sunsama, onde cada card ganha data num toque e o lote se confirma de uma vez. Fonte: chave vesp
+   do snapshot (v_painel_vespera), que só traz linhas enquanto a pergunta da véspera está aberta. "Mantenho as datas"
+   responde a pergunta pela escolher() e o grupo some; nova data num card grava repactuar só nele. Os dois têm os 6 s de
+   desfazer. A lista mostra todos os cards de amanhã, mesmo os que já estão na ordem de Hoje, porque a decisão é do lote. */
+function vespera(){
+  const l=(D.vesp||[]).filter(x=>x&&x.vesp_id!=null);
+  if(!l.length||FEITOS.has("tarefa|"+String(l[0].vesp_id)))return null;
+  return {id:String(l[0].vesp_id),prazo:l[0].prazo,cards:l.filter(x=>!FEITOS.has("tarefa|"+String(x.ref)))};
+}
+const datasVespera=()=>{const vistos=new Set([somaDias(1)]);
+  return [["+3 dias",somaDias(3)],["próx. segunda",proxSegunda()],["+2 semanas",somaDias(14)]].filter(([,d])=>!vistos.has(d)&&vistos.add(d));};
+function renderVespera(){
+  const v=vespera(), box=document.getElementById("vespBox"), n=v?v.cards.length:0;
+  box.classList.toggle("hidden",!n);
+  if(!n){document.getElementById("vespLista").innerHTML="";return;}
+  /* uma linha so no Hoje (piso do canone, teste 106): a data card a card fica na folha, que cabe 6 cards ou 20 */
+  document.getElementById("vespLista").innerHTML=`<div class="cob3"><span class="t"><b>${esc(plural(n,"card vence","cards vencem"))} amanhã, ${esc(diaCurto(v.prazo)||ddmm(v.prazo))}</b><small>${esc(v.cards.map(x=>curto(x.titulo,48)).join(" · "))}</small></span><span class="bts"><button class="pri" data-acao="vespManter" data-a1="${esc(v.id)}">Mantenho as datas</button><button class="sec" data-acao="abrirVespera">Mudar datas</button></span></div>`;
+}
+function abrirVespera(){
+  const v=vespera(); if(!v||!v.cards.length){fecharFolha();return;}
+  const op=datasVespera();
+  mostrarFolha(`<h3 id="folhaTit">Vence amanhã, ${esc(diaCurto(v.prazo)||ddmm(v.prazo))}</h3>
+    <p class="mut">Toque no novo dia de um card. Os que você não mudar seguem para amanhã.</p>
+    <div>${v.cards.map(x=>`<div class="fonte vesp"><span class="t"><b>${esc(x.titulo)}</b><small>${esc(x.frente||"")}</small></span><span class="bts">${op.map(([r,d])=>`<button class="sec" data-acao="vespData" data-a1="${esc(x.ref)}" data-a2="${esc(d)}" aria-label="Nova data ${esc(r)}: ${esc(diaCurto(d))}">${esc(diaCurto(d))}</button>`).join("")}</span></div>`).join("")}</div>
+    <button class="pri" data-acao="vespManter" data-a1="${esc(v.id)}">Mantenho as datas</button>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
+function vespData(ref,data){
+  const x=(D.vesp||[]).find(y=>String(y.ref)===String(ref)); if(!x||!data)return;
+  FEITOS.add("tarefa|"+String(ref));
+  pendurar({origem:"tarefa",ref:String(ref),verbo:"repactuar",valor:data,vesp:true},"Nova data "+ddmm(data)+" · "+curto(x.titulo,60),null);
+  renderVespera();
+  /* a folha fecha em todo ato (pendurar); com card ainda sem decisao ela volta, para o proximo toque */
+  const v=vespera(); if(v&&v.cards.length)abrirVespera();
+}
+function vespManter(id){
+  const v=vespera(); if(!v||v.id!==String(id))return;
+  FEITOS.add("tarefa|"+v.id);
+  pendurar({origem:"tarefa",ref:v.id,escolha:"Mantenho as datas",vesp:true},"Mantenho as datas de amanhã",null);
+  renderVespera();
 }
 /* p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so, no molde da lista Hoje do Things e da caixa do Linear: uma fila,
    acao propria por tipo. Entram em Hoje, depois dos cards, as pecas da Mesa que nasceram hoje e as 3 paradas de maior
@@ -1731,6 +1785,7 @@ function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null
   if(p.mesa){msVolta(p.mesa,false);toast("Desfeito. Nada foi gravado.",null,false,2600);return;}
   if(p.origem!=null)FEITOS.delete(p.origem+"|"+String(p.ref));
   if(p.cob3)renderCobrar();
+  if(p.vesp){renderVespera(); if(document.querySelector("#folha .fonte.vesp")&&!document.getElementById("veu").classList.contains("hidden"))abrirVespera();}
   if(p.voz){abrirVoz(p.voz);toast("Desfeito. O texto voltou para você corrigir.",null,false,3000);return;}
   toast("Desfeito. Nada foi gravado.",null,false,2600); }
 /* p4.3: com o auto-advance, um ato novo costuma estar pendente quando o anterior volta do banco. O
@@ -1772,7 +1827,7 @@ async function enviar(){
     /* p4.29 (plano 95): Ratifico e Retifico vao pela escolher(), que confere se a opcao existe no card */
     const {data,error}=await comTetoR(sb.rpc("escolher",{p_ref:String(p.ref),p_opcao:p.escolha}),LIMITE_ACAO,"escolher");
     const txt=error?erroTxt(error):String(data||"");
-    if(error||txt.startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); resultado(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
+    if(error||txt.startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); if(p.vesp)renderVespera(); resultado(txt.replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
     resultado("Gravado.",null,2500);
     await carregar(true);
     return;
@@ -1787,7 +1842,7 @@ async function enviar(){
   }
   const {data,error}=await comTetoR(sb.rpc("agir",{p_origem:p.origem,p_ref:String(p.ref),p_verbo:p.verbo,p_valor:valor}),LIMITE_ACAO,"agir");
   const txt=error?erroTxt(error):(typeof data==="string"?data:"feito");
-  if(error||String(txt).startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); if(p.cob3)renderCobrar(); resultado(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
+  if(error||String(txt).startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); if(p.cob3)renderCobrar(); if(p.vesp)renderVespera(); resultado(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
   resultado(p.verbo==="deliberar"?await recibo("Gravado."):"Gravado.",null,p.verbo==="deliberar"?6000:2500);
   await carregar(true);
 }
