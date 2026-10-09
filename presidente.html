@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OLkE7CWAzEGtiWbM2uJ8Di++HaBf0hIxjyXvghUDK5A=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-+G2qiz/gcMCV3mhM8LMbhF93zLTQenX3wr0rg9njrPw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -54,6 +54,8 @@ a{color:var(--link)}
 .hidden{display:none!important}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .mut{color:var(--mut);font-size:var(--fs-2)}
+/* p4.34: aviso de ato externo na folha de concluir */
+.mut.w{color:var(--warn)}
 
 /* login */
 .login{max-width:380px;margin:12vh auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
@@ -535,7 +537,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.33";
+const VERP="p4.34";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -863,7 +865,7 @@ const ACOES={
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
-  provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1),
+  provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1), concluirCom:el=>agir(el.dataset.a1,el.dataset.a2,"Concluído"),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
   ratifico:()=>{const d=F&&decisaoDe(F);if(d)escolherOpcao(d.i);}, retifico:()=>retifico(), retificoOpcao:el=>escolherOpcao(+el.dataset.a1), responder:()=>responder(), confirmarAnalise:()=>confirmarAnalise(), posicao:()=>posicao(), confirmarPosicao:()=>confirmarPosicao(),
@@ -1513,7 +1515,13 @@ function escolher(verbo){
     /* p4.16 (06/10/2026, pedido do Igor): a prova tambem vai como print ou PDF, pelo botao ou colando (Ctrl+V)
        no campo. O arquivo so sobe quando o ato vai ao banco, depois dos 6 s de desfazer, para o bucket privado
        mesa-provas (o mesmo da baixa da Mesa); o caminho entra no texto da prova, que o banco ja exige. */
-    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">O que aconteceu? Link, protocolo ou "e-mail do fiscal 08/10". Peça pronta não fecha o card: ela precisa ter saído e ter volta.</label>
+    /* p4.34 (plano 115 = A3 do plano 101; s1274, 08/10/2026): 3 provas provaveis concluem num toque, sem digitar. Medido
+       em 07/10: 19% dos fechamentos do Igor passaram pelo painel; o atrito era escrever. As 3 falam da VOLTA (resposta,
+       confirmacao, conferido), nunca da saida, porque peca pronta nao fecha card (LC-14); a data entra sozinha e o texto
+       passa da prova minima do banco. O campo livre e o print seguem para qualquer outra prova. */
+    const pp=provasProvaveis(F);
+    campo.innerHTML=`<div class="campo">${pp.length?`<span class="mut">Prova em um toque</span>`:`<span class="mut w">Este card pede ato externo (assinar, pagar, protocolar ou receber): escreva a prova ou anexe o comprovante.</span>`}<div class="datas provas">${pp.map(p=>`<button data-acao="concluirCom" data-a1="${esc(verbo)}" data-a2="${esc(p)}">${esc(p)}</button>`).join("")}</div>
+      <label for="cv" class="mut">Ou escreva a prova: link, protocolo ou "e-mail do fiscal 08/10". Peça pronta não fecha o card: ela precisa ter saído e ter volta.</label>
       <textarea id="cv" rows="2" data-ao-colar="provaColar" placeholder="Escreva, ou cole aqui o print (Ctrl+V)"></textarea>
       <label for="cvArq" class="mut">Print ou comprovante (opcional)</label><input id="cvArq" class="ms-arq" type="file" accept="image/*,application/pdf" data-ao-mudar="provaEscolher">
       <span id="cvArqNome" class="mut" aria-live="polite"></span>
@@ -1583,6 +1591,12 @@ function provaColar(e){
   provaMarca(new File([f],nome,{type:f.type}));
   toast("Print anexado. Ele sobe quando você concluir.",null,false,2500);
 }
+/* card cujo criterio pede ato externo (o mesmo vocabulario da guarda do banco) nao ganha prova pronta: "conferido
+   pessoalmente" fecharia um "pagar" sem comprovante. Ali segue so o campo e o print. */
+const ATO_EXTERNO=/\b(assinad|assinar|protocol|pag[oa]s?\b|pagar|recebid|receber|deposit|comparec)/;
+const provasProvaveis=c=>{const crit=String((c&&(c.criterio_pronto||(c.origem==="tarefa"&&(invDe(c.ref)||{}).criterio_pronto)))||"").toLowerCase();
+  if(ATO_EXTERNO.test(crit))return [];
+  const d=ddmm(somaDias(0));return ["Resposta por WhatsApp em "+d,"Confirmação por e-mail em "+d,"Feito e conferido pessoalmente em "+d];};
 function confirmarProva(verbo){
   const cv=document.getElementById("cv"), v=cv?cv.value.trim():"", arq=PROVA_ARQ;
   if(!arq&&v.length<PROVA_MIN){toast(`Escreva a prova em pelo menos ${PROVA_MIN} letras ou anexe o print.`,"bad",false,3000);if(cv)cv.focus();return;}
