@@ -130,4 +130,6 @@ Tudo vai para a `evolucao`, com escopo `00-memoria` e prefixo `painel.presidente
 - `telas_hoje`;
 - `palavras` e `numeros`.
 
-O plano 106 automatiza a gravação. Até ele entrar, toda versão nova do presidente remede à mão.
+Desde o plano 106 (08/10), `npm run canone` mede as réguas de tela (telas, palavras, números por aba, a 390 e
+1280 px) e o teste `testes/canone.spec.js` reprova na CI a versão que passar do piso. As réguas de julgamento
+(série, banda, BSC) seguem pontuadas à mão nesta página.

@@ -60,8 +60,8 @@ página**, trocando a linha antiga pelo fato novo com a data.
 - Rodar local antes de empurrar: `npm run teste`.
 - Versão nova do `presidente.html`: `const VERP` e `version.json` mudam juntos. A página
   confere a versão pelo `version.json`; esquecido, ela oferece ao Igor a versão velha (teste p4.20 cobra).
-- Versão nova do `presidente.html`: remedir as réguas de `docs/canone.md` e gravar
-  `painel.presidente_canone24_pct` na `evolucao` (o plano 106 automatiza).
+- Versão nova do `presidente.html`: `npm run canone` remede as réguas de tela de `docs/canone.md`;
+  grave o JSON na `evolucao` (prefixo `painel.presidente_`). O teste "106" reprova a tela que incha além do piso.
 - Mexeu no `<script>` do `presidente.html` ou da `seguranca.html`: `node scripts/csp-hash.mjs` antes do commit. A CSP
   de cada uma autoriza só o hash do próprio script, sem `unsafe-inline` (plano 87 em 07/10/2026, plano 102 em
   08/10/2026); hash velho = página em branco (testes "87 fecho" e "102" cobram). Ação de tela vai em `data-acao`, nunca
