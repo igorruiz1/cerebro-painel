@@ -43,6 +43,8 @@ const DUBLE = `(()=>{
     cob3:[],
     /* p4.32: fatia de sessoes da frente do sistema; vazia por padrao, o teste do plano 113 troca */
     est:[],
+    /* p4.33: ritmo de 7 dias; vazio por padrao, o teste do plano 114 troca */
+    rit:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2410,5 +2412,39 @@ test('p4.32 frentes: a frente do sistema mostra a fatia de sessoes de 7 d e acen
   await expect(linha.locator('.r'), 'abaixo do teto nao acende').not.toHaveClass(/\bw\b/);
   const pc = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves);
   expect(pc, 'a carga pede a chave est').toContain('est');
+  expect(erros).toEqual([]);
+});
+
+/* p4.33 (plano 114 = A5 do plano 101, s1274 08/10/2026): saude por fonte (Andon) e ritmo de 7 dias. O selo unico dizia
+   "sistema ok" ou "degradado" e escondia qual fonte envelheceu. Agora o selo e o carimbo sao um botao so (duas linhas, 44 px
+   sem crescer o topo) que abre a lista de fontes com a hora do ultimo dado; a fonte atrasada vem primeiro e acesa. O carimbo
+   diz quantos cards o Igor fechou em 7 dias contra a semana anterior. A p4.32 reprova: o selo nao abre nada. */
+test('p4.33 saude por fonte: o selo abre a lista com hora por fonte, a atrasada primeiro e acesa; ritmo de 7 d no carimbo', async ({page})=>{
+  await page.setViewportSize({width:390, height:800});
+  await page.addInitScript(()=>{ const h=new Date(Date.now()-2*36e5).toISOString();
+    window.__dados={rit:[{fechados_7d:72,fechados_7d_ant:64}],
+      mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:h},{nome:'mesa-orfaos',estado:'atrasada',janela_horas:24,ultimo_ponto:'2026-10-01T09:00:00-04:00'},
+          {nome:'estrutura',estado:'manual',janela_horas:0,ultimo_ponto:null},{nome:'ciclo-caixa-fechar',estado:'nunca',janela_horas:170,ultimo_ponto:null}]}; });
+  const erros = await abrir(page);
+  /* a 390 o ritmo quebraria o carimbo em duas linhas (medido: topo de 106 para 131 px): no celular ele fica na folha */
+  await expect(page.locator('#fresco .ritmo'), 'no celular o ritmo nao aparece no carimbo').toBeHidden();
+  const bt = page.locator('button.estado');
+  expect(await page.locator('#fresco').evaluate(e=>Math.round(e.getBoundingClientRect().height/parseFloat(getComputedStyle(e).lineHeight))), 'carimbo em uma linha').toBe(1);
+  expect(await bt.evaluate(b=>b.getBoundingClientRect().height), 'selo abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await bt.click();
+  await expect(page.locator('#folhaTit')).toHaveText('Saúde por fonte');
+  const linhas = page.locator('#folha .fonte');
+  await expect(linhas.nth(0), 'atrasada primeiro, sem hifen de maquina').toContainText('mesa orfaos');
+  await expect(linhas.nth(0)).toHaveClass(/\bw\b/);
+  await expect(linhas.nth(0)).toContainText('último dado 01/10');
+  await expect(linhas.nth(1), 'a que nunca rodou tambem acende').toContainText('nunca rodou');
+  await expect(page.locator('#folha'), 'rotina manual nao tem hora e fica fora').not.toContainText('estrutura');
+  await expect(page.locator('#folha .fonte', {hasText:'backup cerebro'}), 'a fonte em dia nao acende').not.toHaveClass(/\bw\b/);
+  await expect(page.locator('#folha .chips')).toContainText('2 fontes acesas');
+  await expect(page.locator('#folha .chips')).toContainText('72 cards seus fechados em 7 d64 na semana anterior');
+  await page.evaluate(()=>fecharFolha());
+  await page.setViewportSize({width:1280, height:800});
+  await expect(page.locator('#fresco .ritmo'), 'em tela larga o ritmo fica ao lado do carimbo').toBeVisible();
+  await expect(page.locator('#fresco')).toContainText('72 fechados em 7 d (+8)');
   expect(erros).toEqual([]);
 });
