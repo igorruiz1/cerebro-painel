@@ -84,24 +84,39 @@ Cada régua vale SIM = 1, PARCIAL = 0,5 ou NÃO = 0. A medida foi feita no modo 
 ## O plano
 
 O dono é `claude` (sessão), `automacao` (rotina) ou `igor`. Os itens vivem em `plano_item` no banco;
-esta tabela é cópia de leitura.
+esta tabela é cópia de leitura de 08/10.
+
+Em 08/10 este plano foi **fundido com o plano 101**: as 9 propostas que comparam o presidente com o
+painel de um parceiro (doc 2482 do cérebro). O Igor aceitou 8 delas; a A6, e-mail não lido como cartão, ficou fora
+porque exige um sensor no PC e a A2 já cobre a cobrança. A trava "código só depois de 20/10" caiu,
+porque o plano 87 fechou em 07/10.
 
 | Plano | O quê | Dono | Pronto quando | Prazo |
 |---|---|---|---|---|
-| 102 | `seguranca.html` com CSP por hash, sem `unsafe-inline` | claude | CSP sem `unsafe-inline`, `csp-hash.mjs` cobre as duas páginas, teste cobra, fumaça verde | 10/10 |
-| 103 | KPI vermelho em 100% dos últimos 30 dias ganha destino | claude | Cada um sai com recalibrar, virar plano com dono ou ir para o bastidor; lista pronta para o gate | 13/10 |
-| 104 | Gate único do presidente | igor | Ratifica: destino dos vermelhos, números da Semana, sinal das frentes de vida, prazo dos itens sem data | 14/10 |
-| 106 | Régua do cânone por script a cada versão | claude | Script no repo, gravação por PR, teste de piso (Hoje ≤ 1,5 tela a 1280) | 15/10 |
-| 105 | KPI grava 1 linha por dia | automacao | Linhas/dia ≤ KPIs vivos × 1,2 por 7 dias; o passado só compacta com ordem | 17/10 |
-| 107 | Aba Semana: scorecard EOS + WBR | claude | 5 a 15 números, cada um com dono, meta, sparkline de 13 semanas e banda p10-p90; teste cobra | 20/10 |
-| 111 | Uso do index medido; congelar ou fundir | claude | Pings por página em 14 dias, custo do index medido, proposta com recomendação | 22/10 |
-| 108 | Frentes em small multiples | claude | Sparkline de margem de 8 semanas na mesma escala, vencidos e idade; comparar sem tocar | 27/10 |
-| 109 | Funil LC-14 no Caixa | claude | 4 elos com margem e idade; pronta nunca soma em paga; teste cobra | 30/10 |
-| 110 | 13 semanas no padrão IBCS | claude | Realizado ao lado do previsto, erro semanal, pior caso como faixa | 03/11 |
+| 102 | `seguranca.html` com CSP por hash | claude | **Feito 08/10** (PR 92), conferido no ar | 10/10 |
+| 103 | KPI vermelho em 100% de 30 dias ganha destino | claude | Lista com recalibrar, virar plano com dono ou ir para o bastidor, pronta para o gate | 13/10 |
+| 104 | Gate único do presidente | igor | Destino dos vermelhos, números da Semana, sinal das frentes de vida, prazo ou descarte dos itens sem data | 14/10 |
+| 106 | Régua do cânone por script a cada versão | claude | Script no repo, gravação por PR, teste de piso | 15/10 |
+| 112 | A2 Grupo Cobrar na tela Hoje | claude | Retorno de terceiro vencido sobe para Hoje com rascunho pronto, nunca enviado pela máquina | 16/10 |
+| 113 | B2 Teto de estrutura à vista | claude | Fração de sessões na 00-memoria visível; aviso acima de 25% | 16/10 |
+| 105 | KPI grava 1 linha por dia | automacao | Linhas/dia ≤ KPIs vivos × 1,2 por 7 dias | 17/10 |
+| 114 | A5 Saúde por fonte e ritmo de 7 dias | claude | Hora do último dado de cada fonte, mais cards fechados em 7 dias | 20/10 |
+| 111 | Uso do index medido; congelar ou fundir | claude | Pings por página em 14 dias e proposta com recomendação | 22/10 |
+| 115 | A3 Concluir em 1 toque | claude | 3 provas prováveis e a prova da LC-14 mantida; fechamentos pelo painel de 19% para 50% | 23/10 |
+| 107 | Aba Semana: scorecard EOS + WBR | claude | 5 a 15 números com dono, meta, sparkline de 13 semanas e banda p10-p90 | 27/10 |
+| 116 | A1 + Nova e tecla N | claude | Card de uma linha criado na hora, dentro do teto de 8 por dia | 27/10 |
+| 109 | Funil LC-14 no Caixa | claude | 4 elos com margem e idade; pronta nunca soma em paga | 30/10 |
+| 117 | B1 Sessão aberta pelo card | claude | Abertura ≤ 3.000 caracteres, contra 17.472 | 30/10 |
+| 118 | B3 Card só nasce com ato | claude | Cards fechados sem ato de 22% para menos de 10% | 30/10 |
+| 119 | A4 Origem legível no card | claude | Origem escrita embaixo do título | 03/11 |
+| 108 | Frentes em small multiples | claude | Sparkline de margem de 8 semanas na mesma escala; comparar sem tocar | 06/11 |
+| 110 | 13 semanas no padrão IBCS | claude | Realizado ao lado do previsto, erro semanal, pior caso como faixa | 10/11 |
 
-**A ordem é aritmética, não gosto.** Banda e destino dos vermelhos (103/104) vêm antes da aba
-Semana (107). Uma Semana com 15 números vermelhos permanentes repete o defeito que o index tinha em
-agosto, só que em tamanho menor.
+**A ordem é aritmética, não gosto.**
+- **O ato vem antes da leitura.** Cobrar, concluir e criar card mexem no caixa e no tempo do Igor já.
+  Série, banda e Semana melhoram a leitura de um número que hoje já se lê.
+- **O destino dos vermelhos (103/104) vem antes da Semana (107).** Uma Semana com 15 números
+  vermelhos permanentes repete o defeito que o index tinha em agosto, só que em tamanho menor.
 
 **O que deliberadamente fica fora:**
 - **Biblioteca de gráfico.** Sparkline em SVG puro resolve, e a CSP por hash continua simples.
