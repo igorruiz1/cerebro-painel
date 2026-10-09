@@ -2448,3 +2448,43 @@ test('p4.33 saude por fonte: o selo abre a lista com hora por fonte, a atrasada 
   await expect(page.locator('#fresco')).toContainText('72 fechados em 7 d (+8)');
   expect(erros).toEqual([]);
 });
+
+/* p4.34 (plano 115 = A3 do plano 101, s1274 08/10/2026): concluir em um toque com prova provavel. Medido em 07/10: 19% dos
+   fechamentos do Igor passaram pelo painel; o atrito era escrever a prova. Tres provas prontas concluem num toque, com os
+   6 s de desfazer. A classe que se cobra (LC-14): prova que fala da saida em vez da volta, prova sem data e prova curta
+   demais para a guarda do banco. A p4.33 reprova: a folha de concluir so tinha o campo de texto. */
+test('p4.34 concluir: tres provas provaveis falam da volta, com a data de hoje; um toque grava feita so depois do desfazer', async ({page})=>{
+  await page.setViewportSize({width:390, height:800});
+  const erros = await abrir(page);
+  await page.click('#foco .pri');
+  const chips = page.locator('#campo .provas button');
+  await expect(chips).toHaveCount(3);
+  const hoje = await page.evaluate(()=>ddmm(somaDias(0)));
+  const textos = await chips.allTextContents();
+  for (const t of textos) {
+    expect(t, 'prova com a data de hoje').toContain(hoje);
+    expect(t.length, 'prova passa do minimo do banco').toBeGreaterThanOrEqual(8);
+    expect(t, 'prova fala da volta, nao da saida (LC-14)').toMatch(/Resposta|Confirmação|conferido/);
+    expect(t, 'nunca so "enviei"').not.toMatch(/^Enviei/i);
+  }
+  for (const b of await chips.all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'chip abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await expect(page.locator('#cv'), 'o campo livre segue para outra prova').toBeVisible();
+  await chips.nth(0).click();
+  let agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'));
+  expect(agir, 'nada grava antes do desfazer').toEqual([]);
+  await page.evaluate(()=>enviar());
+  agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(agir).toEqual([{p_origem:'tarefa',p_ref:'2',p_verbo:'feita',p_valor:textos[0]}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.34 concluir: card cujo criterio pede ato externo nao ganha prova pronta; segue o campo e o print', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>{ const t=INV.find(x=>String(x.id)==='2'); t.criterio_pronto='Boleto pago e comprovante no banco'; abrirFila(0); escolher('feita'); });
+  await expect(page.locator('#campo .provas button'), 'pagar pede comprovante, nao prova pronta').toHaveCount(0);
+  await expect(page.locator('#campo')).toContainText('pede ato externo');
+  await expect(page.locator('#cv')).toBeVisible();
+  await expect(page.locator('#cvArq')).toBeAttached();
+  expect(erros).toEqual([]);
+});
