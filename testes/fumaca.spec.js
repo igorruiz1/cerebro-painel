@@ -2091,3 +2091,50 @@ test('87c fila: chips, card, rapidos e modo foco sem on*; origem e ref com aspa 
   expect(v.fAto).toEqual([['a'], ['s'], ['r']]);
   expect(v.modoFoco, 'sair desliga, nunca alterna').toEqual([[false]]);
 });
+
+/* t1920 (s1363, 09/10/2026), item 1.5 do plano 57: dois addEventListener("keydown") no index decidiam a tecla
+   pela ordem de registro; R com card focado agia no card e o segundo tratador relia o foco e podia recarregar.
+   A classe do defeito e o atalho com dois donos: um tratador so, e cada tecla com um efeito so. */
+test('t1920: o index tem UM tratador de teclado, e R com card focado age no card sem recarregar', async ({page})=>{
+  const fs = require('fs');
+  const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+  const n = (html.match(/addEventListener\(\s*["']keydown["']/g)||[]).length;
+  expect(n, 'tratadores de keydown no index.html').toBe(1);
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{
+    const log=[]; window.carregar=()=>log.push('carregar'); window.fAto=k=>log.push('ato:'+k);
+    window.cardFocado=()=>({querySelector:()=>null});
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',bubbles:true}));
+    window.cardFocado=()=>null;
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',bubbles:true}));
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',ctrlKey:true,bubbles:true}));
+    return log;
+  });
+  expect(r, 'com foco: so o ato; sem foco: recarrega; Ctrl+R e do navegador').toEqual(['ato:r','carregar']);
+  expect(erros).toEqual([]);
+});
+
+/* t1920 (s1363), item 1.4 do plano 57: no celular de referencia (390x844) a primeira decisao termina ate 450 px,
+   com a fonte larga da CI. Mede o titulo do 1o card, nao um print. */
+test('t1920: a 390x844 o titulo da primeira decisao termina ate 450 px, sem rolagem horizontal', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  const erros = await abrir(page);
+  await revelarCasca(page);
+  const r = await page.evaluate(()=>{
+    const s=(chave,serie,meta)=>({chave,serie,meta_num:meta,direcao:"maior_melhor",p10:1,p90:2,situacao_banda:"normal"});
+    D.se=["caixa.sobrevida_dias","caixa.menor_saldo_13s","caixa.entrada_realizada_30d","caixa.decisao_parada_rs","entrega.output_sem_ack"].map(c=>s(c,[1,2],90));
+    D.wip={ativos_ate_48h:23,teto:14}; D.garg=[{tipo:"TOTAL",itens:5,teto:5}];
+    D.rw={dias_sobrevida_pior:11,dias_sobrevida:24,caixa_hoje:17023,queima_dia_base:700};
+    const it=ref=>({origem:'tarefa',ref,nivel:1,acoes:[],titulo:'Receber parcela '+ref,titulo_completo:'Receber parcela '+ref,recomendacao:'Faça X agora.',frente:'00-x',camada_tela:'hoje'});
+    D.fila=[it('1'),it('2')]; D.cont={}; D.depois=[];
+    document.body.style.letterSpacing='1.5px';
+    rAgora();
+    const c=document.querySelector('#fila1 .card .ttl')||document.querySelector('#fila1 .card');
+    return {achou:!!c, fundo:c?Math.round(c.getBoundingClientRect().bottom):-1,
+      SW:document.documentElement.scrollWidth, W:document.documentElement.clientWidth};
+  });
+  expect(r.achou, 'o 1o card de decisao foi desenhado').toBe(true);
+  expect(r.fundo, `titulo da 1a decisao termina em ${r.fundo}px`).toBeLessThanOrEqual(450);
+  expect(r.SW).toBe(r.W);
+  expect(erros).toEqual([]);
+});
