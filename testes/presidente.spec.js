@@ -2641,3 +2641,29 @@ test('p4.36 nova: N abre a folha; titulo fora do padrao nao sai; dia cheio nao e
   await expect(page.locator('#tmsg')).toContainText('Card criado: t99');
   expect(erros).toEqual([]);
 });
+
+/* p4.37 (s1275 09/10/2026): rotina que rodou e falhou depois do ultimo ponto bom acende, com o motivo. A Saude por fonte so
+   olhava o ultimo ponto bom: a vigia-testes falhou 07 e 08/10 e aparecia como "ultimo dado 06/10", igual a parada, e a
+   sensor-dabli falhou em 08/10 sem acender nada (estado "nova"). A classe que se cobra: falha que a tela nao mostra, e
+   falha antiga (ja superada por ponto bom) que acende a toa. A p4.36 reprova: o selo dizia "sistema ok". */
+test('p4.37 saude: rotina que falhou depois do ultimo ponto bom acende com o motivo; falha ja superada nao acende', async ({page})=>{
+  await page.addInitScript(()=>{ const h=n=>new Date(Date.now()-n*36e5).toISOString();
+    window.__dados={mo:[
+      {nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:h(3),ultima_tentativa:h(3),ultima_ok:true},
+      {nome:'sensor-dabli',estado:'nova',janela_horas:24,ultimo_ponto:h(40),ultima_tentativa:h(12),ultima_ok:false,ultima_falha:'ADIAR SO COM O IGOR: card 1917 e do Igor'},
+      {nome:'vigia-testes',estado:'no ponto',janela_horas:26,ultimo_ponto:h(2),ultima_tentativa:h(30),ultima_ok:false,ultima_falha:'falha velha, ja superada'}]}; });
+  const erros = await abrir(page);
+  await expect(page.locator('#saude'), 'o selo nao diz ok com rotina falhando').toContainText('1 rotina falhando');
+  await page.locator('button.estado').click();
+  const l = page.locator('#folha .fonte');
+  await expect(l.nth(0), 'a que falhou vem primeiro, acesa').toHaveClass(/\bw\b/);
+  await expect(l.nth(0)).toContainText('sensor dabli');
+  await expect(l.nth(0)).toContainText('falhou ');
+  await expect(l.nth(0), 'o motivo aparece na linha').toContainText('ADIAR SO COM O IGOR');
+  await expect(l.nth(0)).toContainText('último dado bom');
+  await expect(l.nth(0).locator('.r')).toHaveText('falhou');
+  const vt = page.locator('#folha .fonte', {hasText:'vigia testes'});
+  await expect(vt, 'falha anterior ao ultimo ponto bom nao acende').not.toHaveClass(/\bw\b/);
+  await expect(vt).not.toContainText('falha velha');
+  expect(erros).toEqual([]);
+});
