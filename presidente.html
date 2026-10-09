@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nc+pNwJezmmc++Hz75UGzzq8XVa1DU/rfb7STT+OHXE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-xb2XCldl2xhUorPLHNzlETvUVAF7MdpIG7wYAOvr6os=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -283,6 +283,14 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .teclas{display:none;font-size:var(--fs-2);color:var(--mut)}
 .teclas kbd{font-family:var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px;color:var(--ink2)}
 @media (hover:hover) and (pointer:fine){.teclas{display:block}}
+/* p4.36 (planos 88 e 116): verbos na busca e a folha Nova pendencia */
+.qverbos{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 6px}
+.qverbos button{min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:0 12px;font-size:var(--fs-2)}
+.qverbos kbd,.item.nova kbd{font-family:var(--mono);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:6px;color:var(--ink2)}
+.nova-cont{font-family:var(--mono);font-size:var(--fs-2);color:var(--mut);text-align:right}
+.nova-cont.w,.nova-erro{color:var(--warn)}
+.datas button:disabled{opacity:.55;cursor:not-allowed}
+.nova-sel{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 12px;font-size:var(--fs-3)}
 
 /* instrucao por voz: folha cheia no celular, painel lateral no desktop */
 .folha.cheia{max-height:none;height:100%;border-radius:0}
@@ -462,7 +470,10 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
       <button class="ico" id="micTopo" aria-label="Falar uma instrução" data-acao="abrirVoz">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
-      <button class="ico" aria-label="Buscar card ou frente" data-acao="alternarBusca">
+      <button class="ico" aria-label="Nova pendência (tecla N)" data-acao="abrirNova">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="ico" aria-label="Buscar card ou frente (tecla /)" data-acao="alternarBusca">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       </button>
       <button class="ico" aria-label="Recarregar" data-acao="recarregar">
@@ -471,7 +482,8 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
     </header>
     <div id="busca" class="busca hidden">
       <label for="q" class="mut">Número do card, palavra do título ou nome da frente</label>
-      <input id="q" type="search" data-ao-digitar="buscar" autocomplete="off">
+      <input id="q" type="search" data-ao-digitar="buscar" data-ao-tecla="buscaTecla" autocomplete="off">
+      <div class="teclas"><kbd>/</kbd> abre a busca · <kbd>Enter</kbd> abre o primeiro · <kbd>N</kbd> cria card · no card aberto: <kbd>A</kbd> conclui, <kbd>S</kbd> muda a data, <kbd>R</kbd> responde</div>
       <div id="qres" class="pilha"></div>
     </div>
 
@@ -542,7 +554,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.35";
+const VERP="p4.36";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -718,6 +730,9 @@ function demoCliente(){
         if(t){ if(v==="repactuar")t.prazo=a.p_valor; else t.status="aguardando_terceiro"; t.parado_dias=0; }
         b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); b.dados.vesp=(b.dados.vesp||[]).filter(x=>String(x.ref)!==r); }
       return "OK: "+v+" (demonstração)"; },
+    painel_nova_tarefa:a=>{ const b=B(), id=Math.max(...b.inv.map(t=>+t.id))+1;
+      b.inv.push({id,frente:a.p_frente,dono:"igor",status:"pendente",prazo:a.p_prazo,parado_dias:0,titulo:a.p_titulo,acoes:b.inv[0].acoes});
+      return "CRIADO: t"+id+" em "+a.p_frente+", prazo "+a.p_prazo.slice(8,10)+"/"+a.p_prazo.slice(5,7)+" (demonstração)"; },
     escolher:a=>{ const b=B(); if((b.dados.vesp||[]).some(x=>String(x.vesp_id)===String(a.p_ref)))b.dados.vesp=[];
       return "ESCOLHIDO: "+a.p_opcao+" (demonstração)"; },
     inbox:()=>"ANOTADO. Demonstração: nada foi gravado.",
@@ -874,7 +889,10 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(),
+  abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
+  novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
+  buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1), concluirCom:el=>agir(el.dataset.a1,el.dataset.a2,"Concluído"),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1435,13 +1453,116 @@ function renderSelos(){
   const nfr=ARV?ARV.filter(a=>a.nivel===1).length:""; set("n-frentes",nfr);set("r-frentes",nfr);
 }
 
-/* ---------- busca ---------- */
+/* ---------- busca e barra de comandos ----------
+   p4.36 (planos 88 e 116, fundidos; s1275, 09/10/2026). Molde: a barra de comandos do Linear (Cmd+K) e a captura em
+   um passo do GTD. A busca so abria o card; agora os 3 primeiros achados trazem os verbos (concluir, nova data,
+   responder) com a tecla de cada um, Enter abre o primeiro e, sem achado, cria o card com o texto digitado. A tecla
+   / (ou Ctrl+K) abre a busca de qualquer aba; N abre a folha Nova pendencia, tambem no botao + do topo. Antes,
+   card novo so nascia por sessao de chat (~17 mil caracteres de abertura) ou pela inbox, transcrita depois. */
+let BUSCA=[];
 function buscar(v){
-  const el=document.getElementById("qres"), q=String(v||"").trim().toLowerCase().replace(/^t(?=\d)/,"");
+  const el=document.getElementById("qres"), bruto=String(v||"").trim(), q=bruto.toLowerCase().replace(/^t(?=\d)/,"");
+  BUSCA=[];
   if(!q){el.innerHTML="";return;}
   if(!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const r=INV.filter(t=>t.status!=="feita"&&(String(t.id)===q||(t.titulo||"").toLowerCase().includes(q)||nomeFrente(t.frente).toLowerCase().includes(q)||(t.resumo||"").toLowerCase().includes(q))).slice(0,20);
-  el.innerHTML=r.length?r.map(itemInv).join(""):`<div class="vazio">Nenhum card aberto com “${esc(v)}”.</div>`;
+  BUSCA=r;
+  const nova=bruto.length>=3&&!/^t?\d+$/i.test(bruto)
+    ?`<button class="item nova" data-acao="abrirNova" data-a1="${esc(bruto)}"><span class="t l2">+ Criar card: “${esc(curto(bruto,70))}”${r.length?"":"<kbd>Enter</kbd>"}</span></button>`:"";
+  el.innerHTML=(r.length?r.map((t,i)=>itemInv(t)+(i<3?verbosBusca(t):"")).join(""):`<div class="vazio">Nenhum card aberto com “${esc(v)}”.</div>`)+nova;
+}
+function verbosBusca(t){
+  const tem=v=>(t.acoes||[]).some(a=>a.verbo===v), id=+t.id, bt=(k,r)=>`<button data-acao="buscaVerbo" data-a1="${id}" data-a2="${k}">${r}<kbd>${k.toUpperCase()}</kbd></button>`;
+  const bs=[(t.acoes||[]).some(a=>CONCLUIR.has(a.verbo))?bt("a","Concluir"):"",tem("repactuar")?bt("s","Nova data"):"",bt("r","Responder")].join("");
+  return `<div class="qverbos" aria-label="Agir neste card">${bs}</div>`;
+}
+function buscaVerbo(id,k){ abrirInv(id); if(F)teclaFolha(k); }
+function abrirBusca(){ const b=document.getElementById("busca"); b.classList.remove("hidden"); const q=document.getElementById("q"); q.focus(); q.select(); }
+function buscaTecla(el,ev){
+  if(ev.key==="Enter"){ ev.preventDefault(); const v=el.value.trim(); if(BUSCA.length)abrirInv(+BUSCA[0].id); else if(v.length>=3&&!/^t?\d+$/i.test(v))abrirNova(v); }
+  else if(ev.key==="ArrowDown"){ const b=document.querySelector("#qres button"); if(b){ev.preventDefault();b.focus();} }
+  else if(ev.key==="Escape"){ ev.preventDefault(); document.getElementById("busca").classList.add("hidden"); el.blur(); }
+}
+/* teclas de qualquer aba: / e Ctrl+K abrem a busca; N abre Nova pendencia. Nunca dentro de campo de texto nem com folha aberta */
+document.addEventListener("keydown",e=>{
+  if(e.defaultPrevented||e.altKey||e.repeat||!INV)return;
+  if(!document.getElementById("veu").classList.contains("hidden"))return;
+  const t=e.target; if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||"")))return;
+  const k=String(e.key||"").toLowerCase();
+  if(e.ctrlKey||e.metaKey){ if(k==="k"){e.preventDefault();abrirBusca();} return; }
+  if(k==="/"){e.preventDefault();abrirBusca();}
+  else if(k==="n"){e.preventDefault();abrirNova("");}
+});
+
+/* ---------- p4.36 (plano 116 = A1 do plano 101): Nova pendencia em uma linha ----------
+   O titulo segue o padrao do banco (padrao_titulo_ok: verbo no infinitivo, 8 a 70 caracteres), a frente vem sugerida
+   pelas palavras do titulo contra os cards abertos de cada frente, e o prazo vem sugerido no primeiro dia com vaga no
+   teto de 8 cards seus por dia. O Igor confirma os tres e o card nasce pela painel_nova_tarefa(), com os 6 s de
+   desfazer. A porta do banco cobra as mesmas regras; recusa volta com a folha aberta e o texto guardado. */
+const VERBO_RE=/^([a-zà-ú]+-)?(ir|pôr|[a-zà-ú]*[a-zà-ú](ar|er|ir|or|ôr))(?![a-zà-ú0-9_])/i, TETO_DIA=8;
+let NP={titulo:"",frente:null,prazo:null,frenteMao:false};
+const semAcento=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const cargaDia=d=>INV?INV.filter(t=>t.dono==="igor"&&t.prazo===d&&!["feita","aguardando_terceiro","cancelada"].includes(t.status)).length:0;
+/* pista = radical de 5 letras das palavras do titulo, sem o verbo inicial e sem palavra de ligacao: "fiscal" casa com
+   "fiscalizacao" e "medicao" com "medicao"; "ligar" e "para" nao contam (no 1o desenho, levavam tudo para a frente com mais cards) */
+const LIGA=new Set(["para","sobre","antes","depois","entre","desde","contra","quando","ainda","mesmo","todos","todas","outra","outro","nossa","nosso"]);
+const radicais=t=>semAcento(t).split(/[^a-z0-9]+/).filter(Boolean).slice(1).filter(w=>w.length>=4&&!LIGA.has(w)).map(w=>w.slice(0,5));
+function frentesNova(titulo){
+  const pal=new Set(radicais(titulo)), m=new Map();
+  (INV||[]).forEach(t=>{ if(!t.frente||t.frente==="00-memoria"||t.dono!=="igor"||t.status==="feita")return;
+    const x=m.get(t.frente)||{f:t.frente,n:0,s:0}; x.n++; new Set(radicais(t.titulo)).forEach(w=>{if(pal.has(w))x.s++;}); m.set(t.frente,x); });
+  return [...m.values()].sort((a,b)=>b.s-a.s||b.n-a.n||a.f.localeCompare(b.f)).map(x=>x.f);
+}
+function prazosNova(){
+  const vistos=new Set();
+  return [["hoje",somaDias(0)],["amanhã",somaDias(1)],["+3 dias",somaDias(3)],["próx. segunda",proxSegunda()],["+2 semanas",somaDias(14)]]
+    .filter(([,d])=>!vistos.has(d)&&vistos.add(d)).map(([r,d])=>({r,d,n:cargaDia(d)}));
+}
+function abrirNova(txt,manter){
+  if(!INV){toast("Carregando os cards; tente em instantes.",null,false,2500);return;}
+  if(!manter){ const t=String(txt||"").trim().replace(/\s+/g," ").slice(0,70);
+    NP={titulo:t?t.charAt(0).toUpperCase()+t.slice(1):"",frente:null,prazo:null,frenteMao:false}; }
+  if(!NP.frente)NP.frente=frentesNova(NP.titulo)[0]||null;
+  if(!NP.prazo){ const p=prazosNova().find(x=>x.r!=="hoje"&&x.n<TETO_DIA); NP.prazo=p?p.d:null; }
+  mostrarFolha(`<h3 id="folhaTit">Nova pendência</h3>
+    <div class="campo"><label for="novaTit" class="mut">Uma linha, começando pelo verbo: Ligar, Enviar, Pagar, Decidir…</label>
+      <input id="novaTit" maxlength="70" autocomplete="off" value="${esc(NP.titulo)}" data-ao-digitar="novaDigitou" data-ao-tecla="novaEnter">
+      <div class="nova-cont" id="novaCont"></div></div>
+    <div id="novaOpc"></div>
+    <p class="nova-erro hidden" id="novaErro" role="alert"></p>
+    <button class="pri" data-acao="criarNova">Criar card</button>
+    <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
+  renderNovaOpc(); novaContar();
+  const i=document.getElementById("novaTit"); i.focus(); i.setSelectionRange(i.value.length,i.value.length);
+}
+function renderNovaOpc(){
+  const el=document.getElementById("novaOpc"); if(!el)return;
+  const fr=frentesNova(NP.titulo), top=fr.slice(0,4); if(NP.frente&&!top.includes(NP.frente))top[3]=NP.frente;
+  el.innerHTML=`<div class="campo"><span class="mut">Frente</span><div class="datas">${top.filter(Boolean).map(f=>`<button data-acao="novaFrente" data-a1="${esc(f)}" class="${f===NP.frente?"sug":""}" aria-pressed="${f===NP.frente}">${esc(nomeFrente(f))}</button>`).join("")}</div>
+      ${fr.length>4?`<select aria-label="Outra frente" data-ao-mudar="novaFrente" class="nova-sel"><option value="">outra frente…</option>${fr.slice(4).map(f=>`<option value="${esc(f)}">${esc(nomeFrente(f))}</option>`).join("")}</select>`:""}</div>
+    <div class="campo"><span class="mut">Prazo · teto de ${TETO_DIA} cards seus por dia</span><div class="datas">${prazosNova().map(x=>{const cheio=x.n>=TETO_DIA;
+      return `<button data-acao="novaPrazo" data-a1="${esc(x.d)}" class="${x.d===NP.prazo?"sug":""}" aria-pressed="${x.d===NP.prazo}" ${cheio?"disabled":""}>${x.r} <span class="mut">${esc(diaCurto(x.d))} · ${cheio?"cheio":x.n+"/"+TETO_DIA}</span></button>`;}).join("")}</div></div>`;
+}
+function novaContar(){ const c=document.getElementById("novaCont"); if(!c)return; const n=NP.titulo.length; c.textContent=n+"/70"; c.classList.toggle("w",n>0&&n<8); }
+function novaDigitou(v){
+  NP.titulo=String(v||"").replace(/\s+/g," ").slice(0,70); novaContar();
+  if(!NP.frenteMao){ const f=frentesNova(NP.titulo)[0]; if(f&&f!==NP.frente){NP.frente=f;renderNovaOpc();} }
+}
+function novaEscolher(k,v){ if(!v)return; NP[k]=v; if(k==="frente")NP.frenteMao=true; renderNovaOpc(); }
+function novaProblema(){
+  const t=NP.titulo.trim();
+  if(t.length<8)return "Escreva o card em uma linha, com pelo menos 8 caracteres.";
+  if(!VERBO_RE.test(t))return "Comece pelo verbo no infinitivo: Ligar, Enviar, Pagar, Decidir…";
+  if(!NP.frente)return "Escolha a frente.";
+  if(!NP.prazo)return "Escolha o prazo.";
+  if(cargaDia(NP.prazo)>=TETO_DIA)return "Esse dia já tem "+TETO_DIA+" cards seus. Escolha outro.";
+  return null;
+}
+function criarNova(){
+  const i=document.getElementById("novaTit"); if(i){const v=i.value.replace(/\s+/g," ").trim();NP.titulo=v.charAt(0).toUpperCase()+v.slice(1);}
+  const prob=novaProblema(), er=document.getElementById("novaErro");
+  if(prob){ if(er){er.textContent=prob;er.classList.remove("hidden");} if(i)i.focus(); return; }
+  pendurar({nova:{titulo:NP.titulo,frente:NP.frente,prazo:NP.prazo}},"Criar card · "+curto(NP.titulo,60)+" · "+ddmm(NP.prazo),null);
 }
 
 /* ---------- detalhe do card ---------- */
@@ -1783,6 +1904,7 @@ function cobrar(ref){
 }
 function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
   if(p.mesa){msVolta(p.mesa,false);toast("Desfeito. Nada foi gravado.",null,false,2600);return;}
+  if(p.nova){abrirNova(null,true);toast("Desfeito. O card não foi criado; o texto ficou na folha.",null,false,3000);return;}
   if(p.origem!=null)FEITOS.delete(p.origem+"|"+String(p.ref));
   if(p.cob3)renderCobrar();
   if(p.vesp){renderVespera(); if(document.querySelector("#folha .fonte.vesp")&&!document.getElementById("veu").classList.contains("hidden"))abrirVespera();}
@@ -1800,6 +1922,16 @@ async function enviar(){
   if(!PEND)return; const p=PEND; PEND=null; clearTimeout(p.t);
   toast("gravando…",null,false);
   if(p.mesa)return msGravarDec(p.mesa);
+  if(p.nova){
+    /* p4.36 (plano 116): o card nasce pela porta do banco, que cobra titulo, frente, prazo e o teto do dia */
+    const {data,error}=await comTetoR(sb.rpc("painel_nova_tarefa",{p_titulo:p.nova.titulo,p_frente:p.nova.frente,p_prazo:p.nova.prazo}),LIMITE_ACAO,"painel_nova_tarefa");
+    const txt=error?erroTxt(error):String(data||"");
+    if(error||!/^CRIADO/.test(txt)){ resultado(txt.replace(/^RECUSADO:\s*/,"Não criou: ").slice(0,220)||"Não criou: o banco não respondeu.","bad",9000); abrirNova(null,true); return; }
+    NP={titulo:"",frente:null,prazo:null,frenteMao:false};
+    resultado(txt.replace(/^CRIADO:\s*/,"Card criado: ").slice(0,160),null,4000);
+    await carregar(true);
+    return;
+  }
   if(p.voz){
     const {data,error}=await comTetoR(sb.rpc("inbox",{p_texto:VOZ_PREFIXO+p.voz}),LIMITE_ACAO,"inbox");
     const txt=error?erroTxt(error):String(data||"");

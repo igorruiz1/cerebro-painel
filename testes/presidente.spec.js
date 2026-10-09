@@ -78,7 +78,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -2557,5 +2557,87 @@ test('p4.35 vespera: snapshot sem a chave vesp esconde o grupo e diz que a parte
   await expect(page.locator('#vespBox')).toBeHidden();
   await page.evaluate(()=>{ D.vesp=[{origem:'tarefa',ref:'41',titulo:'Sem pergunta aberta',prazo:'2026-10-10',vesp_id:null}]; renderVespera(); });
   await expect(page.locator('#vespBox'), 'sem pergunta aberta nao ha o que manter').toBeHidden();
+  expect(erros).toEqual([]);
+});
+
+/* p4.36 (planos 88 e 116 fundidos, s1275 09/10/2026): barra de comandos (Linear Cmd+K) e captura em uma linha (GTD). A
+   busca so abria o card e card novo so nascia por sessao de chat ou pela inbox. A classe que se cobra: tecla que dispara
+   dentro de campo de texto, verbo que grava sem passar pela folha do card, card criado sem desfazer, titulo fora do padrao
+   do banco e dia lotado oferecido como prazo. A p4.35 reprova: nao ha / nem N nem a porta painel_nova_tarefa. */
+test('p4.36 barra: / e Ctrl+K abrem a busca; os 3 primeiros achados trazem os verbos com a tecla; Enter abre o primeiro; sem achado, Enter cria', async ({page})=>{
+  const erros = await abrir(page);
+  await page.keyboard.press('/');
+  await expect(page.locator('#busca')).toBeVisible();
+  await expect(page.locator('#q')).toBeFocused();
+  await page.keyboard.type('Item');
+  await expect(page.locator('#q'), 'a tecla / nao entra no texto').toHaveValue('Item');
+  const verbos = page.locator('#qres .qverbos');
+  await expect(verbos, 'verbos so nos 3 primeiros achados').toHaveCount(3);
+  await expect(verbos.nth(0).locator('button', {hasText:'Nova data'})).toContainText('S');
+  await expect(verbos.nth(0).locator('button', {hasText:'Concluir'}), 'sem verbo de concluir no card, sem botao').toHaveCount(0);
+  for (const b of await page.locator('#qres button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await verbos.nth(1).locator('button', {hasText:'Nova data'}).click();
+  await expect(page.locator('#folhaTit'), 'o verbo abre a folha do proprio card').toHaveText('Item para decidir');
+  await expect(page.locator('#campo .datas button').first(), 'e ja no campo da nova data').toBeVisible();
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'abrir o verbo nao grava').toBe(0);
+  await page.keyboard.press('Escape');
+  await page.locator('#q').focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#folhaTit'), 'Enter abre o primeiro achado').toHaveText('Item esperando');
+  await page.keyboard.press('Escape');
+  await page.locator('#q').fill(''); await page.locator('#q').type('Pedir orcamento ao vidraceiro');
+  await expect(page.locator('#qres .item.nova')).toContainText('Criar card');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#folhaTit')).toHaveText('Nova pendência');
+  await expect(page.locator('#novaTit')).toHaveValue('Pedir orcamento ao vidraceiro');
+  await page.keyboard.press('Escape');
+  await page.locator('#q').press('Escape');
+  await expect(page.locator('#busca'), 'Esc fecha a busca').toBeHidden();
+  await page.locator('body').click({position:{x:5,y:5}});
+  await page.keyboard.press('Control+k');
+  await expect(page.locator('#q'), 'Ctrl+K tambem abre').toBeFocused();
+  expect(erros).toEqual([]);
+});
+
+test('p4.36 nova: N abre a folha; titulo fora do padrao nao sai; dia cheio nao e oferecido; cria so depois do desfazer; recusa reabre com o texto', async ({page})=>{
+  await page.setViewportSize({width:360, height:760});
+  const erros = await abrir(page);
+  /* lota amanha com 8 cards do Igor: o chip do dia sai desabilitado e a sugestao pula para o proximo com vaga */
+  await page.evaluate(()=>{ const d=somaDias(1); for(let i=0;i<8;i++)INV.push({id:900+i,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:d,parado_dias:0,titulo:'Lotar o dia '+i,acoes:[]}); });
+  await page.keyboard.press('n');
+  await expect(page.locator('#folhaTit')).toHaveText('Nova pendência');
+  await expect(page.locator('#novaTit'), 'a tecla N nao entra no texto').toHaveValue('');
+  const amanha = page.locator('#novaOpc button[data-acao="novaPrazo"]', {hasText:'amanhã'});
+  await expect(amanha).toBeDisabled();
+  await expect(amanha).toContainText('cheio');
+  const sug = await page.locator('#novaOpc button[data-acao="novaPrazo"][aria-pressed="true"]').getAttribute('data-a1');
+  expect(sug > await page.evaluate(()=>somaDias(1)), 'sugere o primeiro dia com vaga depois de amanha').toBe(true);
+  await page.locator('#novaTit').fill('reuniao com o fiscal');
+  await page.locator('#folha button', {hasText:'Criar card'}).click();
+  await expect(page.locator('#novaErro')).toContainText('verbo');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_nova_tarefa').length), 'fora do padrao nao chama o banco').toBe(0);
+  await page.locator('#novaTit').fill('');
+  await page.locator('#novaTit').type('ligar para o fiscal sobre a medicao');
+  await expect(page.locator('#novaCont')).toHaveText('35/70');
+  const fr = page.locator('#novaOpc button[data-acao="novaFrente"][aria-pressed="true"]');
+  await expect(fr, 'uma frente sugerida e marcada').toHaveCount(1);
+  for (const b of await page.locator('#folha button:visible, #folha input, #folha select').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'controle da folha abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth), 'sem rolagem horizontal a 360').toBeLessThanOrEqual(360);
+  await page.locator('#novaOpc button[data-acao="novaFrente"]', {hasText:'Contrato PJ'}).click();
+  await page.locator('#novaTit').press('Enter');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_nova_tarefa').length), 'nada grava antes do desfazer').toBe(0);
+  await page.locator('#tbtn').click();
+  await expect(page.locator('#novaTit'), 'desfazer devolve a folha com o texto').toHaveValue('Ligar para o fiscal sobre a medicao');
+  await page.locator('#folha button', {hasText:'Criar card'}).click();
+  await page.evaluate(()=>{ window.__nova='RECUSADO: tarefa gemea da t5 ja aberta na frente 20-contrato-pj'; enviar(); });
+  await expect(page.locator('#tmsg')).toContainText('Não criou: tarefa gemea');
+  await expect(page.locator('#novaTit'), 'recusa reabre a folha com o texto guardado').toHaveValue('Ligar para o fiscal sobre a medicao');
+  const nova = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_nova_tarefa').map(c=>c.a));
+  expect(nova).toEqual([{p_titulo:'Ligar para o fiscal sobre a medicao',p_frente:'20-contrato-pj',p_prazo:sug}]);
+  await page.evaluate(()=>{ window.__nova=null; });
+  await page.locator('#folha button', {hasText:'Criar card'}).click();
+  await page.evaluate(()=>enviar());
+  await expect(page.locator('#tmsg')).toContainText('Card criado: t99');
   expect(erros).toEqual([]);
 });
