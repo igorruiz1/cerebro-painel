@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v91";
+const VER="v92";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1774,18 +1774,31 @@ function focar(i){
   rFbar();
   c[foco].scrollIntoView({behavior:"smooth",block:"center"});
 }
+/* v92 (t1920, s1363): UM tratador de teclado so. Eram dois (atalhos de card aqui e Esc, "/" e R
+   la embaixo, em "atalhos"), e a ordem de registro decidia quem via a tecla primeiro: R com card
+   focado agia no card e depois o segundo tratador relia o foco e podia recarregar a pagina. */
 document.addEventListener("keydown",e=>{
-  const t=e.target.tagName;
-  if(t==="INPUT"||t==="TEXTAREA"){ if(e.key==="Escape")e.target.blur(); return; }
-  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const t=e.target.tagName, campo=(t==="INPUT"||t==="TEXTAREA"), mod=(e.metaKey||e.ctrlKey||e.altKey);
+  /* Esc vale em todo lugar: sai do campo ou do modo foco, fecha o modal e solta o card focado */
+  if(e.key==="Escape"){
+    if(campo)e.target.blur();
+    else if(!mod&&document.body.classList.contains("foco")){e.preventDefault();modoFoco(false);}
+    fecharModal(); if(foco>=0){cards().forEach(x=>x.style.outline="");foco=-1;}
+    return;
+  }
+  if(campo)return;
+  if(e.key==="/"){e.preventDefault();const q=document.getElementById("q");
+    if(q&&document.getElementById("filtros").classList.contains("on")){gavetaFiltros(true);q.focus();}
+    return;}
+  if(mod)return;
   const k=e.key.toLowerCase();
   if(k==="f"){e.preventDefault();modoFoco();}
-  else if(k==="escape"&&document.body.classList.contains("foco")){e.preventDefault();modoFoco(false);}
   else if(k==="j"){e.preventDefault();focar(foco+1);}
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
   /* v61: A, S e R agem no card focado; sem foco nao fazem nada (R sem foco segue recarregando) */
   else if((k==="a"||k==="s"||k==="r")&&cardFocado()){e.preventDefault(); fAto(k);}
+  else if(e.key==="r")carregar();
   /* v61: com os 4 atos do PRONTO abertos, 1 a 4 escolhem o ato em vez de trocar de aba */
   else if(k>="1"&&k<="4"&&cardFocado()&&cardFocado().querySelector(".qpr.on")){e.preventDefault();
     const b=cardFocado().querySelectorAll(".qpr.on .qk")[+k-1]; if(b) b.click();}
@@ -3886,13 +3899,7 @@ function rAcervo(){
      :`<tr><td colspan="5" class="empty">nenhuma lição oferecida 3+ vezes sem ser usada.</td></tr>`);
 }
 
-/* ---------- atalhos ---------- */
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){fecharModal();if(foco>=0){cards().forEach(x=>x.style.outline="");foco=-1;}return;}
-  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
-  if(e.key==="/"){e.preventDefault();const q=document.getElementById("q");
-    if(q&&document.getElementById("filtros").classList.contains("on")){gavetaFiltros(true);q.focus();}}
-  if(e.key==="r"&&!e.metaKey&&!e.ctrlKey&&!cardFocado())carregar();});
+/* ---------- atalhos: vivem no tratador unico de teclado, junto de focar() (v92) ---------- */
 
 /* ---------- arranque ---------- */
 F.frente=pref("frente")||null;F.origem=pref("origem")||null;
