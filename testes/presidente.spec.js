@@ -2667,3 +2667,79 @@ test('p4.37 saude: rotina que falhou depois do ultimo ponto bom acende com o mot
   await expect(vt).not.toContainText('falha velha');
   expect(erros).toEqual([]);
 });
+
+/* p4.38 (card 1562, s1322, 09/10/2026; desenho do Igor de 02/10): a frente do socio abre em quatro blocos de presidente
+   (v_dabli_presidente), no lugar da lista generica de cards. A classe que se cobra: bloco que some quando vem vazio (a view
+   so devolve linha de bloco com item), lista generica que volta junto, detalhe que quebra em varias linhas e rolagem
+   horizontal no celular. Teste de layout sem o elemento passa vazio: exige 4 blocos e 4 linhas. A p4.37 reprova aqui. */
+const LINHAS_4B = `(()=>{ const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+  window.__tab={v_dabli_presidente:[
+    {ordem:1,bloco:'A · EXEMPLO',ref:'D9',item:'Decidir o preco do plano de exemplo',detalhe:'Detalhe de exemplo '+'bem comprido '.repeat(30),prazo:null,dias_parado:9,recomendacao:'decisao aberta na frente: ratifique ou retifique'},
+    {ordem:1,bloco:'A · EXEMPLO',ref:'t91',item:'Assinar o termo de exemplo',detalhe:'ato do Igor',prazo:d(-2),dias_parado:2,recomendacao:'VENCIDO ha 2 dia(s): repactue ou feche'},
+    {ordem:2,bloco:'B · EXEMPLO',ref:'t92',item:'Receber a minuta do terceiro de exemplo',detalhe:'Terceiro de exemplo',prazo:d(4),dias_parado:-4,recomendacao:'quem deve a proxima resposta: o terceiro'},
+    {ordem:4,bloco:'D · EXEMPLO',ref:'receber',item:'Mensalidade de exemplo',detalhe:'R$ 1.000,00 (fatia de exemplo) · status previsto',prazo:d(6),dias_parado:-6,recomendacao:'confira no extrato'}]}; })();`;
+
+test('p4.38 frente do socio: quatro blocos da v_dabli_presidente no lugar da lista de cards, vazio diz "nada aqui", sem rolagem a 360, 390 e 1280', async ({page})=>{
+  await page.addInitScript(LINHAS_4B);
+  const erros = await abrir(page);
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  const b = page.locator('#folha section.d4');
+  await expect(b, 'quatro blocos, o vazio inclusive').toHaveCount(4);
+  await expect(page.locator('#folha .d4i'), 'uma linha por item da view').toHaveCount(4);
+  expect(await b.locator('.rot').allTextContents(), 'ordem da view, titulo curto e contagem').toEqual(
+    ['Só o presidente decide2','Terceiro esperando ou me devendo1','O sócio entregou e espera palavra0','Dinheiro da frente1']);
+  await expect(b.nth(2).locator('.d4i')).toHaveCount(0);
+  await expect(b.nth(2).locator('.d4v')).toHaveText('nada aqui');
+  await expect(page.locator('#folha .item'), 'a lista generica de cards saiu (substitui, nao soma)').toHaveCount(0);
+  const l = b.nth(0).locator('.d4i');
+  await expect(l.nth(0)).toContainText('Decidir o preco do plano de exemplo');
+  await expect(l.nth(0).locator('.d4m')).toHaveText('parado há 9 d');
+  await expect(l.nth(0).locator('.d4r')).toHaveText('decisao aberta na frente: ratifique ou retifique');
+  await expect(l.nth(1).locator('.d4m')).toContainText('venceu ');
+  await expect(b.nth(1).locator('.d4m'), 'prazo futuro sem "parado"').toHaveText(/^até \d\d\/\d\d$/);
+  /* o detalhe e uma linha so, com reticencias */
+  const det = await l.nth(0).locator('.d4d').evaluate(e=>({ws:getComputedStyle(e).whiteSpace, to:getComputedStyle(e).textOverflow,
+    corta:e.scrollWidth>e.clientWidth, alto:e.getBoundingClientRect().height, lh:parseFloat(getComputedStyle(e).lineHeight)||20}));
+  expect(det.ws).toBe('nowrap'); expect(det.to).toBe('ellipsis'); expect(det.corta, 'o detalhe longo e cortado').toBe(true);
+  expect(det.alto, 'detalhe em uma linha').toBeLessThan(det.lh*1.6);
+  for (const w of [360, 390, 1280]) {
+    await page.setViewportSize({width:w, height:820});
+    const m = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; const f=document.getElementById('folha');
+      return {W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth, FW:f.clientWidth, FSW:f.scrollWidth, n:f.querySelectorAll('section.d4').length}; });
+    expect(m.n, `blocos a ${w}`).toBe(4);
+    expect(m.SW, `rolagem horizontal da pagina a ${w}`).toBe(m.W);
+    expect(m.FSW, `rolagem horizontal da folha a ${w}`).toBe(m.FW);
+  }
+  /* as outras frentes seguem com a lista de cards */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('20-contrato-pj'); });
+  await expect(page.locator('#folha section.d4')).toHaveCount(0);
+  expect(await page.$$eval('#folha .item .t', e=>e.map(x=>x.textContent))).toEqual(['Item esperando','Item depois']);
+  expect(erros).toEqual([]);
+});
+
+test('p4.38 frente do socio: leitura que falha se declara no lugar dos blocos', async ({page})=>{
+  await page.addInitScript(()=>{ window.__pendura=['v_dabli_presidente']; });
+  const erros = await abrir(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_RECARGA);
+  await page.evaluate(()=>abrirFrente('08-dabli-tech'));
+  await expect(page.locator('#d4')).toContainText('carregando');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#d4')).toContainText('não vieram agora');
+  await expect(page.locator('#folha section.d4')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.38 demonstracao: a frente ficticia do socio abre os quatro blocos inventados, sem rede e sem marca real', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('frentes'));
+  await page.locator('#frentesLista .frente', {hasText:'Startup de tecnologia'}).click();
+  await expect(page.locator('#folha section.d4')).toHaveCount(4);
+  await expect(page.locator('#folha .d4i')).toHaveCount(5);
+  await expect(page.locator('#folha section.d4').nth(2).locator('.d4v')).toHaveText('nada aqui');
+  expect(await page.locator('#folha').innerText(), 'marca real na folha').not.toMatch(/Dabli/);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
+  expect(await page.evaluate(()=>window.__rpc.length), 'o duble do banco nao recebe nada').toBe(0);
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
