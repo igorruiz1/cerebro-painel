@@ -39,6 +39,8 @@ const DUBLE = `(()=>{
     c13:sem,c13i:[{id:31,natureza:'receber',vencido:true,valor_igor:1400,descricao:'Laudo L1',data_venc:hoje,frente_slug:'11-renda-alt'}],
     /* p4.27: sem leitura de 7 dias atras por padrao; o teste do plano 89 troca por window.__dados */
     var7:[],
+    /* p4.31: grupo Cobrar vazio por padrao; o teste do grupo troca por window.__dados */
+    cob3:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -63,13 +65,14 @@ const DUBLE = `(()=>{
     relatorios:[{tipo:'dia',alvo:hoje,versao:'02',titulo:'Fechamento do dia de exemplo v02',path:'dia/fechamento_v02.pdf'},
       {tipo:'estoque',alvo:hoje,versao:'01',titulo:'Estoque parado de exemplo v01',path:'estoque/estoque_v01.pdf'}]};
   window.__rpc=[]; window.__storage=[];
-  /* window.__pendura: nomes de RPC ou view que nunca respondem. window.__dados: chaves que trocam as do duble. */
+  /* window.__pendura: nomes de RPC ou view que nunca respondem. window.__dados: chaves que trocam as do duble.
+     window.__sem: chaves que a carga omite, como um snapshot antigo (p4.31). */
   const pendura=n=>(window.__pendura||[]).includes(n);
   const q=(r,v)=>{const p=pendura(v)?new Promise(()=>{}):Promise.resolve({data:r,error:null});p.lte=()=>p;p.eq=()=>p;p.order=()=>p;p.limit=()=>p;return p;};
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:{...dados,...(window.__dados||{})},idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -2314,4 +2317,74 @@ test('96 Dar minha posição grava deliberar pelo agir; com opcoes na folha, a p
   await page.evaluate(()=>enviar());
   agir = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
   expect(agir[1]).toEqual({p_origem:'tarefa',p_ref:'8',p_verbo:'deliberar',p_valor:'Nenhuma: renegociar o prazo'});
+});
+
+/* p4.31 (plano 112 = A2 do plano 101, s1274 08/10/2026): grupo Cobrar no Hoje, no molde da lista Aguardando do GTD. O card
+   que espera terceiro com o retorno vencido so aparecia na coluna Esperando, em outra aba (medido em 08/10: 6 de 9). A classe
+   que se cobra: cobranca que ninguem ve e cobranca que sai sem o Igor. Copiar nao chama o banco; Cobrei agora grava o verbo
+   cobrar so depois dos 6 s de desfazer; card que ja esta em Hoje nao repete; sem a chave cob3 o grupo some, sem erro.
+   A p4.30 reprova: nao ha #cob3Box nem a chave cob3 na carga. */
+const COB3 = [
+  {origem:'tarefa',ref:'5',titulo:'Nao deve repetir: ja esta em Hoje',terceiro:'Alguem',retorno_esperado:'2026-10-01',dias:7,rascunho:'nao'},
+  {origem:'tarefa',ref:'7',titulo:'Cobrar resposta de exemplo',terceiro:'Terceiro de exemplo',retorno_esperado:'2026-10-05',dias:3,rascunho:'Bom dia! Rascunho de exemplo.'},
+  {origem:'tarefa',ref:'8',titulo:'Segundo pedido de exemplo',terceiro:null,retorno_esperado:'2026-10-08',dias:0,rascunho:'Outro rascunho.'}];
+test('p4.31 cobrar: grupo no Hoje sem repetir card; copiar nao grava; Cobrei agora grava cobrar so depois do desfazer', async ({page})=>{
+  await page.addInitScript(c=>{ window.__dados={cob3:c}; }, COB3);
+  const erros = await abrir(page);
+  const carga = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga'));
+  expect(carga.a.p_chaves, 'a carga pede a chave cob3').toContain('cob3');
+  const box = page.locator('#cob3Box'), linhas = box.locator('.cob3');
+  await expect(box).toBeVisible();
+  await expect(linhas, 'o card 5 ja esta em Hoje e nao repete').toHaveCount(2);
+  await expect(box).not.toContainText('Nao deve repetir');
+  await expect(linhas.nth(0)).toContainText('Terceiro de exemplo · cobrar · 3 d');
+  await expect(linhas.nth(1)).toContainText('sem nome de quem responde · cobrar · vence hoje');
+  for (const b of await box.locator('button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  /* a 1a versao herdou ".ordem button" e o "Cobrei agora" ficou ilegivel: o contraste se mede no que a tela pinta */
+  const ruins = (await page.evaluate(contrasteDos, '#cob3Box *')).filter(m=>m.razao<4.5);
+  expect(ruins, 'texto do grupo abaixo de 4,5:1').toEqual([]);
+  const pri = await box.locator('button:has-text("Cobrei agora")').first().evaluate(b=>getComputedStyle(b).backgroundColor);
+  const sec = await box.locator('button:has-text("Copiar cobrança")').first().evaluate(b=>getComputedStyle(b).backgroundColor);
+  expect(pri, 'Cobrei agora tem o fundo do botao principal, nao o da lista').not.toBe(sec);
+  await linhas.nth(0).locator('button:has-text("Copiar cobrança")').click();
+  await expect(page.locator('#tmsg'), 'copiar responde pela tela').toContainText(/ascunho/);
+  const atos = ()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'||c.n==='inbox').map(c=>c.a));
+  expect(await atos(), 'copiar nao chama o banco').toEqual([]);
+  await linhas.nth(0).locator('button:has-text("Cobrei agora")').click();
+  await expect(linhas, 'o card cobrado sai do grupo na hora').toHaveCount(1);
+  expect(await atos(), 'nada grava antes do desfazer').toEqual([]);
+  await page.locator('#tbtn').click();
+  await expect(linhas, 'desfazer devolve o card').toHaveCount(2);
+  expect(await atos()).toEqual([]);
+  await linhas.nth(0).locator('button:has-text("Cobrei agora")').click();
+  await page.evaluate(()=>enviar());
+  expect(await atos()).toEqual([{p_origem:'tarefa',p_ref:'7',p_verbo:'cobrar',p_valor:null}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.31 cobrar: snapshot sem a chave cob3 esconde o grupo e diz que a parte nao chegou, sem erro', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['cob3']; });
+  const erros = await abrir(page);
+  await expect(page.locator('#falha'), 'chave faltando vira aviso, nunca silencio').toContainText('cob3');
+  await expect(page.locator('#cob3Box')).toBeHidden();
+  await expect(page.locator('#cob3Lista .cob3')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
+
+/* p4.31: a primeira versao do grupo Cobrar usou id="cobrarBox", que a aba Caixa ja tinha. Com dois ids iguais, a Caixa
+   escreveu por cima do Hoje e a tela inteira parou de desenhar, sem aviso de build. A classe morre aqui: depois de passar
+   pelas cinco abas e pela folha, nenhum id se repete no DOM vivo. */
+test('p4.31 nenhum id repetido no DOM vivo depois das cinco abas e da folha', async ({page})=>{
+  await page.addInitScript(c=>{ window.__dados={cob3:c}; }, COB3);
+  const erros = await abrir(page);
+  const rep = await page.evaluate(()=>{
+    const dup = new Set(), ver = ()=>{ const vistos = new Set();
+      for (const el of document.querySelectorAll('[id]')) { if (vistos.has(el.id)) dup.add(el.id); vistos.add(el.id); } };
+    for (const a of ['hoje','fila','caixa','frentes','mesa']) { ir(a); ver(); }
+    ir('hoje'); abrirFila(0); ver(); fecharFolha();
+    return [...dup];
+  });
+  expect(rep, 'id repetido no DOM').toEqual([]);
+  expect(erros).toEqual([]);
 });

@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-rf40nbkGGmGS6EFzOuob+zq9UCViOOLu+uihtivMUgA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ZCPXCLh8od5YUMkKA1YOFHUuNvdZ/eroZjAEgJ8XXA8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -147,6 +147,14 @@ h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 .ordem{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .ordem button{min-height:60px;width:100%;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--sf);border:0;border-bottom:1px solid var(--line2);text-align:left}
 .ordem button:last-child{border-bottom:0}
+/* p4.31 (plano 112): lista e linha do grupo Cobrar, com os dois atos embaixo do titulo. Contêiner proprio: dentro de
+   .ordem, a regra ".ordem button" pintava o .pri com o fundo da lista e o "Cobrei agora" sumia (visto no print de 08/10). */
+.cob3l{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.cob3 .t{min-width:0}
+.cob3 .t small{display:block;color:var(--mut);font-size:var(--fs-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cob3{display:flex;flex-direction:column;gap:8px;padding:10px 16px;background:var(--sf);border-bottom:1px solid var(--line2)}
+.cob3:last-child{border-bottom:0}
+.cob3 .bts{display:flex;flex-wrap:wrap;gap:8px}
 .ordem .o{font-family:var(--mono);color:var(--mut);width:18px;flex-shrink:0}
 .ordem .t{flex:1;min-width:0}
 .ordem .t small{display:block;color:var(--mut);font-size:var(--fs-2)}
@@ -466,6 +474,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
           <div class="pilha">
             <h2>Também pede você</h2>
             <div class="atalhos" id="atalhos"></div>
+            <div class="pilha hidden" id="cob3Box"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
           </div>
         </div>
       </section>
@@ -513,7 +522,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.30";
+const VERP="p4.31";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -638,7 +647,11 @@ function demoBase(){
     {id:"fluxo:501",minutos_estimados:5},{id:"fluxo:502",minutos_estimados:10}];
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
     cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
-    rw:cx0.rw, var7};
+    rw:cx0.rw, var7,
+    cob3:[{origem:"tarefa",ref:"307",frente:"20-contrato-pj",titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",terceiro:"Fiscalização de exemplo",retorno_esperado:dd(-2),dias:2,
+      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(-2).slice(8,10)+"/"+dd(-2).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."},
+      {origem:"tarefa",ref:"312",frente:"04-obra-residencial",titulo:"Receber da gráfica o orçamento das placas da obra",terceiro:"Gráfica de exemplo",retorno_esperado:dd(0),dias:0,
+      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(0).slice(8,10)+"/"+dd(0).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."}]};
   const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,tarefa:null,fecha_tarefa:false,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
   const mes=dd(-new Date().getDate()).slice(0,7);
   const mesa={em_jogo:0,horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
@@ -677,7 +690,8 @@ function demoCliente(){
   const RPC={
     painel_carga:()=>{ const b=B(); Object.assign(b.dados,b.caixa(b.dados.c13i)); return {dados:copia(b.dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}; },
     agir:a=>{ const o=a.p_origem, r=String(a.p_ref), v=a.p_verbo, b=B();
-      if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
+      if(v==="cobrar"&&o==="tarefa"){ b.dados.cob3=(b.dados.cob3||[]).filter(x=>String(x.ref)!==r); const t=b.inv.find(x=>String(x.id)===r); if(t)t.parado_dias=0; }
+      else if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
       else if(v==="repactuar"||v==="esperar"){ const t=b.inv.find(x=>String(x.id)===r);
         if(t){ if(v==="repactuar")t.prazo=a.p_valor; else t.status="aguardando_terceiro"; t.parado_dias=0; }
         b.dados.fila=b.dados.fila.filter(x=>!(x.origem===o&&String(x.ref)===r)); }
@@ -732,7 +746,7 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    fresc, mo e eb entram no p4.3 para o selo de saude: ja estavam no snapshot (o index.html le as tres),
    entao o selo nao pede mudanca no banco.
    var7 entra no p4.27 (plano 89): v_painel_variacao_7d, a leitura de 7 dias atras do folego e do menor saldo. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7"];
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -835,7 +849,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
+  cobrar:el=>cobrar(el.dataset.a1), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1101,7 +1115,36 @@ function renderHoje(){
     {n:INV?contar("semana"):"…",t:"vencem nesta semana",c:"semana"},
     cob.length?{n:mil(cob.reduce((s,x)=>s+(+x.valor_igor||0),0)),t:"a receber com data passada",aba:"caixa",w:true}
               :{n:c.depois!=null?c.depois:"…",t:"em segundo plano, fora de hoje",c:"semana"}];
+  renderCobrar();
   document.getElementById("atalhos").innerHTML=at.map(a=>`<button class="atalho ${a.w?"w":""}" ${a.aba?`data-acao="ir" data-a1="${esc(a.aba)}"`:`data-acao="irColuna" data-a1="${esc(a.c)}"`}><b>${esc(a.n)}</b><span>${esc(a.t)}</span></button>`).join("");
+}
+/* p4.31 (plano 112 = A2 do plano 101; s1274, 08/10/2026): grupo Cobrar no Hoje, no molde da lista Aguardando do GTD.
+   O card que espera terceiro so aparecia na coluna Esperando, em outra aba; medido em 08/10 no banco: 6 de 9 com o
+   retorno combinado vencido ou vencendo hoje. Fonte: chave cob3 do snapshot (v_painel_cobrar_terceiro, retorno_esperado
+   ate hoje pela data de Cuiaba). "Copiar cobranca" leva o rascunho para a area de transferencia e nada sai daqui;
+   "Cobrei agora" grava o verbo cobrar (registra a cobranca e move o retorno 2 dias) com os 6 s de desfazer. Card que
+   ja esta na lista de Hoje nao repete aqui; sem a chave cob3 (snapshot antigo) o grupo some e o aviso de parte faltando
+   nomeia cob3, como toda chave do snapshot. */
+function cobrarTerceiros(){
+  const hoje=new Set(hojeLista().map(chaveIt));
+  return (D.cob3||[]).filter(x=>{const k="tarefa|"+String(x.ref);return !hoje.has(k)&&!FEITOS.has(k);});
+}
+function renderCobrar(){
+  const l=cobrarTerceiros();
+  document.getElementById("cob3Box").classList.toggle("hidden",!l.length);
+  document.getElementById("cob3Lista").innerHTML=l.map(x=>{const d=Math.max(0,+x.dias||0);
+    return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(x.terceiro||"sem nome de quem responde")} · <span class="espera w">cobrar · ${d===0?"vence hoje":esc(d)+" d"}</span></small></span><span class="bts"><button class="sec" data-acao="copiarCobranca" data-a1="${esc(x.ref)}">Copiar cobrança</button><button class="pri" data-acao="cobreiAgora" data-a1="${esc(x.ref)}">Cobrei agora</button></span></div>`;}).join("");
+}
+function copiarCobranca(ref){
+  const x=(D.cob3||[]).find(y=>String(y.ref)===String(ref)); if(!x)return;
+  const t=String(x.rascunho||""), falhou=()=>toast("Não deu para copiar. O rascunho: "+t,null,false,9000);
+  try{navigator.clipboard.writeText(t).then(()=>toast("Rascunho copiado. Nada foi enviado: cole onde for cobrar.",null,false,2600),falhou);}catch(e){falhou();}
+}
+function cobreiAgora(ref){
+  const x=(D.cob3||[]).find(y=>String(y.ref)===String(ref)); if(!x)return;
+  FEITOS.add("tarefa|"+String(ref));
+  pendurar({origem:"tarefa",ref:String(ref),verbo:"cobrar",valor:null,cob3:true},"Cobrei · "+curto(x.titulo,60),null);
+  renderCobrar();
 }
 /* p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so, no molde da lista Hoje do Things e da caixa do Linear: uma fila,
    acao propria por tipo. Entram em Hoje, depois dos cards, as pecas da Mesa que nasceram hoje e as 3 paradas de maior
@@ -1625,6 +1668,7 @@ function cobrar(ref){
 function desfazer(){ if(!PEND)return; const p=PEND; clearTimeout(p.t); PEND=null;
   if(p.mesa){msVolta(p.mesa,false);toast("Desfeito. Nada foi gravado.",null,false,2600);return;}
   if(p.origem!=null)FEITOS.delete(p.origem+"|"+String(p.ref));
+  if(p.cob3)renderCobrar();
   if(p.voz){abrirVoz(p.voz);toast("Desfeito. O texto voltou para você corrigir.",null,false,3000);return;}
   toast("Desfeito. Nada foi gravado.",null,false,2600); }
 /* p4.3: com o auto-advance, um ato novo costuma estar pendente quando o anterior volta do banco. O
@@ -1681,7 +1725,7 @@ async function enviar(){
   }
   const {data,error}=await comTetoR(sb.rpc("agir",{p_origem:p.origem,p_ref:String(p.ref),p_verbo:p.verbo,p_valor:valor}),LIMITE_ACAO,"agir");
   const txt=error?erroTxt(error):(typeof data==="string"?data:"feito");
-  if(error||String(txt).startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); resultado(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
+  if(error||String(txt).startsWith("RECUSADO")){ FEITOS.delete(p.origem+"|"+String(p.ref)); if(p.cob3)renderCobrar(); resultado(String(txt).replace(/^RECUSADO:\s*/,"Não gravou: ").slice(0,220),"bad",9000); return; }
   resultado(p.verbo==="deliberar"?await recibo("Gravado."):"Gravado.",null,p.verbo==="deliberar"?6000:2500);
   await carregar(true);
 }
