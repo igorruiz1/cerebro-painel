@@ -2743,3 +2743,123 @@ test('p4.38 demonstracao: a frente ficticia do socio abre os quatro blocos inven
   expect(rede).toEqual([]);
   expect(erros).toEqual([]);
 });
+
+/* ---------- plano 122 · Onda 1, "a tela nunca mente" (p4.39, s1446, 10/10/2026) ----------
+   Google SRE: falhar alto, nunca vazio calado. Cada teste abaixo reprova a p4.38 (prova no PR).
+   DUBLE_122 entra DEPOIS do DUBLE e embrulha o cliente: window.__falha = {nome: 'rede' | 401 | {message}}
+   faz a RPC cair (rede: a promessa rejeita, como o fetch sem rede), voltar 401 (JWT vencido) ou {error};
+   window.__errosCarga poe erros por chave no retorno de painel_carga, como o snapshot faz quando uma fonte cai;
+   window.__authCb e o callback do onAuthStateChange, para o teste disparar SIGNED_OUT e SIGNED_IN. */
+const DUBLE_122 = `(()=>{ const orig=window.supabase.createClient;
+  window.supabase.createClient=(...x)=>{ const c=orig(...x), rpc=c.rpc;
+    c.rpc=(n,a)=>{ const f=(window.__falha||{})[n];
+      if(f){ window.__rpc.push({n,a});
+        if(f==='rede') return Promise.reject(new TypeError('Failed to fetch'));
+        if(f===401) return Promise.resolve({data:null,error:{message:'JWT expired',code:'PGRST301'},status:401});
+        return Promise.resolve({data:null,error:f,status:400}); }
+      const r=rpc(n,a);
+      return n==='painel_carga'&&window.__errosCarga?r.then(x=>({...x,data:{...x.data,erros:window.__errosCarga}})):r; };
+    c.auth.onAuthStateChange=cb=>{ window.__authCb=cb; return {data:{subscription:{unsubscribe(){}}}}; };
+    c.auth.signOut=()=>Promise.resolve({error:null});
+    return c; }; })();`;
+async function abrir122(page){
+  const erros=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(DUBLE_122);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit') && !!document.querySelector('#kanban .item'));
+  return erros;
+}
+const nRpc = (page,n)=>page.evaluate(n=>window.__rpc.filter(x=>x.n===n).length, n);
+
+test('122 carga: erro por chave de painel_carga e remontagem que falha aparecem, nunca calados', async ({page})=>{
+  const erros = await abrir122(page);
+  await expect(page.locator('#falha')).toBeHidden();
+  await page.evaluate(async()=>{ window.__errosCarga={c13:'canceling statement due to statement timeout'}; await carregar(); });
+  await expect(page.locator('#falha'), 'data.erros de painel_carga aparece').toBeVisible();
+  await expect(page.locator('#falha')).toContainText('c13');
+  await expect(page.locator('#falha')).toContainText('statement timeout');
+  await page.evaluate(async()=>{ window.__errosCarga=null; window.__falha={painel_snapshot_montar:{message:'permission denied for function painel_snapshot_montar'}}; await carregar(true); });
+  await expect(page.locator('#falha'), 'remontagem com {error} aparece').toContainText('painel_snapshot_montar');
+  await expect(page.locator('#falha')).toContainText('permission denied');
+  await page.evaluate(async()=>{ window.__falha={painel_snapshot_montar:'rede'}; await carregar(true); });
+  await expect(page.locator('#falha'), 'remontagem sem rede aparece').toContainText('Failed to fetch');
+  await page.evaluate(async()=>{ window.__falha={painel_carga:'rede'}; await carregar(); });
+  await expect(page.locator('#falha'), 'carga sem rede aparece').toContainText('Failed to fetch');
+  await expect(page.locator('#foco .tit'), 'o que estava na tela fica').toBeVisible();
+  await page.evaluate(async()=>{ window.__falha={}; await carregar(); });
+  await expect(page.locator('#falha'), 'carga boa apaga o aviso').toBeHidden();
+  expect(erros).toEqual([]);
+});
+
+test('122 sessao: SIGNED_OUT e 401 levam ao login com aviso, e entrar de novo reabre o painel', async ({page})=>{
+  const erros = await abrir122(page);
+  await page.evaluate(()=>window.__authCb('SIGNED_OUT',null));
+  await expect(page.locator('#login'), 'SIGNED_OUT mostra o login').toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#lmsg')).toContainText('sessão');
+  const n0 = await nRpc(page,'painel_carga');
+  await page.evaluate(()=>window.__authCb('SIGNED_IN',{user:{id:'x'}}));
+  await expect(page.locator('#app'), 'entrar de novo reabre').toBeVisible();
+  await expect.poll(()=>nRpc(page,'painel_carga'), 'e le o banco de novo').toBe(n0+1);
+  await page.evaluate(async()=>{ window.__falha={painel_carga:401}; await carregar(); });
+  await expect(page.locator('#login'), '401 na carga mostra o login').toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#lmsg')).toContainText('sessão');
+  expect(erros).toEqual([]);
+});
+
+test('122 volta do segundo plano: o presidente rele depois de um minuto ou de carga falha, nunca com a folha aberta', async ({page})=>{
+  const erros = await abrir122(page);
+  const volta = ()=>page.evaluate(()=>{ document.dispatchEvent(new Event('visibilitychange')); return new Promise(r=>setTimeout(r,250)); });
+  const n0 = await nRpc(page,'painel_carga');
+  await volta();
+  expect(await nRpc(page,'painel_carga'), 'voltar logo nao rele').toBe(n0);
+  await page.evaluate(()=>{ CARGA_EM=Date.now()-61000; });
+  await volta();
+  expect(await nRpc(page,'painel_carga'), 'voltar depois de um minuto rele').toBe(n0+1);
+  await page.evaluate(()=>{ CARGA_EM=Date.now()-61000; abrirFila(0); });
+  await volta();
+  expect(await nRpc(page,'painel_carga'), 'com a folha aberta nao redesenha por baixo').toBe(n0+1);
+  await page.evaluate(async()=>{ fecharFolha(); window.__falha={painel_carga:{message:'statement timeout'}}; await carregar(); window.__falha={}; });
+  await volta();
+  expect(await nRpc(page,'painel_carga'), 'a ultima carga falhou: voltar rele na hora').toBe(n0+3);
+  await expect(page.locator('#falha')).toBeHidden();
+  expect(erros).toEqual([]);
+});
+
+test('122 ato sem resposta: com o ato em voo nao reenvia, e o retry confere o banco antes de repetir', async ({page})=>{
+  const erros = await abrir122(page);
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_ACAO);
+  const ATO = {origem:'tarefa',ref:'2',verbo:'repactuar',valor:'2026-10-20'};
+  const manda = ()=>page.evaluate(a=>{ PEND={...a,t:0}; enviar(); }, ATO);
+  await page.evaluate(()=>{ window.__pendura=['agir']; });
+  await manda();
+  await expect(page.locator('#tmsg')).toHaveText('gravando…');
+  await manda();
+  expect(await nRpc(page,'agir'), 'em voo: o segundo toque nao vai ao banco').toBe(1);
+  await expect(page.locator('#tmsg')).toContainText('já está sendo gravado');
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#tmsg'), 'o teto continua dizendo que pode ter gravado').toContainText('Nada foi confirmado');
+  /* o banco tinha gravado: o acao mostra o ato depois do envio, e o retry nao repete */
+  await page.evaluate(()=>{ window.__pendura=[]; window.__tab={acao:[{verbo:'repactuar',valor:'2026-10-20',agido_em:new Date().toISOString()}]}; });
+  await manda();
+  await expect(page.locator('#tmsg')).toContainText('já tinha gravado');
+  expect(await nRpc(page,'agir'), 'o retry conferiu o acao e nao repetiu').toBe(1);
+  /* o banco nao tinha gravado: o retry vai, com o mesmo id de ato */
+  await page.evaluate(()=>{ window.__pendura=['agir']; window.__tab={acao:[]}; });
+  await manda();
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#tmsg')).toContainText('Nada foi confirmado');
+  const a1 = await page.evaluate(()=>[...ATOS.values()].map(a=>a.id+':'+a.estado));
+  expect(a1.length, 'um ato incerto').toBe(1);
+  expect(a1[0]).toMatch(/:incerto$/);
+  await manda();
+  await expect.poll(()=>nRpc(page,'agir'), 'sem registro no acao, o retry vai ao banco').toBe(3);
+  const a2 = await page.evaluate(()=>[...ATOS.values()].map(a=>a.id+':'+a.estado));
+  expect(a2, 'o retry reaproveita o id do ato').toEqual([a1[0].replace(/:incerto$/,':voo')]);
+  expect(erros).toEqual([]);
+});

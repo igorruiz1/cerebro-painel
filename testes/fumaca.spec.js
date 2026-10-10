@@ -2138,3 +2138,123 @@ test('t1920: a 390x844 o titulo da primeira decisao termina ate 450 px, sem rola
   expect(r.SW).toBe(r.W);
   expect(erros).toEqual([]);
 });
+
+/* ---------- plano 122 · Onda 1, "a tela nunca mente" (v93, s1446, 10/10/2026) ----------
+   Google SRE: falhar alto, nunca vazio calado. Cada teste abaixo reprova a v92 (prova no PR).
+   comFalhas122 acrescenta a qualquer duble derivado do DUBLE_CONTA: window.__falha = {rpc: 'rede' | 401 | {message}}
+   (rede: a promessa rejeita, como o fetch sem rede; 401: JWT vencido), window.__pendura (RPC que nunca volta),
+   window.__falhaFrom (view que volta {error}) e window.__errosCarga (erros por chave no retorno de painel_carga). */
+function comFalhas122(d){
+  const troca=(s,a,b)=>{ if(!s.includes(a)) throw new Error('duble 122: ancora nao casa: '+a.slice(0,50)); return s.replace(a,b); };
+  d=troca(d,'then:(f,g)=>Promise.resolve({data:[],error:null,count:0}).then(f,g)',
+    'then:(f,g)=>Promise.resolve((window.__falhaFrom||[]).includes(v)?{data:null,error:{message:"canceling statement due to statement timeout"}}:{data:[],error:null,count:0}).then(f,g)');
+  d=troca(d,'if(n==="painel_carga"){',
+    'const _f=(window.__falha||{})[n]; if(_f==="rede")return Promise.reject(new TypeError("Failed to fetch"));'+
+    ' if(_f===401)return Promise.resolve({data:null,error:{message:"JWT expired",code:"PGRST301"},status:401});'+
+    ' if(_f)return Promise.resolve({data:null,error:_f,status:400}); if((window.__pendura||[]).includes(n))return new Promise(()=>{});'+
+    ' if(n==="painel_carga"){');
+  return troca(d,'erros:{}','erros:(window.__errosCarga||{})');
+}
+async function abrir122(page, duble){
+  const erros=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  await dublar(page, comFalhas122(duble||DUBLE_ARGS));
+  await page.goto(PAGINA);
+  await page.waitForFunction(()=>document.getElementById('selo-ver').textContent.trim()!=='—');
+  return erros;
+}
+
+test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some calada', async ({page})=>{
+  const erros = await abrir122(page);
+  await revelarCasca(page);
+  await page.evaluate(()=>carregar());
+  const ato = ()=>exec(()=>sb.rpc('agir',{p_origem:'tarefa',p_ref:'1',p_verbo:'feita',p_valor:'prova de teste'}));
+  const le = ()=>({inv:D.inv.length, fila:D.fila.length, log:document.getElementById('log').textContent,
+    cls:document.getElementById('log').className, falhou:document.getElementById('falhou').classList.contains('on'),
+    det:document.getElementById('falhoudet').textContent});
+  /* (1) remontagem com {error}, carga com erro por chave e as views do Tudo com {error} */
+  const r1 = await page.evaluate(async([ato,le])=>{ ato=eval(ato); le=eval(le);
+    D.inv=[{id:7,frente:'00-teste',dono:'igor',status:'pendente',titulo:'item que estava na tela',acoes:[]}]; D.invr=[]; LAZY.tudo=1;
+    window.__falhaFrom=['v_inventario_frente','v_inventario_resumo'];
+    window.__falha={painel_snapshot_montar:{message:'permission denied for function painel_snapshot_montar'}};
+    window.__errosCarga={garg:'canceling statement due to statement timeout'};
+    const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
+  expect(r1.ok, 'o ato gravou').toBe(true);
+  expect(r1.inv, 'a lista do Tudo que estava na tela continua, nao vira vazio').toBe(1);
+  expect(r1.log, 'o aviso diz que a tela nao releu').toContain('não releu');
+  expect(r1.cls).toContain('bad');
+  expect(r1.falhou, 'a faixa de carga incompleta acende').toBe(true);
+  expect(r1.det).toContain('painel_snapshot_montar');
+  expect(r1.det).toContain('permission denied');
+  expect(r1.det).toContain('v_inventario_frente');
+  expect(r1.det).toContain('garg');
+  /* (2) painel_carga sem rede: a fila fica, e o aviso diz */
+  const r2 = await page.evaluate(async([ato,le])=>{ ato=eval(ato); le=eval(le);
+    window.__falhaFrom=[]; window.__errosCarga=null; window.__falha={painel_carga:'rede'}; LAZY.tudo=0;
+    D.fila=[{origem:'tarefa',ref:'1405',titulo:'Card que estava na tela',nivel:1,acoes:[]}];
+    const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
+  expect(r2.fila, 'a fila que estava na tela continua').toBe(1);
+  expect(r2.log).toContain('não releu');
+  expect(r2.det).toContain('Failed to fetch');
+  /* (3) tudo de volta: a releitura limpa a faixa */
+  const r3 = await page.evaluate(async([ato,le])=>{ ato=eval(ato); le=eval(le);
+    window.__falha={}; const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
+  expect(r3.falhou, 'releitura boa apaga a faixa').toBe(false);
+  expect(r3.cls).not.toContain('bad');
+  expect(erros).toEqual([]);
+});
+
+test('122 deliberar e marcar em lote: rede, {error} e teto aparecem, e nada fica pendurado', async ({page})=>{
+  const erros = await abrir122(page);
+  await revelarCasca(page);
+  const log = ()=>page.evaluate(()=>({t:document.getElementById('log').textContent, c:document.getElementById('log').className}));
+  const prepara = ()=>page.evaluate(()=>{
+    LE=[{ref:'r1',titulo:'peca 1',tipo:'fato',frente:'00-teste',dias:0,dias_para_decurso:3},
+        {ref:'r2',titulo:'peca 2',tipo:'fato',frente:'00-teste',dias:0,dias_para_decurso:3}];
+    SEL.clear(); LE_TUDO=0; rLeituras(); abreDelib('r1'); document.getElementById('dt-r1').value='o que fica valendo, de teste'; });
+  const delib = ()=>page.evaluate(async()=>{ try{ await enviaDelib('r1'); return 'ok'; }catch(e){ return 'jogou: '+e.message; } });
+  /* (1) agir sem rede: erro na tela, nada jogado para o console */
+  await prepara();
+  await page.evaluate(()=>{ window.__falha={agir:'rede'}; });
+  expect(await delib(), 'enviaDelib nao pode jogar').toBe('ok');
+  let l = await log();
+  expect(l.t).toContain('Failed to fetch'); expect(l.c).toContain('bad');
+  /* (2) agir grava, marcar_leituras volta {error}: o erro aparece, nao some atras do "registrado" */
+  await prepara();
+  await page.evaluate(()=>{ window.__falha={marcar_leituras:{message:'permission denied for table leitura'}}; });
+  expect(await delib()).toBe('ok');
+  l = await log();
+  expect(l.t, 'marcar como lida falhou e a tela diz').toContain('permission denied'); expect(l.c).toContain('bad');
+  /* (3) teto: marcar em lote e deliberar que nao voltam viram aviso, e as linhas voltam ao normal */
+  await page.clock.install();
+  const lim = await page.evaluate(()=>LIMITE_ACAO);
+  await prepara();
+  await page.evaluate(()=>{ window.__falha={}; window.__pendura=['marcar_leituras'];
+    document.querySelector('#leituras .lerow input[type=checkbox]').click(); marcarLote(); });
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#log'), 'marcarLote no teto').toContainText('Sem resposta do banco');
+  expect(await page.evaluate(()=>[...document.querySelectorAll('#leituras .lerow')].every(x=>x.style.opacity==='')), 'linha nao fica apagada').toBe(true);
+  await prepara();
+  await page.evaluate(()=>{ window.__pendura=['agir']; enviaDelib('r1'); });
+  await page.clock.fastForward(lim+100);
+  await expect(page.locator('#log'), 'enviaDelib no teto').toContainText('Sem resposta do banco');
+  expect(erros).toEqual([]);
+});
+
+test('122 sessao no bastidor: SIGNED_OUT e 401 levam ao login com aviso, e entrar de novo reabre', async ({page})=>{
+  const erros = await abrir122(page, DUBLE_AUTH);
+  await expect(page.locator('#app')).toBeVisible();
+  await page.evaluate(()=>window.__auth('SIGNED_OUT',null));
+  await expect(page.locator('#login'), 'SIGNED_OUT mostra o login').toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#lmsg')).toContainText('sessão');
+  const n0 = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
+  await page.evaluate(()=>window.__auth('SIGNED_IN',{user:{id:'u'}}));
+  await expect(page.locator('#app'), 'entrar de novo reabre').toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>window.__n.rpc.painel_carga||0), 'e le o banco de novo').toBe(n0+1);
+  await page.evaluate(async()=>{ window.__falha={painel_carga:401}; await carregar(); });
+  await expect(page.locator('#login'), '401 na carga mostra o login').toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#lmsg')).toContainText('sessão');
+  expect(erros).toEqual([]);
+});
