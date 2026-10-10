@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v92";
+const VER="v93";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1911,7 +1911,7 @@ async function codigo(){
   if(c.length<6){lm("O código tem 6 dígitos.","bad");return;}
   const {error}=await sb.auth.verifyOtp({email:e,token:c,type:"email"});
   lm(error?("Erro: "+esc(error.message)):"Entrando…",error?"bad":"ok");}
-async function sair(){await sb.auth.signOut();location.reload();}
+async function sair(){SAINDO=true;await sb.auth.signOut();location.reload();}
 function abrirSenha(){document.getElementById("app").classList.add("hidden");
   document.getElementById("senha").classList.remove("hidden");window.scrollTo(0,0);}
 function fecharSenha(){document.getElementById("senha").classList.add("hidden");
@@ -2012,9 +2012,11 @@ async function carregarAgora(ehRetentativa){
      ocupado. Fonte nova entra como LINHA em painel_snapshot_fonte, nunca editando funcao.
      O preco e honesto e esta na tela: o dado tem IDADE, e a idade aparece. */
   let dados={}, GERADO=null, IDADE=null; SAUDE=null;
+  let caiu=false;
   const rc=await comTeto(sb.rpc("painel_carga"), LIMITE_RECARGA, "painel_carga")
-    .then(x=>{ if(x&&x.error){FALHAS.push("painel_carga — "+x.error.message); return null;} return (x&&x.data)||null; })
+    .then(x=>{ if(x&&x.error){caiu=semSessao(x);FALHAS.push("painel_carga — "+x.error.message); return null;} return (x&&x.data)||null; })
     .catch(e=>{ FALHAS.push("painel_carga — "+(String(e&&e.message).startsWith("__TETO__")?"sem resposta em "+(LIMITE_RECARGA/1000)+"s":(e&&e.message)||"erro")); return null; });
+  if(caiu){ sessaoCaiu(); return; }
   if(rc){
     dados  = rc.dados||{};
     GERADO = rc.gerado_em||null;
@@ -2051,6 +2053,7 @@ async function carregarAgora(ehRetentativa){
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
      op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), pf:U(pf,D.pf), depois:D.depois||[]};
+  FALHA_RELEITURA=false;
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
   LAZY.tudo=0;LAZY.sentinela=0;
@@ -2972,7 +2975,7 @@ async function enviarPendente(){
   msg(t,"ok");
   /* NAO devolve o card em caso de teto aqui: o banco ja gravou e repor na tela seria mentir */
   try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
-  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela nao releu: "+e.message,"bad",9000); }
+  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
 }
 function desfazer(){
   if(!PEND){return;}
@@ -2982,18 +2985,29 @@ function desfazer(){
   volta(p);
   msg("desfeito. Nada foi gravado.",null,2600);
 }
+/* v93 (plano 122, s1446): a releitura pos-ato nao esvazia nem engole erro (Google SRE: falhar alto, nunca vazio calado).
+   Antes, view que voltava {error} virava [] (Tudo e Sentinela apareciam vazios logo depois do ato), a remontagem que
+   falhava sumia num catch, painel_carga com erro ou sem rede nao mudava nada e nao dizia nada, e os erros por chave do
+   snapshot nunca eram lidos. Agora o que falhou mantem o dado anterior, acende a faixa de carga incompleta e a funcao
+   rejeita com a lista, para o chamador dizer "gravado, mas a tela nao releu". O teto segue rejeitando com __TETO__. */
+let FALHA_RELEITURA=false;
 async function recarregarFila(){
+  const FALHAS=[], txt=e=>(e&&e.message)||"falha de rede";
   const q=(v,f)=>{let b=sb.from(v).select("*");if(f)b=f(b);
-    return comTeto(b.then(r=>r.error?[]:r.data), LIMITE_RECARGA, "15s").catch(e=>{if(ehTeto(e))throw e;return [];});};
+    return comTeto(b.then(r=>{ if(r.error){FALHAS.push(v+" — "+r.error.message);return null;} return r.data||[]; }), LIMITE_RECARGA, "15s")
+      .catch(e=>{if(ehTeto(e))throw e;FALHAS.push(v+" — "+txt(e));return null;});};
   /* v49: o Igor ACABOU de escrever. Mostrar o snapshot de ate 5 min atras seria devolver
      a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
      Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
      e rele. As outras 15 continuam por conta do cron de 5 min. */
   const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg","exp"];
-  try{ await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s"); }
-  catch(e){ if(ehTeto(e))throw e; }
+  const m=await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s")
+    .catch(e=>{ if(ehTeto(e))throw e; return {error:{message:txt(e)}}; });
+  if(m&&m.error) FALHAS.push("painel_snapshot_montar — "+m.error.message+" (a fila pode ser de antes do ato)");
   const rc=await comTeto(sb.rpc("painel_carga",{p_chaves:VIVAS}), LIMITE_RECARGA, "15s")
-    .then(x=>(x&&!x.error)?x.data:null).catch(e=>{if(ehTeto(e))throw e;return null;});
+    .then(x=>{ if(!x||x.error||!x.data){FALHAS.push("painel_carga — "+(x&&x.error?x.error.message:"resposta vazia"));return null;} return x.data; })
+    .catch(e=>{if(ehTeto(e))throw e;FALHAS.push("painel_carga — "+txt(e));return null;});
+  if(rc) Object.keys(rc.erros||{}).forEach(k=>FALHAS.push(k+" — "+rc.erros[k]));
   const d=(rc&&rc.dados)||{};
   if(d.fila) D.fila=d.fila;
   if(d.cont) D.cont=d.cont[0]||{};
@@ -3009,16 +3023,19 @@ async function recarregarFila(){
     if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
   if(LAZY.tudo){
     const [rz,it]=await Promise.all([q("v_inventario_resumo"),q("v_inventario_frente")]);
-    D.invr=rz||[]; D.inv=it||[]; rTudo();
+    if(rz&&it){ D.invr=rz; D.inv=it; rTudo(); }
   }
   /* v46: a SENTINELA passou a agir, entao ela tem de RELER. Sem isto o sinal atendido
      continuaria na tela e o contador da aba seguiria contando alarme ja resolvido —
      que e exatamente o defeito que a aba existe para denunciar. */
   if(LAZY.sentinela){
     const [sn,ac]=await Promise.all([q("v_sentinela"),q("v_acoes_inventario",b=>b.eq("origem","tarefa"))]);
-    D.sent=sn||[]; D.sentAc=mapaAcoes(ac); rSentinela();
+    if(sn&&ac){ D.sent=sn; D.sentAc=mapaAcoes(ac); rSentinela(); }
   }
   rAgora();marcaAbas();
+  if(FALHAS.length){ avisaFalha(FALHAS); FALHA_RELEITURA=true; throw new Error(FALHAS.join("  ·  ")); }
+  /* a faixa que esta releitura acendeu apaga quando ela volta boa; a da carga inteira fica com a carga */
+  if(FALHA_RELEITURA){ FALHA_RELEITURA=false; avisaFalha([]); }
 }
 async function exec(fn,okMsg){
   let data,error;
@@ -3030,7 +3047,7 @@ async function exec(fn,okMsg){
   msg(okMsg||t,"ok");
   /* daqui em diante o banco JA gravou: se a tela nao conseguir reler, o aviso tem de dizer isso */
   try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
-  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela nao releu: "+e.message,"bad",9000); }
+  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
   return true;}
 
 /* REGISTRAR: a acao primaria da v25. O dono escreve, o executor le. */
@@ -3134,20 +3151,34 @@ function abreDelib(ref){
   const b=document.getElementById("bd-"+ref); if(b)b.textContent=abriu?"fechar":"deliberar";
   if(abriu){const t=document.getElementById("dt-"+ref); if(t)t.focus();}
 }
+/* v93 (plano 122, s1446): deliberar e marcar em lote iam ao banco sem teto e sem catch: sem rede a promessa rejeitava
+   calada (nada na tela), RPC que nao voltava deixava a linha apagada para sempre, e o erro do marcar_leituras depois do
+   deliberar sumia atras do "registrado". Agora as duas passam pelo teto e todo erro aparece. */
+async function rpcAto(n,a){
+  try{ return (await comTeto(sb.rpc(n,a),LIMITE_ACAO,"12s"))||{data:null,error:null}; }
+  catch(e){ return ehTeto(e)?{teto:true}:{data:null,error:{message:(e&&e.message)||"falha de rede"}}; }
+}
+async function releLeituras(){
+  try{ await carregarAba("leituras",true); await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
+  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
+}
 async function enviaDelib(ref){
   /* deliberar em output ja e executavel: agir() encaminha para deliberar(), testado em 29/08.
      A peca sai da pilha de leitura no mesmo ato, porque quem escreveu sobre ela leu. */
   const t=document.getElementById("dt-"+ref);
   const v=(t&&t.value||"").trim();
   if(v.length<3){msg("Escreva o que você quer perguntar ou deixar valendo.","bad",3500);if(t)t.focus();return;}
-  const {data,error}=await sb.rpc("agir",{p_origem:"output",p_ref:ref,p_verbo:"deliberar",p_valor:v});
-  if(error){msg("Erro: "+error.message,"bad",8000);return;}
-  const r=(typeof data==="string")?data:"registrado";
+  const a=await rpcAto("agir",{p_origem:"output",p_ref:ref,p_verbo:"deliberar",p_valor:v});
+  if(a.teto){avisaTravou("12s",false);return;}
+  if(a.error){msg("Erro: "+a.error.message,"bad",8000);return;}
+  const r=(typeof a.data==="string")?a.data:"registrado";
   if(String(r).indexOf("RECUSADO")===0){msg(r,"bad",8000);return;}
   msg(r,"ok",6000);
-  await sb.rpc("marcar_leituras",{p_refs:[ref]});
-  await carregarAba("leituras",true);
-  await recarregarFila();
+  const m=await rpcAto("marcar_leituras",{p_refs:[ref]});
+  const mt=(typeof m.data==="string")?m.data:"";
+  const naoMarcou=m.teto?"sem resposta em 12s":m.error?m.error.message:(mt.indexOf("RECUSADO")===0?mt:null);
+  await releLeituras();
+  if(naoMarcou) msg("Deliberação registrada, mas a peça não foi marcada como lida ("+naoMarcou+"). Marque de novo.","bad",9000);
 }
 async function marcarLote(){
   /* Corrigido em 29/08: a resposta do banco manda na tela. Antes, qualquer texto virava verde,
@@ -3156,18 +3187,18 @@ async function marcarLote(){
   const refs=[...SEL];
   const linhas=[...document.querySelectorAll("#leituras .lerow:has(input[type=checkbox]:checked)")];
   linhas.forEach(l=>l.style.opacity=".35");
-  const {data,error}=await sb.rpc("marcar_leituras",{p_refs:refs});
+  const r=await rpcAto("marcar_leituras",{p_refs:refs});
   linhas.forEach(l=>l.style.opacity="");
-  if(error){msg("Erro: "+error.message,"bad",8000);return;}
-  const t=(typeof data==="string")?data:"";
+  if(r.teto){avisaTravou("12s",false);return;}
+  if(r.error){msg("Erro: "+r.error.message,"bad",8000);return;}
+  const t=(typeof r.data==="string")?r.data:"";
   const recusou=t.indexOf("RECUSADO")===0;
   msg(t||"sem resposta do banco", recusou?"bad":"ok", recusou?8000:5000);
   /* Recusa NAO recarrega: recarregar apagaria a selecao e o dono ficaria sem saber
      o que tentar de novo. Foi assim que a falha de 29/08 apareceu como "sumiu tudo e nada mudou". */
   if(recusou)return;
   SEL.clear();
-  await carregarAba("leituras",true);
-  await recarregarFila();}
+  await releLeituras();}
 
 /* ---------- COMANDO ---------- */
 function rDash(){ rDelta(); rRunway(); rCaixa13(); rFunil(); rHero(); rPlacar(); rM9(); rFrentes(); rSmallMult(); }
@@ -3939,7 +3970,22 @@ sb.auth.getSession().then(({data})=>{
    carregar(): INITIAL_SESSION duplicava a abertura e TOKEN_REFRESHED (cerca de 1x por hora)
    redesenhava a tela no meio do uso, apagando o que o Igor digitava em "o que fica valendo".
    A abertura com sessao ja salva e da getSession acima; a volta ao app e do visibilitychange. */
+/* v93 (plano 122, s1446): sessao que cai no meio do uso leva ao login com aviso. SIGNED_OUT chega quando o Igor sai em
+   outro aparelho ou quando o supabase-js nao consegue renovar o token; 401 (JWT vencido) chega na carga. Antes a tela
+   seguia aberta com o dado velho. O ato que esperava o desfazer volta para a tela: sem sessao ele seria recusado. */
+let SAINDO=false;
+function semSessao(r){ return !!r&&(r.status===401||(!!r.error&&(r.error.code==="PGRST301"||/JWT expired/i.test(r.error.message||"")))); }
+function sessaoCaiu(){
+  if(SAINDO) return;
+  let perdeu=false;
+  if(PEND){ clearTimeout(PEND.timer); document.getElementById("desf").classList.remove("on"); volta(PEND); PEND=null; perdeu=true; }
+  ABERTO=false;
+  document.getElementById("app").classList.add("hidden"); document.getElementById("fator").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+  document.getElementById("lmsg").textContent="Sua sessão terminou (o acesso venceu ou você saiu em outro aparelho). Entre de novo para ver o painel."+(perdeu?" O último ato não foi enviado.":"");
+}
 sb.auth.onAuthStateChange((ev,s)=>{
+  if(ev==="SIGNED_OUT"){ setTimeout(sessaoCaiu,0); return; }
   const lg=document.getElementById("login");
   if(ev!=="SIGNED_IN"||!s||lg.classList.contains("hidden")) return;
   lg.classList.add("hidden");
