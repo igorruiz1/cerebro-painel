@@ -2863,3 +2863,47 @@ test('122 ato sem resposta: com o ato em voo nao reenvia, e o retry confere o ba
   expect(a2, 'o retry reaproveita o id do ato').toEqual([a1[0].replace(/:incerto$/,':voo')]);
   expect(erros).toEqual([]);
 });
+
+/* p4.40 (t2044, s1522): o painel apita no celular por Web Push. O link do rodape pede a permissao num toque,
+   assina com a chave publica que vem do banco e grava a assinatura por push_assinar. O service worker e o
+   PushManager sao dublados: o que se cobra e o caminho da tela ate o banco, nunca o servico de push real. */
+const PUSH_DUBLE = ()=>{
+  window.__push=[];
+  const sub={endpoint:'https://web.push.apple.com/teste',toJSON(){return {endpoint:this.endpoint,keys:{p256dh:'B'+'A'.repeat(86),auth:'a'.repeat(22)}};}};
+  const reg={pushManager:{getSubscription:()=>Promise.resolve(window.__pushSub||null),
+    subscribe:o=>{window.__push.push({op:'subscribe',userVisibleOnly:o.userVisibleOnly,chave:o.applicationServerKey.length});window.__pushSub=sub;return Promise.resolve(sub);}}};
+  Object.defineProperty(navigator,'serviceWorker',{configurable:true,value:{register:u=>{window.__push.push({op:'register',u});return Promise.resolve(reg);},ready:Promise.resolve(reg)}});
+  window.PushManager=function(){};
+  window.Notification={permission:'default',requestPermission:()=>{window.Notification.permission='granted';return Promise.resolve('granted');}};
+};
+test('p4.40 apito: o link do rodape pede a permissao, assina com a chave do banco e grava a assinatura', async ({page})=>{
+  await page.addInitScript(PUSH_DUBLE);
+  const erros = await abrir(page);
+  await page.evaluate(()=>{ const r=sb.rpc; sb.rpc=(n,a)=>n==='push_chave_publica'?(window.__rpc.push({n,a}),Promise.resolve({data:'B'+'A'.repeat(86),error:null})):r(n,a); });
+  expect(await page.evaluate(()=>window.__push.filter(p=>p.op==='register').map(p=>p.u)), 'registra o sw.js').toEqual(['sw.js']);
+  await page.locator('#avisoLink').click();
+  await expect(page.locator('#avisoLink'), 'o link passa a dizer que o aparelho recebe').toHaveText('Avisos ativos neste aparelho');
+  const sub = await page.evaluate(()=>window.__push.find(p=>p.op==='subscribe'));
+  expect(sub, 'assina so com aviso visivel e com a chave de 65 bytes').toEqual({op:'subscribe',userVisibleOnly:true,chave:65});
+  const gravou = await page.evaluate(()=>window.__rpc.find(r=>r.n==='push_assinar'));
+  expect(gravou && gravou.a.p_endpoint).toBe('https://web.push.apple.com/teste');
+  expect(gravou && gravou.a.p_p256dh.length).toBe(87);
+  expect(gravou && gravou.a.p_auth.length).toBe(22);
+  expect(erros).toEqual([]);
+});
+test('p4.40 apito: sem suporte a push (iPhone fora da Tela de Inicio) o toque explica e nao chama o banco', async ({page})=>{
+  await page.addInitScript(()=>{ delete window.PushManager; Object.defineProperty(navigator,'userAgent',{get:()=>'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'}); });
+  const erros = await abrir(page);
+  await page.locator('#avisoLink').click();
+  await expect(page.locator('#tmsg')).toContainText('Tela de Início');
+  expect(await page.evaluate(()=>window.__rpc.filter(r=>/^push_/.test(r.n)).length), 'nada vai ao banco').toBe(0);
+  expect(erros).toEqual([]);
+});
+test('p4.40 apito: o sw.js mostra o aviso recebido e o toque abre o painel', async ()=>{
+  const sw = require('fs').readFileSync(path.resolve(__dirname, '..', 'sw.js'), 'utf8');
+  expect(sw).toMatch(/addEventListener\('push'/);
+  expect(sw).toMatch(/showNotification\(/);
+  expect(sw).toMatch(/addEventListener\('notificationclick'/);
+  expect(sw).toMatch(/openWindow\(/);
+  expect(sw, 'sem cache: o painel le o banco ao vivo').not.toMatch(/caches\.|addEventListener\('fetch'/);
+});
