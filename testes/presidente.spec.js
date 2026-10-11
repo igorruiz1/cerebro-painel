@@ -49,6 +49,8 @@ const DUBLE = `(()=>{
     vesp:[],
     /* p126: fila unica do banco presente e sem resumo por padrao (montagem antiga); o teste do p126 troca */
     hoje:[], hoje_resumo:[],
+    /* p4.42 (p127): bandeja vazia por padrao; os testes do p127 trocam D.band */
+    band:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2958,4 +2960,50 @@ test('p4.40 apito: o sw.js mostra o aviso recebido e o toque abre o painel', asy
   expect(sw).toMatch(/addEventListener\('notificationclick'/);
   expect(sw).toMatch(/openWindow\(/);
   expect(sw, 'sem cache: o painel le o banco ao vivo').not.toMatch(/caches\.|addEventListener\('fetch'/);
+});
+
+/* p4.42 (p127, s1898 11/10/2026): o bastidor deixa de decidir, entao a decisao da bandeja vem para o presidente. Card PRONTO
+   mostra o que aconteceu com a peca (Feito, Enviei, Refazer, Descartar); DECISAO da bandeja mostra Recusar. Tudo vai pela
+   painel_responder, so depois dos 6 s de desfazer; Refazer e Recusar levam motivo opcional. Card fora da bandeja nao ganha
+   o bloco. A p4.41 reprova aqui: o presidente nao lia a chave band e nao tinha porta para a peca pronta. */
+const CARD_BAND = {id:8,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:null,parado_dias:2,titulo:'Peca da bandeja',
+  acoes:[{verbo:'feita',rotulo:'feita',arg:null}]};
+const responder = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_responder').map(c=>c.a));
+
+test('p127: a carga pede a bandeja e o card PRONTO grava o que aconteceu pela painel_responder', async ({page})=>{
+  await page.setViewportSize({width:360, height:800});
+  await abrir(page);
+  const chaves = await page.evaluate(()=>(window.__rpc.find(c=>c.n==='painel_carga')||{a:{}}).a.p_chaves||[]);
+  expect(chaves, 'a carga pede a chave band').toContain('band');
+  await page.evaluate(c=>{window.__dados={band:[{tipo:'PRONTO',item_id:8},{tipo:'DECISAO',item_id:9}]};D.band=window.__dados.band;INV.push(c);abrirInv(8);}, CARD_BAND);
+  const bloco = page.locator('#folha #band');
+  await expect(bloco).toContainText('O que aconteceu com a peça?');
+  for (const nome of ['Feito','Enviei','Refazer','Descartar']) {
+    const h = await bloco.locator(`button:has-text("${nome}")`).evaluate(b=>b.getBoundingClientRect().height);
+    expect(h, nome+' abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  }
+  await bloco.locator('button:has-text("Enviei")').click();
+  expect(await responder(page), 'nada grava antes do desfazer').toEqual([]);
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'PRONTO',p_id:8,p_ato:'enviado',p_nota:null}]);
+
+  await page.evaluate(()=>{window.__rpc=[];abrirInv(8);});
+  await page.locator('#folha #band button:has-text("Refazer")').click();
+  await page.locator('#campo textarea').fill('Falta a planilha anexa');
+  await page.locator('#campo button:has-text("Devolver para refazer")').click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'PRONTO',p_id:8,p_ato:'refazer',p_nota:'Falta a planilha anexa'}]);
+});
+
+test('p127: DECISAO da bandeja ganha Recusar com motivo opcional; card fora da bandeja nao ganha bloco', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(c=>{window.__dados={band:[{tipo:'DECISAO',item_id:9}]};D.band=window.__dados.band;INV.push({...c,id:9});INV.push({...c,id:10});abrirInv(9);}, CARD_BAND);
+  const bloco = page.locator('#folha #band');
+  await expect(bloco.locator('button')).toHaveText(['Recusar']);
+  await bloco.locator('button:has-text("Recusar")').click();
+  await page.locator('#campo button:has-text("Recusar")').click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'DECISAO',p_id:9,p_ato:'recusado',p_nota:null}]);
+  await page.evaluate(()=>abrirInv(10));
+  await expect(page.locator('#folha #band'), 'card 10 fora da bandeja').toHaveCount(0);
 });
