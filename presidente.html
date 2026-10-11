@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-UkKOSokyhhvYF2ABMQyJJKZenSTtK/XC6gblBNTyVe0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lr/FMU/L/ZdzJZFyjsQ/7EL3q2Ktd/oG1KcBvA8O1Yw=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -431,6 +431,11 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .d4r{font-size:var(--fs-2);color:var(--ink2);overflow-wrap:anywhere}
 .d4v{padding:4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* fim estilo:quatro-blocos */
+/* p4.44 (p168): texto do check-in de segunda, revisavel antes de sair */
+.chk-txt{width:100%;min-height:200px;resize:vertical;border-radius:12px;border:1px solid var(--line);background:var(--card);padding:12px 14px;font-size:var(--fs-3);line-height:1.45}
+.chk-txt:focus{border-color:var(--acc)}
+/* p4.44: tres botoes na linha do Cobrar cabem lado a lado a 390 px (o canone mede Hoje em telas; a 1a versao quebrava em 2 linhas) */
+.cob3 .bts>button{flex:1 1 auto;padding:0 10px}
 </style>
 </head>
 <body>
@@ -569,7 +574,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.43";
+const VERP="p4.44";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -763,6 +768,10 @@ function demoCliente(){
     escolher:a=>{ const b=B(); if((b.dados.vesp||[]).some(x=>String(x.vesp_id)===String(a.p_ref)))b.dados.vesp=[];
       return "ESCOLHIDO: "+a.p_opcao+" (demonstração)"; },
     inbox:()=>"ANOTADO. Demonstração: nada foi gravado.",
+    painel_checkin:()=>{ const d=B().dd, dm=x=>x.slice(8,10)+"/"+x.slice(5,7);
+      return "Check-in Startup · seg "+dm(d(1))+"\n1. Fiz: Enviar a ata da reunião de exemplo; Conferir o saldo da conta de exemplo"+
+        "\n2. Vou fazer: Fazer o check-in semanal de três linhas com o sócio ("+dm(d(1))+"); Revisar a proposta de exemplo ("+dm(d(3))+")"+
+        "\n3. Travado / preciso de você: Validar a planilha de exemplo — com Sócio de exemplo, retorno era "+dm(d(-2)); },
     mesa_painel:mesaVista,
     mesa_deliberar:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc), nota=String(a.p_nota||"").trim(), h=B().dd(0);
       if(!p)return "RECUSADO: doc "+a.p_doc+" nao esta esperando voce";
@@ -922,7 +931,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:()=>abrirCheckin(), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
   buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
@@ -1295,7 +1304,7 @@ function renderCobrar(){
   const l=cobrarTerceiros();
   document.getElementById("cob3Box").classList.toggle("hidden",!l.length);
   document.getElementById("cob3Lista").innerHTML=l.map(x=>{const d=Math.max(0,+x.dias||0);
-    return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(x.terceiro||"sem nome de quem responde")} · <span class="espera w">cobrar · ${d===0?"vence hoje":esc(d)+" d"}</span></small></span><span class="bts"><button class="sec" data-acao="copiarCobranca" data-a1="${esc(x.ref)}">Copiar cobrança</button><button class="pri" data-acao="cobreiAgora" data-a1="${esc(x.ref)}">Cobrei agora</button></span></div>`;}).join("");
+    return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(x.terceiro||"sem nome de quem responde")} · <span class="espera w">cobrar · ${d===0?"vence hoje":esc(d)+" d"}</span></small></span><span class="bts"><button class="sec" data-acao="copiarCobranca" data-a1="${esc(x.ref)}" aria-label="Copiar cobrança">Copiar</button>${String(x.rascunho||"").trim()?`<button class="sec" data-acao="whatsCobranca" data-a1="${esc(x.ref)}" aria-label="Abrir no WhatsApp">WhatsApp</button>`:""}<button class="pri" data-acao="cobreiAgora" data-a1="${esc(x.ref)}" aria-label="Cobrei agora">Cobrei</button></span></div>`;}).join("");
 }
 function copiarCobranca(ref){
   const x=(D.cob3||[]).find(y=>String(y.ref)===String(ref)); if(!x)return;
@@ -1308,6 +1317,41 @@ function cobreiAgora(ref){
   pendurar({origem:"tarefa",ref:String(ref),verbo:"cobrar",valor:null,cob3:true},"Cobrei · "+curto(x.titulo,60),null);
   renderCobrar();
 }
+/* p4.44 (p168, E2.8 do WL, s2214 11/10/2026): "Abrir no WhatsApp" leva o texto pronto ao wa.me SEM numero (o Igor
+   escolhe o contato) e nada grava no banco; quem envia e ele. Na demonstracao o toque so avisa, para nada sair para a rede.
+   O check-in de segunda (tecla C, ou o botao na frente do socio) vem montado do banco por painel_checkin() em 3 linhas,
+   abre numa folha para revisar e sai so por Copiar ou WhatsApp. */
+const waUrl=t=>"https://wa.me/?text="+encodeURIComponent(String(t||""));
+function abrirWhats(t){
+  if(!String(t||"").trim())return;
+  if(DEMO){toast("Na demonstração o WhatsApp não abre. No painel real, este toque abre o WhatsApp com o texto, sem enviar.",null,false,4000);return;}
+  let w=null; try{ w=window.open(waUrl(t),"_blank"); }catch(e){}
+  if(w){ try{ w.opener=null; }catch(e){} toast("WhatsApp aberto com o texto. Escolha o contato e envie você.",null,false,3000); }
+  else toast("O WhatsApp não abriu. Use Copiar e cole na conversa.",null,false,6000);
+}
+function whatsCobranca(ref){ const x=(D.cob3||[]).find(y=>String(y.ref)===String(ref)); if(x)abrirWhats(x.rascunho); }
+async function abrirCheckin(){
+  mostrarFolha(`<h3 id="folhaTit">Check-in de segunda</h3>
+    <p class="mut">Montado do banco. Revise antes de mandar: nada sai daqui sozinho.</p>
+    <div class="campo"><label for="chkTxt" class="mut">Texto do check-in</label><textarea id="chkTxt" class="chk-txt" readonly>carregando…</textarea></div>
+    <p class="nova-erro hidden" id="chkErro" role="alert"></p>
+    <button class="pri" data-acao="checkinCopiar">Copiar</button>
+    <button class="sec" data-acao="checkinWhats">Abrir no WhatsApp</button>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+  let r; try{ r=await comTeto(sb.rpc("painel_checkin",{p_frente:FRENTE_4B}),LIMITE_ACAO,"painel_checkin"); }catch(e){ r={error:e}; }
+  const ta=document.getElementById("chkTxt"), er=document.getElementById("chkErro"); if(!ta)return;
+  const t=r&&!r.error&&typeof r.data==="string"?r.data:"";
+  if(!t||t.startsWith("RECUSADO")){ ta.value="";
+    er.textContent=t?"Não montou: "+t.replace(/^RECUSADO:\s*/,""):"O check-in não veio agora. Feche e abra de novo."; er.classList.remove("hidden"); return; }
+  ta.value=t; ta.readOnly=false;
+}
+const textoCheckin=()=>{ const ta=document.getElementById("chkTxt"); return ta&&!ta.readOnly?ta.value:""; };
+function checkinCopiar(){
+  const t=textoCheckin(); if(!t.trim())return;
+  const falhou=()=>toast("Não deu para copiar. Selecione o texto e copie à mão.",null,false,6000);
+  try{navigator.clipboard.writeText(t).then(()=>toast("Check-in copiado. Nada foi enviado.",null,false,2600),falhou);}catch(e){falhou();}
+}
+function checkinWhats(){ abrirWhats(textoCheckin()); }
 /* p4.35 (plano 68; s1275, 09/10/2026): grupo Vence amanhã no Hoje. A pergunta da véspera (aviso_vespera, decisão do Igor
    na s880: "vencida nunca fica muda") nascia na bandeja, que só o index.html lia; a casa nunca a mostrou. Medido em 09/10:
    as perguntas de 08/10 e 09/10 passaram do dia sem resposta e 16 cards estavam vencidos. Molde: o replanejar do dia
@@ -1542,6 +1586,7 @@ function abrirFrente(slug){
     ${a.veredito?`<div class="bloco"><span class="rot">Situação</span><p>${esc(a.veredito)}</p></div>`:""}
     ${slug===FRENTE_4B?`<div id="d4" class="d4p" aria-live="polite"><div class="vazio">carregando os quatro blocos…</div></div>`
       :`<div class="pilha">${seus.map(itemInv).join("")||`<div class="vazio">Nenhum card seu aberto nesta frente.</div>`}</div>`}
+    ${slug===FRENTE_4B?`<button class="sec" data-acao="abrirCheckin">Check-in de segunda <kbd>C</kbd></button>`:""}
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
   if(slug===FRENTE_4B)carregar4B();
 }
@@ -1610,7 +1655,8 @@ function buscaTecla(el,ev){
   else if(ev.key==="ArrowDown"){ const b=document.querySelector("#qres button"); if(b){ev.preventDefault();b.focus();} }
   else if(ev.key==="Escape"){ ev.preventDefault(); document.getElementById("busca").classList.add("hidden"); el.blur(); }
 }
-/* teclas de qualquer aba: / e Ctrl+K abrem a busca; N abre Nova pendencia. Nunca dentro de campo de texto nem com folha aberta */
+/* teclas de qualquer aba: / e Ctrl+K abrem a busca; N abre Nova pendencia; C abre o check-in de segunda (p4.44).
+   Nunca dentro de campo de texto nem com folha aberta */
 document.addEventListener("keydown",e=>{
   if(e.defaultPrevented||e.altKey||e.repeat||!INV)return;
   if(!document.getElementById("veu").classList.contains("hidden"))return;
@@ -1619,6 +1665,7 @@ document.addEventListener("keydown",e=>{
   if(e.ctrlKey||e.metaKey){ if(k==="k"){e.preventDefault();abrirBusca();} return; }
   if(k==="/"){e.preventDefault();abrirBusca();}
   else if(k==="n"){e.preventDefault();abrirNova("");}
+  else if(k==="c"){e.preventDefault();abrirCheckin();}
 });
 
 /* ---------- p4.36 (plano 116 = A1 do plano 101): Nova pendencia em uma linha ----------

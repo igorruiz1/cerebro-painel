@@ -82,7 +82,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -2431,20 +2431,20 @@ test('p4.31 cobrar: grupo no Hoje sem repetir card; copiar nao grava; Cobrei ago
   /* a 1a versao herdou ".ordem button" e o "Cobrei agora" ficou ilegivel: o contraste se mede no que a tela pinta */
   const ruins = (await page.evaluate(contrasteDos, '#cob3Box *')).filter(m=>m.razao<4.5);
   expect(ruins, 'texto do grupo abaixo de 4,5:1').toEqual([]);
-  const pri = await box.locator('button:has-text("Cobrei agora")').first().evaluate(b=>getComputedStyle(b).backgroundColor);
-  const sec = await box.locator('button:has-text("Copiar cobrança")').first().evaluate(b=>getComputedStyle(b).backgroundColor);
+  const pri = await box.locator('button[data-acao="cobreiAgora"]').first().evaluate(b=>getComputedStyle(b).backgroundColor);
+  const sec = await box.locator('button[data-acao="copiarCobranca"]').first().evaluate(b=>getComputedStyle(b).backgroundColor);
   expect(pri, 'Cobrei agora tem o fundo do botao principal, nao o da lista').not.toBe(sec);
-  await linhas.nth(0).locator('button:has-text("Copiar cobrança")').click();
+  await linhas.nth(0).locator('button[data-acao="copiarCobranca"]').click();
   await expect(page.locator('#tmsg'), 'copiar responde pela tela').toContainText(/ascunho/);
   const atos = ()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'||c.n==='inbox').map(c=>c.a));
   expect(await atos(), 'copiar nao chama o banco').toEqual([]);
-  await linhas.nth(0).locator('button:has-text("Cobrei agora")').click();
+  await linhas.nth(0).locator('button[data-acao="cobreiAgora"]').click();
   await expect(linhas, 'o card cobrado sai do grupo na hora').toHaveCount(1);
   expect(await atos(), 'nada grava antes do desfazer').toEqual([]);
   await page.locator('#tbtn').click();
   await expect(linhas, 'desfazer devolve o card').toHaveCount(2);
   expect(await atos()).toEqual([]);
-  await linhas.nth(0).locator('button:has-text("Cobrei agora")').click();
+  await linhas.nth(0).locator('button[data-acao="cobreiAgora"]').click();
   await page.evaluate(()=>enviar());
   expect(await atos()).toEqual([{p_origem:'tarefa',p_ref:'7',p_verbo:'cobrar',p_valor:null}]);
   expect(erros).toEqual([]);
@@ -3033,4 +3033,88 @@ test('p127: DECISAO da bandeja ganha Recusar com motivo opcional; card fora da b
   expect(await responder(page)).toEqual([{p_tipo:'DECISAO',p_id:9,p_ato:'recusado',p_nota:null}]);
   await page.evaluate(()=>abrirInv(10));
   await expect(page.locator('#folha #band'), 'card 10 fora da bandeja').toHaveCount(0);
+});
+
+/* p4.44 (p168, E2.8 do WL, s2214 11/10/2026): o texto pronto sai pelo WhatsApp sem numero e sem gravar nada; o
+   check-in de segunda vem do banco (painel_checkin), abre pela tecla C ou pela frente do socio, e so sai por Copiar
+   ou WhatsApp, com o texto revisado. O origin/main (p4.43) reprova: nao ha "Abrir no WhatsApp" nem tecla C. */
+const ABRE_JANELA = ()=>{ window.__abertos=[]; window.open=(u,t)=>{ window.__abertos.push({u,t}); return {opener:1}; }; };
+test('p4.44 cobrar: Abrir no WhatsApp leva o rascunho ao wa.me sem numero e nao grava; sem rascunho nao ha o botao', async ({page})=>{
+  const cob = COB3.concat([{origem:'tarefa',ref:'9',titulo:'Pedido sem rascunho de exemplo',terceiro:'Outro de exemplo',retorno_esperado:'2026-10-09',dias:1,rascunho:''}]);
+  await page.addInitScript(c=>{ window.__dados={cob3:c}; }, cob);
+  await page.addInitScript(ABRE_JANELA);
+  const erros = await abrir(page);
+  const box = page.locator('#cob3Box'), linhas = box.locator('.cob3');
+  await expect(linhas).toHaveCount(3);
+  await expect(box.locator('button[data-acao="whatsCobranca"]'), 'so as linhas com rascunho').toHaveCount(2);
+  await expect(linhas.nth(2).locator('button[data-acao="whatsCobranca"]')).toHaveCount(0);
+  for (const b of await box.locator('button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await linhas.nth(0).locator('button[aria-label="Abrir no WhatsApp"]').click();
+  const ab = await page.evaluate(()=>window.__abertos);
+  expect(ab.length).toBe(1);
+  expect(ab[0].u, 'wa.me com o texto e sem numero').toBe('https://wa.me/?text='+encodeURIComponent('Bom dia! Rascunho de exemplo.'));
+  expect(ab[0].u).not.toMatch(/wa\.me\/\d/);
+  await expect(page.locator('#tmsg')).toContainText('Escolha o contato');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir'||c.n==='inbox').length), 'abrir o WhatsApp nao grava').toBe(0);
+  for (const w of [360, 390]) {
+    await page.setViewportSize({width:w, height:820});
+    const m = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; return {W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}; });
+    expect(m.SW, `rolagem horizontal a ${w}`).toBe(m.W);
+  }
+  expect(erros).toEqual([]);
+});
+
+test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp nao gravam; a frente do socio tem o botao; recusa se declara', async ({page})=>{
+  await page.addInitScript(LINHAS_4B);
+  await page.addInitScript(ABRE_JANELA);
+  const erros = await abrir(page);
+  await page.locator('body').click({position:{x:2,y:2}});
+  await page.keyboard.press('c');
+  await expect(page.locator('#folhaTit')).toHaveText('Check-in de segunda');
+  const ta = page.locator('#chkTxt');
+  await expect(ta).toHaveValue(/^Check-in Exemplo · seg 13\/10\n1\. Fiz: /);
+  await expect(ta).not.toHaveAttribute('readonly', /.*/);
+  const ch = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_checkin').map(c=>c.a));
+  expect(ch, 'o texto vem do banco, da frente do socio').toEqual([{p_frente:'08-dabli-tech'}]);
+  /* revisar antes de mandar: o WhatsApp leva o texto como ficou na folha */
+  await ta.fill('Check-in revisado de exemplo');
+  await page.locator('#folha button:has-text("Abrir no WhatsApp")').click();
+  expect((await page.evaluate(()=>window.__abertos))[0].u).toBe('https://wa.me/?text='+encodeURIComponent('Check-in revisado de exemplo'));
+  await page.locator('#folha button:has-text("Copiar")').click();
+  await expect(page.locator('#tmsg')).toContainText(/opiado|copie à mão/);
+  for (const b of await page.locator('#folha button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao da folha abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>!['painel_carga','painel_checkin','painel_ping','atendente_estado','painel_snapshot_montar','painel_medir_decisao','mesa_painel'].includes(c.n)).map(c=>c.n)),
+    'nada grava pelo check-in').toEqual([]);
+  await page.evaluate(()=>fecharFolha());
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  const bt = page.locator('#folha button:has-text("Check-in de segunda")');
+  await expect(bt, 'a frente do socio oferece o check-in').toHaveCount(1);
+  await page.evaluate(()=>{ window.__checkin='RECUSADO: sessao sem dono autorizado.'; });
+  await bt.click();
+  await expect(page.locator('#chkErro')).toHaveText('Não montou: sessao sem dono autorizado.');
+  await expect(page.locator('#chkTxt')).toHaveValue('');
+  await page.locator('#folha button:has-text("Abrir no WhatsApp")').click();
+  expect((await page.evaluate(()=>window.__abertos)).length, 'texto recusado nao vai ao WhatsApp').toBe(1);
+  /* as outras frentes nao tem o botao */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('20-contrato-pj'); });
+  await expect(page.locator('#folha button:has-text("Check-in de segunda")')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.44 demonstracao: check-in ficticio sem marca real e o WhatsApp so avisa, sem sair para a rede', async ({page})=>{
+  await page.addInitScript(ABRE_JANELA);
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.locator('body').click({position:{x:2,y:2}});
+  await page.keyboard.press('c');
+  const ta = page.locator('#chkTxt');
+  await expect(ta).toHaveValue(/^Check-in Startup · seg \d\d\/\d\d\n1\. Fiz: /);
+  expect(await ta.inputValue()).not.toMatch(/Dabli/);
+  await page.locator('#folha button:has-text("Abrir no WhatsApp")').click();
+  await expect(page.locator('#tmsg')).toContainText('Na demonstração o WhatsApp não abre');
+  expect(await page.evaluate(()=>window.__abertos.length), 'nenhuma janela abre na demonstracao').toBe(0);
+  expect(await page.evaluate(()=>window.__rpc.length), 'o duble do banco nao recebe nada').toBe(0);
+  expect(rede, 'nada sai para a rede').toEqual([]);
+  expect(erros).toEqual([]);
 });
