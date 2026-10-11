@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-75HHgi1+ypNgvowZ4j72xX4Zu+hBCKd+urg1KN+/CF0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ckFi7nCOJiu/xoBjg68rmTcuz4lvmcZyzK+suRyzy4o=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -569,7 +569,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.40";
+const VERP="p4.41";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -695,6 +695,8 @@ function demoBase(){
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
     cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
     rw:cx0.rw, var7, rit:[{fechados_7d:23,fechados_7d_ant:19}],
+    /* p126: a demonstracao monta o Hoje no navegador (resumo vazio); as chaves existem para a carga nao acusar falta */
+    hoje:[], hoje_resumo:[],
     vesp:[{origem:"tarefa",ref:"303",frente:"08-startup",titulo:"Fazer o check-in semanal de três linhas com o sócio",prazo:dd(1),vesp_id:"319"},
       {origem:"tarefa",ref:"304",frente:"04-obra-residencial",titulo:"Aprovar a troca do revestimento da área gourmet",prazo:dd(1),vesp_id:"319"}], est:[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}],
     cob3:[{origem:"tarefa",ref:"307",frente:"20-contrato-pj",titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",terceiro:"Fiscalização de exemplo",retorno_esperado:dd(-2),dias:2,
@@ -813,7 +815,7 @@ const FRENTE_4B=DEMO?"08-startup":"08-dabli-tech", VISAO_4B="v_dabli_presidente"
    entao o selo nao pede mudanca no banco.
    var7 entra no p4.27 (plano 89): v_painel_variacao_7d, a leitura de 7 dias atras do folego e do menor saldo.
    vesp entra no p4.35 (plano 68): v_painel_vespera, os cards de amanha enquanto a pergunta da vespera esta aberta. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp"];
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -1105,8 +1107,21 @@ function ordenaClasse(l){
     (a.k-b.k) ||
     ((pos(a.it)!=null&&pos(b.it)!=null)?pos(a.it)-pos(b.it):((+b.it.peso||0)-(+a.it.peso||0))) ||
     (a.i-b.i)).map(x=>x.it);}
+/* p126 E1.1 (s1582): o Hoje vem pronto do banco. Chaves hoje (v_hoje_unico) e hoje_resumo (v_hoje_resumo) do
+   snapshot: o mesmo conjunto, a mesma ordem e a mesma contagem nas duas telas. O card leva os campos da fila (acoes,
+   recomendacao) pela chave origem|ref. Sem a linha do resumo (chave vazia ou ausente), vale a montagem antiga abaixo;
+   chave ausente a carga declara como dado que nao chegou. */
+function numerosHoje(){
+  const r=Array.isArray(D.hoje_resumo)?D.hoje_resumo[0]:D.hoje_resumo;
+  if(!r||r.passos==null||!Array.isArray(D.hoje)) return null;
+  return {passos:+r.passos||0,cards:+r.cards||0,pecas:+r.pecas||0,minutos:+r.minutos||0,sem:+r.sem_estimativa||0,
+          cap:r.capacidade_min!=null?+r.capacidade_min:null};}
+const hojeBanco=()=>numerosHoje()?D.hoje.filter(x=>x&&x.origem!=null).slice().sort((a,b)=>(+a.ordem||0)-(+b.ordem||0)):null;
 /* a lista de HOJE: a camada hoje do banco mais as tarefas vencidas ou de hoje que ficaram fora */
 function hojeLista(){
+  const hb=hojeBanco();
+  if(hb){ const rico=new Map([...(D.fila||[]),...(D.exp||[]),...(D.depois||[])].filter(Boolean).map(x=>[chaveIt(x),x]));
+    return hb.filter(x=>x.tipo!=="peca").map(x=>Object.assign({},x,rico.get(chaveIt(x))||{})); }
   const vistos=new Set((D.fila||[]).map(chaveIt)), extra=[];
   [...(D.exp||[]),...(D.depois||[])].forEach(it=>{
     if(!it||it.origem!=="tarefa"||!classeDe(it)) return;
@@ -1219,16 +1234,17 @@ function renderSaude(){
 /* ---------- Hoje ---------- */
 function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();msRender();}
 function renderHoje(){
-  const rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=+(((D.cap||[])[0]||{}).minutos_dia)||120;
-  /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma */
-  const pz=pecasHoje(), nPassos=h.length+pz.length;
-  const mins=h.map(minDe), soma=mins.reduce((s,m)=>s+(m||30),0)+pz.reduce((s,p)=>s+pecaMin(p),0), semMin=mins.filter(m=>m==null).length;
+  const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
+  /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.
+     p126 (s1582): com o resumo do banco, passos, minutos e "sem estimativa" sao os dele, iguais no bastidor. */
+  const pz=pecasHoje(), nPassos=nh?nh.passos:h.length+pz.length, nPz=nh?nh.pecas:pz.length;
+  const mins=h.map(minDe), soma=nh?nh.minutos:mins.reduce((s,m)=>s+(m||30),0)+pz.reduce((s,p)=>s+pecaMin(p),0), semMin=nh?nh.sem:mins.filter(m=>m==null).length;
   const dias=rw.dias_sobrevida_pior;
   const fr=[];
   if(dias!=null){const v=var7("caixa.sobrevida_dias",dias,n=>plural(n,"dia","dias"));
     fr.push(`O caixa aguenta <button type="button" class="numero ${dias<30?"w":""}" data-acao="abrirFolego">${esc(dias)} dias</button> no pior cenário${v?`, <span class="var7 ${v.cls}">${esc(v.txt)}</span>`:""}.`);}
   const hh=m=>(Math.round(m/6)/10).toLocaleString("pt-BR"), passa=soma-cap;
-  fr.push(nPassos?`Hoje ${nPassos===1?"é":"são"} <b>${plural(nPassos,"passo","passos")}</b>${pz.length?` (${plural(pz.length,"peça da Mesa","peças da Mesa")})`:""}, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
+  fr.push(nPassos?`Hoje ${nPassos===1?"é":"são"} <b>${plural(nPassos,"passo","passos")}</b>${nPz?` (${plural(nPz,"peça da Mesa","peças da Mesa")})`:""}, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
   document.getElementById("situacao").innerHTML=fr.join(" ");
   const foco=document.getElementById("foco");
   if(!h.length&&pz.length){ focoPeca(foco,pz); }
@@ -1338,6 +1354,13 @@ const MIN_ATO={ler:10,aprovar:10,decidir:10,enviar:15,assinar:15,entregar:15,pro
 const pecaMin=p=>MIN_ATO[p&&p.ato]||10;
 const pecasDoCard=(origem,ref)=>origem!=="tarefa"?[]:msEst(MS.dados).filter(p=>p.tarefa!=null&&String(p.tarefa)===String(ref));
 function pecasHoje(){
+  /* p126 (s1582): com o Hoje do banco, as pecas sao as dele (tipo peca), na ordem dele; a linha da Mesa, quando ja
+     carregou, empresta ato, destino e dias; antes disso a linha do banco basta para desenhar. */
+  const hb=hojeBanco();
+  if(hb){ const est=msEst(MS.dados), hj=Date.parse(ivData(new Date())+"T00:00:00Z");
+    return hb.filter(x=>x.tipo==="peca").map(x=>est.find(p=>String(p.id)===String(x.ref))||{id:+x.ref,titulo:x.titulo,ato:x.ato,
+      frente:x.frente,rs:x.em_jogo_rs,novo:x.entrada==="nova",
+      dias:x.data_ref?Math.max(0,Math.round((hj-Date.parse(String(x.data_ref).slice(0,10)+"T00:00:00Z"))/864e5)):null}); }
   /* p4.15: so peca ja triada (com ato). Medido em 06/10 no banco real: as 10 novas do dia eram entradas sem ato,
      ainda nao vistas pela triagem das 21h (prints, planos, o proprio relatorio), e Hoje foi a 23 passos. */
   const pend=msPend(MS.dados).filter(p=>!!p.ato); if(!pend.length)return [];
@@ -1543,7 +1566,7 @@ function linha4(x){
 }
 
 function renderSelos(){
-  const h=hojeLista().length+pecasHoje().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const nh=numerosHoje(), h=nh?nh.passos:hojeLista().length+pecasHoje().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("n-hoje",h);set("r-hoje",h);
   const nf=INV?INV.filter(t=>t.dono==="igor"&&t.status!=="feita").length:"";
   set("n-fila",nf);set("r-fila",nf);

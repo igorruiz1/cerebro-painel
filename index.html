@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v93";
+const VER="v94";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1183,7 +1183,7 @@ const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
    A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
 const IDADE_MAX=1200;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
-                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf"];
+                     "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf","hoje","hoje_resumo"];
 /* v40: promessa que nao volta e pior que erro — o erro a tela mostra, o silencio nao.
    Toda ida ao banco passa por aqui com um teto de tempo. Estourou, a tela DIZ, e diz a
    verdade util: o efeito pode ter chegado, recarregue para ver o estado real. */
@@ -2038,6 +2038,8 @@ async function carregarAgora(ehRetentativa){
         rotp=g("rotp"),op=g("op"),semi=g("semi"),frs=g("frs"),band=g("band"),garg=g("garg"),c13=g("c13"),c13i=g("c13i"),min=g("min"),cap=g("cap"),kdono=g("kdono"),fun=g("fun"),c13e=g("c13e"),eb=g("eb");
   const exp=g("exp");
   const pf=g("pf");
+  /* p126 (s1582): fila unica do Hoje e o resumo dela, os mesmos do presidente */
+  const hoje=g("hoje"), hojeRes=g("hoje_resumo");
   /* v43: a aba SENTINELA carrega por demanda, mas o CONTADOR vem na abertura. Alarme que só
      aparece depois de você clicar continua invisível — foi assim que as quatro views ficaram
      três semanas disparando para ninguém. Só a contagem, não as linhas. */
@@ -2052,7 +2054,7 @@ async function carregarAgora(ehRetentativa){
      rw:U(rw,D.rw),se:L(se,D.se),ev:L(ev,D.ev),ins:L(ins,D.ins),fr:L(fr,D.fr),m9:L(m9,D.m9),
      mat:L(mat,D.mat),au:L(au,D.au),pls:L(pls,D.pls),dv:L(dv,D.dv),par:L(par,D.par),mo:L(mo,D.mo),
      varr:U(varr,D.varr),semi:L(semi,D.semi),nat:L(nat,D.nat),wip:U(wip,D.wip),rotp:U(rotp,D.rotp),
-     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), pf:U(pf,D.pf), depois:D.depois||[]};
+     op:L(op,D.op),frs:L(frs,D.frs),band:L(band,D.band),garg:L(garg,D.garg),c13:L(c13,D.c13),c13i:L(c13i,D.c13i),min:L(min,D.min),cap:U(cap,D.cap),kdono:L(kdono,D.kdono),fun:L(fun,D.fun),c13e:L(c13e,D.c13e),eb:L(eb,D.eb), exp:L(exp,D.exp), pf:U(pf,D.pf), hoje:L(hoje,D.hoje), hoje_resumo:U(hojeRes,D.hoje_resumo), depois:D.depois||[]};
   FALHA_RELEITURA=false;
   avisaFalha(FALHAS);
   LAZY.leituras=0;LAZY.acervo=0;LAZY.espelho=0;LAZY.rotinas=0;LAZY.faixa=0;LAZY.motor2=0;LAZY.movimento=0;
@@ -2136,7 +2138,7 @@ function marcaAbas(){
   const c=D.cont||{};
   const set=(id,n,cls)=>{const e=document.getElementById(id);if(!e)return;
     e.textContent=n||"";e.className="n"+(n?(" "+cls):"");};
-  set("n-agora",hojeLista().length,"hot");
+  const nh=numerosHoje(); set("n-agora",nh?nh.passos:hojeLista().length,"hot");
   set("n-le",c.leituras,"warn");
 }
 const kv=c=>{const k=D.ev.find(x=>x.chave===c);return k?k.valor:null;};
@@ -2462,6 +2464,15 @@ function tempoTxt(lista){
   return soma>cap
     ? ` <span class="s tempo passa">· ~${soma} min para ${cap} disponíveis: passa ${soma-cap} min${est}</span>`
     : ` <span class="s tempo">· ~${soma} de ${cap} min${est}</span>`;}
+/* p126 (s1582): sem filtro, o cabecalho de Hoje diz os passos e os minutos do resumo do banco, os mesmos numeros
+   do presidente (cards e pecas da Mesa). Com filtro, a conta continua sendo a da lista filtrada. */
+function tempoResumo(n){
+  const est=n.sem?` (${n.sem} sem estimativa, contado${n.sem>1?"s":""} a ${MIN_PADRAO} min)`:"";
+  const base=`${n.passos} passo${n.passos===1?"":"s"}${n.pecas?`, ${n.pecas} peça${n.pecas===1?"":"s"} da Mesa`:""}`;
+  if(n.cap==null) return ` <span class="s tempo">· ${base}, ~${n.minutos} min${est}</span>`;
+  return n.minutos>n.cap
+    ? ` <span class="s tempo passa">· ${base}, ~${n.minutos} min para ${n.cap} disponíveis: passa ${n.minutos-n.cap} min${est}</span>`
+    : ` <span class="s tempo">· ${base}, ~${n.minutos} de ${n.cap} min${est}</span>`;}
 function modoFoco(on){
   const ligar=on===undefined?!document.body.classList.contains("foco"):!!on;
   if(ligar&&!cards().length) return;
@@ -2714,8 +2725,21 @@ function ordenaClasse(l){
     (a.k-b.k) ||
     ((pos(a.it)!=null&&pos(b.it)!=null)?pos(a.it)-pos(b.it):((+b.it.peso||0)-(+a.it.peso||0))) ||
     (a.i-b.i)).map(x=>x.it);}
+/* p126 E1.1 (s1582): o Hoje vem pronto do banco. Chaves hoje (v_hoje_unico) e hoje_resumo (v_hoje_resumo) do
+   snapshot: o mesmo conjunto, a mesma ordem e a mesma contagem nas duas telas. O card leva os campos da fila (acoes,
+   recomendacao) pela chave origem|ref. Sem a linha do resumo (chave vazia ou ausente), vale a montagem antiga abaixo;
+   chave ausente a carga declara como dado que nao chegou. */
+function numerosHoje(){
+  const r=Array.isArray(D.hoje_resumo)?D.hoje_resumo[0]:D.hoje_resumo;
+  if(!r||r.passos==null||!Array.isArray(D.hoje)) return null;
+  return {passos:+r.passos||0,cards:+r.cards||0,pecas:+r.pecas||0,minutos:+r.minutos||0,sem:+r.sem_estimativa||0,
+          cap:r.capacidade_min!=null?+r.capacidade_min:null};}
+const hojeBanco=()=>numerosHoje()?D.hoje.filter(x=>x&&x.origem!=null).slice().sort((a,b)=>(+a.ordem||0)-(+b.ordem||0)):null;
 /* a lista de HOJE: a camada hoje do banco mais as tarefas vencidas ou de hoje que ficaram fora */
 function hojeLista(){
+  const hb=hojeBanco();
+  if(hb){ const rico=new Map([...(D.fila||[]),...(D.exp||[]),...(D.depois||[])].filter(Boolean).map(x=>[chaveIt(x),x]));
+    return hb.filter(x=>x.tipo!=="peca").map(x=>Object.assign({},x,rico.get(chaveIt(x))||{})); }
   const vistos=new Set((D.fila||[]).map(chaveIt)), extra=[];
   [...(D.exp||[]),...(D.depois||[])].forEach(it=>{
     if(!it||it.origem!=="tarefa"||!classeDe(it)) return;
@@ -2843,7 +2867,7 @@ function rAgora(){
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
   document.getElementById("h-fila1").innerHTML=(mostra.length?`PRECISA DE VOCÊ HOJE`:`NADA PARA HOJE <span class="s">· o que vem a seguir</span>`)+(filtrando?' <span class="s">· filtrado</span>':"")
-    +resumoClasse(vis)+tempoTxt(vis)+(mostra.length?' <button class="bfoco" type="button" data-acao="modoFoco">modo foco <span class="kbd">F</span></button>':"");
+    +resumoClasse(vis)+(!filtrando&&numerosHoje()?tempoResumo(numerosHoje()):tempoTxt(vis))+(mostra.length?' <button class="bfoco" type="button" data-acao="modoFoco">modo foco <span class="kbd">F</span></button>':"");
   document.getElementById("fila1").innerHTML=mostra.length?mostra.map(cardFila).join("")
     :(filtrando?`<div class="empty">nenhum item de hoje neste filtro.</div>`:vazioAgora());
   if(document.body.classList.contains("foco")){ const n=cards().length; if(n) focar(Math.max(0,Math.min(foco,n-1))); else modoFoco(false); }
@@ -3000,7 +3024,7 @@ async function recarregarFila(){
      a tela ao estado anterior ao ato dele — o defeito mais caro que um painel pode ter.
      Entao a acao REMONTA na hora so as 8 chaves que a acao mexe (~150ms no banco, medido)
      e rele. As outras 15 continuam por conta do cron de 5 min. */
-  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg","exp"];
+  const VIVAS=["fila","cont","cor","nat","wip","op","semi","sentN","band","garg","exp","hoje","hoje_resumo"];
   const m=await comTeto(sb.rpc("painel_snapshot_montar",{p_chaves:VIVAS}), LIMITE_ACAO, "12s")
     .catch(e=>{ if(ehTeto(e))throw e; return {error:{message:txt(e)}}; });
   if(m&&m.error) FALHAS.push("painel_snapshot_montar — "+m.error.message+" (a fila pode ser de antes do ato)");
@@ -3018,6 +3042,8 @@ async function recarregarFila(){
   if(d.band) D.band=d.band;
   if(d.garg) D.garg=d.garg;
   if(d.exp)  D.exp=d.exp;
+  if(d.hoje) D.hoje=d.hoje;
+  if(d.hoje_resumo) D.hoje_resumo=d.hoje_resumo[0]||null;
   if(d.wip)  D.wip=d.wip[0]||null;
   if(d.sentN&&d.sentN[0]){const n=document.getElementById("n-sent");
     if(n) n.textContent=d.sentN[0].n?String(d.sentN[0].n):"";}
