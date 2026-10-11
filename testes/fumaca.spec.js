@@ -506,7 +506,7 @@ test("p127: A, S e R no card focado nao gravam nada, e a fila nao tem botao de d
   await page.waitForTimeout(6500);
   const escritas = await page.evaluate(E=>(window.__n.args||[]).filter(x=>E.includes(x[0])), ESCRITA);
   expect(escritas, "nenhuma escrita saiu do bastidor").toEqual([]);
-  expect(await page.evaluate(()=>document.getElementById("modal").classList.contains("on")), "nenhum campo de decisao abre").toBe(false);
+  expect(await page.evaluate(()=>document.querySelectorAll("#modal, #desf, #app textarea").length), "nenhum campo de decisao existe").toBe(0);
   expect(erros, "erro de script").toEqual([]);
 });
 
@@ -1546,7 +1546,7 @@ test('s859: fluxo conta seus minutos e nao pega os da tarefa de mesmo numero', a
    aria-pressed, aria-selected, aria-expanded) ou no checked nativo, nunca em classe. A classe .on
    so sobra para VISIBILIDADE, e a lista abaixo e fechada: selecao nova com .on, .sel ou .atual
    reprova aqui. Assim leitor de tela, CSS e teste leem o mesmo dono do estado. */
-const VISIBILIDADE_ON = ['filtros','velha','falhou','pane','modal','log','sec','menu','desf','maisbar','ledelib','qpr','coluna'];
+const VISIBILIDADE_ON = ['filtros','velha','falhou','pane','log','sec','menu','maisbar','coluna'];  /* p127 parte 3: modal, desf, ledelib e qpr sairam do index */
 test('82b: .on, .sel e .atual no CSS so de visibilidade, nas tres paginas', async ()=>{
   const fs = require('fs');
   const fora = [];
@@ -1559,7 +1559,7 @@ test('82b: .on, .sel e .atual no CSS so de visibilidade, nas tres paginas', asyn
       if (!(m[2]==='on' && VISIBILIDADE_ON.includes(m[1]))) fora.push(arq+': '+m[0]);
     }
   }
-  expect(regras, 'achou as regras de visibilidade (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(14);
+  expect(regras, 'achou as regras de visibilidade (teste sem alvo passa vazio; 12 desde a p127 parte 3)').toBeGreaterThanOrEqual(12);
   expect(fora, 'estado de selecao por classe; use atributo ARIA').toEqual([]);
 });
 
@@ -1595,14 +1595,14 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
 });
 
 /* v85 (plano 87c, modulo 1 · casca, 07/10/2026): o index segue o presidente da p4.26, um modulo por PR.
-   A casca estatica (login, segundo fator, senha, topo, filtros, modal, desfazer) fica sem handler inline:
+   A casca estatica (login, segundo fator, senha, topo, filtros; modal e desfazer sairam na p127 parte 3) fica sem handler inline:
    a acao mora em data-acao/data-ao-*, e ACOES e a lista fechada. Duas classes se cobram aqui:
    (1) on* de volta na casca ou o total do arquivo subindo (o teto so desce, PR a PR, ate zero no fecho);
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
 const TETO_ON_INDEX = 0;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21; v90 fila: 1; v91 fecho (s1183): 0, o exemplo no comentario do escAttr saiu. A v90 reprova aqui. */
-test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
+test('87c casca: login, topo e filtros sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
   expect(casca.length, 'achou a casca (teste sem alvo passa vazio)').toBeGreaterThan(10000);
@@ -1611,12 +1611,12 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
   const erros = await abrir(page);
   const r = await page.evaluate(()=>{
     const sem = new Set(); let n = 0;
-    for (const el of document.querySelectorAll('#login,#login *,#fator,#fator *,#senha,#senha *,.top,.top *,#velha *,#falhou *,#modal,#modal *,#desf *'))
+    for (const el of document.querySelectorAll('#login,#login *,#fator,#fator *,#senha,#senha *,.top,.top *,#velha *,#falhou *'))
       for (const k of ['acao','aoDigitar','aoMudar','aoTecla','aoColar']) { const v = el.dataset[k];
         if (v !== undefined) { n++; if (!Object.prototype.hasOwnProperty.call(ACOES, v)) sem.add(v); } }
     /* dubles: conta a chamada e guarda os argumentos; nada fala com o Supabase */
     const chamadas = {};
-    for (const nome of ['comSenha','entrarFator','salvarSenha','carregar','gavetaFiltros','fecharModal','sair'])
+    for (const nome of ['comSenha','entrarFator','salvarSenha','carregar','gavetaFiltros','sair'])
       window[nome] = (...a)=>{ (chamadas[nome] = chamadas[nome] || []).push(a.length); };
     const tecla = (id, key)=>document.getElementById(id).dispatchEvent(new KeyboardEvent('keydown',{key, bubbles:true}));
     tecla('pw','a'); tecla('pw','Enter');
@@ -1633,13 +1633,10 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
     document.querySelectorAll('[data-acao="sair"]').forEach(b=>b.click());
     const q = document.getElementById('q'); q.value = 'abc'; q.dispatchEvent(new Event('input',{bubbles:true}));
     const busca = F.q, x = document.getElementById('qx').style.display;
-    document.getElementById('mtit').click();          /* clique dentro da caixa nao fecha */
-    const dentro = (chamadas.fecharModal||[]).length;
-    document.getElementById('modal').click();          /* clique no fundo fecha */
-    return {sem:[...sem], n, chamadas, alt0, alt1, parcial, cheio, busca, x, dentro};
+    return {sem:[...sem], n, chamadas, alt0, alt1, parcial, cheio, busca, x};
   });
   expect(r.sem, 'acao sem registro').toEqual([]);
-  expect(r.n, 'varreu as acoes da casca').toBeGreaterThanOrEqual(30);
+  expect(r.n, 'varreu as acoes da casca (29 desde a p127 parte 3: sairam as 4 do modal e do desfazer)').toBeGreaterThanOrEqual(29);
   expect(r.chamadas.comSenha, 'Enter e clique entram; outra tecla nao').toEqual([0,0]);
   expect(r.alt0 !== r.alt1, 'outras formas de entrar abre e fecha').toBe(true);
   expect(r.parcial, 'o campo do fator so aceita digito').toBe('1234');
@@ -1651,8 +1648,6 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
   expect(r.chamadas.sair, 'os tres sair andam').toEqual([0,0,0]);
   expect(r.busca, 'a busca le o valor do campo').toBe('abc');
   expect(r.x, 'e mostra o x de limpar').toBe('block');
-  expect(r.dentro, 'clique dentro do modal nao fecha').toBe(0);
-  expect(r.chamadas.fecharModal, 'clique no fundo fecha').toEqual([0]);
   expect(erros).toEqual([]);
 });
 
@@ -2001,11 +1996,11 @@ async function abrir122(page, duble){
   return erros;
 }
 
-test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some calada', async ({page})=>{
+test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some calada (pela releLeituras, p127)', async ({page})=>{
   const erros = await abrir122(page);
   await revelarCasca(page);
   await page.evaluate(()=>carregar());
-  const ato = ()=>exec(()=>sb.rpc('agir',{p_origem:'tarefa',p_ref:'1',p_verbo:'feita',p_valor:'prova de teste'}));
+  const ato = ()=>releLeituras().then(()=>true);
   const le = ()=>({inv:D.inv.length, fila:D.fila.length, log:document.getElementById('log').textContent,
     cls:document.getElementById('log').className, falhou:document.getElementById('falhou').classList.contains('on'),
     det:document.getElementById('falhoudet').textContent});
@@ -2035,9 +2030,9 @@ test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some cala
   expect(r2.det).toContain('Failed to fetch');
   /* (3) tudo de volta: a releitura limpa a faixa */
   const r3 = await page.evaluate(async([ato,le])=>{ ato=eval(ato); le=eval(le);
-    window.__falha={}; const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
+    window.__falha={}; msg('',null); const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
   expect(r3.falhou, 'releitura boa apaga a faixa').toBe(false);
-  expect(r3.cls).not.toContain('bad');
+  expect(r3.cls, 'e nao acende aviso novo').not.toContain('bad');
   expect(erros).toEqual([]);
 });
 
@@ -2089,6 +2084,31 @@ test('122 sessao no bastidor: SIGNED_OUT e 401 levam ao login com aviso, e entra
   await expect(page.locator('#app')).toBeHidden();
   await expect(page.locator('#lmsg')).toContainText('sessão');
   expect(erros).toEqual([]);
+});
+
+/* p127 parte 3 (11/10/2026): o bastidor parou de gravar na parte 2, mas a maquina de gravar ficou: agendar, desfazer,
+   a barra #desf, a tecla Z, exec() e o modal de decisao, todos sem chamador. Codigo morto que grava e porta pronta para
+   alguem religar. Classe cobrada: nome dessa maquina voltando ao index, ou o atalho Z voltando a anunciar desfazer.
+   A v95 reprova aqui. */
+test('p127 parte 3: o bastidor nao carrega a maquina de gravar (desfazer, exec, modal)', async ({page})=>{
+  const fs = require('fs');
+  const s = fs.readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
+  for (const n of ['function agendar(','function enviarPendente(','function desfazer(','function volta(','let PEND','async function exec(',
+                   'function abrirModal(','function fecharModal(','function confirmarModal(','pendente=null','id="modal"','id="desf"','.ledelib','.qpr','.qrow','.resp{','<span class="kbd">Z</span>'])
+    expect(s.includes(n), n+' no index').toBe(false);
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>({
+    acoes: ['desfazer','fecharModal','confirmarModal','fundoModal'].filter(k=>Object.prototype.hasOwnProperty.call(ACOES,k)),
+    globais: ['agendar','enviarPendente','desfazer','volta','exec','abrirModal','fecharModal','confirmarModal'].filter(k=>typeof window[k]==='function'),
+    dom: document.querySelectorAll('#modal, #desf, #desfmsg').length,
+    rodape: [...document.querySelectorAll('.sokbd')].map(e=>e.textContent).join(' ')
+  }));
+  expect(r.acoes, 'ACOES sem as entradas de gravar').toEqual([]);
+  expect(r.globais, 'nenhum nome da maquina de gravar no escopo').toEqual([]);
+  expect(r.dom, 'nem modal nem barra de desfazer no DOM').toBe(0);
+  expect(r.rodape, 'o rodape de teclas nao promete desfazer').not.toMatch(/desfaz/i);
+  await page.keyboard.press('z');
+  expect(erros, 'Z sem dono nao derruba o script').toEqual([]);
 });
 
 /* p127 E1.2 (s1898, 11/10/2026): CONTRATO DO BASTIDOR SO DE LEITURA. A decisao mora no presidente (p4.42); o index.html

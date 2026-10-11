@@ -5,7 +5,7 @@
      liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
      fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
      GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ybT++vbiGPr5ItbV1JC/+5fHATrY50/ygJCpPtIhXiY=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ccRnFkKQyZic7LJiGqJNQJk7T21tNZ3dhig6QInbmEs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -348,19 +348,6 @@ code{background:var(--card2);padding:1px 6px;border-radius:5px;font-size:var(--f
 select{background:var(--card);border:1px solid var(--line2);color:var(--ink);border-radius:9px;
  padding:6px 10px;font-size:var(--fs-1);min-height:34px}
 
-/* ---------- MODAL ---------- */
-.modal{position:fixed;inset:0;background:rgba(var(--scrim-a),.74);backdrop-filter:blur(3px);z-index:60;
- display:none;align-items:center;justify-content:center;padding:20px}
-.modal.on{display:flex}
-.mbox{background:var(--surface);border:1px solid var(--line2);border-radius:var(--r2);
- max-width:520px;width:100%;padding:22px;max-height:86vh;overflow:auto}
-.mbox h3{margin:0 0 6px;font-size:var(--fs-3);font-weight:600}
-.mbox .sub{font-size:var(--fs-2);color:var(--mut);margin-bottom:14px;line-height:1.5}
-.mbox textarea,.mbox input[type=text],.mbox input[type=date]{width:100%;background:var(--card);
- border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:var(--fs-2)}
-.mbox textarea{min-height:104px;resize:vertical;line-height:1.5}
-.mbox .mact{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
-
 /* ---------- TOAST ---------- */
 .log{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--raise);
  border:1px solid var(--line2);border-radius:11px;padding:12px 18px;font-size:var(--fs-2);display:none;
@@ -443,13 +430,7 @@ section.sec.on{display:block}
 .selosec.velho{color:var(--warn)}
 .selosec button{background:none;border:0;color:var(--acc);font-size:var(--fs-1);font-family:inherit;
  cursor:pointer;text-decoration:underline;padding:0}
-/* ---------- v25 · CARD INVERTIDO, LEITURAS, DESFAZER ---------- */
-/* O dado de 14 dias (28/08/2026): 46 de 60 acoes do dono foram "deliberar", zero foram "li".
-   O card passa a abrir pelo que ele faz, escrever, e nao pelo que ele ignora, clicar status. */
-.resp{margin-top:10px}
-.resp textarea{width:100%;background:var(--bg);border:1px solid var(--line2);color:var(--ink);
- border-radius:9px;padding:10px 12px;font-size:var(--fs-2);font-family:inherit;resize:vertical;min-height:44px}
-.resp textarea:focus{outline:none;border-color:var(--acc)}
+/* ---------- v25 · LEITURAS ---------- */
 .resplin{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .resplin .prim{flex:0 0 auto;width:auto;margin:0;padding:9px 16px;min-height:40px;font-size:var(--fs-2)}
 .mais{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:9px;
@@ -473,12 +454,6 @@ section.sec.on{display:block}
 .lerow .t{font-size:var(--fs-2);line-height:1.4;color:var(--ink)}
 .lerow .m{font-size:var(--fs-1);color:var(--dim);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
 .lerow .v{font-size:var(--fs-2);color:var(--ink2);margin-top:5px;border-left:2px solid var(--vio);padding-left:9px}
-.desf{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));
- background:var(--raise);border:1px solid var(--acc);border-radius:11px;padding:11px 15px;
- display:none;gap:14px;align-items:center;z-index:60;font-size:var(--fs-2);box-shadow:0 8px 28px rgba(var(--preto-a),.55)}
-.desf.on{display:flex}
-.desf button{background:none;border:0;color:var(--acc);font-weight:650;font-size:var(--fs-2);
- font-family:inherit;cursor:pointer;padding:4px}
 .automed{font-size:var(--fs-1);color:var(--dim);margin-top:10px;line-height:1.7}
 .automed b{color:var(--ink2);font-variant-numeric:tabular-nums}
 .automed .fora{color:var(--warn)}
@@ -534,7 +509,7 @@ section.sec.on{display:block}
     display:inline-flex;align-items:center;justify-content:center}
   .tab .n:empty{background:none}
   main{padding-bottom:104px}
-  .desf,.log{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  .log{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
   /* o topo cabe em UMA linha: identidade, estado e recarregar. O resto entra no ⋯ */
   .topin{padding:8px 13px 8px;gap:8px;flex-wrap:nowrap}
   /* degrau e elo sao bastidor: cortados pela metade nao informam nada e roubam a linha.
@@ -554,12 +529,6 @@ section.sec.on{display:block}
 @media(min-width:641px){ .btmais{display:none} .maisbar{display:none} }
 .btmais{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
   padding:7px 11px;font-size:var(--fs-3);line-height:1;cursor:pointer;min-height:34px}
-/* deliberar dentro da peca de leitura */
-.ledelib{margin-top:9px;display:none}
-.ledelib.on{display:block}
-.ledelib textarea{width:100%;background:var(--bg);border:1px solid var(--line2);color:var(--ink);
-  border-radius:9px;padding:9px 11px;font-size:var(--fs-2);font-family:inherit;resize:vertical;min-height:64px}
-.ledelib textarea:focus{outline:none;border-color:var(--acc)}
 .lerow .acoesle{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .lerow .acoesle button{background:none;border:1px solid var(--line2);color:var(--mut);
   border-radius:8px;padding:6px 11px;font-size:var(--fs-1);font-family:inherit;cursor:pointer;min-height:34px}
@@ -706,19 +675,8 @@ section.sec.on{display:block}
 .saude.mal{color:var(--red);border-color:var(--red)}
 @media (max-width:420px){.saude{max-width:74px;overflow:hidden;text-overflow:ellipsis;margin-left:5px;padding:2px 6px}}
 /* ---------- v61 ONDA 1: decidir sem digitar, filtros em gaveta, topo em uma linha ---------- */
-.qrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
-.qk{background:var(--card2);color:var(--ink);border:1px solid var(--line2);border-radius:9px;
- padding:8px 12px;font-size:var(--fs-2);min-height:40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-.qk:hover{border-color:var(--acc)}
-.qk.pri{border-color:var(--acc);background:var(--acc-bg);color:var(--on-acc-bg)}
-.qk.neg{color:var(--bad)}
-.qk kbd{font-family:inherit;font-size:var(--fs-1);font-weight:600;line-height:1;color:var(--mut);border:1px solid var(--line2);border-radius:4px;padding:2px 5px}
-.qpr{display:none;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px;padding:10px;border:1px dashed var(--line2);border-radius:10px}
-.qpr.on{display:flex}
-.qprl{font-size:var(--fs-1);color:var(--mut);width:100%}
 .btgav .fn{margin-left:4px;font-size:var(--fs-1);padding:1px 6px;border-radius:10px;background:var(--acc);color:var(--on-acc)}
 .filtros.on:not(.gav){display:none}
-@media(hover:none){.qk kbd{display:none}}
 @media(min-width:641px){
  .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center}
  .topin{flex:1 1 auto;max-width:none;margin:0;padding:8px 18px;flex-wrap:nowrap}
@@ -792,7 +750,6 @@ section.sec.on{display:block}
 #fbar button.ok{border-color:var(--grn)}
 body.foco #faixa5,body.foco #hero,body.foco #correcoes,body.foco #fila2,body.foco #estouro,body.foco #p-agora > h2:not(#h-fila1){display:none}
 body.foco #fila1 .card:not([aria-current="true"]){display:none}
-body.foco #fila1 .card[aria-current="true"]{transition:transform .15s;touch-action:pan-y}
 /* v67 · funil, erro da previsao, orcamento de falha */
 .fun{background:var(--card);border:1px solid var(--line2);border-left:3px solid var(--acc);border-radius:12px;padding:14px 16px;margin:10px 0}
 .funi{font-size:var(--fs-2);margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1108,25 +1065,12 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 
 </main></div>
 
-<!-- ===================== MODAL ===================== -->
-<div class="modal" id="modal" data-acao="fundoModal">
-  <div class="mbox">
-    <h3 id="mtit"></h3>
-    <div class="sub" id="msub"></div>
-    <div id="mcampo"></div>
-    <div class="mact">
-      <button class="sec" data-acao="fecharModal">cancelar</button>
-      <button class="prim" id="mok" data-acao="confirmarModal">confirmar</button>
-    </div>
-  </div>
-</div>
-<div class="desf" id="desf"><span id="desfmsg"></span><button data-acao="desfazer">desfazer</button></div>
 <div class="log" id="log"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v95";
+const VER="v96";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1134,7 +1078,7 @@ const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[],sent:[],op:[]};
 let F={q:"",frente:null,origem:null,nat:null}; // filtros (v27: nat = natureza do ato)
-let mostrarResto=false, pendente=null;          // estado de UI
+let mostrarResto=false;                         // estado de UI
 let CARGAINCOMPLETA=false;                      // v45: a ultima carga voltou completa?
 
 /* ---------- utilitários ---------- */
@@ -1224,8 +1168,6 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   gavetaFiltros:()=>gavetaFiltros(), carregar:()=>carregar(), maisTopo:()=>maisTopo(),
   onBusca:el=>onBusca(el.value), limpaBusca:()=>limpaBusca(), toggleChips:()=>toggleChips(),
   limparFiltros:()=>limparFiltros(), recarregarNovo:()=>recarregarNovo(),
-  fundoModal:(el,ev)=>{if(ev.target===el)fecharModal();}, fecharModal:()=>fecharModal(),
-  confirmarModal:()=>confirmarModal(), desfazer:()=>desfazer(),
   /* v86 (87c, modulo 2 · painel e frentes): o argumento vem de data-a1, escapado por esc() */
   irAba:el=>irAba(el.dataset.a1), irParaFrente:el=>irParaFrente(el.dataset.a1),
   alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value),
@@ -1709,11 +1651,11 @@ document.querySelectorAll("#subnav .sub").forEach(b=>b.onclick=()=>abrir(b.datas
   copia();})();
 
 /* Teclado no computador. No celular nada muda: o alvo continua de polegar. */
-let foco=-1, FOCO_T0=null;
+let foco=-1;
 function cards(){return [...document.querySelectorAll("#fila1 .card")];}
 function focar(i){
   const c=cards(); if(!c.length)return;
-  foco=Math.max(0,Math.min(i,c.length-1)); FOCO_T0=Date.now();
+  foco=Math.max(0,Math.min(i,c.length-1));
   c.forEach((x,j)=>{x.style.outline=j===foco?"2px solid var(--acc)":"";x.setAttribute("aria-current",j===foco?"true":"false");});
   rFbar();
   c[foco].scrollIntoView({behavior:"smooth",block:"center"});
@@ -1723,11 +1665,11 @@ function focar(i){
    focado agia no card e depois o segundo tratador relia o foco e podia recarregar a pagina. */
 document.addEventListener("keydown",e=>{
   const t=e.target.tagName, campo=(t==="INPUT"||t==="TEXTAREA"), mod=(e.metaKey||e.ctrlKey||e.altKey);
-  /* Esc vale em todo lugar: sai do campo ou do modo foco, fecha o modal e solta o card focado */
+  /* Esc vale em todo lugar: sai do campo ou do modo foco e solta o card focado */
   if(e.key==="Escape"){
     if(campo)e.target.blur();
     else if(!mod&&document.body.classList.contains("foco")){e.preventDefault();modoFoco(false);}
-    fecharModal(); if(foco>=0){cards().forEach(x=>x.style.outline="");foco=-1;}
+    if(foco>=0){cards().forEach(x=>x.style.outline="");foco=-1;}
     return;
   }
   if(campo)return;
@@ -1739,9 +1681,7 @@ document.addEventListener("keydown",e=>{
   if(k==="f"){e.preventDefault();modoFoco();}
   else if(k==="j"){e.preventDefault();focar(foco+1);}
   else if(k==="k"){e.preventDefault();focar(foco-1);}
-  else if(k==="z"){e.preventDefault();desfazer();}
   else if(e.key==="r")carregar();
-  else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
   /* v46: o atalho parou em "4" quando as abas ja eram 6. Le a contagem real, nao um numero
      escrito a mao, que e o mesmo defeito da grade de 5 colunas corrigida no CSS. */
   else if(k>="1"&&k<="9"){const ts=document.querySelectorAll(".tab");const tb=ts[+k-1];
@@ -2198,30 +2138,6 @@ function limparFiltros(){F={q:"",frente:null,origem:null,nat:null};document.getE
   document.getElementById("qx").style.display="none";pref("frente",null);pref("origem",null);pref("nat",null);
   montaFiltros();rAgora();}
 
-/* ---------- MODAL ---------- */
-function abrirModal(tit,sub,campo,onOk,okLabel){
-  document.getElementById("mtit").textContent=tit;
-  document.getElementById("msub").innerHTML=sub||"";   // html confiavel: todo chamador monta sub com esc()
-  document.getElementById("mcampo").innerHTML=
-    campo==="texto"?`<textarea id="mval" placeholder="${esc(pendente&&pendente.ph||"escreva a sua posição")}"></textarea>`:
-    campo==="date"?`<input type="date" id="mval" value="${new Date(Date.now()+864e5*7).toISOString().slice(0,10)}">`:
-    campo==="entidade"?`<select id="mval"><option value="">em que conta?</option>${((pendente&&pendente.opcoes)||[]).map(o=>`<option value="${esc(o.v)}"${pendente&&o.v===pendente.padrao?" selected":""}>${esc(o.rot)}${pendente&&o.v===pendente.padrao?" (última usada)":""}</option>`).join("")}</select>`:"";
-  document.getElementById("mok").textContent=okLabel||"confirmar";
-  document.getElementById("modal").classList.add("on");
-  pendente=Object.assign(pendente||{},{fn:onOk,campo});
-  setTimeout(()=>{const el=document.getElementById("mval");if(el)el.focus()},60);}
-function fecharModal(){document.getElementById("modal").classList.remove("on");pendente=null;}
-async function confirmarModal(){
-  const el=document.getElementById("mval");
-  const v=el?el.value.trim():null;
-  if(pendente&&pendente.campo&&!v&&!pendente.opcional){msg("Preencha antes de confirmar.","bad");return;}
-  /* v41: agir() recusa motivo de arquivamento com menos de 5 caracteres, e a recusa chegava
-     como erro generico depois da ida ao banco. A regra e do banco; a tela so para de deixar
-     voce descobrir isso pelo caminho longo. */
-  if(pendente&&pendente.min&&v&&v.length<pendente.min){
-    msg(pendente.minMsg||`O banco exige pelo menos ${pendente.min} caracteres — matar um card sem dizer por quê apaga a prova da decisão.`,"bad");return;}
-  const fn=pendente&&pendente.fn;fecharModal();if(fn)await fn(v);}
-
 /* ---------- AGORA ---------- */
 
 /* separa o carimbo "[...]" do começo do texto: vira etiqueta, não título */
@@ -2306,8 +2222,8 @@ function opcoesFila(it){
    (b) Sunsama: cada card diz quantos minutos custa e o dia avisa quando passa do tempo que o
        Igor declarou (parametro_motor igor.minutos_fila_dia). Card sem estimativa conta 30 min
        e se declara, nunca some da conta.
-   (c) Superhuman: modo foco, um card por vez; no celular, arrastar para a direita aceita a
-       recomendacao e para a esquerda adia 2 dias, pelo MESMO caminho de A e S, com desfazer. */
+   (c) Superhuman: modo foco, um card por vez. Desde a p127 o bastidor so le: o foco mostra, quem
+       decide e o presidente. */
 const MIN_PADRAO=30;
 function donoDe(chave){const k=(D.kdono||[]).find(x=>x.chave===chave)||(D.ev||[]).find(x=>x.chave===chave);return k&&k.dono?k.dono:null;}
 function quemMove(chave){const d=donoDe(chave);return d==="igor"?"você":d==="claude"?"a máquina":"sem dono no banco";}
@@ -2353,8 +2269,7 @@ function rFbar(){
    (b) PREVISTO x REALIZADO (pratica do 13-week cash flow): toda segunda a previsao e fotografada e
        comparada com o caixa da foto seguinte (v_caixa_previsao_erro).
    (c) ORCAMENTO DE FALHA por rotina (Google SRE): v_error_budget; so avisa (decisao de 01/10).
-   (d) TEMPO POR DECISAO: o relogio comeca ao focar o card e para no ato A, S ou R, so quando o
-       ato e possivel no card; vai para painel_decisao_tempo. Criterio da onda 2. */
+   (d) TEMPO POR DECISAO: saiu do bastidor na p127; quem decide e mede e o presidente. */
 function erroPrevisao(){
   const e=D.c13e||[];
   if(!e.length) return '<div class="c13s" style="margin-top:8px">Erro da previsão: começa a medir na segunda foto semanal (toda segunda, 06h).</div>';
@@ -2681,7 +2596,7 @@ function rAgora(){
       ${maisCaixa()}
       ${parado?`<span>·</span><span><b>${rs(parado)}</b> parados</span>`:""}
       
-      <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda · <span class="kbd">Z</span> desfaz</span></div></details></div>`;
+      <span class="sokbd">·</span><span class="sokbd"><span class="kbd">J</span> <span class="kbd">K</span> anda</span></div></details></div>`;
   document.getElementById("correcoes").innerHTML=D.cor.length
     ? `<h2>SUA PALAVRA ESTÁ TRAVANDO <span class="s">— o executor discordou e está esperando</span></h2>`
       +D.cor.map(cardCorrecao).join("") : "";
@@ -2786,49 +2701,8 @@ function rVarredura(){
 }
 
 
-/* ---------- AÇÕES · v25 ----------
-   Desfazer de verdade: o card sai da tela na hora e a gravacao SO acontece 6 segundos depois.
-   Desfazer cancela antes de tocar no banco, no padrao do "undo send". Nada de prometer
-   reversao que o banco nao tem.
-   E o sucesso deixou de recarregar o painel inteiro: recarrega a fila de hoje e os contadores,
-   que sao ~12 KB contra os 647 KB que cada clique custava na v24. */
-let PEND=null;
-function agendar(fn,txt,el){
-  if(PEND)enviarPendente();
-  const pai=el?el.parentNode:null, prox=el?el.nextSibling:null;
-  if(el)el.remove();
-  PEND={fn,el,pai,prox,txt};
-  document.getElementById("desfmsg").textContent=txt;
-  document.getElementById("desf").classList.add("on");
-  PEND.timer=setTimeout(enviarPendente,6000);
-}
-function volta(p){ if(p.pai&&p.el)p.pai.insertBefore(p.el,p.prox); }
-async function enviarPendente(){
-  if(!PEND)return; const p=PEND; PEND=null;
-  clearTimeout(p.timer);
-  document.getElementById("desf").classList.remove("on");
-  let data,error;
-  try{ ({data,error}=await comTeto(p.fn(),LIMITE_ACAO,"12s")); }
-  catch(e){
-    if(ehTeto(e)){avisaTravou("12s",false);volta(p);return;}
-    msg("Erro: "+e.message,"bad",7000);volta(p);return;}
-  if(error){msg("Erro: "+error.message,"bad",7000);volta(p);return;}
-  const t=(typeof data==="string")?data:"feito";
-  if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);volta(p);return;}
-  msg(t,"ok");
-  /* NAO devolve o card em caso de teto aqui: o banco ja gravou e repor na tela seria mentir */
-  try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
-  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
-}
-function desfazer(){
-  if(!PEND){return;}
-  clearTimeout(PEND.timer);
-  const p=PEND; PEND=null;
-  document.getElementById("desf").classList.remove("on");
-  volta(p);
-  msg("desfeito. Nada foi gravado.",null,2600);
-}
-/* v93 (plano 122, s1446): a releitura pos-ato nao esvazia nem engole erro (Google SRE: falhar alto, nunca vazio calado).
+/* ---------- RELEITURA DEPOIS DO ATO ----------
+   v93 (plano 122, s1446): a releitura pos-ato nao esvazia nem engole erro (Google SRE: falhar alto, nunca vazio calado).
    Antes, view que voltava {error} virava [] (Tudo e Sentinela apareciam vazios logo depois do ato), a remontagem que
    falhava sumia num catch, painel_carga com erro ou sem rede nao mudava nada e nao dizia nada, e os erros por chave do
    snapshot nunca eram lidos. Agora o que falhou mantem o dado anterior, acende a faixa de carga incompleta e a funcao
@@ -2882,18 +2756,6 @@ async function recarregarFila(){
   /* a faixa que esta releitura acendeu apaga quando ela volta boa; a da carga inteira fica com a carga */
   if(FALHA_RELEITURA){ FALHA_RELEITURA=false; avisaFalha([]); }
 }
-async function exec(fn,okMsg){
-  let data,error;
-  try{ ({data,error}=await comTeto(fn(),LIMITE_ACAO,"12s")); }
-  catch(e){ if(ehTeto(e)){avisaTravou("12s",false);return false;} msg("Erro: "+e.message,"bad",7000);return false; }
-  if(error){msg("Erro: "+error.message,"bad",7000);return false;}
-  const t=(typeof data==="string")?data:(okMsg||"feito");
-  if(String(t).indexOf("RECUSADO")===0){msg(t,"bad",7000);return false;}
-  msg(okMsg||t,"ok");
-  /* daqui em diante o banco JA gravou: se a tela nao conseguir reler, o aviso tem de dizer isso */
-  try{ await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
-  catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
-  return true;}
 
 
 /* ---------- LEITURAS · v25 ---------- */
@@ -2919,8 +2781,7 @@ function leBarra(){
    : `<b>zero</b> peças esperando sua ciência. Silêncio aqui é informação.`;}
 /* v53 · DIVULGAÇÃO PROGRESSIVA (t619). A aba deixa de ser depósito: na dobra sobe só
    o que chegou hoje ou está fora de banda por decurso; o resto fica atrás de "ver tudo",
-   com a contagem à vista. Teto de 6 na dobra para um dia de enxurrada não desfazer a régua.
-   O textarea de deliberar nasce só quando abre, e não N vezes no DOM. */
+   com a contagem à vista. Teto de 6 na dobra para um dia de enxurrada não desfazer a régua. */
 let LE_TUDO=0;
 function leUrgente(x){return x.dias===0||(x.dias_para_decurso??99)<=1;}
 function leRow(x){
@@ -3749,17 +3610,15 @@ sb.auth.getSession().then(({data})=>{
    A abertura com sessao ja salva e da getSession acima; a volta ao app e do visibilitychange. */
 /* v93 (plano 122, s1446): sessao que cai no meio do uso leva ao login com aviso. SIGNED_OUT chega quando o Igor sai em
    outro aparelho ou quando o supabase-js nao consegue renovar o token; 401 (JWT vencido) chega na carga. Antes a tela
-   seguia aberta com o dado velho. O ato que esperava o desfazer volta para a tela: sem sessao ele seria recusado. */
+   seguia aberta com o dado velho. */
 let SAINDO=false;
 function semSessao(r){ return !!r&&(r.status===401||(!!r.error&&(r.error.code==="PGRST301"||/JWT expired/i.test(r.error.message||"")))); }
 function sessaoCaiu(){
   if(SAINDO) return;
-  let perdeu=false;
-  if(PEND){ clearTimeout(PEND.timer); document.getElementById("desf").classList.remove("on"); volta(PEND); PEND=null; perdeu=true; }
   ABERTO=false;
   document.getElementById("app").classList.add("hidden"); document.getElementById("fator").classList.add("hidden");
   document.getElementById("login").classList.remove("hidden");
-  document.getElementById("lmsg").textContent="Sua sessão terminou (o acesso venceu ou você saiu em outro aparelho). Entre de novo para ver o painel."+(perdeu?" O último ato não foi enviado.":"");
+  document.getElementById("lmsg").textContent="Sua sessão terminou (o acesso venceu ou você saiu em outro aparelho). Entre de novo para ver o painel.";
 }
 sb.auth.onAuthStateChange((ev,s)=>{
   if(ev==="SIGNED_OUT"){ setTimeout(sessaoCaiu,0); return; }
@@ -3773,10 +3632,9 @@ sb.auth.onAuthStateChange((ev,s)=>{
    segundo plano congelada, e a tela mostrava a carga de horas antes como se fosse de agora.
    Medido em 28/09/2026: sete cards decididos as 19:12 continuaram na tela do Igor porque a
    pagina era a das 18:34. Voltou depois de VOLTA_MS, ou a ultima carga falhou: carrega de novo.
-   Com texto nao enviado num card ou modal aberto, NAO redesenha — avisa, e o botao fica com ele. */
+   Com texto nao enviado num campo, NAO redesenha — avisa, e o botao fica com ele. */
 const VOLTA_MS=60000;
 function rascunhoAberto(){
-  if(document.getElementById("modal").classList.contains("on")) return true;
   return [...document.querySelectorAll("#app textarea")].some(t=>t.value.trim().length>0);}
 function aoVoltar(){
   if(document.visibilityState!=="visible") return;
