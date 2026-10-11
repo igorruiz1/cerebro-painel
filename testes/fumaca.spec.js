@@ -160,11 +160,12 @@ test('o card da fila de HOJE desenha a escolha quando o banco oferece opcao', as
         titulo:'Decidir o corte dos tetos', titulo_completo:'Decidir o corte dos tetos',
         recomendacao:'Ajustar a meta.'});
     }catch(e){ err=String(e); }
-    return {err, botao:html.includes('faEscolher'), marca:html.includes('recmk'),
+    /* p127 (s1898): o bastidor so le. A opcao aparece como texto; escolher e no presidente */
+    return {err, botao:/<button[^>]*data-acao/.test(html), marca:html.includes('recmk'),
             rotulo:html.includes('Ajustar a meta'), consequencia:html.includes('terceiro mes de estouro')};
   });
   expect(r.err,          'cardFila derrubou').toBe(null);
-  expect(r.botao,        'botao de escolha no card da fila').toBe(true);
+  expect(r.botao,        'nenhum botao de acao no card da fila').toBe(false);
   expect(r.marca,        'marca de opcao recomendada').toBe(true);
   expect(r.rotulo,       'rotulo da opcao').toBe(true);
   expect(r.consequencia, 'consequencia de cada opcao').toBe(true);
@@ -488,61 +489,24 @@ const MONTA_FILA = ()=>{
   return [...document.querySelectorAll("#fila1 .card")].map(c=>c.dataset.r);
 };
 const FOCA = (page,ref)=>page.evaluate(r=>focar(cards().findIndex(c=>c.dataset.r===r)), ref);
-const ENVIA = page=>page.evaluate(async()=>{ await enviarPendente(); return window.__n.args; });
 
-test("A, S e R decidem o card focado sem digitar, cada um pela porta certa", async ({page})=>{
+/* p127 (s1898 11/10/2026): o bastidor so le; a decisao mora no presidente (p4.42). Este teste trocou de lado: antes
+   cobrava que A, S e R decidiam o card focado; agora cobra que nenhuma tecla e nenhum botao da fila grava. */
+const ESCRITA = ["agir","escolher","painel_responder","perguntar","responder_correcao","deliberar_correcao","painel_medir_decisao","marcar_leituras"];
+test("p127: A, S e R no card focado nao gravam nada, e a fila nao tem botao de decidir", async ({page})=>{
   const erros = await abrirComArgs(page);
   const refs = await page.evaluate(MONTA_FILA);
   expect(refs, "os tres cards desenhados").toEqual(expect.arrayContaining(["1405","999","32"]));
-
-  /* PRONTO: A abre os 4 atos, 2 escolhe "enviado" */
-  await FOCA(page,"1405");
-  await page.keyboard.press("a");
-  expect(await page.evaluate(()=>!!document.querySelector('#fila1 .card[data-r="1405"] .qpr.on')), "A abre os atos do PRONTO").toBe(true);
-  await page.keyboard.press("2");
-  let args = await ENVIA(page);
-  expect(args.find(x=>x[0]==="painel_responder"), "o ato 2 e enviado, pela porta definer")
-    .toEqual(["painel_responder",{p_tipo:"PRONTO",p_id:1405,p_ato:"enviado",p_nota:null}]);
-
-  /* DECISAO com opcao recomendada: A escolhe a recomendada */
-  await page.evaluate(MONTA_FILA);
-  await FOCA(page,"999");
-  await page.keyboard.press("a");
-  args = await ENVIA(page);
-  expect(args.find(x=>x[0]==="escolher"), "A escolhe a opcao marcada recomendada")
-    .toEqual(["escolher",{p_ref:"999",p_opcao:"Achou o material"}]);
-
-  /* S: adia 2 dias pelo agir, com a data calculada na tela */
-  await page.evaluate(MONTA_FILA);
-  await FOCA(page,"1405");
-  await page.keyboard.press("s");
-  args = await ENVIA(page);
-  const esperado = await page.evaluate(()=>{const d=new Date();d.setDate(d.getDate()+2);return ivData(d);});
-  expect(args.find(x=>x[0]==="agir"), "S repactua para daqui a 2 dias")
-    .toEqual(["agir",{p_origem:"tarefa",p_ref:"1405",p_verbo:"repactuar",p_valor:esperado}]);
-
-  /* R: recusa com motivo vazio, sem recarregar a pagina */
-  await page.evaluate(MONTA_FILA);
-  await FOCA(page,"1405");
-  await page.keyboard.press("r");
-  expect(await page.evaluate(()=>document.getElementById("modal").classList.contains("on")), "R abre a recusa").toBe(true);
-  await page.evaluate(()=>confirmarModal());
-  args = await ENVIA(page);
-  expect(args.find(x=>x[0]==="painel_responder"), "recusar PRONTO devolve a peca, motivo opcional")
-    .toEqual(["painel_responder",{p_tipo:"PRONTO",p_id:1405,p_ato:"refazer",p_nota:null}]);
-  const cargasR = await page.evaluate(()=>window.__n.args.filter(x=>x[0]==="painel_carga"&&!x[1]).length);
-  expect(cargasR, "R com card focado nao recarrega a pagina inteira").toBe(0);
-
-  /* card fora da bandeja: A nao grava nada; sem foco, R volta a ser recarregar */
-  await page.evaluate(MONTA_FILA);
-  await FOCA(page,"32");
-  await page.keyboard.press("a");
-  expect(await page.evaluate(()=>PEND), "A sem recomendacao nao agenda gravacao").toBe(null);
-  await page.keyboard.press("Escape");
-  const antes = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
-  await page.keyboard.press("r");
-  const depois = await page.evaluate(()=>window.__n.rpc.painel_carga||0);
-  expect(depois, "sem card focado, R recarrega como antes").toBe(antes+1);
+  const botoes = await page.evaluate(()=>[...document.querySelectorAll("#fila1 .card [data-acao]")].map(b=>b.dataset.acao));
+  expect(botoes.filter(a=>a!=="abreTitulo"&&a!=="alternarRecolhe"), "so abrir titulo e recolher texto").toEqual([]);
+  for (const ref of ["1405","999","32"]) {
+    await FOCA(page,ref);
+    for (const k of ["a","s","1","2"]) await page.keyboard.press(k);
+  }
+  await page.waitForTimeout(6500);
+  const escritas = await page.evaluate(E=>(window.__n.args||[]).filter(x=>E.includes(x[0])), ESCRITA);
+  expect(escritas, "nenhuma escrita saiu do bastidor").toEqual([]);
+  expect(await page.evaluate(()=>document.querySelectorAll("#modal, #desf, #app textarea").length), "nenhum campo de decisao existe").toBe(0);
   expect(erros, "erro de script").toEqual([]);
 });
 
@@ -827,13 +791,10 @@ test('modo foco mostra um card por vez, anda com os botoes e sai com Esc', async
     document.querySelectorAll('#fbar button')[1].click();
     const cont2=document.querySelector('#fbar .fc').textContent;
     const faixaVisivel=getComputedStyle(document.getElementById('faixa5')).display!=='none';
-    /* o gesto usa o MESMO caminho da tecla: troca qAceitar/qAdiar por espias */
-    const chamadas=[]; const oA=qAceitar, oS=qAdiar;
-    qAceitar=(o,r)=>chamadas.push('a:'+r); qAdiar=(o,r)=>chamadas.push('s:'+r);
-    gestoFoco(120); gestoFoco(-120); gestoFoco(30);
-    qAceitar=oA; qAdiar=oS;
+    /* p127 (s1898): a barra do foco so navega; aceitar, adiar e recusar sairam com o gesto */
+    const rotulos=[...document.querySelectorAll('#fbar button')].map(b=>b.dataset.acao);
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));
-    return {antes, um, cont, cont2, topo, faixaVisivel, chamadas, depois:vis(), foco:document.body.classList.contains('foco')};
+    return {antes, um, cont, cont2, topo, faixaVisivel, rotulos, depois:vis(), foco:document.body.classList.contains('foco')};
   }, [CARD(1,'um'),CARD(2,'dois'),CARD(3,'tres')]);
   expect(r.antes).toBe(3);
   expect(r.um, 'modo foco: um card na tela').toBe(1);
@@ -841,7 +802,7 @@ test('modo foco mostra um card por vez, anda com os botoes e sai com Esc', async
   expect(r.cont2, 'o botao proximo anda').toBe('2 de 3');
   expect(r.faixaVisivel, 'a faixa sai da frente no foco').toBe(false);
   expect(r.topo, 'no celular o card do foco fica no alto da tela').toBeLessThanOrEqual(260);
-  expect(r.chamadas, 'direita aceita, esquerda adia, toque curto nao faz nada').toEqual(['a:2','s:2']);
+  expect(r.rotulos, 'a barra do foco so anda e sai').toEqual(['focarPasso','focarPasso','sairFoco']);
   expect(r.foco, 'Esc sai do foco').toBe(false);
   expect(r.depois).toBe(3);
 });
@@ -905,32 +866,8 @@ test('o orcamento de falha lista toda rotina e acende quem estourou', async ({pa
   expect(r.aviso, 'a decisao de so avisar esta escrita na tela').toBe(true);
 });
 
-test('o tempo por decisao sai do foco ate o ato, so quando o ato e possivel, e diz o modo', async ({page})=>{
-  await abrir(page);
-  await revelarCasca(page);
-  const r = await page.evaluate(()=>{
-    const it={origem:'tarefa',ref:'7',nivel:1,titulo:'x',titulo_completo:'x',recomendacao:'y',
-      acoes:[{verbo:'repactuar',label:'nova data'}]};
-    D.fila=[it]; D.min=[]; D.cap={minutos_dia:120}; rAgora();
-    const chamadas=[]; const rpcOrig=sb.rpc;
-    sb.rpc=(nome,args)=>{ if(nome==='painel_medir_decisao') chamadas.push(args); return new Promise(()=>{}); };
-    focar(0);
-    const s=medirDecisao('tarefa','7','s');
-    const semRec=medirDecisao('tarefa','7','a');
-    modoFoco(true); focar(0);
-    const s2=medirDecisao('tarefa','7','s');
-    modoFoco(false); sb.rpc=rpcOrig;
-    let viaTecla=null; const fo=fAto; fAto=k=>{viaTecla=k;}; focar(0);
-    document.dispatchEvent(new KeyboardEvent('keydown',{key:'s'})); fAto=fo;
-    return {chamadas, s, semRec, s2, viaTecla};
-  });
-  expect(r.chamadas.length, 'adiar possivel mede; aceitar sem recomendacao nao mede').toBe(2);
-  expect(r.semRec).toBe(null);
-  expect(r.s.p_modo).toBe('lista');
-  expect(r.s2.p_modo).toBe('foco');
-  expect(r.s.p_ms).toBeGreaterThanOrEqual(0);
-  expect(r.viaTecla, 'a tecla passa pelo mesmo caminho do botao').toBe('s');
-});
+/* p127 (s1898): o teste do tempo por decisao no bastidor saiu junto com a decisao. A medida segue no presidente
+   (medirAto, p_modo 'presidente'), coberta em presidente.spec.js. */
 
 /* v68 · f5, auditoria de 02/10/2026. Quatro classes de defeito:
    (a) ordem so por peso: tarefa vencida ficava abaixo do corte atras de item que vence depois;
@@ -953,11 +890,9 @@ test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico esc
     let err=null; try{ rAgora(); marcaAbas(); }catch(e){ err=String(e); }
     const cards=[...document.querySelectorAll('#fila1 .card')];
     const tag=r=>{const c=document.querySelector(`#fila1 .card[data-r="${r}"] .tag.cs`); return c?c.textContent:null;};
-    const achou=!!achaIt('tarefa','1334');
     const out={err, ordem:cards.map(c=>c.dataset.r), ekos:tag('1334'), hoje:tag('1545'),
       cab:document.getElementById('h-fila1').textContent, estouro:document.getElementById('estouro').textContent,
-      fila2:[...document.querySelectorAll('#fila2 .card')].map(c=>c.dataset.r), aba:document.getElementById('n-agora').textContent,
-      achou};
+      fila2:[...document.querySelectorAll('#fila2 .card')].map(c=>c.dataset.r), aba:document.getElementById('n-agora').textContent};
     D.exp=undefined; D.depois=[];
     try{ rAgora(); out.semExp=[...document.querySelectorAll('#fila1 .card')].map(c=>c.dataset.r); }catch(e){ out.semExp=String(e); }
     return out;
@@ -974,7 +909,6 @@ test('tarefa vencida ou de hoje sobe acima do corte, com a classe de servico esc
   expect(r.estouro, 'o corte se anuncia').toContain('5 de 6');
   expect(r.fila2, 'a promovida sai do segundo plano, a futura fica').toEqual(['1600']);
   expect(r.aba, 'o contador da aba conta a tarefa promovida').toBe('6');
-  expect(r.achou, 'A, S e R acham o card promovido').toBe(true);
   expect(r.semExp, 'sem a chave exp a tela ordena o que tem, sem derrubar').toEqual(['1545','1517','1424','demanda-exemplo','32']);
 });
 
@@ -1255,59 +1189,8 @@ for (const largura of [390, 1280]) {
   });
 }
 
-/* LC-14 no bastidor (02/10/2026): o agir_nucleo passa a recusar feita de tarefa sem prova de
-   8 caracteres. Sem este teste, o botao "feita" do inventario e da fila mandava valor nulo e
-   o Igor so descobria a regra pela recusa do banco. */
-test('feita no bastidor abre o campo da prova e prova curta nao vai ao banco', async ({page})=>{
-  const erros = await abrirComArgs(page);
-  const r = await page.evaluate(async()=>{
-    window.__n.args=[];
-    ivAgir(77,'feita','texto','feita','iv-');
-    const ph=document.getElementById('mval').getAttribute('placeholder');
-    document.getElementById('mval').value='ok';
-    await confirmarModal();
-    const curta=window.__n.args.filter(a=>a[0]==='agir').length;
-    fecharModal();
-    agir('tarefa','78','feita','','feita');
-    const abriu=!!document.getElementById('mval');
-    document.getElementById('mval').value='e-mail do fiscal 02/10';
-    await confirmarModal();
-    if(typeof enviarPendente==='function') await enviarPendente();
-    return {ph, curta, abriu, args:window.__n.args.filter(a=>a[0]==='agir').map(a=>a[1])};
-  });
-  expect(r.ph).toContain('prova');
-  expect(r.curta, 'prova curta nao chama agir').toBe(0);
-  expect(r.abriu, 'feita da fila tambem pede prova').toBe(true);
-  expect(r.args).toEqual([{p_origem:'tarefa',p_ref:'78',p_verbo:'feita',p_valor:'e-mail do fiscal 02/10'}]);
-  expect(erros).toEqual([]);
-});
-
-/* v77 (s880, 06/10/2026): caiu e paguei dizem a conta (PF, Ruiz e Dabli nao se misturam, trava 658). O banco
-   recusa recebido/pago sem conta; a tela abre o seletor com as contas do cardapio, a ultima usada vem marcada
-   e sem escolha nada vai ao banco. */
-test('caiu da fila abre o seletor de conta e so grava com a conta escolhida', async ({page})=>{
-  const erros = await abrirComArgs(page);
-  const r = await page.evaluate(async()=>{
-    window.__n.args=[];
-    OPC_ENT['fluxo|19|recebido']={opcoes:[{v:'RUIZ',rot:'Ruiz Engenharia'},{v:'DABLI',rot:'Dabli Tech'},{v:'PF',rot:'Igor PF'}],padrao:'DABLI'};
-    agir('fluxo','19','recebido','entidade','caiu');
-    const sel=document.getElementById('mval');
-    const tipo=sel&&sel.tagName, n=sel?sel.options.length:0, marcada=sel&&sel.value;
-    sel.value='';
-    await confirmarModal();
-    const semConta=window.__n.args.filter(a=>a[0]==='agir').length;
-    document.getElementById('mval').value='RUIZ';
-    await confirmarModal();
-    if(typeof enviarPendente==='function') await enviarPendente();
-    return {tipo, n, marcada, semConta, args:window.__n.args.filter(a=>a[0]==='agir').map(a=>a[1])};
-  });
-  expect(r.tipo).toBe('SELECT');
-  expect(r.n, 'tres contas e a linha vazia').toBe(4);
-  expect(r.marcada, 'a ultima usada vem marcada').toBe('DABLI');
-  expect(r.semConta, 'sem conta nao chama agir').toBe(0);
-  expect(r.args).toEqual([{p_origem:'fluxo',p_ref:'19',p_verbo:'recebido',p_valor:'RUIZ'}]);
-  expect(erros).toEqual([]);
-});
+/* p127 (s1898): "feita pede prova" e "caiu pede a conta" sairam do bastidor junto com o agir. As duas regras
+   seguem no presidente, cobertas em presidente.spec.js (prova minima e conta do dinheiro). */
 
 /* s764 (02/10/2026): a secao ROTINAS le o dead-man pela porta do dono (rpc painel_cron_deadman), nao
    pela view definer; a view so e lida se a porta falhar. */
@@ -1372,16 +1255,11 @@ test('texto hostil do banco aparece como texto e nao executa, nem dentro de oncl
     out.titulo=card&&card.querySelector('.ttl').textContent;
     out.heroi=document.getElementById('hero').textContent;
     out.imgs=document.querySelectorAll('img[onerror]').length;
-    /* argumento JS dentro de atributo: o menu de acao, o chip de frente e o botao de opcao */
-    card.querySelector('.menu button').click();
-    out.modal=document.getElementById('mtit').textContent; fecharModal();
+    /* argumento JS dentro de atributo: o chip de frente. p127: a opcao virou texto, sem botao */
     gavetaFiltros(true);
     const chip=[...document.querySelectorAll('#chipsFrente .chip')].find(c=>c.textContent.includes('window.__xss'));
     chip.click(); out.frente=F.frente; limparFiltros();
-    window.__n.args=[];
-    document.querySelector('#fila1 .card .opb').click();
-    await enviarPendente();
-    out.escolha=(window.__n.args.find(a=>a[0]==='escolher')||[])[1];
+    out.opcao=document.querySelector('#fila1 .card .opb').firstChild.textContent.trim();
     await new Promise(r=>setTimeout(r,200));
     out.xss=window.__xss; out.csp=window.__csp;
     return out;
@@ -1390,9 +1268,8 @@ test('texto hostil do banco aparece como texto e nao executa, nem dentro de oncl
   expect(r.titulo, 'o titulo hostil aparece como texto').toBe(XSS_TAG);
   expect(r.heroi, 'contador do snapshot tambem e texto').toContain(XSS_TAG);
   expect(r.imgs, 'nenhum elemento nasceu do texto do banco').toBe(0);
-  expect(r.modal, 'o rotulo chega literal ao modal').toBe(XSS_ASPA);
   expect(r.frente, 'a frente chega literal ao filtro').toBe(XSS_ASPA);
-  expect(r.escolha, 'a opcao chega literal ao banco').toEqual({p_ref:'77',p_opcao:XSS_ENT});
+  expect(r.opcao, 'a opcao aparece literal').toBe(XSS_ENT);
   expect(r.xss, 'nenhum handler injetado rodou').toBeUndefined();
   expect(r.csp, 'nenhuma violacao de CSP desenhando a fila').toEqual([]);
 });
@@ -1669,7 +1546,7 @@ test('s859: fluxo conta seus minutos e nao pega os da tarefa de mesmo numero', a
    aria-pressed, aria-selected, aria-expanded) ou no checked nativo, nunca em classe. A classe .on
    so sobra para VISIBILIDADE, e a lista abaixo e fechada: selecao nova com .on, .sel ou .atual
    reprova aqui. Assim leitor de tela, CSS e teste leem o mesmo dono do estado. */
-const VISIBILIDADE_ON = ['filtros','velha','falhou','pane','modal','log','sec','menu','desf','maisbar','ledelib','qpr','coluna'];
+const VISIBILIDADE_ON = ['filtros','velha','falhou','pane','log','sec','menu','maisbar','coluna'];  /* p127 parte 3: modal, desf, ledelib e qpr sairam do index */
 test('82b: .on, .sel e .atual no CSS so de visibilidade, nas tres paginas', async ()=>{
   const fs = require('fs');
   const fora = [];
@@ -1682,7 +1559,7 @@ test('82b: .on, .sel e .atual no CSS so de visibilidade, nas tres paginas', asyn
       if (!(m[2]==='on' && VISIBILIDADE_ON.includes(m[1]))) fora.push(arq+': '+m[0]);
     }
   }
-  expect(regras, 'achou as regras de visibilidade (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(14);
+  expect(regras, 'achou as regras de visibilidade (teste sem alvo passa vazio; 12 desde a p127 parte 3)').toBeGreaterThanOrEqual(12);
   expect(fora, 'estado de selecao por classe; use atributo ARIA').toEqual([]);
 });
 
@@ -1718,14 +1595,14 @@ test('82b: aba, secao e linha marcada se leem por atributo, e a cor vem dele', a
 });
 
 /* v85 (plano 87c, modulo 1 · casca, 07/10/2026): o index segue o presidente da p4.26, um modulo por PR.
-   A casca estatica (login, segundo fator, senha, topo, filtros, modal, desfazer) fica sem handler inline:
+   A casca estatica (login, segundo fator, senha, topo, filtros; modal e desfazer sairam na p127 parte 3) fica sem handler inline:
    a acao mora em data-acao/data-ao-*, e ACOES e a lista fechada. Duas classes se cobram aqui:
    (1) on* de volta na casca ou o total do arquivo subindo (o teto so desce, PR a PR, ate zero no fecho);
    (2) acao com argumento trocado: onclick="carregar()" chamava sem argumento, e a delegacao entrega o
    botao; registro que repassasse o elemento faria carregar(el) e gavetaFiltros(el) lerem lixo.
    A v83 reprova: a casca tinha 33 on* e o arquivo 89. */
 const TETO_ON_INDEX = 0;  /* v85 casca: 56; v86 painel e frentes: 49; v87 leituras: 42; v88 Agora/PF/correcao e titulo: 30; v89 Tudo e secoes: 21; v90 fila: 1; v91 fecho (s1183): 0, o exemplo no comentario do escAttr saiu. A v90 reprova aqui. */
-test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
+test('87c casca: login, topo e filtros sem handler inline; o clique e o Enter andam pelo registro', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
   const casca = fonte.slice(fonte.indexOf('<body'), fonte.indexOf('<script src='));
   expect(casca.length, 'achou a casca (teste sem alvo passa vazio)').toBeGreaterThan(10000);
@@ -1734,12 +1611,12 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
   const erros = await abrir(page);
   const r = await page.evaluate(()=>{
     const sem = new Set(); let n = 0;
-    for (const el of document.querySelectorAll('#login,#login *,#fator,#fator *,#senha,#senha *,.top,.top *,#velha *,#falhou *,#modal,#modal *,#desf *'))
+    for (const el of document.querySelectorAll('#login,#login *,#fator,#fator *,#senha,#senha *,.top,.top *,#velha *,#falhou *'))
       for (const k of ['acao','aoDigitar','aoMudar','aoTecla','aoColar']) { const v = el.dataset[k];
         if (v !== undefined) { n++; if (!Object.prototype.hasOwnProperty.call(ACOES, v)) sem.add(v); } }
     /* dubles: conta a chamada e guarda os argumentos; nada fala com o Supabase */
     const chamadas = {};
-    for (const nome of ['comSenha','entrarFator','salvarSenha','carregar','gavetaFiltros','fecharModal','sair'])
+    for (const nome of ['comSenha','entrarFator','salvarSenha','carregar','gavetaFiltros','sair'])
       window[nome] = (...a)=>{ (chamadas[nome] = chamadas[nome] || []).push(a.length); };
     const tecla = (id, key)=>document.getElementById(id).dispatchEvent(new KeyboardEvent('keydown',{key, bubbles:true}));
     tecla('pw','a'); tecla('pw','Enter');
@@ -1756,13 +1633,10 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
     document.querySelectorAll('[data-acao="sair"]').forEach(b=>b.click());
     const q = document.getElementById('q'); q.value = 'abc'; q.dispatchEvent(new Event('input',{bubbles:true}));
     const busca = F.q, x = document.getElementById('qx').style.display;
-    document.getElementById('mtit').click();          /* clique dentro da caixa nao fecha */
-    const dentro = (chamadas.fecharModal||[]).length;
-    document.getElementById('modal').click();          /* clique no fundo fecha */
-    return {sem:[...sem], n, chamadas, alt0, alt1, parcial, cheio, busca, x, dentro};
+    return {sem:[...sem], n, chamadas, alt0, alt1, parcial, cheio, busca, x};
   });
   expect(r.sem, 'acao sem registro').toEqual([]);
-  expect(r.n, 'varreu as acoes da casca').toBeGreaterThanOrEqual(30);
+  expect(r.n, 'varreu as acoes da casca (29 desde a p127 parte 3: sairam as 4 do modal e do desfazer)').toBeGreaterThanOrEqual(29);
   expect(r.chamadas.comSenha, 'Enter e clique entram; outra tecla nao').toEqual([0,0]);
   expect(r.alt0 !== r.alt1, 'outras formas de entrar abre e fecha').toBe(true);
   expect(r.parcial, 'o campo do fator so aceita digito').toBe('1234');
@@ -1774,8 +1648,6 @@ test('87c casca: login, topo, filtros e modal sem handler inline; o clique e o E
   expect(r.chamadas.sair, 'os tres sair andam').toEqual([0,0,0]);
   expect(r.busca, 'a busca le o valor do campo').toBe('abc');
   expect(r.x, 'e mostra o x de limpar').toBe('block');
-  expect(r.dentro, 'clique dentro do modal nao fecha').toBe(0);
-  expect(r.chamadas.fecharModal, 'clique no fundo fecha').toEqual([0]);
   expect(erros).toEqual([]);
 });
 
@@ -1827,13 +1699,12 @@ test('87c frentes: os seis desenhos do painel sem on*; o slug com aspa chega int
    deliberar saem do onclick/onchange. O ref vem do banco e vai em data-a1 por esc(). A classe cobrada:
    ref com aspa quebrando o argumento, e a caixa de deliberar (que nasce depois, dentro da linha) voltando
    a trazer on*. A v86 reprova (on* nas leituras). */
-test('87c leituras: barra, linha e deliberacao sem on*; o ref com aspa chega inteiro', async ({page})=>{
+test('87c leituras: barra e linha sem on*, sem deliberar (p127); o ref com aspa chega inteiro', async ({page})=>{
   await abrir(page);
   await revelarCasca(page);
   const r = await page.evaluate(()=>{
     const hostil = "o'1 \"x\" <b>";
-    const vistos = {enviaDelib:[], marcarLote:0};
-    window.enviaDelib = ref=>vistos.enviaDelib.push(ref);
+    const vistos = {marcarLote:0};
     window.marcarLote = ()=>{ vistos.marcarLote++; };
     LE = [{ref:hostil, titulo:'peca hostil', tipo:'fato', frente:'00-teste', dias:0, dias_para_decurso:3},
           {ref:'r-calma', titulo:'peca em dia', tipo:'fato', frente:'00-teste', dias:3, dias_para_decurso:9}];
@@ -1852,26 +1723,21 @@ test('87c leituras: barra, linha e deliberacao sem on*; o ref com aspa chega int
     cx.click();
     const marcou = SEL.has(hostil) && cx.checked;
     document.querySelector('#le-barra [data-acao="marcarLote"]').click();
-    document.querySelector('#leituras [data-acao="abreDelib"]').click();
-    const caixa = document.getElementById('ld-'+hostil), aberta = caixa.classList.contains('on');
-    const v1 = varrer();                                  /* com a caixa de deliberar no DOM */
-    caixa.querySelector('[data-acao="enviaDelib"]').click();
-    caixa.querySelector('[data-acao="abreDelib"]').click();   /* cancelar fecha */
-    const fechada = !caixa.classList.contains('on');
+    const v1 = varrer();
+    /* p127 (s1898): deliberar saiu do bastidor; marcar lida (ciencia) fica */
+    const delib = document.querySelectorAll('#leituras [data-acao="abreDelib"], #leituras [data-acao="enviaDelib"], #leituras textarea').length;
     document.querySelector('#le-barra [data-acao="leTodas"]').click();
     const todas = SEL.size;
-    return {err, v1, linhas0, linhas1, marcou, aberta, fechada, todas, vistos, hostil};
+    return {err, v1, linhas0, linhas1, marcou, delib, todas, vistos, hostil};
   });
   expect(r.err, 'rLeituras derrubou o script').toBe(null);
-  expect(r.v1.inline, 'on* nas leituras e na caixa de deliberar').toEqual([]);
+  expect(r.v1.inline, 'on* nas leituras').toEqual([]);
   expect(r.v1.sem, 'acao sem registro').toEqual([]);
-  expect(r.v1.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(8);
+  expect(r.v1.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(4);
   expect([r.linhas0, r.linhas1], 'ver tudo traz a peca em dia').toEqual([1, 2]);
   expect(r.marcou, 'o checkbox marca o ref inteiro').toBe(true);
   expect(r.vistos.marcarLote, 'marcar em lote anda').toBe(1);
-  expect(r.aberta, 'deliberar abre a caixa do ref com aspa').toBe(true);
-  expect(r.vistos.enviaDelib, 'registrar entrega o ref inteiro').toEqual([r.hostil]);
-  expect(r.fechada, 'cancelar fecha').toBe(true);
+  expect(r.delib, 'p127: nenhum deliberar nas leituras').toBe(0);
   expect(r.todas, 'selecionar todas').toBe(2);
 });
 
@@ -1880,7 +1746,7 @@ test('87c leituras: barra, linha e deliberacao sem on*; o ref com aspa chega int
    (1) a correcao passava SEIS argumentos de tipos diferentes (numero, booleano, objeto, texto) dentro de
    JS em atributo; agora vao como uma lista JSON em data-a1 e o tipo tem de voltar igual;
    (2) modoFoco() sem argumento alterna, e o registro nao pode lhe passar o botao. A v87 reprova. */
-test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao chega com os seis argumentos e o tipo de cada um', async ({page})=>{
+test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao so se le (p127)', async ({page})=>{
   const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','index.html'),'utf8').replace(/\r\n/g,'\n');
   for (const f of ['rPF','cardCorrecao','avisoDepois','pecaLink','vazioAgora','rAgora']) {
     const i = fonte.indexOf('\nfunction '+f+'('), j = fonte.indexOf('\nfunction ', i+10);
@@ -1890,8 +1756,7 @@ test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao chega co
   const erros = await abrir(page);
   await revelarCasca(page);
   const r = await page.evaluate(()=>{
-    const vistos = {corrigir:[], copiaPeca:[], verDepois:0, irAba:[], modoFoco:[], verTudo:[]};
-    window.corrigir = (...a)=>vistos.corrigir.push(a);
+    const vistos = {copiaPeca:[], verDepois:0, irAba:[], modoFoco:[], verTudo:[]};
     window.copiaPeca = b=>vistos.copiaPeca.push(b.tagName);
     window.verDepois = ()=>{ vistos.verDepois++; };
     window.irAba = p=>vistos.irAba.push(p);
@@ -1910,7 +1775,8 @@ test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao chega co
     for (const el of caixa.querySelectorAll('*')) {
       for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
       const v = el.dataset.acao; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v); } }
-    caixa.querySelectorAll('[data-acao="corrigir"]').forEach(b=>b.click());
+    /* p127 (s1898): responder a correcao saiu do bastidor; o card so mostra */
+    vistos.corrigir = caixa.querySelectorAll('.card.cor button').length;
     caixa.querySelector('[data-acao="copiaPeca"]').click();
     caixa.querySelector('[data-acao="verDepois"]').click();
     caixa.querySelector('[data-acao="irAba"]').click();
@@ -1921,11 +1787,8 @@ test('87c Agora: PF, correcao, peca e segundo plano sem on*; a correcao chega co
   });
   expect(r.inline, 'on* na correcao, na peca e no vazio da Agora').toEqual([]);
   expect(r.sem, 'acao sem registro').toEqual([]);
-  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(7);
-  expect(r.vistos.corrigir, 'seis argumentos, cada um no seu tipo').toEqual([
-    [42,'responder_correcao',true,'',"aceito 'isto'",''],
-    [42,'deliberar_correcao',{nota:'o\'1 "x"'},'motivo','deliberar','p"q <b>'],
-    [42,'responder_correcao',null,'','sem arg','']]);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(4);
+  expect(r.vistos.corrigir, 'p127: a correcao nao tem botao no bastidor').toBe(0);
   expect(r.vistos.copiaPeca, 'copiar recebe o proprio botao').toEqual(['BUTTON']);
   expect(r.vistos.verDepois, 'segundo plano').toBe(1);
   expect(r.vistos.irAba, 'esperando ciencia abre leituras').toEqual(['leituras']);
@@ -1970,16 +1833,14 @@ test('87c titulo: Enter e espaco abrem o titulo, outra tecla nao, e o atalho glo
    em data-a1/a2 por esc(), ou numa lista JSON quando sao varios; (2) o tipo de cada argumento: o id seguia
    como TEXTO (ia entre aspas), o +7d como NUMERO e o prefixo da superficie (iv- ou sv-) tem de chegar, senao
    o desfazer tira a linha da aba errada. A v88 reprova (on* na Tudo). */
-test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e rotulo com aspa chegam inteiros', async ({page})=>{
+test('87c Tudo: raia, faixa, opcoes e secoes sem on*, inventario sem botao (p127); rotulo com aspa chega inteiro', async ({page})=>{
   await abrir(page);
   await revelarCasca(page);
   const r = await page.evaluate(()=>{
     const hostil = "9'1 \"x\" <b>", rot = "esp'era \"já\"";
-    const vistos = {raia:[], ordem:[], faixa:[], escolher:[], enviar:[], agir:[], adiar:[], secao:[], recarga:[]};
+    const vistos = {raia:[], ordem:[], faixa:[], secao:[], recarga:[]};
     window.raiaTudo = k=>vistos.raia.push(k); window.ordenaTudo = k=>vistos.ordem.push(k);
     window.filtraTudo = k=>vistos.faixa.push(k);
-    window.ivEscolher = (...a)=>vistos.escolher.push(a); window.ivEnviar = (...a)=>vistos.enviar.push(a);
-    window.ivAgir = (...a)=>vistos.agir.push(a); window.ivAdiar = (...a)=>vistos.adiar.push(a);
     window.abrirSecao = (...a)=>vistos.secao.push(a); window.recarregarSecao = (...a)=>vistos.recarga.push(a);
     const acoes = [{verbo:'esperar', arg:null, rotulo:rot}, {verbo:'feita', arg:null, rotulo:'concluir'},
                    {verbo:'repactuar', arg:'data', rotulo:'repactuar'}];
@@ -1988,10 +1849,8 @@ test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e 
               prazo:'2026-10-01', titulo:'card hostil', opcoes:[{label:rot, recomendada:true, consequencia:'c'}], acoes}];
     TUDOR = 'todas'; TUDOF = 'todas'; TUDOORD = 'frente';
     let err=null; try { rTudo(); } catch(e){ err=String(e); }
-    const sv = document.createElement('div'); sv.id = 'sv-teste';
-    sv.innerHTML = botoesIv({id:hostil, acoes}, esc, 'sv-'); document.body.appendChild(sv);
     montaSecnav('panorama'); SECQUANDO['caixa'] = Date.now()-20*60000; seloSecao('panorama','caixa');
-    const raiz = ()=>[...document.querySelectorAll('#ord-tudo *, #nav-tudo *, #tudo-lista *, #sv-teste *, #nav-panorama *, #selo-panorama *')];
+    const raiz = ()=>[...document.querySelectorAll('#ord-tudo *, #nav-tudo *, #tudo-lista *, #nav-panorama *, #selo-panorama *')];
     const inline=[], sem=[]; let n=0;
     for (const el of raiz()) {
       for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
@@ -1999,28 +1858,19 @@ test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e 
     document.querySelector('#ord-tudo [data-acao="raiaTudo"][data-a1="igor"]').click();
     document.querySelector('#ord-tudo [data-acao="ordenaTudo"][data-a1="idade"]').click();
     document.querySelector('#nav-tudo [data-acao="filtraTudo"][data-a1="vencida"] .n').click();  /* clique no numero dentro do botao */
-    document.querySelector('#tudo-lista [data-acao="ivEscolher"]').click();
-    for (const pre of ['#tudo-lista', '#sv-teste']) {
-      document.querySelector(pre+' [data-acao="ivEnviar"]').click();
-      document.querySelector(pre+' [data-acao="ivAgir"]').click();
-      document.querySelector(pre+' [data-acao="ivAdiar"]').click();
-    }
+    /* p127 (s1898): a linha do inventario so mostra; escolher, concluir e +7d sao no presidente */
+    const opcao = document.querySelector('#tudo-lista .opb').textContent, botoesLinha = document.querySelectorAll('#tudo-lista .ivrow button').length;
     document.querySelector('#nav-panorama [data-acao="abrirSecao"][data-a2="frentes"]').click();
     document.querySelector('#selo-panorama [data-acao="recarregarSecao"]').click();
-    sv.remove();
-    return {err, inline, sem, n, vistos, hostil, rot};
+    return {err, inline, sem, n, vistos, hostil, rot, opcao, botoesLinha};
   });
   expect(r.err, 'rTudo derrubou o script').toBe(null);
   expect(r.inline, 'on* na Tudo, no inventario ou nas secoes').toEqual([]);
   expect(r.sem, 'acao sem registro').toEqual([]);
-  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(20);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(10);
   expect([r.vistos.raia, r.vistos.ordem, r.vistos.faixa]).toEqual([['igor'], ['idade'], ['vencida']]);
-  expect(r.vistos.escolher, 'escolher entrega id e rotulo inteiros').toEqual([[r.hostil, r.rot]]);
-  expect(r.vistos.enviar, 'enviar: id texto, verbo, valor nulo, rotulo e o prefixo de cada superficie').toEqual(
-    [[r.hostil,'esperar',null,r.rot,'iv-'], [r.hostil,'esperar',null,r.rot,'sv-']]);
-  expect(r.vistos.agir, 'feita sem arg abre o campo da prova').toEqual(
-    [[r.hostil,'feita','texto','concluir','iv-'], [r.hostil,'feita','texto','concluir','sv-']]);
-  expect(r.vistos.adiar, '+7d: dias como numero').toEqual([[r.hostil,7,'iv-'], [r.hostil,7,'sv-']]);
+  expect(r.opcao, 'a opcao aparece com o rotulo inteiro').toContain(r.rot);
+  expect(r.botoesLinha, 'p127: nenhum botao na linha do inventario').toBe(0);
   expect(r.vistos.secao).toEqual([['panorama','frentes']]);
   expect(r.vistos.recarga, 'selo velho oferece atualizar').toEqual([['panorama','caixa']]);
 });
@@ -2030,13 +1880,12 @@ test('87c Tudo: raia, faixa, opcoes, acoes do inventario e secoes sem on*; id e 
    4 atos da peca pronta) e a barra do modo foco saem do onclick/onkeydown. Classes cobradas: (1) origem e
    ref com aspa chegam inteiros e como texto; (2) Ctrl+Enter registra e Enter sozinho nao; (3) "sair" do foco
    DESLIGA (modoFoco(false)), nunca alterna; (4) o passo do foco chega como numero. A v89 reprova (on* na fila). */
-test('87c fila: chips, card, rapidos e modo foco sem on*; origem e ref com aspa chegam inteiros', async ({page})=>{
+test('87c fila: chips, card e modo foco sem on*; o card nao decide (p127); origem e ref com aspa chegam inteiros', async ({page})=>{
   await abrir(page);
   await revelarCasca(page);
   const r = await page.evaluate(()=>{
     const ref = "7'1 \"x\" <b>", rot = "conta 'PF' \"já\"";
-    const nomes = ['setFrente','setOrigem','setNat','registrar','toggleMenu','perguntar','agir','faEscolher',
-                   'qAceitar','qAdiar','qRecusar','qPronto','fAto','focar','modoFoco'];
+    const nomes = ['setFrente','setOrigem','setNat','focar','modoFoco'];
     const vistos = {}; nomes.forEach(n=>{ vistos[n]=[]; window[n]=(...a)=>vistos[n].push(a); });
     const acoes = [{verbo:'repactuar', label:'mudar prazo', campo:'data'}, {verbo:'pago', label:rot, campo:'entidade'}];
     const it1 = {origem:'tarefa', ref, titulo:'card hostil', frente:"00-te'ste", nivel:1, acoes};
@@ -2052,57 +1901,40 @@ test('87c fila: chips, card, rapidos e modo foco sem on*; origem e ref com aspa 
       foco = 1; document.body.classList.add('foco'); rFbar();
     } catch(e){ err=String(e); }
     const raiz = ()=>[...document.querySelectorAll('#chipsFrente *, #chipsOrigem *, #chipsNat *, #fila1 *, #fbar *')];
-    const inline=[], sem=[]; let n=0;
+    const inline=[], sem=[], acoesCard=[]; let n=0;
     for (const el of raiz()) {
       for (const a of el.attributes) if (/^on/i.test(a.name)) inline.push(el.tagName+' '+a.name);
-      for (const k of ['acao','aoTecla']) { const v=el.dataset[k]; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v);} } }
+      for (const k of ['acao','aoTecla']) { const v=el.dataset[k]; if (v!==undefined){ n++; if(!Object.prototype.hasOwnProperty.call(ACOES,v)) sem.push(v); if(el.closest('#fila1')) acoesCard.push(v);} } }
     const q = s=>document.querySelector(s);
     q("#chipsFrente [data-acao=setFrente]").click(); q('#chipsOrigem [data-acao=setOrigem]').click(); q('#chipsNat [data-acao=setNat]').click();
-    const c1 = document.querySelectorAll('#fila1 .card')[0], c2 = document.querySelectorAll('#fila1 .card')[1];
-    const ta = c1.querySelector('textarea');
-    ta.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter', bubbles:true}));               /* Enter sozinho: nada */
-    ta.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter', ctrlKey:true, bubbles:true}));  /* Ctrl+Enter registra */
-    c1.querySelector('[data-acao=registrar]').click();
-    c1.querySelector('[data-acao=toggleMenu]').click();
-    c1.querySelector('[data-acao=perguntar]').click();
-    c1.querySelectorAll('[data-acao=agir]')[1].click();
-    c1.querySelector('[data-acao=faEscolher]').click();
-    c1.querySelector('[data-acao=qAceitar]').click(); c1.querySelector('[data-acao=qAdiar]').click();
-    c2.querySelector('[data-acao=qRecusar]').click(); c2.querySelectorAll('[data-acao=qPronto]')[1].click();
+    const campos = document.querySelectorAll('#fila1 textarea, #fila1 button').length;
     for (const b of document.querySelectorAll('#fbar button')) b.click();
     document.body.classList.remove('foco'); document.getElementById('fbar').innerHTML=''; document.getElementById('fila1').innerHTML='';
-    return {err, inline, sem, n, vistos, ref, rot, k1: c1.id.slice(2), k2: c2.id.slice(2)};
+    return {err, inline, sem, n, vistos, campos, acoesCard:[...new Set(acoesCard)]};
   });
   expect(r.err, 'montar a fila derrubou o script').toBe(null);
   expect(r.inline, 'on* nos chips, no card ou na barra do foco').toEqual([]);
   expect(r.sem, 'acao sem registro').toEqual([]);
-  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(25);
+  expect(r.n, 'achou as acoes (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(6);
   const v = r.vistos;
   expect([v.setFrente[0], v.setOrigem[0], v.setNat[0]], 'chips chegam inteiros').toEqual([["00-te'ste"], ['tarefa'], ["9 nat'ureza"]]);
-  expect(v.registrar, 'Ctrl+Enter e o botao registram; Enter sozinho nao').toEqual(
-    [['tarefa', r.ref, 't-'+r.k1], ['tarefa', r.ref, 't-'+r.k1]]);
-  expect(v.toggleMenu).toEqual([[r.k1]]);
-  expect(v.perguntar).toEqual([['tarefa', r.ref]]);
-  expect(v.agir, 'agir: cinco argumentos, campo e rotulo inteiros').toEqual([['tarefa', r.ref, 'pago', 'entidade', r.rot]]);
-  expect(v.faEscolher).toEqual([['tarefa', r.ref, r.rot, 'c-'+r.k1]]);
-  expect([v.qAceitar, v.qAdiar, v.qRecusar]).toEqual([[['tarefa', r.ref]], [['tarefa', r.ref]], [['tarefa', 't-pronto']]]);
-  expect(v.qPronto, 'segundo ato da peca pronta').toEqual([['t-pronto', 'enviado', 'c-'+r.k2]]);
+  expect(r.campos, 'p127: o card da fila nao tem campo nem botao').toBe(0);
+  expect(r.acoesCard, 'p127: no card so abrir o titulo').toEqual(['abreTitulo']);
   expect(v.focar, 'passo do foco como numero').toEqual([[0], [2]]);
-  expect(v.fAto).toEqual([['a'], ['s'], ['r']]);
   expect(v.modoFoco, 'sair desliga, nunca alterna').toEqual([[false]]);
 });
 
 /* t1920 (s1363, 09/10/2026), item 1.5 do plano 57: dois addEventListener("keydown") no index decidiam a tecla
    pela ordem de registro; R com card focado agia no card e o segundo tratador relia o foco e podia recarregar.
    A classe do defeito e o atalho com dois donos: um tratador so, e cada tecla com um efeito so. */
-test('t1920: o index tem UM tratador de teclado, e R com card focado age no card sem recarregar', async ({page})=>{
+test('t1920: o index tem UM tratador de teclado, e R recarrega com ou sem card focado (p127)', async ({page})=>{
   const fs = require('fs');
   const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
   const n = (html.match(/addEventListener\(\s*["']keydown["']/g)||[]).length;
   expect(n, 'tratadores de keydown no index.html').toBe(1);
   const erros = await abrir(page);
   const r = await page.evaluate(()=>{
-    const log=[]; window.carregar=()=>log.push('carregar'); window.fAto=k=>log.push('ato:'+k);
+    const log=[]; window.carregar=()=>log.push('carregar');
     window.cardFocado=()=>({querySelector:()=>null});
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',bubbles:true}));
     window.cardFocado=()=>null;
@@ -2110,7 +1942,7 @@ test('t1920: o index tem UM tratador de teclado, e R com card focado age no card
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',ctrlKey:true,bubbles:true}));
     return log;
   });
-  expect(r, 'com foco: so o ato; sem foco: recarrega; Ctrl+R e do navegador').toEqual(['ato:r','carregar']);
+  expect(r, 'p127: R so recarrega, com ou sem foco; Ctrl+R e do navegador').toEqual(['carregar','carregar']);
   expect(erros).toEqual([]);
 });
 
@@ -2164,11 +1996,11 @@ async function abrir122(page, duble){
   return erros;
 }
 
-test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some calada', async ({page})=>{
+test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some calada (pela releLeituras, p127)', async ({page})=>{
   const erros = await abrir122(page);
   await revelarCasca(page);
   await page.evaluate(()=>carregar());
-  const ato = ()=>exec(()=>sb.rpc('agir',{p_origem:'tarefa',p_ref:'1',p_verbo:'feita',p_valor:'prova de teste'}));
+  const ato = ()=>releLeituras().then(()=>true);
   const le = ()=>({inv:D.inv.length, fila:D.fila.length, log:document.getElementById('log').textContent,
     cls:document.getElementById('log').className, falhou:document.getElementById('falhou').classList.contains('on'),
     det:document.getElementById('falhoudet').textContent});
@@ -2198,46 +2030,41 @@ test('122 releitura pos-ato no bastidor: falha nao esvazia a lista nem some cala
   expect(r2.det).toContain('Failed to fetch');
   /* (3) tudo de volta: a releitura limpa a faixa */
   const r3 = await page.evaluate(async([ato,le])=>{ ato=eval(ato); le=eval(le);
-    window.__falha={}; const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
+    window.__falha={}; msg('',null); const ok=await ato(); return {ok, ...le()}; }, [ato.toString(), le.toString()]);
   expect(r3.falhou, 'releitura boa apaga a faixa').toBe(false);
-  expect(r3.cls).not.toContain('bad');
+  expect(r3.cls, 'e nao acende aviso novo').not.toContain('bad');
   expect(erros).toEqual([]);
 });
 
-test('122 deliberar e marcar em lote: rede, {error} e teto aparecem, e nada fica pendurado', async ({page})=>{
+test('122 marcar em lote: rede, {error} e teto aparecem, e nada fica pendurado (deliberar saiu na p127)', async ({page})=>{
   const erros = await abrir122(page);
   await revelarCasca(page);
   const log = ()=>page.evaluate(()=>({t:document.getElementById('log').textContent, c:document.getElementById('log').className}));
   const prepara = ()=>page.evaluate(()=>{
     LE=[{ref:'r1',titulo:'peca 1',tipo:'fato',frente:'00-teste',dias:0,dias_para_decurso:3},
         {ref:'r2',titulo:'peca 2',tipo:'fato',frente:'00-teste',dias:0,dias_para_decurso:3}];
-    SEL.clear(); LE_TUDO=0; rLeituras(); abreDelib('r1'); document.getElementById('dt-r1').value='o que fica valendo, de teste'; });
-  const delib = ()=>page.evaluate(async()=>{ try{ await enviaDelib('r1'); return 'ok'; }catch(e){ return 'jogou: '+e.message; } });
-  /* (1) agir sem rede: erro na tela, nada jogado para o console */
+    SEL.clear(); LE_TUDO=0; rLeituras(); document.querySelector('#leituras .lerow input[type=checkbox]').click(); });
+  const marca = ()=>page.evaluate(async()=>{ try{ await marcarLote(); return 'ok'; }catch(e){ return 'jogou: '+e.message; } });
+  /* (1) sem rede: erro na tela, nada jogado para o console */
   await prepara();
-  await page.evaluate(()=>{ window.__falha={agir:'rede'}; });
-  expect(await delib(), 'enviaDelib nao pode jogar').toBe('ok');
+  await page.evaluate(()=>{ window.__falha={marcar_leituras:'rede'}; });
+  expect(await marca(), 'marcarLote nao pode jogar').toBe('ok');
   let l = await log();
   expect(l.t).toContain('Failed to fetch'); expect(l.c).toContain('bad');
-  /* (2) agir grava, marcar_leituras volta {error}: o erro aparece, nao some atras do "registrado" */
+  /* (2) {error}: o erro aparece */
   await prepara();
   await page.evaluate(()=>{ window.__falha={marcar_leituras:{message:'permission denied for table leitura'}}; });
-  expect(await delib()).toBe('ok');
+  expect(await marca()).toBe('ok');
   l = await log();
   expect(l.t, 'marcar como lida falhou e a tela diz').toContain('permission denied'); expect(l.c).toContain('bad');
-  /* (3) teto: marcar em lote e deliberar que nao voltam viram aviso, e as linhas voltam ao normal */
+  /* (3) teto: marcar em lote que nao volta vira aviso, e as linhas voltam ao normal */
   await page.clock.install();
   const lim = await page.evaluate(()=>LIMITE_ACAO);
   await prepara();
-  await page.evaluate(()=>{ window.__falha={}; window.__pendura=['marcar_leituras'];
-    document.querySelector('#leituras .lerow input[type=checkbox]').click(); marcarLote(); });
+  await page.evaluate(()=>{ window.__falha={}; window.__pendura=['marcar_leituras']; marcarLote(); });
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#log'), 'marcarLote no teto').toContainText('Sem resposta do banco');
   expect(await page.evaluate(()=>[...document.querySelectorAll('#leituras .lerow')].every(x=>x.style.opacity==='')), 'linha nao fica apagada').toBe(true);
-  await prepara();
-  await page.evaluate(()=>{ window.__pendura=['agir']; enviaDelib('r1'); });
-  await page.clock.fastForward(lim+100);
-  await expect(page.locator('#log'), 'enviaDelib no teto').toContainText('Sem resposta do banco');
   expect(erros).toEqual([]);
 });
 
@@ -2256,5 +2083,69 @@ test('122 sessao no bastidor: SIGNED_OUT e 401 levam ao login com aviso, e entra
   await expect(page.locator('#login'), '401 na carga mostra o login').toBeVisible();
   await expect(page.locator('#app')).toBeHidden();
   await expect(page.locator('#lmsg')).toContainText('sessão');
+  expect(erros).toEqual([]);
+});
+
+/* p127 parte 3 (11/10/2026): o bastidor parou de gravar na parte 2, mas a maquina de gravar ficou: agendar, desfazer,
+   a barra #desf, a tecla Z, exec() e o modal de decisao, todos sem chamador. Codigo morto que grava e porta pronta para
+   alguem religar. Classe cobrada: nome dessa maquina voltando ao index, ou o atalho Z voltando a anunciar desfazer.
+   A v95 reprova aqui. */
+test('p127 parte 3: o bastidor nao carrega a maquina de gravar (desfazer, exec, modal)', async ({page})=>{
+  const fs = require('fs');
+  const s = fs.readFileSync(path.resolve(__dirname,'..','index.html'),'utf8');
+  for (const n of ['function agendar(','function enviarPendente(','function desfazer(','function volta(','let PEND','async function exec(',
+                   'function abrirModal(','function fecharModal(','function confirmarModal(','pendente=null','id="modal"','id="desf"','.ledelib','.qpr','.qrow','.resp{','<span class="kbd">Z</span>'])
+    expect(s.includes(n), n+' no index').toBe(false);
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>({
+    acoes: ['desfazer','fecharModal','confirmarModal','fundoModal'].filter(k=>Object.prototype.hasOwnProperty.call(ACOES,k)),
+    globais: ['agendar','enviarPendente','desfazer','volta','exec','abrirModal','fecharModal','confirmarModal'].filter(k=>typeof window[k]==='function'),
+    dom: document.querySelectorAll('#modal, #desf, #desfmsg').length,
+    rodape: [...document.querySelectorAll('.sokbd')].map(e=>e.textContent).join(' ')
+  }));
+  expect(r.acoes, 'ACOES sem as entradas de gravar').toEqual([]);
+  expect(r.globais, 'nenhum nome da maquina de gravar no escopo').toEqual([]);
+  expect(r.dom, 'nem modal nem barra de desfazer no DOM').toBe(0);
+  expect(r.rodape, 'o rodape de teclas nao promete desfazer').not.toMatch(/desfaz/i);
+  await page.keyboard.press('z');
+  expect(erros, 'Z sem dono nao derruba o script').toEqual([]);
+});
+
+/* p127 E1.2 (s1898, 11/10/2026): CONTRATO DO BASTIDOR SO DE LEITURA. A decisao mora no presidente (p4.42); o index.html
+   le e mostra. Classes cobradas: (1) chamada ao banco que grava voltando ao bastidor por outra porta (agir, escolher,
+   painel_responder e as demais), ou escrita direta por insert/update/delete; a lista abaixo e FECHADA, e a unica
+   escrita que fica e marcar_leituras, a ciencia da aba Leituras, que o presidente ainda nao tem; (2) script inline
+   rodando sob 'unsafe-inline': a CSP autoriza so o hash do unico script, como no presidente (87 fecho); (3) Hoje
+   contando por conta propria: os numeros vem das chaves do E1.1 (hoje e hoje_resumo). A v94 reprova aqui. */
+const PORTAS_DO_BASTIDOR = ['painel_carga','painel_snapshot_montar','painel_cron_deadman','painel_ping','marcar_leituras'];
+test('p127 contrato: o bastidor so le, roda sem unsafe-inline e conta Hoje pelas chaves do E1.1', async ({page})=>{
+  const fs = require('fs'), crypto = require('crypto');
+  const s = fs.readFileSync(path.resolve(__dirname,'..','index.html'),'utf8').replace(/\r\n?/g,'\n');
+  const portas = [...new Set([...s.matchAll(/\b(?:rpc|rpcAto)\(\s*["'`]([a-z_]+)["'`]/g)].map(m=>m[1]))].sort();
+  expect(portas.length, 'achou as chamadas (teste sem alvo passa vazio)').toBeGreaterThanOrEqual(4);
+  expect(portas.filter(p=>!PORTAS_DO_BASTIDOR.includes(p)), 'chamada ao banco fora da lista do bastidor').toEqual([]);
+  /* nome calculado escaparia da lista: so o envelope rpcAto(n,a) passa n adiante, e quem chama rpcAto passa nome fixo */
+  expect(s.match(/\brpc\(\s*[^"'`\s]/g), 'rpc com nome calculado fora do rpcAto').toEqual(['rpc(n']);
+  expect(s, 'o envelope e o rpcAto').toContain('async function rpcAto(n,a){\n  try{ return (await comTeto(sb.rpc(n,a)');
+  expect(s.match(/\brpcAto\(\s*[^"'`\sn]/g), 'rpcAto com nome calculado').toBeNull();
+  expect(s.match(/\.from\([^)]*\)[^;\n]*?\.(insert|update|upsert|delete)\(/g), 'escrita direta em tabela').toBeNull();
+  expect((s.match(/\.from\(/g)||[]).length, 'achou as leituras por from (teste sem alvo passa vazio)').toBeGreaterThan(0);
+  for (const n of ['agir','escolher','painel_responder','perguntar','responder_correcao','deliberar_correcao','painel_medir_decisao'])
+    expect(s.includes('"'+n+'"'), n+' citado no codigo do bastidor').toBe(false);
+  const csp = (s.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)"/)||[])[1];
+  expect(csp, 'achou a CSP').toBeTruthy();
+  const scriptSrc = (csp.match(/script-src ([^;]*)/)||[])[1];
+  expect(scriptSrc, 'sem unsafe-inline').not.toContain("'unsafe-inline'");
+  const inl = [...s.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  expect(inl.length, 'um script inline so').toBe(1);
+  expect(inl[0][1].length, 'o script inline tem corpo').toBeGreaterThan(100000);
+  const h = crypto.createHash('sha256').update(inl[0][1],'utf8').digest('base64');
+  expect(scriptSrc, 'hash do script atual: rode node scripts/csp-hash.mjs').toContain(`'sha256-${h}'`);
+  const chaves = (s.match(/const CHAVES_PAINEL=\[([\s\S]*?)\];/)||[])[1]||'';
+  expect(chaves, 'Hoje vem do E1.1').toMatch(/"hoje","hoje_resumo"/);
+  await page.addInitScript(VIGIA_CSP);
+  const erros = await abrir(page);
+  expect(await page.evaluate(()=>typeof VER), 'o script rodou sob a CSP').toBe('string');
+  expect(await page.evaluate(()=>window.__csp), 'nenhuma violacao de CSP').toEqual([]);
   expect(erros).toEqual([]);
 });
