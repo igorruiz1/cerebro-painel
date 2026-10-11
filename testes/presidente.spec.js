@@ -3139,3 +3139,24 @@ test('p132: manifest com PNG 192/512 e maskable, apple-touch-icon 180 no preside
   expect(lado(apple[1]).join('x')).toBe('180x180');
   expect(fonte).toMatch(/<meta name="apple-mobile-web-app-capable" content="yes">/);
 });
+
+/* p108 (p4.46, s2468 11/10/2026): small multiples na aba Frentes. Cada frente com serie de margem realizada de 8 semanas
+   (v_frente_semanas), TODAS na mesma escala, e "piorou" so na frente cuja soma movel de 4 semanas cheias caiu. O p4.45
+   reprova: nenhuma sparkline. Na demonstracao so a consultoria piorou (entrou 2.500, saiu 3.000); o contrato PJ, com
+   medicao mensal de 12 mil, NAO piora so porque a semana seguinte a medicao vem zerada (a regra semana a semana acusava). */
+test('p108: aba Frentes em small multiples, 8 barras por frente na mesma escala e "piorou" na frente certa', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('frentes'));
+  const linhas = page.locator('#frentesLista button.frente');
+  await expect(linhas.first().locator('svg.spark8')).toHaveCount(1);
+  const n = await linhas.count();
+  const sp = await page.$$eval('#frentesLista button.frente', bs=>bs.map(b=>{ const s=b.querySelector('svg.spark8');
+    return {txt:b.querySelector('b').textContent, escala:s&&s.dataset.escala, barras:s?s.querySelectorAll('rect').length:0, pio:b.classList.contains('piorou')}; }));
+  expect(sp.length, 'mediu todas as frentes listadas').toBe(n);
+  expect(sp.every(x=>x.barras===8), 'cada frente com 8 semanas').toBe(true);
+  expect(new Set(sp.map(x=>x.escala)).size, 'mesma escala em todas: comparar sem ler numero').toBe(1);
+  expect(sp.filter(x=>x.pio).map(x=>x.txt.replace(/\s*piorou$/,'')).sort()).toEqual(['Consultoria de obras']);
+  await expect(page.locator('#frentesLista button.frente', {hasText:'Consultoria de obras'}).locator('small')).toContainText('o mais velho tem 34 d');
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
