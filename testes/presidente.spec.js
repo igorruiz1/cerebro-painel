@@ -47,6 +47,8 @@ const DUBLE = `(()=>{
     rit:[],
     /* p4.35: sem pergunta da vespera aberta por padrao; o teste do plano 68 troca */
     vesp:[],
+    /* p126: fila unica do banco presente e sem resumo por padrao (montagem antiga); o teste do p126 troca */
+    hoje:[], hoje_resumo:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -620,6 +622,56 @@ test('o mesmo banco poe o mesmo item no topo de Hoje nas duas telas, com a venci
   expect(noPres.pediuExp, 'o presidente pede a chave exp ao banco').toBe(true);
   expect(noPres.foco, 'o proximo passo do presidente e a vencida').toBe('item 1334');
   expect(noPres.ordem.slice(0, noIndex.length), 'a ordem ate o corte do index e a mesma').toEqual(noIndex);
+  expect(errosIdx.concat(erros), 'erros de script').toEqual([]);
+});
+
+/* p126 E1.1 (s1582, 10/10/2026): o presidente mostrou 22 passos e 6,7 h e o bastidor 19 itens e 355 min com o mesmo
+   banco (medido em 10/10). Cada tela montava o Hoje no navegador. Agora as duas leem a chave hoje (v_hoje_unico) e o
+   resumo hoje_resumo: o banco decide o conjunto, a ordem e a conta. O caso poe na fila um item que o banco tirou de
+   Hoje (fluxo 32), uma vencida do segundo plano que o banco poe em 1o e uma peca da Mesa; o codigo antigo reprova. */
+const CASO_P126 = ()=>{
+  const dia=n=>{const d=new Date(); d.setDate(d.getDate()+n); return ivData(d);};
+  const it=(origem,ref,pos,peso,dr,camada)=>({origem,ref:String(ref),posicao:pos,peso,data_ref:dr,camada_tela:camada||'hoje',teto_tela:5,
+    nivel:3,frente:'20-contrato-pj',acoes:[{label:'feita',verbo:'feita'}],titulo:'item '+ref,titulo_completo:'item '+ref});
+  const hj=(ordem,tipo,origem,ref,dr,min,extra)=>Object.assign({ordem,tipo,origem,ref:String(ref),titulo:'banco '+ref,frente:'20-contrato-pj',
+    data_ref:dr,entrada:'fila',classe:null,minutos:min,sem_estimativa:false,pecas_ligadas:[],em_jogo_rs:null,ato:null},extra||{});
+  return {fila:[it('tarefa','1545',1,75,dia(1)),it('fluxo','32',2,72,null),it('tarefa','1517',3,70,dia(2))],
+          exp:[it('tarefa','1334',9,70,dia(-7),'depois')],
+          hoje:[hj(1,'card','tarefa','1334',dia(-7),20,{entrada:'vencida',classe:1}),hj(2,'card','tarefa','1517',dia(2),25),
+                hj(3,'card','tarefa','1545',dia(1),30),hj(4,'peca','mesa','102',dia(0),15,{entrada:'nova',ato:'enviar'})],
+          resumo:{passos:4,cards:3,pecas:1,minutos:90,sem_estimativa:0,capacidade_min:120,passa_min:0,pecas_dentro_de_card:[]}};
+};
+test('p126: as duas telas leem o Hoje do banco, com o mesmo conjunto, a mesma ordem e a mesma conta de passos e minutos', async ({page, context})=>{
+  const idx = await context.newPage(), errosIdx = [];
+  idx.on('pageerror',e=>errosIdx.push(String(e)));
+  await idx.addInitScript(DUBLE_INDEX);
+  await idx.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await idx.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
+  await idx.waitForFunction(()=>document.getElementById('selo-ver').textContent.trim()!=='\u2014');
+  const caso = await idx.evaluate(CASO_P126);
+  const noIndex = await idx.evaluate(c=>{
+    D.fila=c.fila; D.exp=c.exp; D.depois=[]; D.cont={depois:0}; D.cor=[]; D.min=[]; D.cap={minutos_dia:999}; semTeto=true;
+    D.hoje=c.hoje; D.hoje_resumo=c.resumo;
+    rAgora(); marcaAbas();
+    return {ordem:[...document.querySelectorAll('#fila1 .card')].map(x=>x.dataset.r),
+            n:document.getElementById('n-agora').textContent, cab:document.getElementById('h-fila1').textContent};
+  }, caso);
+  await page.addInitScript(c=>{ window.__dados={fila:c.fila, exp:c.exp, hoje:c.hoje, hoje_resumo:[c.resumo]}; }, caso);
+  const erros = await abrir(page);
+  const noPres = await page.evaluate(()=>({ordem:hojeLista().map(x=>String(x.ref)), pecas:pecasHoje().map(p=>String(p.id)),
+    n:document.getElementById('n-hoje').textContent, sit:document.getElementById('situacao').textContent,
+    foco:document.querySelector('#foco .tit').textContent,
+    pediu:window.__rpc.find(c=>c.n==='painel_carga').a.p_chaves}));
+  expect(noIndex.ordem, 'no index, a lista de Hoje e a do banco: fluxo 32 fora, vencida 1334 no topo').toEqual(['1334','1517','1545']);
+  expect(noPres.ordem, 'no presidente, a mesma lista na mesma ordem').toEqual(noIndex.ordem);
+  expect(noPres.pecas, 'a peca de Hoje e a do banco').toEqual(['102']);
+  expect(noPres.n, 'o selo de Hoje do presidente conta os passos do banco').toBe('4');
+  expect(noIndex.n, 'a aba Agora do bastidor conta os mesmos passos').toBe('4');
+  expect(noPres.sit, 'o presidente diz os passos e o tempo do resumo').toContain('são 4 passos');
+  expect(noPres.sit).toContain('1,5 h das suas 2 h');
+  expect(noIndex.cab, 'o bastidor diz os mesmos passos e minutos').toContain('4 passos, 1 peça da Mesa, ~90 de 120 min');
+  expect(noPres.foco, 'o proximo passo e o do banco, com o titulo da fila').toBe('item 1334');
+  expect(noPres.pediu, 'o presidente pede as duas chaves ao banco').toEqual(expect.arrayContaining(['hoje','hoje_resumo']));
   expect(errosIdx.concat(erros), 'erros de script').toEqual([]);
 });
 
