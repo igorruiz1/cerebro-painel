@@ -3118,3 +3118,45 @@ test('p4.44 demonstracao: check-in ficticio sem marca real e o WhatsApp so avisa
   expect(rede, 'nada sai para a rede').toEqual([]);
   expect(erros).toEqual([]);
 });
+
+/* p132 (p4.45, s2468 11/10/2026): o painel tem de ser instalavel de verdade nos dois aparelhos do Igor. O manifest so
+   tinha um SVG embutido: o Chrome do Android pede PNG 192 e 512, e o iPhone ignora o manifest e usa o apple-touch-icon
+   (sem ele, a Tela de Inicio ganha uma foto da pagina). O p4.44 reprova: nenhum PNG no manifest, nenhum apple-touch-icon. */
+test('p132: manifest com PNG 192/512 e maskable, apple-touch-icon 180 no presidente, arquivos existem no tamanho certo', ()=>{
+  const raiz = path.resolve(__dirname,'..');
+  const lado = arq => { const b = fs.readFileSync(path.join(raiz,arq)); // cabecalho PNG: largura e altura no IHDR
+    expect(b.slice(1,4).toString(), arq+' e PNG').toBe('PNG'); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
+  const m = JSON.parse(fs.readFileSync(path.join(raiz,'manifest.json'),'utf8'));
+  const png = m.icons.filter(i => i.type === 'image/png');
+  for (const [sz, prop] of [['192x192','any'],['512x512','any'],['512x512','maskable']]) {
+    const i = png.find(x => x.sizes === sz && x.purpose === prop);
+    expect(i, `manifest sem PNG ${sz} ${prop}`).toBeTruthy();
+    expect(lado(i.src).join('x'), i.src).toBe(sz);
+  }
+  const fonte = fs.readFileSync(path.join(raiz,'presidente.html'),'utf8');
+  const apple = fonte.match(/<link rel="apple-touch-icon" href="([^"]+)">/);
+  expect(apple, 'presidente sem apple-touch-icon: o iPhone poe uma foto da pagina').toBeTruthy();
+  expect(lado(apple[1]).join('x')).toBe('180x180');
+  expect(fonte).toMatch(/<meta name="apple-mobile-web-app-capable" content="yes">/);
+});
+
+/* p108 (p4.46, s2468 11/10/2026): small multiples na aba Frentes. Cada frente com serie de margem realizada de 8 semanas
+   (v_frente_semanas), TODAS na mesma escala, e "piorou" so na frente cuja soma movel de 4 semanas cheias caiu. O p4.45
+   reprova: nenhuma sparkline. Na demonstracao so a consultoria piorou (entrou 2.500, saiu 3.000); o contrato PJ, com
+   medicao mensal de 12 mil, NAO piora so porque a semana seguinte a medicao vem zerada (a regra semana a semana acusava). */
+test('p108: aba Frentes em small multiples, 8 barras por frente na mesma escala e "piorou" na frente certa', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('frentes'));
+  const linhas = page.locator('#frentesLista button.frente');
+  await expect(linhas.first().locator('svg.spark8')).toHaveCount(1);
+  const n = await linhas.count();
+  const sp = await page.$$eval('#frentesLista button.frente', bs=>bs.map(b=>{ const s=b.querySelector('svg.spark8');
+    return {txt:b.querySelector('b').textContent, escala:s&&s.dataset.escala, barras:s?s.querySelectorAll('rect').length:0, pio:b.classList.contains('piorou')}; }));
+  expect(sp.length, 'mediu todas as frentes listadas').toBe(n);
+  expect(sp.every(x=>x.barras===8), 'cada frente com 8 semanas').toBe(true);
+  expect(new Set(sp.map(x=>x.escala)).size, 'mesma escala em todas: comparar sem ler numero').toBe(1);
+  expect(sp.filter(x=>x.pio).map(x=>x.txt.replace(/\s*piorou$/,'')).sort()).toEqual(['Consultoria de obras']);
+  await expect(page.locator('#frentesLista button.frente', {hasText:'Consultoria de obras'}).locator('small')).toContainText('o mais velho tem 34 d');
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
