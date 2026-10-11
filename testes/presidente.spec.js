@@ -501,6 +501,33 @@ test('resposta chega sozinha: evento do Realtime avisa e redesenha a conversa do
   await expect(page.locator('#tmsg')).toHaveText('limpo');
 });
 
+/* p4.43 (s2118, p167 etapa 1): o banco sobe painel_pulso quando o dado muda; a tela rele sozinha, sem toque e sem
+   remontar o snapshot. Com folha aberta o pulso espera e sai quando a folha fecha. */
+test('pulso do banco: a tela rele a carga sozinha, nunca por cima de folha aberta', async ({page})=>{
+  await abrir(page);
+  const ouvintes = await page.evaluate(()=>window.__rt.filter(h=>h.f.table==='painel_pulso'&&h.f.event==='UPDATE').length);
+  expect(ouvintes, 'presidente ouve painel_pulso').toBe(1);
+  const cargas = ()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+  const montar0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length);
+  const c0 = await cargas();
+  await page.evaluate(()=>{
+    window.__dados={fila:[{origem:'tarefa',ref:'2',camada_tela:'hoje',posicao:1,teto_tela:5,frente:'11-renda-alt',titulo:'Card que mudou no banco',porque_agora:'vence hoje',verbo_sugerido:'feita',acoes:[]}]};
+    window.__rt.filter(h=>h.f.table==='painel_pulso').forEach(h=>{ h.cb({new:{id:1,versao:7}}); h.cb({new:{id:1,versao:8}}); });
+  });
+  await expect(page.locator('#foco .tit')).toContainText('Card que mudou no banco');
+  expect(await cargas() - c0, 'dois pulsos seguidos viram uma carga so').toBe(1);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length), 'pulso nao remonta o snapshot').toBe(montar0);
+  /* folha aberta: o pulso espera */
+  await page.evaluate(()=>abrirFila(0));
+  await expect(page.locator('#veu')).not.toHaveClass(/hidden/);
+  const c1 = await cargas();
+  await page.evaluate(()=>window.__rt.filter(h=>h.f.table==='painel_pulso').forEach(h=>h.cb({new:{id:1,versao:9}})));
+  await page.waitForTimeout(2500);
+  expect(await cargas(), 'nada rele por cima da folha aberta').toBe(c1);
+  await page.evaluate(()=>fecharFolha());
+  await expect.poll(cargas, {message:'o pulso guardado sai depois que a folha fecha', timeout:8000}).toBe(c1 + 1);
+});
+
 test('fio curto: 3 trocas em 7 dias no card desligam o "Pedir análise"', async ({page})=>{
   await page.addInitScript(t=>{ window.__tab={dialogo:[1,2,3].map(i=>({id:i,pergunta:'pergunta '+i,resposta:'resposta '+i,perguntado_em:t,respondido_em:t}))}; }, AGORA());
   await abrir(page);
