@@ -1,10 +1,11 @@
 // Recalcula o hash da CSP do presidente.html (plano 87, fecho · s1183, 07/10/2026) e da seguranca.html
-// (plano 102 · s1274, 08/10/2026). O script inline de cada pagina roda sem 'unsafe-inline': a CSP autoriza so o hash dele.
+// (plano 102 · s1274, 08/10/2026) e do index.html (p127 · s1898, 11/10/2026). O script inline de cada pagina roda sem
+// 'unsafe-inline': a CSP autoriza so o hash dele.
 // Mexeu no <script> de uma delas? Rode `node scripts/csp-hash.mjs` antes do commit; os testes "87 fecho" e "102" cobram.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 
-for (const nome of ['presidente.html', 'seguranca.html']) {
+for (const nome of ['presidente.html', 'seguranca.html', 'index.html']) {
   const arq = new URL('../' + nome, import.meta.url);
   const raw = readFileSync(arq, 'utf8');
   const crlf = raw.includes('\r\n');

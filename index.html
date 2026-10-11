@@ -5,7 +5,7 @@
      liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
      fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
      GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ybT++vbiGPr5ItbV1JC/+5fHATrY50/ygJCpPtIhXiY=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1126,7 +1126,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v94";
+const VER="v95";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1231,10 +1231,10 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   alternaFaixa5:el=>el.parentNode.classList.toggle("f5todos"), verLoop:el=>verLoop(el.value),
   /* v87 (87c, modulo 3 · leituras e deliberacao): o ref vem de data-a1, escapado por esc() */
   leSel:el=>leSel(el.dataset.a1,el), leTodas:()=>leTodas(), marcarLote:()=>marcarLote(),
-  leVerTudo:()=>leVerTudo(), abreDelib:el=>abreDelib(el.dataset.a1), enviaDelib:el=>enviaDelib(el.dataset.a1),
+  leVerTudo:()=>leVerTudo(),
   /* v88 (87c, modulo 4 · Agora, PF e correcao). modoFoco SEM argumento: modoFoco(el) leria o botao
      como "ligar" e nunca desligaria. */
-  pfEscolhe:el=>pfEscolhe(el.dataset.mes), corrigir:el=>corrigir(...JSON.parse(el.dataset.a1)),
+  pfEscolhe:el=>pfEscolhe(el.dataset.mes),
   verDepois:()=>verDepois(), copiaPeca:el=>copiaPeca(el), modoFoco:()=>modoFoco(), verTudo:()=>verTudo(),
   /* titulo que abre (TTL_ATTR, correcao e fila): Enter ou espaco. O onkeydown fazia stopPropagation para
      o atalho global (document, keydown) nao ver a tecla; aqui os dois ouvintes moram no document, e so
@@ -1244,21 +1244,15 @@ const ACOES={alternarRecolhe:el=>alternarRecolhe(el),
   /* v89 (87c, modulo 5 · Tudo e secoes): raia, ordem e faixa da Tudo; escolher, agir e +7d do inventario
      e da sentinela (lista JSON em data-a1); secoes por data-a1/a2 */
   raiaTudo:el=>raiaTudo(el.dataset.a1), ordenaTudo:el=>ordenaTudo(el.dataset.a1),
-  filtraTudo:el=>filtraTudo(el.dataset.a1), ivEscolher:el=>ivEscolher(el.dataset.a1,el.dataset.a2),
-  ivEnviar:el=>ivEnviar(...JSON.parse(el.dataset.a1)), ivAgir:el=>ivAgir(...JSON.parse(el.dataset.a1)),
-  ivAdiar:el=>ivAdiar(...JSON.parse(el.dataset.a1)),
+  filtraTudo:el=>filtraTudo(el.dataset.a1),
   recarregarSecao:el=>recarregarSecao(el.dataset.a1,el.dataset.a2), abrirSecao:el=>abrirSecao(el.dataset.a1,el.dataset.a2),
   /* v90 (87c, modulo 6 · fila): chips, card, botoes rapidos e barra do modo foco. Ctrl/Cmd+Enter no campo do
      card registra, como o onkeydown fazia (sem segurar a tecla: o atalho global ja ignora quem digita).
      sairFoco chama modoFoco(false): o modoFoco sem argumento alterna, e sair tem de desligar sempre. */
   setFrente:el=>setFrente(el.dataset.a1), setOrigem:el=>setOrigem(el.dataset.a1), setNat:el=>setNat(el.dataset.a1),
-  registrar:el=>registrar(el.dataset.a1,el.dataset.a2,el.dataset.a3),
-  registrarAtalho:(el,ev)=>{ if((ev.metaKey||ev.ctrlKey)&&ev.key==="Enter") registrar(el.dataset.a1,el.dataset.a2,el.id); },
-  toggleMenu:el=>toggleMenu(el.dataset.a1), perguntar:el=>perguntar(el.dataset.a1,el.dataset.a2),
-  agir:el=>agir(...JSON.parse(el.dataset.a1)), faEscolher:el=>faEscolher(...JSON.parse(el.dataset.a1)),
-  qAceitar:el=>qAceitar(el.dataset.a1,el.dataset.a2), qAdiar:el=>qAdiar(el.dataset.a1,el.dataset.a2),
-  qRecusar:el=>qRecusar(el.dataset.a1,el.dataset.a2), qPronto:el=>qPronto(el.dataset.a1,el.dataset.a2,el.dataset.a3),
-  focarPasso:el=>focar(foco+Number(el.dataset.a1)), fAto:el=>fAto(el.dataset.a1), sairFoco:()=>modoFoco(false)};
+  /* p127 (s1898): o bastidor so le. Registrar, perguntar, agir, escolher, os atos rapidos e os da bandeja sairam;
+     a decisao mora no presidente.html (p4.42). Fica o marcar lida da aba Leituras, ciencia e nao decisao. */
+  focarPasso:el=>focar(foco+Number(el.dataset.a1)), sairFoco:()=>modoFoco(false)};
 ligarAcoes(ACOES);
 /* comum:fator · igual byte a byte no presidente.html; testes/presidente.spec.js confere */
 /* t1745 (s855, 05/10/2026): com o segundo fator ativo, a sessao que entrou so com senha ou e-mail
@@ -1428,14 +1422,13 @@ function grupoHTML(alvo,R,esc2){
              ${(x.opcoes||x.recomendacao||x.criterio_pronto)
                ? `<details class="ivd"><summary>o que pesa nesta decisão</summary>
                    ${x.opcoes&&x.opcoes.length?`<ul class="ivop">`+x.opcoes.map(o=>
-                      `<li class="${x.escolha===o.label?"esc":""}"><button class="opb" data-acao="ivEscolher" data-a1="${id}" data-a2="${esc2(o.label)}">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
+                      `<li class="${x.escolha===o.label?"esc":""}"><span class="opb">${esc2(o.label)}${o.recomendada?` <i class="recmk">recomendada</i>`:""}</span><span>${esc2(o.consequencia)}</span></li>`).join("")+`</ul>`
                       +(x.escolha?`<div class="ivesc">escolhido: <b>${esc2(x.escolha)}</b></div>`:``):""}
                    ${x.recomendacao?`<div class="ivrec"><b>minha recomendação</b> ${esc2(x.recomendacao)}</div>`:""}
                    ${x.criterio_pronto?`<div class="ivcp"><b>pronto quando</b> ${esc2(x.criterio_pronto)}</div>`:""}
                  </details>`
                : ""}`
           : `<div class="ivt"><span class="ivraw">sem card</span> ${esc2(x.resumo)}</div>`}
-        <div class="iva">${botoesIv(x,esc2)}</div>
       </div>`;}).join("");
     const sub = TUDOORD==="frente"
       ? `${rs.length} nesta faixa · ${esc2(r.abertas||rs.length)} abertas · ${esc2(r.suas||0)} suas · ${esc2(r.invisiveis||0)} fora da aba AGORA`
@@ -1529,9 +1522,7 @@ function rSentinela(){
           </div>
           <div class="ivt tit">${esc(x.titulo)}</div>
           <div class="ivj">${esc(x.detalhe)}</div>
-          <div class="iva">${ac
-            ? botoesIv({id:x.ref,acoes:ac},esc,"sv-")
-            : `<span class="ivsem">${SEMACAO[x.sinal]||"o banco não oferece ação para este sinal"}</span>`}</div>
+          <div class="iva"><span class="ivsem">${ac?"decide-se no presidente":(SEMACAO[x.sinal]||"o banco não oferece ação para este sinal")}</span></div>
         </div>`;}).join("")+`</div>`;
   }).join("");
   const nse=document.getElementById("n-sent");
@@ -1555,23 +1546,6 @@ function execChip(x){
   const e=EXEC[x.executor_possivel]; if(!e) return "";
   return `<span class="ivnat ex-${x.executor_possivel}" title="${esc(e[1])}">${esc(e[0])}</span>`;
 }
-function botoesIv(x,esc2,pref){
-  /* v89 (87c, modulo 5 · Tudo e secoes): os argumentos vao como UMA lista JSON em data-a1, escapada por
-     esc(); o id segue texto, como ia entre aspas no onclick, e o +7d segue numero */
-  const ref=String(x.id), P=pref||"iv-", lista=a=>`data-a1="${esc(JSON.stringify(a))}"`;
-  const acoes=Array.isArray(x.acoes)?x.acoes:[];
-  if(!acoes.length) return `<span class="ivsem">o banco não oferece ação para este card</span>`;
-  const cls=v=>v==="feita"?"ivb pri":(v==="arquivar"?"ivb neg":"ivb");
-  const bs=acoes.filter(a=>a.verbo!=="escolher").map(a=>{
-    const rot=esc2(a.rotulo||a.verbo);
-    if(a.arg==null&&a.verbo!=="feita") return `<button class="${cls(a.verbo)}" data-acao="ivEnviar" ${lista([ref,a.verbo,null,a.rotulo||a.verbo,P])}>${rot}</button>`;
-    const campo=a.arg==="data"?"date":"texto"; /* feita sem arg tambem cai aqui: abre o campo da prova */
-    return `<button class="${cls(a.verbo)}" data-acao="ivAgir" ${lista([ref,a.verbo,campo,a.rotulo||a.verbo,P])}>${rot}</button>`;
-  });
-  /* atalho de +7d so existe se o banco de fato aceita repactuar neste card */
-  if(acoes.some(a=>a.verbo==="repactuar")) bs.splice(1,0,`<button class="ivb" data-acao="ivAdiar" ${lista([ref,7,P])}>+7d</button>`);
-  return bs.join("");
-}
 
 /* ---------- AGIR A PARTIR DO INVENTARIO · v36 ----------
    Ate a v35 a tela so listava: a fila de decisao era o UNICO cardapio de acoes do banco e os
@@ -1581,36 +1555,6 @@ function botoesIv(x,esc2,pref){
    do acervo 641: quem desenha a interface pelo que imagina constroi metade e chama de pronto. */
 const ivData=d=>{const p=n=>String(n).padStart(2,"0");
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());};
-/* v46: o MESMO card pode estar desenhado em DUAS abas ao mesmo tempo (TUDO e SENTINELA),
-   e as duas ficam no DOM — a aba fechada apenas perde a classe .on. Com um id so, o
-   getElementById devolvia a linha da aba INVISIVEL e o desfazer tirava da tela errada.
-   Agora cada superficie declara seu prefixo: iv- na TUDO, sv- na SENTINELA. */
-function ivEnviar(ref,verbo,valor,label,pref){
-  const el=document.getElementById((pref||"iv-")+ref);
-  agendar(()=>sb.rpc("agir",{p_origem:"tarefa",p_ref:String(ref),p_verbo:verbo,p_valor:valor}),
-          label+" em "+ref, el);
-}
-function ivAdiar(ref,dias,pref){ const d=new Date(); d.setDate(d.getDate()+dias);
-  ivEnviar(ref,"repactuar",ivData(d),"novo prazo",pref); }
-/* v39: a opcao entra como VALOR, nao como frase. O banco compara com a opcao marcada
-   recomendada e grava seguiu ou divergiu sozinho — e o que faltava para medir adesao. */
-function ivEscolher(ref,opcao){
-  const el=document.getElementById("iv-"+ref);
-  agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}), "escolher em "+ref, el);
-}
-/* LC-14: concluir pede uma linha de prova. O banco recusa feita com menos de 8 caracteres (agir_nucleo). */
-const PROVA_PH="prova: o que aconteceu, quando e por qual canal (ex.: e-mail do fiscal 02/10)";
-const PROVA_MSG="Concluir pede uma linha de prova com pelo menos 8 caracteres. Peça pronta não fecha card.";
-function ivAgir(ref,verbo,campo,label,pref){
-  pendente={ph: verbo==="arquivar" ? "por que este card morre sem ser executado"
-              : verbo==="feita" ? PROVA_PH
-              : verbo==="esperar" ? "com quem está a bola (ex.: fiscal da obra); volta em 3 dias"
-                                   : "o que fica valendo neste card",
-            min: verbo==="arquivar" ? 5 : verbo==="feita" ? 8 : 0,
-            minMsg: verbo==="feita" ? PROVA_MSG : null};
-  abrirModal(label,`<span class="mono">tarefa ${esc(String(ref))}</span>`,campo,
-             v=>ivEnviar(ref,verbo,v,label,pref), label);
-}
 function filtraTudo(k){ TUDOF=k; rTudo(); window.scrollTo({top:0,behavior:"smooth"}); }
 
 /* ---------- navegação · v25: cada aba carrega o que ela mostra, e nada mais ---------- */
@@ -1796,12 +1740,7 @@ document.addEventListener("keydown",e=>{
   else if(k==="j"){e.preventDefault();focar(foco+1);}
   else if(k==="k"){e.preventDefault();focar(foco-1);}
   else if(k==="z"){e.preventDefault();desfazer();}
-  /* v61: A, S e R agem no card focado; sem foco nao fazem nada (R sem foco segue recarregando) */
-  else if((k==="a"||k==="s"||k==="r")&&cardFocado()){e.preventDefault(); fAto(k);}
   else if(e.key==="r")carregar();
-  /* v61: com os 4 atos do PRONTO abertos, 1 a 4 escolhem o ato em vez de trocar de aba */
-  else if(k>="1"&&k<="4"&&cardFocado()&&cardFocado().querySelector(".qpr.on")){e.preventDefault();
-    const b=cardFocado().querySelectorAll(".qpr.on .qk")[+k-1]; if(b) b.click();}
   else if(k==="enter"&&foco>=0){const c=cards()[foco];if(c){const ta=c.querySelector("textarea");if(ta){e.preventDefault();ta.focus();}}}
   /* v46: o atalho parou em "4" quando as abas ja eram 6. Le a contagem real, nao um numero
      escrito a mao, que e o mesmo defeito da grade de 5 colunas corrigida no CSS. */
@@ -2328,11 +2267,8 @@ function promessaResposta(){
 function cardFila(it){
   /* v25: o card abre pelo que o dono FAZ. Medido em 14 dias ate 28/08/2026: 46 de 60 acoes
      foram deliberar, ou seja escrever; zero foram "li"; uma foi "feita". Status virou secundario. */
-  const acts=(it.acoes||[]).filter(a=>a.verbo!=="deliberar");
   const k=uid(it.origem+it.ref);
   const p=partes(it.titulo_completo||it.titulo);
-  /* v90 (87c, modulo 6 · fila): origem e ref vao em data-a1/a2 por esc(); varios argumentos, numa lista JSON */
-  const O=esc(it.origem), R=esc(it.ref), lista=a=>`data-a1="${esc(JSON.stringify(a))}"`;
   return `<div class="card n${esc(it.nivel)}" id="c-${k}" data-o="${esc(it.origem)}" data-r="${esc(it.ref)}">
    <div class="meta" style="margin-bottom:6px">
      <span class="mono">${esc(it.origem)} ${esc(it.ref)}</span>
@@ -2348,21 +2284,8 @@ function cardFila(it){
    ${pecaLink(it)}
    ${bloco(it.contestado?"VOCÊ CONTESTOU":(it.rec_do_igor?"SUA PALAVRA":"RECOMENDO"),it.recomendacao,it.contestado?"vio":"","r-"+k)}
    ${opcoesFila(it)}
-   ${rapidos(it)}
    ${it.ultima_pergunta?trocaVigente(it,k):""}
-   <div class="resp">
-     <textarea id="t-${k}" rows="2" placeholder="o que fica valendo"
-       data-ao-tecla="registrarAtalho" data-a1="${O}" data-a2="${R}"></textarea>
-     <div class="resplin">
-       <button class="prim" data-acao="registrar" data-a1="${O}" data-a2="${R}" data-a3="t-${k}">registrar</button>
-       ${acts.length?`<button class="mais" data-acao="toggleMenu" data-a1="${k}" aria-expanded="false">outras ações</button>`:""}
-       <button class="link" data-acao="perguntar" data-a1="${O}" data-a2="${R}">perguntar</button>
-     </div>
-     <div class="menu" id="m-${k}">
-       ${acts.map(a=>{ if(a.campo==="entidade")OPC_ENT[it.origem+"|"+it.ref+"|"+a.verbo]={opcoes:a.opcoes||[],padrao:a.padrao||null};
-         return `<button class="sec" data-acao="agir" ${lista([String(it.origem),String(it.ref),a.verbo,a.campo||"",a.label])}>${esc(a.label)}</button>`;}).join("")}
-     </div>
-   </div></div>`;}
+   <div class="iva"><span class="ivsem">decide-se no presidente</span></div></div>`;}
 /* ---------- v48: A ESCOLHA CHEGA NA FILA DE HOJE ----------
    O mecanismo inteiro ja existia: tarefa.opcoes (jsonb), a rpc escolher(), e a tela
    desenhando os botoes — mas SO na aba TUDO, desde a v39. v_painel_fila nunca expos a
@@ -2373,73 +2296,10 @@ function cardFila(it){
 function opcoesFila(it){
   const o=(D.op||[]).find(x=>x.origem===it.origem&&String(x.ref)===String(it.ref));
   if(!o||!Array.isArray(o.opcoes)||!o.opcoes.length) return "";
-  const k=uid(it.origem+it.ref);
   return `<ul class="ivop">`+o.opcoes.map(x=>
-    `<li class="${o.escolha===x.label?"esc":""}"><button class="opb" data-acao="faEscolher" data-a1="${esc(JSON.stringify([String(it.origem),String(it.ref),x.label,"c-"+k]))}">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</button><span>${esc(x.consequencia||"")}</span></li>`).join("")
+    `<li class="${o.escolha===x.label?"esc":""}"><span class="opb">${esc(x.label)}${x.recomendada?` <i class="recmk">recomendada</i>`:""}</span><span>${esc(x.consequencia||"")}</span></li>`).join("")
     +`</ul>`+(o.escolha?`<div class="ivesc">escolhido: <b>${esc(o.escolha)}</b></div>`:"");
 }
-/* ---------- v61 ONDA 1: DECIDIR SEM DIGITAR (t1454, doc 1201 secao 3.2) ----------
-   Medido em 29/09/2026: a bandeja tinha 10 itens, 9 deles PRONTO, e o unico caminho para
-   responder era escrever em "o que fica valendo". A = aceitar, S = adiar 2 dias, R = recusar
-   (motivo opcional), sobre o card focado com J/K. No PRONTO o A abre os 4 atos do
-   responder_pronto (feito, enviado, refazer, descartar): voce declara o que de fato
-   aconteceu, porque uma tecla so marcando "enviado" falsificaria o funil (LC-14).
-   O tipo vem da v_bandeja_presidente pela chave band do snapshot. PRONTO e DECISAO gravam
-   por painel_responder(), porta definer com is_dono(): o painel so tem SELECT em tarefa, e
-   responder_pronto chamado direto daqui dava permission denied. */
-function tipoBand(it){
-  if(!it||it.origem!=="tarefa") return null;
-  const b=(D.band||[]).find(x=>String(x.item_id)===String(it.ref));
-  return b?b.tipo:null;}
-function recOpcao(it){
-  const o=(D.op||[]).find(x=>x.origem===it.origem&&String(x.ref)===String(it.ref));
-  if(!o||!Array.isArray(o.opcoes)) return null;
-  const r=o.opcoes.find(x=>x.recomendada); return r?r.label:null;}
-function podeAdiar(it){ return !!it&&(it.acoes||[]).some(a=>a.verbo==="repactuar"); }
-/* v68: o card promovido por classe de servico mora em D.exp ou D.depois, nao em D.fila. Sem isto
-   A, S e R sobre ele nao achavam o card e respondiam "o banco nao aceita novo prazo". */
-function achaIt(origem,ref){ return [...(D.fila||[]),...(D.exp||[]),...(D.depois||[])].find(x=>x.origem===origem&&String(x.ref)===String(ref)); }
-const ATOS_PRONTO=[["feito","feito"],["enviado","enviei"],["refazer","refazer"],["descartar","descartar"]];
-function rapidos(it){
-  const k=uid(it.origem+it.ref), t=tipoBand(it), rec=recOpcao(it);
-  const O=esc(it.origem), R=esc(String(it.ref)), bs=[], or=`data-a1="${O}" data-a2="${R}"`;
-  if(rec) bs.push(`<button class="qk pri" data-acao="qAceitar" ${or}>aceitar recomendação <kbd>A</kbd></button>`);
-  else if(t==="PRONTO") bs.push(`<button class="qk pri" data-acao="qAceitar" ${or} aria-expanded="false" aria-controls="qp-${k}">aceitar <kbd>A</kbd></button>`);
-  if(podeAdiar(it)) bs.push(`<button class="qk" data-acao="qAdiar" ${or}>adiar 2 dias <kbd>S</kbd></button>`);
-  if(t==="PRONTO"||t==="DECISAO") bs.push(`<button class="qk neg" data-acao="qRecusar" ${or}>recusar <kbd>R</kbd></button>`);
-  if(!bs.length) return "";
-  const pr = t==="PRONTO"
-    ? `<div class="qpr" id="qp-${k}"><span class="qprl">o que aconteceu com a peça?</span>`+ATOS_PRONTO.map(([a,l],i)=>
-        `<button class="qk" data-acao="qPronto" data-a1="${R}" data-a2="${a}" data-a3="c-${k}">${l} <kbd>${i+1}</kbd></button>`).join("")+`</div>`
-    : "";
-  return `<div class="qrow">${bs.join("")}</div>${pr}`;}
-function qAceitar(origem,ref){
-  const it=achaIt(origem,ref); if(!it) return;
-  const k=uid(origem+ref), rec=recOpcao(it);
-  if(rec) return faEscolher(origem,ref,rec,"c-"+k);
-  if(tipoBand(it)==="PRONTO"){
-    const p=document.getElementById("qp-"+k); if(!p) return;
-    const abre=!p.classList.contains("on"); p.classList.toggle("on",abre);
-    const b=document.querySelector(`#c-${k} .qrow .qk.pri`); if(b) b.setAttribute("aria-expanded",abre?"true":"false");
-    return;}
-  msg("este card não tem recomendação para aceitar com uma tecla: escreva o que fica valendo",null,3500);}
-function qAdiar(origem,ref){
-  const it=achaIt(origem,ref);
-  if(!podeAdiar(it)){ msg("o banco não aceita novo prazo neste card",null,3000); return; }
-  const d=new Date(); d.setDate(d.getDate()+2);
-  agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:String(ref),p_verbo:"repactuar",p_valor:ivData(d)}),
-          "novo prazo em "+ref, document.getElementById("c-"+uid(origem+ref)));}
-function qPronto(ref,ato,idel){
-  agendar(()=>sb.rpc("painel_responder",{p_tipo:"PRONTO",p_id:Number(ref),p_ato:ato,p_nota:null}),
-          ato+" em "+ref, document.getElementById(idel));}
-function qRecusar(origem,ref){
-  const it=achaIt(origem,ref), t=tipoBand(it);
-  if(t!=="PRONTO"&&t!=="DECISAO"){ msg("recusar vale para peça pronta ou decisão da bandeja",null,3000); return; }
-  const el=document.getElementById("c-"+uid(origem+ref));
-  pendente={ph:"motivo (opcional)",opcional:true};
-  abrirModal("Recusar",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — ${t==="PRONTO"?"a peça volta para eu refazer":"a decisão sai marcada como recusada"}`,"texto",
-    v=>agendar(()=>sb.rpc("painel_responder",{p_tipo:t,p_id:Number(ref),p_ato:t==="PRONTO"?"refazer":"recusado",p_nota:v||null}),
-                "recusado em "+ref, el), "recusar");}
 /* v66 (s692, onda 2 do plano de 01/10/2026, doc 1507).
    (a) EOS Scorecard: ate 15 numeros na tela, cada um com DONO lido do banco (kpi.dono). O
        "quem move: voce" escrito a mao em todos os numeros nao dizia nada.
@@ -2448,7 +2308,7 @@ function qRecusar(origem,ref){
        e se declara, nunca some da conta.
    (c) Superhuman: modo foco, um card por vez; no celular, arrastar para a direita aceita a
        recomendacao e para a esquerda adia 2 dias, pelo MESMO caminho de A e S, com desfazer. */
-const MIN_PADRAO=30, LIM_GESTO=90;
+const MIN_PADRAO=30;
 function donoDe(chave){const k=(D.kdono||[]).find(x=>x.chave===chave)||(D.ev||[]).find(x=>x.chave===chave);return k&&k.dono?k.dono:null;}
 function quemMove(chave){const d=donoDe(chave);return d==="igor"?"você":d==="claude"?"a máquina":"sem dono no banco";}
 function minDe(it){ if(!it) return null;
@@ -2486,25 +2346,7 @@ function rFbar(){
     <span class="fc">${foco+1} de ${c.length}</span>
     <button type="button" data-acao="focarPasso" data-a1="-1" aria-label="card anterior">‹</button>
     <button type="button" data-acao="focarPasso" data-a1="1" aria-label="próximo card">›</button>
-    <button type="button" class="ok" data-acao="fAto" data-a1="a">aceitar <span class="kbd">A</span></button>
-    <button type="button" data-acao="fAto" data-a1="s">adiar 2 dias <span class="kbd">S</span></button>
-    <button type="button" data-acao="fAto" data-a1="r">recusar <span class="kbd">R</span></button>
     <button type="button" data-acao="sairFoco">sair <span class="kbd">Esc</span></button></div>`:"";}
-function fAto(k){const c=cardFocado(); if(!c) return; medirDecisao(c.dataset.o,c.dataset.r,k); (k==="a"?qAceitar:k==="s"?qAdiar:qRecusar)(c.dataset.o,c.dataset.r);}
-function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO){fAto("s");return "s";} return null; }
-(function(){
-  let x0=null,y0=null,el=null;
-  document.addEventListener("touchstart",e=>{
-    if(!document.body.classList.contains("foco")) return;
-    const t=e.target; if(!t.closest||t.closest("textarea,button,select,input,a")) return;
-    const c=t.closest("#fila1 .card[aria-current=true]"); if(!c) return;
-    el=c; x0=e.touches[0].clientX; y0=e.touches[0].clientY;},{passive:true});
-  document.addEventListener("touchmove",e=>{
-    if(!el) return; const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
-    if(Math.abs(dy)>Math.abs(dx)) return; el.style.transform=`translateX(${dx}px)`;},{passive:true});
-  document.addEventListener("touchend",e=>{
-    if(!el) return; const dx=e.changedTouches[0].clientX-x0, c=el; el=null; c.style.transform=""; gestoFoco(dx);},{passive:true});
-})();
 /* v67 (s693, onda 3 do plano de 01/10/2026, doc 1507).
    (a) FUNIL DE RECEITA (Balanced Scorecard, perspectiva do cliente): v_proposta_funil. Proposta
        enviada nao e contrato (LC-14): o valor em aberto aparece separado do que foi aceito.
@@ -2513,15 +2355,6 @@ function gestoFoco(dx){ if(dx>LIM_GESTO){fAto("a");return "a";} if(dx<-LIM_GESTO
    (c) ORCAMENTO DE FALHA por rotina (Google SRE): v_error_budget; so avisa (decisao de 01/10).
    (d) TEMPO POR DECISAO: o relogio comeca ao focar o card e para no ato A, S ou R, so quando o
        ato e possivel no card; vai para painel_decisao_tempo. Criterio da onda 2. */
-function medirDecisao(o,r,k){
-  if(FOCO_T0==null) return null;
-  const it=achaIt(o,r), t=tipoBand(it);
-  const pode = k==="a" ? (!!recOpcao(it)||t==="PRONTO") : k==="s" ? podeAdiar(it) : (t==="PRONTO"||t==="DECISAO");
-  if(!pode) return null;
-  const ms=Math.max(0,Date.now()-FOCO_T0); FOCO_T0=Date.now();
-  const a={p_origem:o,p_ref:String(r),p_ato:k,p_ms:Math.round(ms),p_modo:document.body.classList.contains("foco")?"foco":"lista"};
-  try{ const p=sb.rpc("painel_medir_decisao",a); if(p&&p.then) p.then(()=>{},()=>{}); }catch(e){}
-  return a;}
 function erroPrevisao(){
   const e=D.c13e||[];
   if(!e.length) return '<div class="c13s" style="margin-top:8px">Erro da previsão: começa a medir na segunda foto semanal (toda segunda, 06h).</div>';
@@ -2633,12 +2466,6 @@ function rOrcamento(){
     const est=c>=100?"estourou o limite":c>=50?"gastou metade do limite":String(x.veredito_budget||"").toLowerCase();
     return `<tr class="${cls}"><td>${esc(x.nome)}</td><td>${x.slo_pct!=null?esc(x.slo_pct)+"%":"—"}</td><td>${x.cumprimento_pct!=null?esc(x.cumprimento_pct)+"%":"—"}</td><td>${esc(x.falhas_7d??0)} / ${esc(x.orcamento_falhas_7d??"—")}</td><td>${esc(est)}</td></tr>`;}).join("");}
 function cardFocado(){ const c=cards()[foco]; return (foco>=0&&c&&c.dataset.o)?c:null; }
-function faEscolher(origem,ref,opcao,idel){
-  /* mesmo portao da aba TUDO: a opcao entra como VALOR e o banco compara sozinho com a
-     marcada recomendada, gravando seguiu ou divergiu. A tela nao julga adesao. */
-  agendar(()=>sb.rpc("escolher",{p_ref:String(ref),p_opcao:opcao}),
-          "escolher em "+ref, document.getElementById(idel));
-}
 function cardCorrecao(c){
   const k="cor"+uid(c.dialogo_id);
   const p=partes(c.objeto_resumo);
@@ -2658,15 +2485,7 @@ function cardCorrecao(c){
      <span style="color:var(--mut);font-size:var(--fs-1)">${esc(c.objeto_pronto)}</span></div>`:""}
    ${bloco("VOCÊ DISSE — "+esc(c.quando||""),c.sua_posicao,"vio","v-"+k)}
    ${bloco("EU DISCORDEI",c.o_que_o_motor_disse,"","m-"+k)}
-   <div class="acts">
-     ${(c.acoes||[]).map((a,i)=>{
-       const cls=i===0?"prim":(a.rpc==="deliberar_correcao"?"prim vio":"sec");
-       /* v88 (87c): os seis argumentos vao como UMA lista JSON em data-a1, escapada por esc(); o tipo
-          (numero, booleano, objeto) volta igual no JSON.parse. undefined vira null, como antes. */
-       const args=[c.dialogo_id,a.rpc,a.arg,a.campo||"",a.label,a.placeholder||""].map(v=>v===undefined?null:v);
-       return `<button class="${cls}" data-acao="corrigir" data-a1="${esc(JSON.stringify(args))}">${esc(a.label)}</button>`;
-     }).join("")}
-   </div></div>`;}
+   <div class="iva"><span class="ivsem">responder a correção saiu do bastidor na p127: peça pelo chat</span></div></div>`;}
 const TETO=5; let semTeto=false;
 function verTudo(){semTeto=true;rAgora();}
 /* v68 (f5, achado 10 da auditoria de 02/10/2026): "ver depois" sem teto e com falha virando lista
@@ -3076,38 +2895,6 @@ async function exec(fn,okMsg){
   catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
   return true;}
 
-/* REGISTRAR: a acao primaria da v25. O dono escreve, o executor le. */
-function registrar(origem,ref,idc){
-  const ta=document.getElementById(idc);
-  const v=(ta&&ta.value||"").trim();
-  if(v.length<3){msg("Escreva o que fica valendo antes de registrar.","bad",3500);if(ta)ta.focus();return;}
-  const el=document.getElementById("c-"+uid(origem+ref));
-  agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:"deliberar",p_valor:v}),
-          "registrado em "+ref,el);
-}
-function toggleMenu(k){const m=document.getElementById("m-"+k);if(m)m.classList.toggle("on");}
-function agir(origem,ref,verbo,campo,label){
-  const el=document.getElementById("c-"+uid(origem+ref));
-  const go=v=>agendar(()=>sb.rpc("agir",{p_origem:origem,p_ref:ref,p_verbo:verbo,p_valor:v}),
-                      label+" em "+ref,el);
-  if(!campo&&!(verbo==="feita"&&origem==="tarefa"))return go(null);
-  if(!campo){campo="texto";pendente={ph:PROVA_PH,min:8,minMsg:PROVA_MSG};}
-  /* s880: caiu/paguei dizem a conta (PF, Ruiz e Dabli nao se misturam, trava 658); o banco recusa sem conta */
-  else if(campo==="entidade"){const e=OPC_ENT[origem+"|"+ref+"|"+verbo]||{};pendente={opcoes:e.opcoes||[],padrao:e.padrao||null};}
-  else pendente={ph:campo==="texto"?"o que fica valendo":null};
-  abrirModal(label,`<span class="mono">${esc(origem)} ${esc(ref)}</span>${campo==="entidade"?" · em que conta o dinheiro "+(verbo==="pago"?"saiu":"entrou")+"?":""}`,campo,go,label);}
-const OPC_ENT={};
-function perguntar(origem,ref){
-  pendente={ph:"o que você quer saber, ou o que quer que eu faça"};
-  abrirModal("Perguntar ao executor",`<span class="mono">${esc(origem)} ${esc(ref)}</span> — a resposta chega na próxima passada.`,
-    "texto",v=>exec(()=>sb.rpc("perguntar",{p_origem:origem,p_ref:ref,p_texto:v}),"registrado — respondo na próxima passada."),"enviar");}
-function corrigir(id,rpc,arg,campo,label,ph){
-  if(rpc==="responder_correcao"&&!campo)
-    return exec(()=>sb.rpc("responder_correcao",{p_id:id,p_aceito:arg,p_motivo:null}),
-      arg?"aceito — vou executar por aqui.":"posição mantida — registrado.");
-  pendente={ph:ph||"sua posição: o que fica valendo, e até quando"};
-  abrirModal(label,"Nem aceitar nem manter — a sua posição vira o que fica valendo.","texto",
-    v=>exec(()=>sb.rpc("deliberar_correcao",{p_id:id,p_texto:v}),"deliberação registrada."),"registrar");}
 
 /* ---------- LEITURAS · v25 ---------- */
 let LE=[], SEL=new Set();
@@ -3147,10 +2934,6 @@ function leRow(x){
           <span>${x.dias===0?"hoje":esc(x.dias)+"d"}</span>
           <span>${x.dias_para_decurso>0?"decurso em "+esc(x.dias_para_decurso)+"d":"vence hoje por decurso"}</span></div>
         ${x.veredito?`<div class="v">${esc(x.veredito)}</div>`:""}
-        <div class="acoesle">
-          <button data-acao="abreDelib" data-a1="${esc(x.ref)}" id="bd-${esc(x.ref)}">deliberar</button>
-        </div>
-        <div class="ledelib" id="ld-${esc(x.ref)}"></div>
       </div></div>`;}
 function leVerTudo(){LE_TUDO=1;rLeituras();}
 function rLeituras(){
@@ -3163,20 +2946,6 @@ function rLeituras(){
   el.innerHTML=(dobra.length?dobra.map(leRow).join("")
       :`<div class="empty">nada fora de banda. ${ord.length} peça(s) esperando ciência, todas em dia.</div>`)
    +(fora>0?`<button class="mais" style="width:100%;margin-top:8px" data-acao="leVerTudo">ver tudo (${fora} em dia, fora da dobra)</button>`:"");}
-function abreDelib(ref){
-  const d=document.getElementById("ld-"+ref); if(!d)return;
-  if(!d.innerHTML.trim()){
-    d.innerHTML=`<textarea id="dt-${esc(ref)}" rows="3"
-        placeholder="o que você não entendeu, ou o que fica valendo"></textarea>
-      <div class="acoesle">
-        <button class="prim" data-acao="enviaDelib" data-a1="${esc(ref)}">registrar e marcar lida</button>
-        <button data-acao="abreDelib" data-a1="${esc(ref)}">cancelar</button>
-      </div>`;}
-  const abriu=!d.classList.contains("on");
-  d.classList.toggle("on",abriu);
-  const b=document.getElementById("bd-"+ref); if(b)b.textContent=abriu?"fechar":"deliberar";
-  if(abriu){const t=document.getElementById("dt-"+ref); if(t)t.focus();}
-}
 /* v93 (plano 122, s1446): deliberar e marcar em lote iam ao banco sem teto e sem catch: sem rede a promessa rejeitava
    calada (nada na tela), RPC que nao voltava deixava a linha apagada para sempre, e o erro do marcar_leituras depois do
    deliberar sumia atras do "registrado". Agora as duas passam pelo teto e todo erro aparece. */
@@ -3187,24 +2956,6 @@ async function rpcAto(n,a){
 async function releLeituras(){
   try{ await carregarAba("leituras",true); await comTeto(recarregarFila(),LIMITE_RECARGA,"15s"); }
   catch(e){ if(ehTeto(e))avisaTravou("15s",true); else msg("Gravado, mas a tela não releu: "+e.message,"bad",9000); }
-}
-async function enviaDelib(ref){
-  /* deliberar em output ja e executavel: agir() encaminha para deliberar(), testado em 29/08.
-     A peca sai da pilha de leitura no mesmo ato, porque quem escreveu sobre ela leu. */
-  const t=document.getElementById("dt-"+ref);
-  const v=(t&&t.value||"").trim();
-  if(v.length<3){msg("Escreva o que você quer perguntar ou deixar valendo.","bad",3500);if(t)t.focus();return;}
-  const a=await rpcAto("agir",{p_origem:"output",p_ref:ref,p_verbo:"deliberar",p_valor:v});
-  if(a.teto){avisaTravou("12s",false);return;}
-  if(a.error){msg("Erro: "+a.error.message,"bad",8000);return;}
-  const r=(typeof a.data==="string")?a.data:"registrado";
-  if(String(r).indexOf("RECUSADO")===0){msg(r,"bad",8000);return;}
-  msg(r,"ok",6000);
-  const m=await rpcAto("marcar_leituras",{p_refs:[ref]});
-  const mt=(typeof m.data==="string")?m.data:"";
-  const naoMarcou=m.teto?"sem resposta em 12s":m.error?m.error.message:(mt.indexOf("RECUSADO")===0?mt:null);
-  await releLeituras();
-  if(naoMarcou) msg("Deliberação registrada, mas a peça não foi marcada como lida ("+naoMarcou+"). Marque de novo.","bad",9000);
 }
 async function marcarLote(){
   /* Corrigido em 29/08: a resposta do banco manda na tela. Antes, qualquer texto virava verde,
