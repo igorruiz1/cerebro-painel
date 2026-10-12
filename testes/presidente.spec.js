@@ -86,7 +86,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -932,7 +932,7 @@ test('o "Gravado." do ato anterior nao cobre o desfazer do ato seguinte', async 
   expect(erros).toEqual([]);
 });
 
-test('teclado na folha: A ato principal, S nova data, R responder, e nada disso dentro de campo de texto', async ({page})=>{
+test('teclado na folha: A ato principal, S adiar (p157), R responder, e nada disso dentro de campo de texto', async ({page})=>{
   const erros = await abrir(page);
   await page.keyboard.press('s');
   await expect(page.locator('#veu'), 'sem folha, S nao faz nada').toBeHidden();
@@ -940,7 +940,9 @@ test('teclado na folha: A ato principal, S nova data, R responder, e nada disso 
   await page.keyboard.press('Control+s');
   await expect(page.locator('#campo')).toBeEmpty();
   await page.keyboard.press('s');
-  await expect(page.locator('#campo .datas button')).toHaveCount(4);
+  /* p4.54 (p157): S adia escondendo; a nova data segue no botao da folha */
+  await expect(page.locator('#campo .datas button')).toHaveCount(3);
+  await expect(page.locator('#campo')).toContainText('Adiar só esconde');
   await page.keyboard.press('r');
   await expect(page.locator('#campo label')).toHaveText('Pedir análise');
   await expect(page.locator('#cv')).toBeFocused();
@@ -2401,7 +2403,12 @@ test('95 decisao: Ratifico grava a opcao recomendada pela escolher, so depois do
     expect(h, nome+' abaixo de 44 px').toBeGreaterThanOrEqual(44);
   }
   await bloco.locator('button:has-text("Ratifico")').click();
+  /* p4.54 (p157): decisao com toque duplo; o 1o toque so arma */
+  await page.evaluate(()=>enviar());
   let esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher'));
+  expect(esc, 'um toque so nao grava a decisao').toEqual([]);
+  await bloco.locator('button:has-text("Ratifico")').click();
+  esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher'));
   expect(esc, 'nada grava antes do desfazer').toEqual([]);
   await page.evaluate(()=>enviar());
   esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher').map(c=>c.a));
@@ -2415,7 +2422,7 @@ test('95 decisao: Retifico mostra as outras opcoes e grava a tocada; sem recomen
   const ops = page.locator('#campo .opcoes button');
   await expect(ops).toHaveCount(2);
   await expect(page.locator('#campo')).toContainText('Nenhuma serve');
-  await ops.nth(0).click();
+  await ops.nth(0).click(); await ops.nth(0).click(); /* p4.54 (p157): toque duplo */
   await page.evaluate(()=>enviar());
   const esc = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher').map(c=>c.a));
   expect(esc).toEqual([{p_ref:'8',p_opcao:'Adiar uma semana'}]);
@@ -2723,7 +2730,7 @@ test('p4.36 barra: / e Ctrl+K abrem a busca; os 3 primeiros achados trazem os ve
   await expect(page.locator('#q'), 'a tecla / nao entra no texto').toHaveValue('Item');
   const verbos = page.locator('#qres .qverbos');
   await expect(verbos, 'verbos so nos 3 primeiros achados').toHaveCount(3);
-  await expect(verbos.nth(0).locator('button', {hasText:'Nova data'})).toContainText('S');
+  await expect(verbos.nth(0).locator('button', {hasText:'Nova data'}).locator('kbd'), 'p4.54: S virou Adiar; Nova data abre direto, sem tecla').toHaveCount(0);
   await expect(verbos.nth(0).locator('button', {hasText:'Concluir'}), 'sem verbo de concluir no card, sem botao').toHaveCount(0);
   for (const b of await page.locator('#qres button').all())
     expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
@@ -3393,5 +3400,105 @@ test('p4.48 plano mestre: snapshot sem a chave plm avisa a falta e a folha diz q
   await page.evaluate(()=>ir('frentes'));
   await page.locator('#btPlano').click();
   await expect(page.locator('#folha')).toContainText('O plano não chegou');
+  expect(erros).toEqual([]);
+});
+
+
+/* p4.54 (p157, s3286 12/10/2026): um toque com Desfazer. A classe que se cobra: decisao gravada num toque so, adiar
+   que muda o prazo real (o sensor deixava de acusar), ato sem volta depois dos segundos de desfazer e porta do painel
+   que recebe texto onde bastava id e inteiro. A p4.53 reprova: S abria a nova data, um toque gravava a escolha, Z nao
+   fazia nada, o desfazer durava 6 s e nao havia painel_esconder, painel_desfazer nem painel_atos_recentes. */
+test('p157 adiar so esconde: S abre amanha, 3 dias e 1 semana; grava painel_esconder com id e dias, so depois de 8 s', async ({page})=>{
+  const erros = await abrir(page);
+  await page.clock.install();
+  await page.evaluate(()=>abrirFila(0));
+  await page.keyboard.press('s');
+  await expect(page.locator('#campo')).toContainText('o prazo real continua valendo');
+  const bts = page.locator('#campo .datas button');
+  await expect(bts).toHaveCount(3);
+  for (const b of await bts.all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await bts.nth(1).click();
+  await expect(page.locator('#tbtn'), 'o aviso traz o desfazer').toBeVisible();
+  await page.clock.fastForward(7000);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_esconder').length), 'aos 7 s ainda da para desfazer').toBe(0);
+  await page.clock.fastForward(1100);
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_esconder').map(c=>c.a))).toEqual([{p_tarefa_id:2,p_dias:3}]);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'esconder nao passa pelo agir nem mexe no prazo').toBe(0);
+  expect(erros).toEqual([]);
+});
+
+test('p157 decisao com toque duplo: um toque arma e avisa; o segundo grava; tecla 2 arma e 2 de novo grava a opcao 2', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(c=>{INV.push(c);abrirInv(8);}, CARD_DECISAO);
+  const rat = page.locator('#folha #decide [data-acao="ratifico"]');
+  await rat.click();
+  await expect(rat, 'o 1o toque marca o botao').toHaveClass(/arma/);
+  await expect(page.locator('#tmsg')).toContainText('Toque de novo em Ratifico');
+  expect(await page.evaluate(()=>PEND), 'um toque nao pendura nada').toBeNull();
+  await rat.click();
+  expect(await page.evaluate(()=>PEND&&PEND.escolha)).toBe('Assinar agora');
+  await page.evaluate(()=>desfazer());
+  await page.evaluate(()=>abrirInv(8));
+  await page.keyboard.press('2');
+  await expect(page.locator('#tmsg')).toContainText('Aperte 2 de novo');
+  expect(await page.evaluate(()=>PEND)).toBeNull();
+  await page.keyboard.press('2');
+  expect(await page.evaluate(()=>PEND&&PEND.escolha)).toBe('Adiar uma semana');
+  await page.evaluate(()=>enviar());
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='escolher').map(c=>c.a))).toEqual([{p_ref:'8',p_opcao:'Adiar uma semana'}]);
+  await page.evaluate(()=>abrirInv(8));
+  await page.keyboard.press('7');
+  await expect(page.locator('#folha')).toBeVisible();
+  expect(erros).toEqual([]);
+});
+
+test('p157 X conclui e Z desfaz: com ato esperando, Z cancela; sem, abre os Ultimos atos; Desfazer manda so o id', async ({page})=>{
+  await page.addInitScript(()=>{ window.__atos=[
+    {acao_id:41,origem:'tarefa',ref:'2',verbo:'feita',titulo:'Card de exemplo',agido_em:new Date().toISOString(),pode:true,motivo:'pode desfazer'},
+    {acao_id:40,origem:'tarefa',ref:'5',verbo:'repactuar',titulo:'Segundo card',agido_em:new Date().toISOString(),pode:false,motivo:'o card mudou depois do ato'}]; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>abrirFila(0));
+  await page.keyboard.press('x');
+  await expect(page.locator('#campo .pri'), 'X abre a prova de concluir').toHaveText('Concluir com esta prova');
+  await page.evaluate(()=>{ escolher('repactuar'); });
+  await page.click('#campo .datas button >> nth=0');
+  expect(await page.evaluate(()=>!!PEND)).toBe(true);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('z');
+  expect(await page.evaluate(()=>PEND), 'Z com ato esperando desfaz').toBeNull();
+  await expect(page.locator('#tmsg')).toContainText('Nada foi gravado');
+  await page.keyboard.press('z');
+  await expect(page.locator('#folhaTit'), 'Z sem ato esperando abre os Ultimos atos').toHaveText('Últimos atos');
+  const lis = page.locator('#atos li');
+  await expect(lis).toHaveCount(2);
+  await expect(lis.nth(0)).toContainText('Concluí');
+  await expect(lis.nth(1), 'o que nao volta diz por que').toContainText('o card mudou depois do ato');
+  await expect(lis.nth(1).locator('button')).toHaveCount(0);
+  const bt = lis.nth(0).locator('button', {hasText:'Desfazer'});
+  expect(await bt.evaluate(b=>b.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  await bt.click();
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_desfazer').map(c=>c.a))).toEqual([{p_acao_id:41}]);
+  await expect(page.locator('#tmsg')).toContainText('Desfeito');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'nada foi ao agir').toBe(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal').toBe(true);
+  expect(erros).toEqual([]);
+});
+
+test('p157 contrato da tela: as portas do um toque recebem so id e inteiros, e a busca oferece os Ultimos atos', async ({page})=>{
+  await page.addInitScript(()=>{ window.__desfazerR='RECUSADO: passou de 1 dia.'; window.__atos=[{acao_id:'9',origem:'tarefa',ref:'2',verbo:'esconder',titulo:'x',agido_em:new Date().toISOString(),pode:true,motivo:''}]; });
+  const erros = await abrir(page);
+  await page.keyboard.press('/');
+  await page.locator('#busca [data-acao="abrirAtos"]').click();
+  await page.locator('#atos button').click();
+  await expect(page.locator('#tmsg'), 'a recusa do banco aparece em portugues').toContainText('Não desfez: passou de 1 dia.');
+  await page.keyboard.press('Escape');
+  await page.evaluate(()=>{ abrirFila(0); adiarEsconder(); });
+  await page.click('#campo .datas button >> nth=2');
+  await page.evaluate(()=>enviar());
+  const r = await page.evaluate(()=>window.__rpc.filter(c=>['painel_desfazer','painel_esconder','painel_atos_recentes'].includes(c.n)).map(c=>c.a||{}));
+  for (const a of r) for (const [k,v] of Object.entries(a))
+    expect(Number.isInteger(v), k+' tem de ir como inteiro, foi '+JSON.stringify(v)).toBe(true);
+  expect(r.length).toBeGreaterThanOrEqual(3);
   expect(erros).toEqual([]);
 });
