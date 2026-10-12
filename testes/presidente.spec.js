@@ -55,6 +55,8 @@ const DUBLE = `(()=>{
     sug:[],
     /* p4.48 (p167 e5): plano mestre vazio por padrao; o teste do plano troca por window.__dados */
     plm:[],
+    /* p4.55 (p109): funil vazio por padrao; o teste do p109 troca por window.__dados */
+    funil:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -3500,5 +3502,40 @@ test('p157 contrato da tela: as portas do um toque recebem so id e inteiros, e a
   for (const a of r) for (const [k,v] of Object.entries(a))
     expect(Number.isInteger(v), k+' tem de ir como inteiro, foi '+JSON.stringify(v)).toBe(true);
   expect(r.length).toBeGreaterThanOrEqual(3);
+  expect(erros).toEqual([]);
+});
+
+/* p4.55 (p109, s3409, 12/10/2026): funil da LC-14 no Caixa. A classe que mata: peca pronta somada como dinheiro.
+   Pronta > enviada > aceita > paga, cada elo com a sua margem, o numero de itens e a idade do mais velho, e o toque
+   abre a lista. Uma peca pronta de 9,9 milhoes e uma linha de paga que nao veio do fluxo de caixa nao podem mexer
+   no total de paga. No main de antes nao existe #funil: o teste reprova. */
+test('p109: o funil do Caixa tem 4 elos, pronta nunca soma em paga e cada elo abre a lista', async ({page})=>{
+  await page.addInitScript(()=>{ window.__dados={funil:[
+    {elo:'pronta',origem:'mesa',ref:'1',titulo:'Peca pronta gigante',frente_slug:'11-renda-alt',margem_rs:9999999,desde:'2026-09-11',idade_d:31,detalhe:'enviar'},
+    {elo:'pronta',origem:'mesa',ref:'2',titulo:'Peca pronta sem valor',frente_slug:'11-renda-alt',margem_rs:null,desde:'2026-10-10',idade_d:2,detalhe:'assinar'},
+    {elo:'enviada',origem:'proposta',ref:'PC-1',titulo:'Proposta de exemplo',frente_slug:'20-contrato-pj',margem_rs:4000,desde:'2026-10-01',idade_d:11,detalhe:null},
+    {elo:'aceita',origem:'fluxo',ref:'31',titulo:'Recebivel de exemplo',frente_slug:'20-contrato-pj',margem_rs:2500,desde:'2026-09-20',idade_d:22,detalhe:'confirmado'},
+    {elo:'paga',origem:'fluxo',ref:'32',titulo:'Recebido de exemplo',frente_slug:'20-contrato-pj',margem_rs:1500,desde:'2026-10-05',idade_d:7,detalhe:'recebido'},
+    {elo:'paga',origem:'mesa',ref:'1',titulo:'Peca que nao e dinheiro',frente_slug:'11-renda-alt',margem_rs:5000000,desde:'2026-10-05',idade_d:7,detalhe:null}]}; });
+  const erros=await abrir(page);
+  await page.evaluate(()=>ir('caixa'));
+  const r=await page.evaluate(()=>[...document.querySelectorAll('#funil button[data-elo]')].map(b=>({elo:b.dataset.elo,t:b.textContent})));
+  expect(r.map(x=>x.elo),'quatro elos na ordem da LC-14').toEqual(['pronta','enviada','aceita','paga']);
+  const paga=r.find(x=>x.elo==='paga').t, pronta=r.find(x=>x.elo==='pronta').t;
+  expect(paga,'paga soma so o recebido do fluxo de caixa').toContain('R$ 1,5 mil');
+  expect(paga,'peca pronta nunca soma em paga (vazada daria R$ 5.001,5 mil e 2 itens)').not.toMatch(/5\.00|10\.00|2 itens/);
+  expect(paga).toContain('1 item');
+  expect(pronta,'pronta: itens, idade do mais velho e sem valor declarado').toMatch(/2 itens · o mais velho há 31 dias · 1 sem valor/);
+  expect(pronta,'pronta: margem do elo').toContain('R$ 10.000 mil');
+  await page.locator('#funil button[data-elo="paga"]').click();
+  const f=await page.evaluate(()=>({tit:document.getElementById('folhaTit').textContent,n:document.querySelectorAll('#folha .pilha .linha-r').length,txt:document.getElementById('folha').textContent}));
+  expect(f.tit).toContain('Paga nos últimos 30 dias');
+  expect(f.n,'o elo abre a sua lista, sem a peca').toBe(1);
+  expect(f.txt).not.toContain('Peca que nao e dinheiro');
+  await page.evaluate(()=>{fecharFolha();abrirFunil('pronta');});
+  const g=await page.evaluate(()=>({n:document.querySelectorAll('#folha .pilha .linha-r').length,txt:document.getElementById('folha').textContent}));
+  expect(g.n).toBe(2);
+  expect(g.txt,'detalhe em lingua de gente, nunca o verbo cru').toContain('falta enviar');
+  expect(g.txt).toContain('sem valor');
   expect(erros).toEqual([]);
 });
