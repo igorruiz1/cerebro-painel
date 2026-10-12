@@ -59,6 +59,8 @@ const DUBLE = `(()=>{
     funil:[],
     /* p4.58 (p144): semana vazia por padrao; o teste do p144 troca por window.__dados */
     semana:[],
+    /* p4.61 (p155): sem aviso da rotina por padrao; o teste do p155 troca por window.__dados */
+    aviso:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -3736,5 +3738,34 @@ test('p147: o norte abre a Semana como manchete, fora da lista; a lista para em 
   await expect(page.locator('#semNumeros .linha-r'), 'ate 14 numeros de avanco').toHaveCount(14);
   await expect(page.locator('#semTopo')).toContainText('o norte e 14 números, 14 fora da meta');
   await expect(page.locator('#semDecisoes .chip')).toHaveText(['1 deliberação']);
+  expect(erros).toEqual([]);
+});
+
+/* p4.61 (p155, s3995 12/10/2026): a guarda fn_guarda_rotina nao deixa rotina mexer em card que o Igor tocou em 7 dias
+   e grava aviso_card, mas o painel nao lia a tabela: o Igor nao sabia que a rotina tinha parado no card dele. Agora a
+   carga pede a chave aviso e a folha do card diz o que a rotina queria mudar, quantas vezes e por que nao mudou; card sem
+   aviso nao ganha bloco. O origin/main (p4.60) reprova: a carga nao pede aviso e a folha nao tem .aviso-rotina. */
+test('p155 aviso_card: carga pede aviso; a folha do card diz que a rotina nao mexeu e por que; sem aviso, nada', async ({page})=>{
+  await page.setViewportSize({width:360, height:800});
+  await page.addInitScript(()=>{ window.__dados={aviso:[
+    {origem:'tarefa',ref:'2',dia:'2026-10-11',n:2,motivo:'card tocado pelo Igor nos ultimos 7 dias',campos:'opcoes,prazo',ultimo_em:'2026-10-11T05:55:00-04:00'},
+    {origem:'tarefa',ref:'99',dia:'2026-10-11',n:1,motivo:'card tocado pelo Igor nos ultimos 7 dias',campos:'status',ultimo_em:'2026-10-11T05:55:00-04:00'}]}; });
+  const erros = await abrir(page);
+  const carga = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga'));
+  expect(carga.a.p_chaves, 'a carga pede a chave aviso').toContain('aviso');
+  await page.click('#foco .pri');
+  await expect(page.locator('#folhaTit')).toHaveText('Card de exemplo');
+  const av = page.locator('#folha .aviso-rotina');
+  await expect(av).toHaveCount(1);
+  await expect(av).toContainText('A rotina não mexeu neste card');
+  await expect(av).toContainText('Em 11/10 uma rotina tentou mudar as opções, o prazo (2 tentativas)');
+  await expect(av).toContainText('você mexeu neste card nos últimos 7 dias');
+  await expect(av, 'o aviso de outro card nao vaza').not.toContainText('situação');
+  const ruins = (await page.evaluate(contrasteDos, '#folha .aviso-rotina *')).filter(m=>m.razao<4.5);
+  expect(ruins, 'texto do aviso abaixo de 4,5:1').toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360').toBe(true);
+  await page.evaluate(()=>{ fecharFolha(); D.aviso=[{origem:'decisao',ref:'2',dia:'2026-10-11',n:1,motivo:'decisao aberta: so o Igor altera ou fecha',campos:'status',ultimo_em:'2026-10-11T05:55:00-04:00'}]; });
+  await page.click('#foco .pri');
+  await expect(page.locator('#folha .aviso-rotina'), 'aviso de decisao com o mesmo numero nao entra no card de tarefa').toHaveCount(0);
   expect(erros).toEqual([]);
 });
