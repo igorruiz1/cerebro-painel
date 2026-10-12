@@ -15,10 +15,9 @@ test('106: Hoje cabe em 1,5 tela a 1280 e as cinco abas nao incham alem do piso 
   expect(larga.abas.hoje.telas, 'Hoje a 1280: regua 1 (Few, uma tela para o essencial)').toBeLessThanOrEqual(1.5);
   expect(estreita.abas.hoje.telas, 'Hoje a 390').toBeLessThanOrEqual(3);
   expect(larga.total.palavras, 'palavras nas cinco abas: regua 9 (leitura em 20 min)').toBeLessThanOrEqual(1900);
-  /* p4.58 (p144, s3409, 12/10/2026): decisao escrita para passar do piso. A sexta aba (Semana) e a revisao semanal
-     pedida pelo Igor no p144, com 5 a 15 numeros por criterio; cada aba tambem repete os ~13 numeros do cabecalho
-     (carimbo, ritmo, selos). Medido na p4.58 em demonstracao: 326 (Semana 32). O piso sobe de 320 para 340 so por isso;
-     o p147 (1 norte e ate 14 numeros no presidente) deve trazer o total de volta para baixo. */
-  expect(larga.total.numeros, 'numeros nas seis abas: regua 8 (EOS, poucos numeros)').toBeLessThanOrEqual(340);
+  /* p4.58 (p144, s3409, 12/10/2026): a Semana entrou e o piso subiu de 320 para 340 por decisao escrita.
+     p4.60 (s3768): volta a 320. O trilho a 1280 repetia o carimbo do topo (dados de HH:MM · N fechados em 7 d (+M)),
+     5 numeros em cada uma das seis abas; o carimbo fica so no topo. Medido: 326 antes, 296 depois. */
+  expect(larga.total.numeros, 'numeros nas seis abas: regua 8 (EOS, poucos numeros)').toBeLessThanOrEqual(320);
   for (const [a, x] of Object.entries(larga.abas)) expect(x.telas, `aba ${a} a 1280`).toBeLessThanOrEqual(3.5);
 });
