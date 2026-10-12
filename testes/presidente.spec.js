@@ -3716,3 +3716,25 @@ test('p144: aba Semana com numeros, decisoes e plano; Fechar a revisao grava os 
   await expect(page.locator('#n-semana'), 'revisao feita apaga o selo').toHaveText('');
   expect(erros).toEqual([]);
 });
+
+/* p4.59 (p147, s3409, 12/10/2026): presidente com 1 norte e ate 14 numeros de avanco, com dono e meta; o resto no
+   bastidor. A classe que mata: o norte misturado aos outros e a tela que incha um numero por versao. No main de antes
+   nao ha #semNorte: o teste reprova. */
+test('p147: o norte abre a Semana como manchete, fora da lista; a lista para em 14; plural certo nas decisoes', async ({page})=>{
+  await page.addInitScript(()=>{ window.__dados={semana:[
+    {bloco:'norte',ordem:1,titulo:'★ Norte de exemplo',ref:'painel.fechamentos_pelo_painel_pct',valor:21,ha_7d:18,meta:80,unidade:'pct',direcao:'maior_melhor',detalhe:'fora',dono:'igor'},
+    ...Array.from({length:16},(_,i)=>({bloco:'numero',ordem:i+1,titulo:'Numero de exemplo '+(i+1),ref:'x.'+i,valor:i,ha_7d:i,meta:0,unidade:'num',direcao:'menor_melhor',detalhe:i?'fora':'dentro',dono:'claude'})),
+    {bloco:'decisao_total',ordem:1,titulo:'deliberacao',valor:1}]}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semNorte')).toBeVisible();
+  await expect(page.locator('#semNorte .rot')).toHaveText('Norte');
+  await expect(page.locator('#semNorte')).toContainText('Norte de exemplo');
+  await expect(page.locator('#semNorte')).toContainText('21%');
+  await expect(page.locator('#semNorte')).toContainText('meta 80% · melhorou · seu');
+  await expect(page.locator('#semNumeros'), 'o norte nao se repete na lista').not.toContainText('Norte de exemplo');
+  await expect(page.locator('#semNumeros .linha-r'), 'ate 14 numeros de avanco').toHaveCount(14);
+  await expect(page.locator('#semTopo')).toContainText('o norte e 14 números, 14 fora da meta');
+  await expect(page.locator('#semDecisoes .chip')).toHaveText(['1 deliberação']);
+  expect(erros).toEqual([]);
+});
