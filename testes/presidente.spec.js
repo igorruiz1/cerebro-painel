@@ -57,6 +57,8 @@ const DUBLE = `(()=>{
     plm:[],
     /* p4.55 (p109): funil vazio por padrao; o teste do p109 troca por window.__dados */
     funil:[],
+    /* p4.58 (p144): semana vazia por padrao; o teste do p144 troca por window.__dados */
+    semana:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -125,14 +127,14 @@ test('todo destino abre um painel que existe, e todo painel tem destino', async 
   });
   expect(r.semPainel,'destino sem painel').toEqual([]);
   expect(r.semDestino,'painel sem destino').toEqual([]);
-  expect(r.n,'cinco destinos planos').toBe(5);
+  expect(r.n,'seis destinos planos (p4.58: a Semana entrou)').toBe(6);
 });
 
 for (const largura of [360, 390, 1280]) {
   test(`a ${largura}px: nenhum controle abaixo de 44 px e nenhuma rolagem horizontal`, async ({page})=>{
     await page.setViewportSize({width:largura, height:820});
     const erros = await abrir(page);
-    for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
+    for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) {
       await page.evaluate(a=>ir(a), aba);
       const m = await page.evaluate(()=>{
         const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
@@ -1774,7 +1776,7 @@ test('Demonstracao: nenhum cliente do banco nasce, nada sai para a rede, a marca
   const {erros, rede} = await abrirDemo(page, 360);
   await expect(page.locator('#demoAviso')).toBeVisible();
   await abaFalsa(page);
-  for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
+  for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) {
     await page.evaluate(a=>ir(a), aba);
     if(aba==='mesa') await page.waitForSelector('#ms-raiz .ms-item');
     const m = await page.evaluate(()=>{
@@ -1788,6 +1790,8 @@ test('Demonstracao: nenhum cliente do banco nasce, nada sai para a rede, a marca
     expect(m.txt, `marca real em ${aba}`).not.toMatch(/Dabli/);
   }
   await expect(page.locator('.so-real').first(), 'bastidor, seguranca e sair somem').toBeHidden();
+  /* p4.58: o laco agora termina na Semana; os passos da Mesa voltam a ela */
+  await page.evaluate(()=>ir('mesa'));
   /* p4.53: com dado ficticio, Ok tira a peca de leitura e "Enviei por" tira a de envio; o estado muda so na memoria */
   const antes = await page.locator('#n-mesa').innerText();
   await page.evaluate(()=>msAbrirId(705)); await page.click('#msBtAprovar'); await page.evaluate(()=>enviar());
@@ -2227,7 +2231,7 @@ test('p4.22: nenhum texto abaixo de 14 px nas cinco abas e na folha do president
     }
     return {n,out};
   });
-  for (const aba of ['hoje','fila','caixa','frentes','mesa']) {
+  for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) {
     await page.evaluate(a=>ir(a), aba);
     if (aba==='mesa') await page.waitForSelector('#ms-raiz .ms-item');
     const r = await medir();
@@ -2300,7 +2304,7 @@ test('87b: nenhum handler inline no presidente; toda acao da tela esta no regist
       for (const a of el.attributes) if (/^on/i.test(a.name)) inline.add(el.tagName+' '+a.name);
       for (const k of ['acao','aoDigitar','aoMudar','aoTecla','aoColar']) { const v = el.dataset[k];
         if (v !== undefined) { n++; if (!Object.prototype.hasOwnProperty.call(ACOES, v)) sem.add(v); } } } };
-    for (const aba of ['hoje','fila','caixa','frentes','mesa']) { ir(aba); varrer(); }
+    for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) { ir(aba); varrer(); }
     abrirFila(0); varrer(); fecharFolha();
     ir('hoje');
     document.querySelector('[data-acao="ir"][data-a1="fila"]').click();
@@ -2546,7 +2550,7 @@ test('p4.31 nenhum id repetido no DOM vivo depois das cinco abas e da folha', as
   const rep = await page.evaluate(()=>{
     const dup = new Set(), ver = ()=>{ const vistos = new Set();
       for (const el of document.querySelectorAll('[id]')) { if (vistos.has(el.id)) dup.add(el.id); vistos.add(el.id); } };
-    for (const a of ['hoje','fila','caixa','frentes','mesa']) { ir(a); ver(); }
+    for (const a of ['hoje','fila','caixa','frentes','mesa','semana']) { ir(a); ver(); }
     ir('hoje'); abrirFila(0); ver(); fecharFolha();
     return [...dup];
   });
@@ -3662,5 +3666,53 @@ test('p143: atendente so aparece com pedido esperando, com o prazo de 2 h uteis;
   expect(r, 'o recibo do pedido novo diz o prazo').toMatch(/Prazo: resposta até .*\(2 h úteis\)\./);
   await page.evaluate(()=>{ window.__atd={despertador:'sem_token',pendentes:0}; return atendenteEstado(); });
   await expect(page.locator('#atd'), 'problema da maquina aparece mesmo sem pedido').toContainText('Sem despertador');
+  expect(erros).toEqual([]);
+});
+
+/* p4.58 (p144, s3409, 12/10/2026): revisao semanal no painel. A classe que mata: revisao que so existe no chat, sem
+   numero com meta, sem o que foi decidido e sem prova de que foi feita. A aba Semana mostra os numeros do placar com
+   meta e a semana anterior, as decisoes de 7 dias, o plano de 7 dias; "Fechar a revisao" grava os minutos. No main de
+   antes nao ha a aba: o teste reprova. */
+test('p144: aba Semana com numeros, decisoes e plano; Fechar a revisao grava os minutos e o selo some', async ({page})=>{
+  const hoje=new Date().toISOString().slice(0,10);
+  await page.addInitScript(h=>{ window.__dados={semana:[
+    {bloco:'numero',ordem:1,titulo:'★ Folego de exemplo',ref:'caixa.sobrevida_dias',valor:41,ha_7d:37,meta:30,unidade:'dias',detalhe:'dentro',dono:'igor'},
+    {bloco:'numero',ordem:2,titulo:'Fechamentos de exemplo',ref:'painel.fechamentos_pelo_painel_pct',valor:72,ha_7d:65,meta:80,unidade:'pct',detalhe:'fora',dono:'igor'},
+    {bloco:'numero',ordem:3,titulo:'Saldo de exemplo',ref:'caixa.menor_saldo_13s',valor:12400,ha_7d:9800,meta:0,unidade:'num',detalhe:'dentro',dono:'igor'},
+    {bloco:'numero',ordem:4,titulo:'Rotinas de exemplo',ref:'motor.rotinas_no_ponto_pct',valor:100,ha_7d:92,meta:100,unidade:'pct',detalhe:'dentro',dono:'claude'},
+    {bloco:'numero',ordem:5,titulo:'Demanda de exemplo',ref:'fluxo.idade_demanda_aberta_max',valor:12,ha_7d:15,meta:21,unidade:'dias',detalhe:'dentro',dono:'claude'},
+    {bloco:'decisao_total',ordem:1,titulo:'ratificacao',valor:18},{bloco:'decisao_total',ordem:2,titulo:'escolha_em_card',valor:9},
+    ...Array.from({length:9},(_,i)=>({bloco:'decisao',ordem:i+1,titulo:'Decisao de exemplo '+(i+1),detalhe:'escolha_em_card',frente:'11-renda-alt',quando:h})),
+    {bloco:'plano',ordem:1,titulo:'Item do plano de exemplo',dono:'automacao',quando:h},
+    {bloco:'plano',ordem:2,titulo:'Item atrasado de exemplo',dono:'claude',detalhe:'atrasado',quando:'2026-10-01'},
+    {bloco:'cards',ordem:1,titulo:'cards',valor:7,detalhe:'1',dono:'igor'}]}; }, hoje);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#tituloAba')).toHaveText('Semana');
+  await expect(page.locator('#semTopo')).toContainText('em aberto');
+  await expect(page.locator('#semTopo')).toContainText('5 números, 1 fora da meta');
+  const nums = page.locator('#semNumeros .linha-r');
+  await expect(nums).toHaveCount(5);
+  await expect(nums.nth(0)).toContainText('Folego de exemplo');
+  await expect(nums.nth(0), 'sem a estrela do banco').not.toContainText('★');
+  await expect(nums.nth(0)).toContainText('41 dias');
+  await expect(nums.nth(0)).toContainText('meta 30 dias · melhorou · seu');
+  await expect(nums.nth(1).locator('.r')).toHaveClass(/w/);
+  await expect(nums.nth(2)).toContainText('R$ 12,4 mil');
+  await expect(page.locator('#semDecisoes .chip')).toHaveText(['18 ratificações','9 escolhas em card']);
+  await expect(page.locator('#semDecisoes .linha-r')).toHaveCount(8);
+  await page.click('#semDecisoes button[data-acao="semTodas"]');
+  await expect(page.locator('#folha .pilha .linha-r')).toHaveCount(9);
+  await page.evaluate(()=>fecharFolha());
+  await expect(page.locator('#semPlano')).toContainText('atrasado, era 01/10');
+  await expect(page.locator('#semPlano button')).toContainText('7 cards seus com prazo na próxima semana');
+  await expect(page.locator('#n-semana')).toHaveText('•');
+  await page.evaluate(()=>{ SEM_ABERTA=Date.now()-12*60000; });
+  await page.click('#semFechar');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='semana_revisao_fechar').map(c=>c.a))).toEqual([{p_minutos:12,p_nota:null}]);
+  await page.evaluate(()=>{ D.semana=D.semana.concat([{bloco:'revisao',ordem:1,valor:12,quando:new Date().toISOString()}]); render(); });
+  await expect(page.locator('#semTopo')).toContainText('feita');
+  await expect(page.locator('#semTopo')).toContainText('12 minutos');
+  await expect(page.locator('#n-semana'), 'revisao feita apaga o selo').toHaveText('');
   expect(erros).toEqual([]);
 });
