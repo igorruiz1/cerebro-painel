@@ -51,6 +51,8 @@ const DUBLE = `(()=>{
     hoje:[], hoje_resumo:[],
     /* p4.42 (p127): bandeja vazia por padrao; os testes do p127 trocam D.band */
     band:[],
+    /* p4.47 (p158): sem sugestao esperando aceite por padrao; o teste do p158 troca por window.__dados */
+    sug:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -3158,5 +3160,51 @@ test('p108: aba Frentes em small multiples, 8 barras por frente na mesma escala 
   expect(sp.filter(x=>x.pio).map(x=>x.txt.replace(/\s*piorou$/,'')).sort()).toEqual(['Consultoria de obras']);
   await expect(page.locator('#frentesLista button.frente', {hasText:'Consultoria de obras'}).locator('small')).toContainText('o mais velho tem 34 d');
   expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+/* p4.47 (p158, E1.6 do WL, s2655 11/10/2026): rotina sugere, o Igor aceita. O sensor de arquivo grava sugestao e o card so
+   nasce no aceite. O grupo aparece no Hoje com Virar card e Descartar; nada grava antes dos 6 s de desfazer; o ato vai pela
+   painel_responder com tipo SUGESTAO; desfazer devolve a linha; sem a chave sug o grupo some e a falta e avisada.
+   O origin/main (p4.46) reprova: nao ha #sugBox nem a chave sug na carga. */
+const SUG = [{id:41,fonte:'sensor-dabli',frente_slug:'20-contrato-pj',titulo:'Ler arquivos novos do socio no compartilhado',dias:1},
+  {id:42,fonte:'sensor-arquivo',frente_slug:'11-renda-alt',titulo:'Conferir a planilha nova de exemplo',dias:0}];
+test('p4.47 sugestoes: grupo no Hoje; Virar card e Descartar gravam pela painel_responder so depois do desfazer', async ({page})=>{
+  await page.setViewportSize({width:360, height:800});
+  await page.addInitScript(c=>{ window.__dados={sug:c}; }, SUG);
+  const erros = await abrir(page);
+  const carga = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga'));
+  expect(carga.a.p_chaves, 'a carga pede a chave sug').toContain('sug');
+  const box = page.locator('#sugBox'), linhas = box.locator('.cob3');
+  await expect(box).toBeVisible();
+  await expect(linhas).toHaveCount(2);
+  await expect(linhas.nth(0)).toContainText('Ler arquivos novos do socio no compartilhado');
+  await expect(linhas.nth(1)).toContainText('sensor-arquivo · hoje');
+  for (const b of await box.locator('button').all())
+    expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  const ruins = (await page.evaluate(contrasteDos, '#sugBox *')).filter(m=>m.razao<4.5);
+  expect(ruins, 'texto do grupo abaixo de 4,5:1').toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360').toBe(true);
+  await linhas.nth(0).locator('button[data-acao="sugAceitar"]').click();
+  await expect(linhas, 'a sugestao aceita sai do grupo na hora').toHaveCount(1);
+  expect(await responder(page), 'nada grava antes do desfazer').toEqual([]);
+  await page.locator('#tbtn').click();
+  await expect(linhas, 'desfazer devolve a sugestao').toHaveCount(2);
+  expect(await responder(page)).toEqual([]);
+  await linhas.nth(0).locator('button[data-acao="sugAceitar"]').click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:41,p_ato:'aceito',p_nota:null}]);
+  await page.evaluate(()=>{window.__rpc=[];});
+  await box.locator('button[data-acao="sugDescartar"]').first().click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:42,p_ato:'descartar',p_nota:null}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.47 sugestoes: snapshot sem a chave sug esconde o grupo e diz que a parte nao chegou, sem erro', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['sug']; });
+  const erros = await abrir(page);
+  await expect(page.locator('#falha'), 'chave faltando vira aviso, nunca silencio').toContainText('sug');
+  await expect(page.locator('#sugBox')).toBeHidden();
   expect(erros).toEqual([]);
 });
