@@ -1071,6 +1071,50 @@ test('caiu pede o banco exato: 11 contas sem rolar a 360 px, a ultima usada dest
   expect(erros).toEqual([]);
 });
 
+/* p4.49 (p137, s2833 11/10/2026): pagar pelo painel. O paguei copia o codigo do boleto ou do Pix que o banco guardou,
+   mostra o atalho do app so da conta que tem atalho testado, e a conta tocada leva o print do comprovante ao banco.
+   A acao do card passa por acoesFila: campo que ela nao repassa some calado, por isso o teste parte do dado do banco. */
+test('p137: paguei copia o codigo, abre o app da conta sugerida e leva conta e print; sem codigo nao ha copiar', async ({page})=>{
+  await page.setViewportSize({width:360, height:820});
+  await page.addInitScript(()=>{
+    const d=n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:t=>{window.__copiado=t;return Promise.resolve();}}});
+    const ops=[{v:'BANCO_A',rot:'PF · Banco A 10001-1',app:'exemplo-banco://abrir'},{v:'BANCO_B',rot:'PF · Banco B 200002-2'}];
+    const pagar=(ref,padrao,extra)=>({origem:'fluxo',ref,camada_tela:'hoje',teto_tela:5,frente:'07-financas-pf',titulo:'Pagar parcela de exemplo '+ref,data_ref:d(0),dias_parado:0,
+      acoes:[Object.assign({label:'paguei',verbo:'pago',campo:'entidade',padrao,opcoes:ops},extra),{campo:'date',label:'nova data',verbo:'repactuar'}]});
+    window.__dados={fila:[pagar('41','BANCO_A',{codigo:'00190000090000000000000000000000000000000000000',codigo_tipo:'boleto'}),pagar('42','BANCO_B',{})]};
+  });
+  const erros = await abrir(page);
+  const abrirRef = ref=>page.evaluate(r=>abrirHoje(hojeLista().find(x=>String(x.ref)===r),'pago'), ref);
+  await abrirRef('42');
+  await expect(page.locator('#campo [data-acao="copiarCodigo"]'), 'sem codigo no banco, sem botao de copiar').toHaveCount(0);
+  await expect(page.locator('#campo a.abrir-app'), 'conta sugerida sem atalho testado, sem botao de app').toHaveCount(0);
+  await expect(page.locator('#campo #cvArq'), 'o print segue disponivel').toHaveCount(1);
+  await page.evaluate(()=>fecharFolha());
+  await abrirRef('41');
+  const copiar = page.locator('#campo [data-acao="copiarCodigo"]');
+  await expect(copiar).toHaveText('Copiar a linha do boleto');
+  await copiar.click();
+  expect(await page.evaluate(()=>window.__copiado), 'copiou a linha que veio do banco').toBe('00190000090000000000000000000000000000000000000');
+  await expect(page.locator('#campo a.abrir-app')).toHaveAttribute('href','exemplo-banco://abrir');
+  const alturas = await page.evaluate(()=>[...document.querySelectorAll('#campo .copiar-cod, #campo .abrir-app')].map(e=>Math.round(e.getBoundingClientRect().height)));
+  expect(alturas.length).toBe(2);
+  expect(alturas.filter(h=>h<44||h>80), 'copiar e abrir app com altura de toque, sem esticar').toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360 px').toBe(true);
+  await page.setInputFiles('#cvArq', {name:'comprovante.png', mimeType:'image/png', buffer:Buffer.from('png de exemplo')});
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').length), 'copiar e anexar nao gravam nada').toBe(0);
+  await page.click('#campo .contas button[data-conta="BANCO_B"]');
+  await page.evaluate(()=>enviar());
+  const up = await page.evaluate(()=>window.__storage.filter(s=>s.op==='upload'));
+  expect(up.length, 'o print subiu uma vez').toBe(1);
+  expect(up[0].b).toBe('mesa-provas');
+  const ag = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir').map(c=>c.a));
+  expect(ag.length).toBe(1);
+  expect(ag[0].p_verbo).toBe('pago');
+  expect(ag[0].p_valor, 'conta tocada + caminho do print, no formato que o agir_nucleo separa').toMatch(/^BANCO_B · anexo mesa-provas\/.+\.png$/);
+  expect(erros).toEqual([]);
+});
+
 /* p4.10 (06/10/2026): varredura de contraste. O chip da conta sugerida sumiu (1,09:1) com a classe certa no DOM,
    porque uma regra mais especifica trocou o fundo e deixou o texto. A classe do defeito e cascata que pinta texto
    escuro em fundo escuro: aqui todo texto de botao visivel, nas cinco abas e na folha do card, passa 4,5:1. */
