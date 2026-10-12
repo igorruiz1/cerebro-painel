@@ -16,12 +16,24 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const alvo = new URL((e.notification.data && e.notification.data.url) || './presidente.html?abrir=hoje', self.registration.scope).href;
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(janelas => {
-    const j = janelas.find(w => w.url.startsWith(self.registration.scope) && 'focus' in w);
-    if (!j) return self.clients.openWindow(alvo);
-    /* p4.51 (s2878, 12/10/2026): com o app aberto em segundo plano, so focar trazia a ultima tela. A janela
-       recebe o destino do aviso e vai ate ele (presidente.html: aoAvisoTocado). */
-    j.postMessage({ tipo: 'abrir', url: alvo });
-    return j.focus();
+  const pagina = u => { try { return new URL(u).pathname; } catch (x) { return ''; } };
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async todas => {
+    const janelas = todas.filter(w => w.url.startsWith(self.registration.scope));
+    /* p4.51 (s2878, 12/10/2026): com o app aberto em segundo plano, so focar trazia a ultima tela. A janela que ja
+       esta na pagina do destino recebe o destino e vai ate ele sem recarregar (presidente.html: aoAvisoTocado). */
+    const mesma = janelas.find(w => pagina(w.url) === pagina(alvo) && 'focus' in w);
+    if (mesma) { mesma.postMessage({ tipo: 'abrir', url: alvo }); return mesma.focus(); }
+    /* p4.52 (s3056, 12/10/2026, p136): o teste do Igor reprovou porque a janela aberta era o bastidor (index.html):
+       ela recebia a mensagem, nao a ouvia, e o toque so trazia o bastidor. Janela em outra pagina do app navega ate o
+       destino; se o navegador recusar (janela fora do controle deste sw), abre o destino; por ultimo, a mensagem,
+       que o index.html tambem ouve. */
+    const outra = janelas.find(w => 'focus' in w);
+    if (!outra) return self.clients.openWindow(alvo);
+    if ('navigate' in outra) {
+      try { const n = await outra.navigate(alvo); if (n) return n.focus(); } catch (x) {}
+    }
+    try { const n = await self.clients.openWindow(alvo); if (n) return n; } catch (x) {}
+    outra.postMessage({ tipo: 'abrir', url: alvo });
+    return outra.focus();
   }));
 });
