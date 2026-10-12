@@ -7,6 +7,14 @@ nenhuma tela mostrava isso.
 A p4.5 (05/10/2026) fecha o ciclo na própria folha: abrir a cópia da peça e decidir (aprovar, pedir ajuste,
 largar). Antes, decidir uma peça da Mesa exigia sair do painel.
 
+> **p4.53 (12/10/2026, s3056, t2308): dois caminhos por tipo de peça.** Onda 2 da auditoria da Mesa (doc 4005),
+> decisão 2 do Igor. Peça de leitura ou decisão: **Ok**, **Ajustar**, **Adiar**, **Descartar** (`mesa_deliberar`
+> `aprovado`, `ajustar`, `adiar`, `largar`). Peça de envio, entrega, assinatura ou protocolo: **Enviei por**
+> (`mesa_baixa_painel`), que aprova e dá a baixa num toque e conta como decisão pelo painel; Ajustar, Adiar e Descartar
+> ficam ao lado. Saíram a ciência do dia, a ciência em lote, Lidos, Arquivo, o ritual "Encerrar o dia" e a régua
+> "Sua hora": as seções abaixo sobre eles ficam como histórico. O estado "aprovada" vem de `mesa_item.aprovada_em`
+> (chave `aprovada_em` no estoque do `mesa_painel`), nunca do texto do motivo. O link antigo `?ritual=1` só abre a Mesa.
+
 A p4.12 (06/10/2026, s03) faz da Mesa o ritual de fim de dia, no molde do "daily shutdown" do Sunsama. Motivo
 medido: desde a p4.5 o banco tinha **0 deliberações e 0 baixas pelo painel** com 40 peças paradas (13 delas há 7
 dias ou mais), e o fechamento do dia abria direto no PDF, sem lugar para ciência, com v01, v02 e v03 do mesmo dia

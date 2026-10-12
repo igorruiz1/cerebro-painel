@@ -159,7 +159,7 @@ for (const largura of [360, 390, 1280]) {
     /* p4.4: folha da peca da Mesa aberta, com canal escolhido */
     await page.evaluate(()=>{fecharFolha();ir('mesa');});
     await page.waitForSelector('#ms-raiz .ms-item');
-    await page.evaluate(()=>{msAbrir(0);msEscolherCanal('email_corporativo');});
+    await page.evaluate(()=>{msAbrirId(102);msEscolherCanal('email_corporativo');});
     const ms = await page.evaluate(()=>{
       const r=[...document.querySelectorAll('#folha button,#folha input,#folha textarea')].filter(e=>{const b=e.getBoundingClientRect();return b.width>0&&(b.height<44||b.width<44);}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim());
       return {r, n:document.querySelectorAll('#folha .ms-canal').length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
@@ -177,7 +177,7 @@ for (const largura of [360, 390, 1280]) {
           nota:[...document.querySelectorAll('#folha .ms-decide textarea, #folha .ms-decide input[type=date]')].filter(vis).length, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
       });
       expect(dc.peca, 'botao da peca na folha').toBe(true);
-      expect(dc.dec, `quatro decisoes e o botao do campo (${dec})`).toBe(5);
+      expect(dc.dec, `p4.53: envio tem tres decisoes ao lado do Enviei por, mais o botao do campo (${dec})`).toBe(4);
       expect(dc.nota, `um campo de nota aberto (${dec})`).toBe(1);
       expect(dc.r, `controles pequenos com o campo de ${dec} aberto`).toEqual([]);
       expect(dc.SW, `rolagem horizontal com o campo de ${dec} aberto`).toBe(dc.W);
@@ -1229,7 +1229,7 @@ const abrirMesa = async page=>{
   return erros;
 };
 
-test('Mesa: a aba mostra as 3 pecas, o dia, a regua da hora e os 2 relatorios, sem codigo cru do banco', async ({page})=>{
+test('Mesa: a aba mostra as 3 pecas, o dia e os 2 relatorios, sem codigo cru do banco', async ({page})=>{
   await page.setViewportSize({width:360, height:820});
   const erros = await abrirMesa(page);
   await expect(page.locator('#ms-raiz .ms-item')).toHaveCount(3);
@@ -1240,19 +1240,17 @@ test('Mesa: a aba mostra as 3 pecas, o dia, a regua da hora e os 2 relatorios, s
   const txt = (await page.locator('#p-mesa').innerText()).replace(/\u00a0/g,' ');
   expect(txt).toContain('3 peças esperam você');
   expect(txt).toContain('1 nova hoje');
-  expect(txt).toContain('Neste mês: 42,5 h');
-  expect(txt).toContain('piso R$ 63,03');
-  expect(txt).toContain('teto R$ 480,00');
-  for (const s of ['Aprovação para Fiscal de exemplo','Envio para Cliente de exemplo','Assinatura','sem valor','parada há 9 d','parada desde hoje','Saiu hoje','com comprovante','Fechamento do dia','versão 02','sem ciência'])
+  for (const s of ['Aprovação para Fiscal de exemplo','Envio para Cliente de exemplo','Assinatura','sem valor','parada há 9 d','parada desde hoje','Saiu hoje','com comprovante','Fechamento do dia','versão 02'])
     expect(txt, 'mostra '+s).toContain(s);
   for (const cru of CRUS_MESA) expect(txt, 'codigo cru na aba: '+cru).not.toContain(cru);
   /* a folha da peca tambem fala lingua de gente */
   await page.click('#ms-raiz .ms-item >> nth=0');
   await expect(page.locator('#folhaTit')).toHaveText('Medicao 7 de exemplo');
-  await expect(page.locator('#msDest'), 'para quem vem preenchido').toHaveValue('Fiscal de exemplo');
   const folha = (await page.locator('#folha').innerText()).replace(/\u00a0/g,' ');
   expect(folha).toContain('Falta a sua aprovacao para protocolar.');
-  expect(folha).toContain('Previsto por WhatsApp');
+  /* p4.53: o destinatario mora no "Enviei por" da peca de envio, uma vez so */
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(102); });
+  await expect(page.locator('#msDest'), 'para quem vem preenchido').toHaveValue('Cliente de exemplo');
   for (const cru of CRUS_MESA) expect(folha, 'codigo cru na folha: '+cru).not.toContain(cru);
   /* fonte mais larga (Linux da CI): o desenho encolhe o texto, nao a pagina */
   const w = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; const a={W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
@@ -1261,9 +1259,9 @@ test('Mesa: a aba mostra as 3 pecas, o dia, a regua da hora e os 2 relatorios, s
   expect(erros).toEqual([]);
 });
 
-test('Mesa: "Dar baixa" sem canal nao chama o banco e diz o que falta', async ({page})=>{
+test('Mesa: "Enviei por" sem canal nao chama o banco e diz o que falta', async ({page})=>{
   const erros = await abrirMesa(page);
-  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#ms-raiz .ms-item >> nth=1');
   await page.click('#msBt');
   await expect(page.locator('#msAviso')).toContainText('Escolha por onde a peça saiu');
   await expect(page.locator('#veu'), 'a folha continua aberta').toBeVisible();
@@ -1284,17 +1282,18 @@ test('Mesa: com canal, a baixa chama mesa_baixa_painel com a peca e o canal cert
   await page.click('#msBt');
   await expect.poll(baixas).toEqual([{p_doc:102,p_canal:'gmail',p_dest:'Cliente de exemplo',p_prova_path:null}]);
   await expect(page.locator('#veu'), 'baixa gravada fecha a folha').toBeHidden();
-  await expect(page.locator('#tmsg')).toContainText('Baixa gravada: saiu por E-mail para Cliente de exemplo');
+  await expect(page.locator('#tmsg')).toContainText('Enviada por E-mail para Cliente de exemplo: aprovada e com baixa');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length), 'a aba recarrega').toBeGreaterThan(cargas0);
   /* com print: sobe para mesa-provas em AAAA-MM/<peca>_<hora>.<ext> e o banco recebe o mesmo caminho */
-  await page.click('#ms-raiz .ms-item >> nth=0');
+  await page.click('#ms-raiz .ms-item >> nth=2');
   await page.click('#folha [data-canal="whatsapp"]');
+  await page.fill('#msDest','Fiscal de exemplo');
   await page.setInputFiles('#msArq', {name:'print.PNG', mimeType:'image/png', buffer:Buffer.from('png')});
   await page.click('#msBt');
   await expect.poll(async()=>(await baixas()).length).toBe(2);
   const b = (await baixas())[1], up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
-  expect(b).toMatchObject({p_doc:101,p_canal:'whatsapp',p_dest:'Fiscal de exemplo'});
-  expect(b.p_prova_path).toMatch(/^\d{4}-\d{2}\/101_\d+\.png$/);
+  expect(b).toMatchObject({p_doc:103,p_canal:'whatsapp',p_dest:'Fiscal de exemplo'});
+  expect(b.p_prova_path).toMatch(/^\d{4}-\d{2}\/103_\d+\.png$/);
   expect(up).toEqual([{b:'mesa-provas',op:'upload',p:b.p_prova_path,tipo:'image/png'}]);
   /* recusa do banco vira aviso com o texto, e a folha fica para corrigir */
   await page.evaluate(()=>{ window.__baixa='RECUSADO: doc 103 nao esta esperando voce'; });
@@ -1406,7 +1405,7 @@ test('Mesa: cada formato abre do jeito que o iPhone mostra (texto e pagina na fo
   expect(erros).toEqual([]);
 });
 
-test('Mesa: peca sem arquivo nao mostra Aprovar e o gravar recusa aprovar sem ver', async ({page})=>{
+test('Mesa: peca sem arquivo nao mostra Ok e o gravar recusa o Ok sem ver', async ({page})=>{
   const erros = await abrirMesaFmt(page);
   await page.evaluate(()=>msAbrirId(206));
   await expect(page.locator('#msPeca')).toHaveCount(0);
@@ -1415,9 +1414,9 @@ test('Mesa: peca sem arquivo nao mostra Aprovar e o gravar recusa aprovar sem ve
   await expect(page.locator('#msAbreAjustar')).toBeVisible();
   const rpc0 = await page.evaluate(()=>window.__rpc.length);
   await page.evaluate(()=>msDecidir('aprovado'));
-  await expect(page.locator('#msAvisoDec')).toContainText('aprovar fica para quando a cópia subir');
+  await expect(page.locator('#msAvisoDec')).toContainText('o Ok fica para quando a cópia subir');
   expect(await page.evaluate(r0=>window.__rpc.slice(r0).filter(c=>c.n==='mesa_deliberar').length, rpc0), 'nada vai ao banco').toBe(0);
-  /* peca com arquivo continua com Aprovar */
+  /* peca com arquivo continua com Ok */
   await page.evaluate(()=>{ fecharFolha(); msAbrirId(205); });
   await expect(page.locator('#msBtAprovar')).toBeVisible();
   expect(erros).toEqual([]);
@@ -1441,7 +1440,7 @@ test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca s
   await page.evaluate(()=>fecharFolha());
   await page.click('#ms-raiz .ms-item >> nth=2');
   await expect(page.locator('#msPeca')).toHaveCount(0);
-  await expect(page.locator('#folha')).toContainText('Ainda sem arquivo para abrir. A aprovação fica liberada quando a cópia da peça subir.');
+  await expect(page.locator('#folha')).toContainText('Ainda sem arquivo para abrir.');
   /* erro do bucket vira aviso e a aba vazia fecha */
   await page.evaluate(()=>{ fecharFolha(); window.__storageErro=true; });
   await page.click('#ms-raiz .ms-item >> nth=0');
@@ -1453,31 +1452,31 @@ test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca s
   expect(erros).toEqual([]);
 });
 
-test('Mesa: "Aprovar" chama mesa_deliberar com a peca certa, fecha a folha e recarrega; recusa volta a folha', async ({page})=>{
+test('Mesa: "Ok" chama mesa_deliberar com a peca certa, fecha a folha e recarrega; recusa volta a folha', async ({page})=>{
   const erros = await abrirMesa(page);
   const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length);
   await page.click('#ms-raiz .ms-item >> nth=0');
-  await expect(page.locator('#folha .ms-decide')).toContainText('Aprovar tira da sua mesa o que é leitura ou decisão; o que é envio continua aqui até a baixa.');
+  await expect(page.locator('#folha .ms-decide')).toContainText('Ok tira a peça da sua mesa.');
   await page.click('#msBtAprovar');
   await expect(page.locator('#veu'), 'a folha fecha no toque').toBeHidden();
   expect(await deliberacoes(page), 'p4.19: nada vai antes do prazo de desfazer').toEqual([]);
   await page.evaluate(()=>enviar());
   await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:101,p_decisao:'aprovado',p_nota:null}]);
   await expect(page.locator('#toast')).not.toHaveClass(/bad/);
-  await expect(page.locator('#tmsg')).toHaveText('Aprovação gravada.');
+  await expect(page.locator('#tmsg')).toHaveText('Ok gravado: a peça saiu da sua mesa.');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length), 'a aba recarrega').toBeGreaterThan(cargas0);
   /* RECUSADO: toast de erro com o texto do banco, folha aberta e botoes de volta */
-  await page.evaluate(()=>{ window.__deliberar='RECUSADO: doc 102 ja saiu da mesa'; });
-  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.evaluate(()=>{ window.__deliberar='RECUSADO: doc 101 ja saiu da mesa'; });
+  await page.click('#ms-raiz .ms-item >> nth=0');
   await page.click('#msBtAprovar');
   await page.evaluate(()=>enviar());
   await expect(page.locator('#toast')).toHaveClass(/bad/);
-  await expect(page.locator('#tmsg')).toContainText('Não gravou: doc 102 ja saiu da mesa');
-  await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 102 ja saiu da mesa');
+  await expect(page.locator('#tmsg')).toContainText('Não gravou: doc 101 ja saiu da mesa');
+  await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 101 ja saiu da mesa');
   await expect(page.locator('#veu')).toBeVisible();
   await expect(page.locator('#msBtAprovar')).toBeEnabled();
-  await expect(page.locator('#msBtAprovar')).toHaveText('Aprovar');
-  expect((await deliberacoes(page)).map(a=>a.p_doc)).toEqual([101,102]);
+  await expect(page.locator('#msBtAprovar')).toHaveText('Ok');
+  expect((await deliberacoes(page)).map(a=>a.p_doc)).toEqual([101,101]);
   expect(erros).toEqual([]);
 });
 
@@ -1504,27 +1503,27 @@ test('Mesa: "Pedir ajuste" sem texto nao chama o banco; com texto vai com a nota
   expect(erros).toEqual([]);
 });
 
-test('Mesa: "Largar" sem motivo nao chama o banco; com motivo vai com a nota', async ({page})=>{
+test('Mesa: "Descartar" sem motivo nao chama o banco; com motivo vai com a nota', async ({page})=>{
   const erros = await abrirMesa(page);
   await page.click('#ms-raiz .ms-item >> nth=2');
   await page.click('#msAbreLargar');
   await expect(page.locator('#msTxtLargar')).toBeVisible();
   await expect(page.locator('#msTxtAjustar'), 'um campo por vez').toBeHidden();
   await page.click('#msBtLargar');
-  await expect(page.locator('#msAvisoDec')).toContainText('Diga o motivo de tirar a peça da mesa');
+  await expect(page.locator('#msAvisoDec')).toContainText('Diga por que descartar a peça');
   await page.waitForTimeout(150);
   expect(await deliberacoes(page), 'sem motivo nao grava').toEqual([]);
   await page.fill('#msTxtLargar','Cliente desistiu do contrato');
   await page.click('#msBtLargar');
   await page.evaluate(()=>enviar());
   await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:103,p_decisao:'largar',p_nota:'Cliente desistiu do contrato'}]);
-  await expect(page.locator('#tmsg')).toHaveText('Peça tirada da sua mesa.');
+  await expect(page.locator('#tmsg')).toHaveText('Peça descartada.');
   expect(erros).toEqual([]);
 });
 
 test('Mesa: nenhum codigo da decisao aparece cru na folha nem no aviso', async ({page})=>{
   const erros = await abrirMesa(page);
-  /* "O que ajustar" e "Por que largar" sao os rotulos pedidos, em portugues de gente; fora deles, nada */
+  /* "O que ajustar" e o rotulo pedido, em portugues de gente; fora dele, nada */
   const CRUS_DEC = ['aprovado','ajustar','largar','mesa_deliberar','p_decisao','p_nota','RECUSADO','OK:'];
   const textos = [];
   const colhe = async()=>textos.push((await page.locator('#folha').innerText())+'\n'+(await page.locator('#tmsg').innerText()));
@@ -1537,11 +1536,11 @@ test('Mesa: nenhum codigo da decisao aparece cru na folha nem no aviso', async (
   await page.evaluate(()=>{ window.__deliberar='OK: aprovado'; });
   await page.click('#msBtAprovar'); await expect(page.locator('#veu')).toBeHidden(); await colhe();
   for (const t of textos) {
-    const limpo = t.replace(/ /g,' ').split('O que ajustar').join('').split('Por que largar').join('');
+    const limpo = t.replace(/ /g,' ').split('O que ajustar').join('');
     for (const cru of [...CRUS_DEC, ...CRUS_MESA]) expect(limpo, 'codigo cru: '+cru).not.toContain(cru);
   }
   const rot = await page.evaluate(()=>{ msAbrir(0); return [...document.querySelectorAll('#folha .ms-decide button, #folha .ms-decide label, #msPeca')].map(e=>e.textContent.trim()); });
-  expect(rot).toEqual(['Abrir a peça','Aprovar','Pedir ajuste','Adiar','Largar','O que ajustar','Enviar pedido','Volta para a mesa em','Adiar','Por que largar','Confirmar']);
+  expect(rot).toEqual(['Abrir a peça','Ok','Ajustar','Adiar','Descartar','O que ajustar','Enviar pedido','Volta para a mesa em','Adiar','Por que descartar','Descartar']);
   expect(erros).toEqual([]);
 });
 
@@ -1684,41 +1683,29 @@ test('s859: pagamento conta minutos pela chave fluxo e nao pega os da tarefa de 
   expect(sit, '25 + 10 min').toContain('cerca de 0,6 h');
 });
 
-test('s859: a hora da Mesa diz a janela de 30 dias e nao alarma dentro da regua', async ({page})=>{
-  await abrirMesa(page);
-  const txt = (await page.evaluate(()=>{
-    MS.dados.valor_hora={janela:'30 dias',recebido:15196.31,horas:77.6,por_hora:195.72,piso:63.03,teto:480};
-    msRender(); return document.getElementById('p-mesa').innerText;
-  })).replace(/\u00a0/g,' ');
-  expect(txt).toContain('Sua hora nos últimos 30 dias: R$ 195,72, dentro da régua');
-  expect(txt).not.toContain('abaixo do piso');
-});
 
 /* ---------- p4.12 (06/10/2026, s03): Mesa como ritual de fim de dia e modo demonstracao ----------
    O Igor abria o "fechamento do dia" direto no PDF, sem onde dar ciencia nem decidir, e via v01, v02 e v03 do
    mesmo dia misturadas com a vigente. Os testes cobram a classe: relatorio repetido nunca aparece duas vezes,
    o toque nunca abre PDF sem passar pela folha, o ritual so grava o que foi decidido e termina na ciencia,
    e a demonstracao nao cria cliente do banco nem carrega nome real no fonte (o repositorio e publico). */
-test('Mesa p4.13: o link do aviso (?ritual=1) abre a Mesa ja no "Encerrar o dia" e tira o parametro da barra', async ({page})=>{
+test('Mesa p4.53: o link antigo do aviso (?ritual=1) so abre a Mesa, sem ritual, e tira o parametro da barra', async ({page})=>{
   const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
   await page.addInitScript(DUBLE);
   await page.route('**cdn.jsdelivr.net**', r=>r.abort());
   await page.goto(PAGINA+'?ritual=1');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
   await expect(page.locator('#tituloAba')).toHaveText('Mesa');
-  expect(page.url(), 'o parametro sai da barra').not.toContain('ritual');
-  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').length), 'abrir o ritual nao grava').toBe(0);
-  /* sem o parametro, nada de ritual */
-  await page.goto(PAGINA);
-  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  await page.waitForSelector('#ms-raiz .ms-item');
   await page.waitForTimeout(300);
-  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#veu'), 'nenhuma folha de ritual abre').toBeHidden();
+  expect(page.url(), 'o parametro sai da barra').not.toContain('ritual');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|ciencia)/.test(c.n)).length), 'abrir nao grava').toBe(0);
   expect(erros).toEqual([]);
 });
 
 const ciencias = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_ciencia').map(c=>c.a));
 
-test('Mesa p4.12: relatorio repetido aparece uma vez, na versao vigente; a anterior so dentro da folha; a ciencia do dia vai ao banco', async ({page})=>{
+test('Mesa p4.12: relatorio repetido aparece uma vez, na versao vigente; a anterior so dentro da folha; a folha nao pede ciencia', async ({page})=>{
   const erros = await abrirMesa(page);
   await abaFalsa(page);
   const hoje = await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados));
@@ -1734,43 +1721,11 @@ test('Mesa p4.12: relatorio repetido aparece uma vez, na versao vigente; a anter
   await expect.poll(()=>page.evaluate(()=>window.__storage.map(x=>x.p))).toEqual(['dia/v03.pdf']);
   await page.click('#folha summary');
   await expect(page.locator('#folha .ms-versoes button')).toHaveText(['Versão 02, substituída','Versão 01, substituída']);
-  await page.click('#msBtCiencia');
-  await expect.poll(()=>ciencias(page)).toEqual([{p_dia:hoje,p_nota:null}]);
-  await expect(page.locator('#veu')).toBeHidden();
-  await expect(page.locator('#tmsg')).toContainText('Ciência gravada');
+  await expect(page.locator('#msBtCiencia'), 'p4.53: a ciencia do dia saiu').toHaveCount(0);
+  expect(hoje).toBeTruthy();
   expect(erros).toEqual([]);
 });
 
-test('Mesa p4.12: "Encerrar o dia" passa peca por peca (nova primeiro), Pular nao grava, e termina na ciencia do dia', async ({page})=>{
-  const erros = await abrirMesa(page);
-  await expect(page.locator('#msBtEncerrar')).toHaveText('Encerrar o dia (3)');
-  await page.click('#msBtEncerrar');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
-  await expect(page.locator('#folhaTit'), 'a nova vem primeiro').toHaveText('Laudo de exemplo');
-  await page.click('#msBtAprovar');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/2 de 3/i);
-  await expect(page.locator('#folhaTit'), 'depois a de maior valor').toHaveText('Medicao 7 de exemplo');
-  expect(await deliberacoes(page), 'p4.19: espera o prazo de desfazer').toEqual([]);
-  await page.evaluate(()=>enviar());
-  await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:102,p_decisao:'aprovado',p_nota:null}]);
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/3 de 3/i);
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  expect((await deliberacoes(page)).length, 'pular nao grava').toBe(1);
-  await expect(page.locator('#folhaTit')).toHaveText('Encerrar o dia');
-  await expect(page.locator('#folha')).toContainText('Você decidiu 1 peça e pulou 2.');
-  await expect(page.locator('#folha')).toContainText('2 peças ficam na mesa para amanhã.');
-  await page.click('#msBtCiencia');
-  await expect.poll(()=>ciencias(page)).toEqual([{p_dia:null,p_nota:null}]);
-  await expect(page.locator('#veu')).toBeHidden();
-  await expect(page.locator('#tmsg')).toContainText('Dia encerrado');
-  /* recusa do banco fica no resumo, com o texto dele, e o botao volta */
-  await page.evaluate(()=>{ window.__ciencia='RECUSADO: nao da para dar ciencia de dia que nao chegou'; MS.ritual={ids:[],snap:{},i:0,feitas:0,puladas:0}; msResumo(); });
-  await page.click('#msBtCiencia');
-  await expect(page.locator('#msAvisoCi')).toContainText('Não gravou: nao da para dar ciencia');
-  await expect(page.locator('#msBtCiencia')).toBeEnabled();
-  expect(erros).toEqual([]);
-});
 
 test('Mesa p4.12: Adiar vai com a data; sem data nao grava; a peca adiada sai da conta do dia e diz quando volta', async ({page})=>{
   const erros = await abrirMesa(page);
@@ -1790,7 +1745,6 @@ test('Mesa p4.12: Adiar vai com a data; sem data nao grava; a peca adiada sai da
   await expect(page.locator('#tmsg')).toContainText('Adiada até 07/10.');
   await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados)); m.estoque[0].adiado_ate=somaDias(2); window.__mesa=m; msCarregar(); });
   await expect(page.locator('#n-mesa'), 'a adiada sai do selo').toHaveText('2');
-  await expect(page.locator('#msBtEncerrar')).toHaveText('Encerrar o dia (2)');
   await expect(page.locator('#ms-raiz details.ms-adiadas summary')).toHaveText('Adiadas (1)');
   await page.click('#ms-raiz details.ms-adiadas summary');
   await expect(page.locator('#ms-raiz details.ms-adiadas .ms-item')).toContainText('volta em');
@@ -1830,13 +1784,10 @@ test('Demonstracao: nenhum cliente do banco nasce, nada sai para a rede, a marca
     expect(m.txt, `marca real em ${aba}`).not.toMatch(/Dabli/);
   }
   await expect(page.locator('.so-real').first(), 'bastidor, seguranca e sair somem').toBeHidden();
-  /* ritual com dado ficticio: decide, adia, para; o estado muda so na memoria da pagina */
+  /* p4.53: com dado ficticio, Ok tira a peca de leitura e "Enviei por" tira a de envio; o estado muda so na memoria */
   const antes = await page.locator('#n-mesa').innerText();
-  await page.click('#msBtEncerrar');
-  await page.click('#msBtAprovar');
-  await page.click('#msAbreAdiar'); await page.click('#msBtAdiar');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/3 de/i);
-  await page.click('#folha .ms-ritual-pe >> text=Parar');
+  await page.evaluate(()=>msAbrirId(705)); await page.click('#msBtAprovar'); await page.evaluate(()=>enviar());
+  await page.evaluate(()=>msAbrirId(701)); await page.click('#folha [data-canal="gmail"]'); await page.click('#msBt');
   await expect.poll(()=>page.locator('#n-mesa').innerText()).not.toBe(antes);
   await page.click('#ms-raiz .ms-rel >> nth=0'); await page.click('#msRelPdf');
   await expect(page.locator('#tmsg')).toContainText('Relatório aberto');
@@ -1921,7 +1872,7 @@ test('Hoje p4.14: entram as pecas novas e as 3 de maior valor; adiada e o resto 
   expect(mins).toContain('3 peças da Mesa');
   await page.click('#ordem .peca-hoje >> nth=0');
   await expect(page.locator('#folhaTit'), 'a peca de Hoje abre a folha da Mesa').toHaveText('Peca 201');
-  await expect(page.locator('#msBtAprovar')).toBeVisible();
+  await expect(page.locator('#msBaixaBloco'), 'p4.53: peca de envio abre no Enviei por').toBeVisible();
   /* tempo: 3 pecas de envio = 45 min a mais que so os cards */
   const dif = await page.evaluate(()=>{ fecharFolha(); const so=MS.dados; const txt1=document.getElementById('situacao').textContent;
     MS.dados=null; renderHoje(); const txt0=document.getElementById('situacao').textContent; MS.dados=so; renderHoje();
@@ -1944,14 +1895,14 @@ test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a p
   const erros = await abrir(page);
   await expect.poll(()=>pecasNaHoje(page)).toHaveLength(2);
   await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados));
-    m.estoque=m.estoque.map(p=>p.id===101?Object.assign(p,{tarefa:2,fecha_tarefa:true}):p); window.__mesa=m; msCarregar(); });
-  await expect.poll(()=>pecasNaHoje(page), 'a peca ligada ao card de Hoje nao repete').toEqual(['Laudo de exemplo']);
+    m.estoque=m.estoque.map(p=>p.id===102?Object.assign(p,{tarefa:2,fecha_tarefa:true}):p); window.__mesa=m; msCarregar(); });
+  await expect.poll(()=>pecasNaHoje(page), 'a peca ligada ao card de Hoje nao repete').toEqual(['Medicao 7 de exemplo']);
   await expect(page.locator('#foco')).toContainText('com peça da Mesa');
   await page.evaluate(()=>abrirFila(0));
   await expect(page.locator('#folha')).toContainText('Peça da Mesa ligada a este card');
   await expect(page.locator('#folha')).toContainText('conclui este card');
   await page.click('#folha .ms-ligada');
-  await expect(page.locator('#folhaTit')).toHaveText('Medicao 7 de exemplo');
+  await expect(page.locator('#folhaTit')).toHaveText('Laudo de exemplo');
   const montar0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length);
   await page.evaluate(()=>{ window.__baixa='OK: baixa gravada (envio 7); card 2 concluido junto'; });
   await page.click('#folha [data-canal="whatsapp"]');
@@ -2060,79 +2011,22 @@ test('Mesa p4.16: o filtro cabe a 360 px sem rolagem lateral e com alvo de toque
 /* p4.17 (06/10/2026): o Igor aprovou 3 pecas de envio de um cliente e achou que nada tinha acontecido: a folha fechava
    e a peca voltava igual, com o botao Aprovar. Agora a aprovada mostra "aprovada, falta enviar", a folha fica aberta
    e desce ate "Ja enviei". O p4.16 reprova aqui. */
-test('Mesa p4.17: aprovar peca de envio deixa a folha aberta em "Já enviei" e marca a peça como aprovada', async ({page})=>{
+test('Mesa p4.53: aprovada vem do campo aprovada_em do banco, nunca do texto do motivo', async ({page})=>{
   const erros = await abrirMesa(page);
-  await page.click('#ms-raiz .ms-item >> nth=1');
-  await page.click('#msBtAprovar');
-  await expect(page.locator('#msAprovada'), 'p4.19: a folha mostra aprovada antes do banco').toContainText('Aprovada por você em');
-  await page.evaluate(()=>enviar());
-  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').map(c=>c.a))).toEqual([{p_doc:102,p_decisao:'aprovado',p_nota:null}]);
-  await expect(page.locator('#veu'), 'a folha continua aberta').toBeVisible();
-  await expect(page.locator('#msAprovada')).toContainText('Aprovada por você em');
-  await expect(page.locator('#msBtAprovar'), 'sem o botao de aprovar de novo').toHaveCount(0);
-  await expect(page.locator('#msBaixaBloco')).toBeVisible();
-  await expect(page.locator('#tmsg')).toContainText('Quando enviar, dê a baixa aqui');
-  /* a lista mostra o selo para a peca que o banco devolve aprovada */
-  await page.evaluate(()=>{ fecharFolha(); MS.dados.estoque[1].motivo='aprovado por voce em 06/10 16:11; falta enviar'; msRender(); });
+  await page.evaluate(()=>{ MS.dados.estoque[1].aprovada_em=new Date().toISOString(); MS.dados.estoque[2].motivo='aprovado por voce em 06/10 16:11; falta assinar'; msRender(); });
   await expect(page.locator('#ms-raiz .ms-item >> nth=1')).toContainText('aprovada, falta enviar');
-  await expect(page.locator('#ms-raiz .ms-item >> nth=0'), 'peca nao aprovada sem selo').not.toContainText('aprovada');
-  /* peca de leitura (aprovar) continua saindo da mesa: a folha fecha */
-  await page.click('#ms-raiz .ms-item >> nth=0');
-  await page.click('#msBtAprovar');
-  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#ms-raiz .ms-item >> nth=2'), 'texto parecido no motivo nao vira estado').not.toContainText('aprovada, falta');
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await expect(page.locator('#msAprovada')).toContainText('Aprovada por você em');
+  await expect(page.locator('#msBaixaBloco')).toBeVisible();
   expect(erros).toEqual([]);
 });
 
-/* p4.18 (06/10/2026, plano 100): o Igor deu ciencia em 10/09 e 12/09 e eles continuaram na lista; e o de 01/09
-   ofereceu "Dar ciencia" que o banco recusou (mais de 31 dias). Agora: topo so o que espera ciencia, Lidos e
-   Arquivo recolhidos, e ciencia em lote dos atrasados num toque. O p4.17 reprova aqui. */
-test('Mesa p4.18: ciência tira do topo; Lidos e Arquivo recolhidos; fora da janela sem botão; lote num toque', async ({page})=>{
-  const erros = await abrir(page);
-  await page.evaluate(()=>{
-    const h=somaDias(0), d=n=>somaDias(-n);
-    window.__mesa={hoje:h,em_jogo:0,horas_mes:1,estoque:[],producao_hoje:{},saiu_hoje:[],
-      relatorios:[{tipo:'dia',alvo:h,versao:'01',path:'dia/h.pdf'},{tipo:'dia',alvo:d(1),versao:'01',path:'dia/d1.pdf'},
-        {tipo:'dia',alvo:d(5),versao:'01',path:'dia/d5.pdf'},{tipo:'dia',alvo:d(40),versao:'01',path:'dia/d40.pdf'},
-        {tipo:'mes',alvo:h.slice(0,7),versao:'01',path:'mes/m.pdf'}],
-      fechamentos:[{dia:d(1),ciente_em:new Date().toISOString(),pendentes:null,adiadas:null,decididas:2}]};
-    const orig=sb.rpc.bind(sb);
-    sb.rpc=(n,a)=>{ if(n!=='mesa_ciencia_lote')return orig(n,a); window.__rpc.push({n,a});
-      return Promise.resolve({data:'OK: ciencia em lote de 2 dia(s) gravada, sem contagem da mesa',error:null}); };
-    ir('mesa');
-  });
-  await page.waitForSelector('#ms-raiz .ms-rel');
-  const titulos = sel=>page.evaluate(s=>[...document.querySelectorAll(s)].map(b=>b.querySelector('.ms-tit').textContent),sel);
-  const topo = await titulos('#ms-raiz > .pilha .ms-rel');
-  expect(topo, 'topo: hoje, o atrasado dentro da janela e o do mes').toHaveLength(3);
-  expect(topo.some(t=>/Fechamento do mês/.test(t))).toBe(true);
-  expect(await titulos('#msLidos .ms-rel'), 'com ciencia vai para Lidos').toHaveLength(1);
-  expect(await titulos('#msArquivo .ms-rel'), 'mais de 31 dias vai para Arquivo').toHaveLength(1);
-  await expect(page.locator('#msLidos')).not.toHaveAttribute('open','');
-  await expect(page.locator('#msBtLote')).toHaveText('Dar ciência em lote (2 dias atrasados)');
-  /* Arquivo: sem botao que o banco recusa, com o motivo escrito */
-  await page.click('#msArquivo summary');
-  await page.click('#msArquivo .ms-rel');
-  await expect(page.locator('#msCiFora')).toContainText('Mais de 31 dias');
-  await expect(page.locator('#msBtCiencia')).toHaveCount(0);
-  await page.evaluate(()=>fecharFolha());
-  /* Lidos: ciencia retroativa sem contagem inventada */
-  await page.click('#msLidos summary');
-  await page.click('#msLidos .ms-rel');
-  await expect(page.locator('#msCiDada')).toContainText('depois do dia');
-  await expect(page.locator('#msCiDada')).not.toContainText('peça');
-  await page.evaluate(()=>fecharFolha());
-  /* lote: uma chamada, sem parametro */
-  await page.click('#msBtLote');
-  await expect(page.locator('#tmsg')).toContainText('Ciência em lote gravada: 2 dias.');
-  const lote = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_ciencia_lote'));
-  expect(lote).toHaveLength(1);
-  expect(erros).toEqual([]);
-});
 
 /* p4.19 (06/10/2026, plano 84): a decisao da Mesa era o unico toque do painel sem volta: aprovar, ajustar, adiar e
    largar gravavam na hora. Agora esperam 6 s com desfazer, como os atos da folha. O p4.18 reprova aqui: o toque
    gravava antes do prazo e o desfazer nao existia. */
-test('Mesa p4.19: decisão espera 6 s com desfazer; desfazer devolve a peça com a nota; no ritual volta ao mesmo passo', async ({page})=>{
+test('Mesa p4.19: decisão espera 6 s com desfazer; desfazer devolve a peça com a nota', async ({page})=>{
   const erros = await abrirMesa(page);
   await page.clock.install();
   await page.click('#ms-raiz .ms-item >> nth=1');
@@ -2156,25 +2050,10 @@ test('Mesa p4.19: decisão espera 6 s com desfazer; desfazer devolve a peça com
   await page.clock.fastForward(6100);
   await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:102,p_decisao:'ajustar',p_nota:'Trocar a data da capa'}]);
   await expect(page.locator('#tmsg')).toContainText('Pedido de ajuste gravado.');
-  /* ritual: o desfazer volta para a mesma peca, no mesmo passo, e a conta do resumo nao conta a desfeita */
-  await page.click('#msBtEncerrar');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
-  await page.click('#msBtAprovar');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/2 de 3/i);
-  await page.click('#tbtn');
-  await expect(page.locator('#folha .ms-ritual')).toHaveText(/1 de 3/i);
-  await expect(page.locator('#folhaTit')).toHaveText('Laudo de exemplo');
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await expect(page.locator('#folha')).toContainText('Você decidiu 0 peças e pulou 3.');
-  await page.clock.fastForward(7000);
-  expect((await deliberacoes(page)).length, 'so o ajuste gravou').toBe(1);
-  await page.click('#folha >> text=Voltar à mesa');
   expect(erros).toEqual([]);
 });
 
-test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; baixa e ciência gravam antes a decisão que espera', async ({page})=>{
+test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; a baixa grava antes a decisão que espera', async ({page})=>{
   const erros = await abrirMesa(page);
   await page.clock.install();
   await page.evaluate(()=>{ window.__deliberar='RECUSADO: doc 101 ja saiu da mesa'; });
@@ -2185,22 +2064,81 @@ test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; b
   await expect(page.locator('#veu'), 'a peca volta').toBeVisible();
   await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 101 ja saiu da mesa');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
-  /* peca de envio aprovada e baixa dentro dos 6 s: a aprovacao vai primeiro */
+  /* Ok numa peca e "Enviei por" noutra dentro dos 6 s: o Ok vai primeiro */
   await page.evaluate(()=>{ fecharFolha(); window.__deliberar='OK: aprovado'; });
-  await page.click('#ms-raiz .ms-item >> nth=1');
+  await page.click('#ms-raiz .ms-item >> nth=0');
   await page.click('#msBtAprovar');
+  await page.click('#ms-raiz .ms-item >> nth=1');
   await page.click('#folha .ms-canal >> nth=0');
   await page.fill('#msDest','Cliente de exemplo');
   await page.click('#msBt');
-  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|baixa_painel)$/.test(c.n)).map(c=>c.n+':'+(c.a.p_doc)))).toEqual(['mesa_deliberar:101','mesa_deliberar:102','mesa_baixa_painel:102']);
-  /* ciencia com decisao esperando: a decisao vai antes */
-  /* a 102 ja esta aprovada (sem botao): pula, aprova a seguinte, pula a ultima e da ciencia dentro dos 6 s */
-  await page.click('#msBtEncerrar');
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await page.click('#msBtAprovar');
-  await page.click('#folha .ms-ritual-pe >> text=Pular');
-  await page.click('#msBtCiencia');
-  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|ciencia)$/.test(c.n)).map(c=>c.n).slice(-2))).toEqual(['mesa_deliberar','mesa_ciencia']);
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|baixa_painel)$/.test(c.n)).map(c=>c.n+':'+(c.a.p_doc)))).toEqual(['mesa_deliberar:101','mesa_deliberar:101','mesa_baixa_painel:102']);
+  expect(erros).toEqual([]);
+});
+
+/* t2308 (s3056, 12/10/2026; onda 2 da auditoria da Mesa, doc 4005, decisao 2 do Igor): dois caminhos por tipo de peca.
+   A p4.51 reprova aqui: "Aprovar" num envio deixava a peca na mesa sem baixa, a folha de leitura trazia "Ja enviei", e
+   a Mesa tinha ciencia do dia, lote, Lidos, Arquivo, ritual e regua da hora. */
+test('t2308: peca de envio so sai da Mesa pelo "Enviei por", que aprova e da a baixa', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=1');
+  await expect(page.locator('#msBaixaBloco')).toBeVisible();
+  await expect(page.locator('#msBtAprovar'), 'nenhum botao aprova envio sem baixa').toHaveCount(0);
+  await expect(page.locator('#folha .ms-decisoes button')).toHaveText(['Ajustar','Adiar','Descartar']);
+  await page.evaluate(()=>msDecidir('aprovado'));
+  await expect(page.locator('#msAvisoDec')).toContainText('Enviei por');
+  await page.waitForTimeout(150); await page.evaluate(()=>{ if(PEND)enviar(); });
+  expect(await deliberacoes(page), 'aprovar envio pela tela nao vai ao banco').toEqual([]);
+  await expect(page.locator('#msBt')).toHaveText('Enviei por…');
+  await page.click('#folha [data-canal="whatsapp"]');
+  await expect(page.locator('#msBt')).toHaveText('Enviei por WhatsApp');
+  await page.click('#msBt');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_baixa_painel').map(c=>c.a.p_doc))).toEqual([102]);
+  await expect(page.locator('#veu')).toBeHidden();
+  expect(erros).toEqual([]);
+});
+test('t2308: peca de leitura ou decisao nao mostra o bloco de envio', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await page.click('#ms-raiz .ms-item >> nth=0');
+  await expect(page.locator('#msBaixaBloco'), 'sem Ja enviei em peca de leitura').toHaveCount(0);
+  await expect(page.locator('#folha .ms-canal')).toHaveCount(0);
+  await expect(page.locator('#msDest')).toHaveCount(0);
+  await expect(page.locator('#folha .ms-decisoes button')).toHaveText(['Ok','Ajustar','Adiar','Descartar']);
+  const folha = await page.locator('#folha').innerText();
+  expect(folha).not.toMatch(/Já enviei|Dar baixa|Para quem/);
+  expect(erros).toEqual([]);
+});
+test('t2308: a Mesa nao tem ciencia do dia, lote, Lidos, Arquivo, ritual nem regua da hora', async ({page})=>{
+  const erros = await abrirMesa(page);
+  for (const sel of ['#msBtEncerrar','#msBtLote','#msLidos','#msArquivo','.ms-hora','.ms-fecho']) await expect(page.locator('#ms-raiz '+sel), sel).toHaveCount(0);
+  const txt = await page.locator('#p-mesa').innerText();
+  expect(txt).not.toMatch(/ciência|Encerrar o dia|Sua hora|Neste mês|piso R\$/i);
+  await page.click('#ms-raiz .ms-rel >> nth=0');
+  await expect(page.locator('#msBtCiencia')).toHaveCount(0);
+  await expect(page.locator('#folha')).not.toContainText('ciência');
+  const fonte = require('fs').readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  expect(fonte, 'o painel nao chama mais a ciencia').not.toMatch(/rpc\("mesa_ciencia/);
+  expect(fonte, 'o estado aprovada nao se le do texto do motivo').not.toMatch(/aprovado por voce em \(/);
+  expect(erros).toEqual([]);
+});
+test('t2308: na demonstracao a 390 px cada peca da Mesa se resolve numa visita so', async ({page})=>{
+  const {erros} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('mesa'));
+  await page.waitForSelector('#ms-raiz .ms-item');
+  const n0 = await page.evaluate(()=>msPend(MS.dados).length);
+  expect(n0, 'a demonstracao tem pecas de leitura e de envio').toBeGreaterThan(3);
+  let visitas = 0;
+  for (let i = 0; i < n0; i++) {
+    const antes = await page.evaluate(()=>msPend(MS.dados).length);
+    await page.click('#ms-raiz > .pilha .ms-item >> nth=0'); visitas++;
+    const m = await page.evaluate(()=>({W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}));
+    expect(m.SW, 'folha sem rolagem lateral a 390 px').toBe(m.W);
+    if (await page.locator('#msBtAprovar').count()) { await page.click('#msBtAprovar'); await page.evaluate(()=>{ if(PEND)enviar(); }); }
+    else { await page.click('#folha .ms-canal >> nth=0'); if(!(await page.inputValue('#msDest')).trim()) await page.fill('#msDest','Cliente ficticio'); await page.click('#msBt'); }
+    await expect.poll(()=>page.evaluate(()=>msPend(MS.dados).length), 'a peca sai da mesa na primeira visita').toBe(antes-1);
+  }
+  expect(visitas, 'uma visita por peca').toBe(n0);
+  await expect(page.locator('#ms-raiz')).toContainText('Nenhuma peça espera você');
   expect(erros).toEqual([]);
 });
 
