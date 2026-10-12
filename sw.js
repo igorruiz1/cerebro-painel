@@ -9,15 +9,19 @@ self.addEventListener('push', e => {
   e.waitUntil(self.registration.showNotification(d.titulo || 'Cérebro', {
     body: d.corpo || '',
     tag: d.tag || 'aviso',
-    data: { url: d.url || './presidente.html' }
+    data: { url: d.url || './presidente.html?abrir=hoje' }
   }));
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const alvo = new URL((e.notification.data && e.notification.data.url) || './presidente.html', self.registration.scope).href;
+  const alvo = new URL((e.notification.data && e.notification.data.url) || './presidente.html?abrir=hoje', self.registration.scope).href;
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(janelas => {
-    for (const j of janelas) if (j.url.startsWith(self.registration.scope) && 'focus' in j) return j.focus();
-    return self.clients.openWindow(alvo);
+    const j = janelas.find(w => w.url.startsWith(self.registration.scope) && 'focus' in w);
+    if (!j) return self.clients.openWindow(alvo);
+    /* p4.51 (s2878, 12/10/2026): com o app aberto em segundo plano, so focar trazia a ultima tela. A janela
+       recebe o destino do aviso e vai ate ele (presidente.html: aoAvisoTocado). */
+    j.postMessage({ tipo: 'abrir', url: alvo });
+    return j.focus();
   }));
 });
