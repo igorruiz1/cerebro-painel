@@ -5,7 +5,7 @@
      liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
      fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
      GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ccRnFkKQyZic7LJiGqJNQJk7T21tNZ3dhig6QInbmEs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-czC6egDgYDxq5h82/wSwpzTGy61PoqJkJAeHUqRHt7Y=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1070,10 +1070,18 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v96";
+const VER="v97";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
+/* v97 / p4.52 (s3056, 12/10/2026, p136): o toque no aviso com o bastidor aberto caia aqui. O sw.js manda
+   {tipo:"abrir",url} quando nao consegue navegar a janela (e o sw.js antigo, ainda em cache, manda sempre):
+   o bastidor ouve e vai ao destino, que e sempre uma pagina do proprio app. */
+if("serviceWorker" in navigator){try{navigator.serviceWorker.addEventListener("message",e=>{const d=e.data;
+  if(!d||d.tipo!=="abrir"||typeof d.url!=="string")return;
+  let u=null;try{u=new URL(d.url,location.href);}catch(x){}
+  if(u&&u.origin===location.origin&&/\/presidente\.html$/.test(u.pathname))location.assign(u.href);});
+  if(navigator.serviceWorker.startMessages)navigator.serviceWorker.startMessages();}catch(e){}}
 const sb=supabase.createClient(URL_,KEY_);
 
 let D={fila:[],cor:[],ev:[],mo:[],ac:[],mat:[],ins:[],fr:[],au:[],semi:[],loop:[],sent:[],op:[]};

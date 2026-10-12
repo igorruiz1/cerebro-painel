@@ -3122,18 +3122,23 @@ test('p4.40 apito: o sw.js mostra o aviso recebido e o toque abre o painel', asy
 
 /* p4.51 (s2878, 12/10/2026, p136): o Igor tocou no aviso das 7h e o app abriu na ultima tela. Com a janela ja aberta em
    segundo plano, o sw.js so fazia focus(). Agora a janela recebe o destino e vai ate ele; o aviso leva o destino no link. */
-function rodarSW(janelas, url){
+function rodarSW(janelas, url, op={}){
   const vm = require('vm');
   const sw = require('fs').readFileSync(path.resolve(__dirname, '..', 'sw.js'), 'utf8');
-  const ouv = {}, abertos = [], msgs = [], focos = [];
+  const ouv = {}, abertos = [], msgs = [], focos = [], navegou = [];
+  const janela = u => { const w = { url:u, focus(){ focos.push(w.url); return Promise.resolve(w); }, postMessage(m){ msgs.push({ de:u, m }); } };
+    /* p4.52: o WindowClient.navigate do navegador; recusar = janela fora do controle do sw */
+    if (op.navigate !== 'ausente') w.navigate = d => { if (op.navigate === 'recusa') return Promise.reject(new TypeError('nao controlada'));
+      navegou.push({ de:u, para:d }); w.url = d; return Promise.resolve(w); };
+    return w; };
   const self = { addEventListener:(t,f)=>{ ouv[t]=f; }, skipWaiting(){},
     registration:{ scope:'https://x.test/cerebro-painel/', showNotification:()=>Promise.resolve() },
-    clients:{ claim(){}, openWindow:u=>{ abertos.push(u); return Promise.resolve(null); },
-      matchAll:()=>Promise.resolve(janelas.map(u=>({ url:u, focus(){ focos.push(u); return Promise.resolve(this); }, postMessage(m){ msgs.push(m); } }))) } };
+    clients:{ claim(){}, openWindow:u=>{ abertos.push(u); return Promise.resolve(op.abreNada ? null : janela(u)); },
+      matchAll:()=>Promise.resolve(janelas.map(janela)) } };
   vm.runInNewContext(sw, { self, URL });
   let espera = Promise.resolve();
   ouv.notificationclick({ notification:{ close(){}, data:url?{url}:{} }, waitUntil:p=>{ espera=p; } });
-  return espera.then(()=>({ abertos, msgs, focos }));
+  return espera.then(()=>({ abertos, msgs: msgs.map(x=>x.m), msgsDe: msgs, focos, navegou }));
 }
 test('p4.51 aviso: tocar com o app aberto leva ao destino do aviso, nao a ultima tela', async ()=>{
   const destino = 'https://x.test/cerebro-painel/presidente.html?abrir=mesa';
@@ -3145,6 +3150,25 @@ test('p4.51 aviso: tocar com o app aberto leva ao destino do aviso, nao a ultima
   expect(fechado.abertos, 'app fechado abre ja no destino').toEqual([destino]);
   const semUrl = await rodarSW([], null);
   expect(semUrl.abertos, 'aviso sem destino abre o Hoje').toEqual(['https://x.test/cerebro-painel/presidente.html?abrir=hoje']);
+});
+/* p4.52 (s3056, 12/10/2026, p136): o teste do Igor reprovou a p4.51. A janela aberta do app era o bastidor (index.html):
+   o sw.js so mandava a mensagem e focava, o bastidor nao ouvia, e o toque trazia o bastidor em vez do Hoje.
+   A p4.51 reprova aqui: com a janela fora da pagina do destino, o toque tem de chegar ao destino. */
+test('p4.52 aviso: tocar com o bastidor aberto leva ao destino no presidente, nao ao bastidor', async ()=>{
+  const destino = 'https://x.test/cerebro-painel/presidente.html?abrir=hoje';
+  const idx = 'https://x.test/cerebro-painel/index.html';
+  const nav = await rodarSW([idx], './presidente.html?abrir=hoje');
+  expect(nav.navegou, 'a janela do bastidor navega ate o destino').toEqual([{ de:idx, para:destino }]);
+  expect(nav.focos, 'e vem para a frente ja no destino').toEqual([destino]);
+  expect(nav.abertos, 'sem abrir janela nova').toEqual([]);
+  const recusa = await rodarSW([idx], './presidente.html?abrir=hoje', { navigate:'recusa' });
+  expect(recusa.abertos, 'navegador recusou navegar: abre o destino (reserva)').toEqual([destino]);
+  const semNav = await rodarSW([idx], './presidente.html?abrir=hoje', { navigate:'ausente', abreNada:true });
+  expect(semNav.abertos, 'sem navigate, tenta abrir o destino').toEqual([destino]);
+  expect(semNav.msgs, 'e por ultimo avisa o bastidor, que ouve').toEqual([{ tipo:'abrir', url:destino }]);
+  const duas = await rodarSW([idx, 'https://x.test/cerebro-painel/presidente.html'], './presidente.html?abrir=mesa');
+  expect(duas.msgsDe, 'com bastidor e presidente abertos, quem recebe e o presidente').toEqual([{ de:'https://x.test/cerebro-painel/presidente.html', m:{ tipo:'abrir', url:'https://x.test/cerebro-painel/presidente.html?abrir=mesa' } }]);
+  expect(duas.navegou, 'sem recarregar ninguem').toEqual([]);
 });
 test('p4.51 aviso: o link ?abrir= abre a aba na partida e sai da barra', async ({page})=>{
   const erros=[]; page.on('pageerror',e=>erros.push(String(e)));

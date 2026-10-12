@@ -52,6 +52,26 @@ async function revelarCasca(page){
   });
 }
 
+/* v97 / p4.52 (s3056, 12/10/2026, p136): o toque no aviso com o bastidor aberto caia no bastidor. O sw.js (o antigo
+   ainda em cache, ou o novo quando o navegador recusa navegar) manda {tipo:"abrir",url}: o bastidor ouve e vai ao
+   destino. A v96 reprova: nao ouvia nada. Destino fora do app e ignorado. */
+test('v97 aviso: o bastidor ouve o toque no aviso e vai ao presidente', async ({page})=>{
+  await page.addInitScript(()=>{ window.__swOuv=[];
+    Object.defineProperty(navigator,'serviceWorker',{configurable:true,value:{
+      addEventListener:(t,f)=>{ if(t==='message')window.__swOuv.push(f); }, startMessages(){},
+      register:()=>Promise.resolve({}), ready:new Promise(()=>{}) }}); });
+  const erros = await abrir(page);
+  expect(await page.evaluate(()=>window.__swOuv.length), 'o bastidor ouve as mensagens do sw').toBeGreaterThan(0);
+  const base = page.url();
+  await page.evaluate(()=>window.__swOuv.forEach(f=>f({data:{tipo:'abrir',url:'https://fora.test/presidente.html'}})));
+  await page.evaluate(()=>window.__swOuv.forEach(f=>f({data:{tipo:'outra',url:'./presidente.html'}})));
+  await page.waitForTimeout(150);
+  expect(page.url(), 'destino fora do app ou mensagem estranha: fica').toBe(base);
+  expect(erros, 'o bastidor roda sem erro').toEqual([]);
+  await Promise.all([ page.waitForURL(/presidente\.html\?abrir=hoje$/),
+    page.evaluate(()=>window.__swOuv.forEach(f=>f({data:{tipo:'abrir',url:'./presidente.html?abrir=hoje'}}))) ]);
+});
+
 test('o selo do cabecalho e o VER do script sao o mesmo numero', async ({page})=>{
   await abrir(page);
   const {selo, ver} = await page.evaluate(()=>({
