@@ -3635,3 +3635,32 @@ test('p134 cobranca: WhatsApp e volta perguntam Cobrou?; Sim grava cobrar pelo m
   expect(await page.evaluate(()=>PEND.ref)).toBe('7');
   expect(erros).toEqual([]);
 });
+
+/* p4.57 (p143, s3409, 12/10/2026): pedido no painel respondido em ate 2 h uteis. A classe que mata: aviso que grita
+   "Atendente dormindo" sem nada esperando (ruido) e pedido sem prazo visivel. Sem pedido, a linha cala; com pedido,
+   diz ate quando; fora do prazo, acende; o recibo do pedido novo traz o prazo. No main de antes a linha dizia
+   "Atendente dormindo" com zero esperando: o teste reprova. */
+test('p143: atendente so aparece com pedido esperando, com o prazo de 2 h uteis; fora do prazo acende; recibo traz o prazo', async ({page})=>{
+  await page.addInitScript(()=>{ window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined;
+    window.__atd={despertador:'ligado',pendentes:0,sessao_viva:false,ultimo_despertar_em:'2026-10-01T00:00:00Z',http:200,atrasados:0,
+      no_prazo_30d:{total:212,no_prazo:201,pct:95}}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>atendenteEstado());
+  await expect(page.locator('#atd'), 'sem pedido esperando, nada de "dormindo"').toHaveText('');
+  const prazo = new Date(Date.now()+90*60000).toISOString();
+  await page.evaluate(p=>{ window.__atd={...window.__atd,pendentes:2,proximo_prazo:p,prazo_novo:p}; return atendenteEstado(); }, prazo);
+  await expect(page.locator('#atd')).toContainText('Atendente dormindo · 2 esperando, resposta até');
+  await expect(page.locator('#atd')).not.toHaveClass(/velho/);
+  expect(await page.locator('#atd').getAttribute('title')).toContain('201 de 212 respondidos em até 2 h úteis');
+  await page.setViewportSize({width:390, height:820});
+  const m = await page.locator('#atd').evaluate(e=>({h:e.getBoundingClientRect().height, fs:parseFloat(getComputedStyle(e).fontSize)}));
+  expect(m.h, 'cabe numa linha a 390 px').toBeLessThan(m.fs*1.8);
+  await page.evaluate(()=>{ window.__atd={...window.__atd,pendentes:1,atrasados:1}; return atendenteEstado(); });
+  await expect(page.locator('#atd')).toContainText('1 fora do prazo');
+  await expect(page.locator('#atd')).toHaveClass(/velho/);
+  const r = await page.evaluate(()=>recibo('Anotado.'));
+  expect(r, 'o recibo do pedido novo diz o prazo').toMatch(/Prazo: resposta até .*\(2 h úteis\)\./);
+  await page.evaluate(()=>{ window.__atd={despertador:'sem_token',pendentes:0}; return atendenteEstado(); });
+  await expect(page.locator('#atd'), 'problema da maquina aparece mesmo sem pedido').toContainText('Sem despertador');
+  expect(erros).toEqual([]);
+});
