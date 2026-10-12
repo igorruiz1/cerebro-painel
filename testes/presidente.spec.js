@@ -3539,3 +3539,99 @@ test('p109: o funil do Caixa tem 4 elos, pronta nunca soma em paga e cada elo ab
   expect(g.txt).toContain('sem valor');
   expect(erros).toEqual([]);
 });
+
+/* p4.56 (p134, s3409, 12/10/2026): Enviar pelo painel. A classe que mata: peca pronta que so sai pelo computador e
+   baixa que depende de o Igor lembrar de voltar e marcar. A peca de saida abre o WhatsApp com link assinado de 7 dias
+   ou compartilha o arquivo; na volta o painel pergunta "Saiu?" e o sim da a baixa pelo mesa_baixa_painel. A cobranca
+   que saiu pelo WhatsApp volta com "Cobrou?". No main de antes nao ha #msBtWhats nem a pergunta: os testes reprovam. */
+const SAI_E_VOLTA = page=>page.evaluate(()=>{
+  Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__oculto===true});
+  window.__oculto=true; document.dispatchEvent(new Event('visibilitychange'));
+  window.__oculto=false; document.dispatchEvent(new Event('visibilitychange')); });
+const baixasP134 = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_baixa_painel').map(c=>c.a));
+test('p134 Mesa: WhatsApp com link abre wa.me com link assinado de 7 dias e, na volta, Saiu? da a baixa por WhatsApp', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await abaFalsa(page);
+  await page.evaluate(()=>{ window.__storageUrl=p=>'https://exemplo.supabase.co/storage/v1/object/sign/mesa/'+p+'?token=t'; msAbrirId(102); });
+  await expect(page.locator('#msEnviarBloco')).toBeVisible();
+  await page.click('#msBtWhats');
+  await expect.poll(()=>page.evaluate(()=>(window.__abas[0]||{location:{}}).location.href)).toMatch(/^https:\/\/wa\.me\/\?text=/);
+  const href = await page.evaluate(()=>window.__abas[0].location.href);
+  const txt = decodeURIComponent(href.split('text=')[1]);
+  expect(txt, 'o texto leva o titulo e o link assinado').toContain('Laudo de exemplo');
+  expect(txt).toContain('https://exemplo.supabase.co/storage/v1/object/sign/mesa/pecas/102/laudo_exemplo_v02.pdf?token=t');
+  expect(href, 'sem numero: o Igor escolhe o contato').not.toMatch(/wa\.me\/\d/);
+  expect(await page.evaluate(()=>window.__storage.filter(c=>c.op==='createSignedUrl').map(c=>[c.p,c.s])), 'link de 7 dias').toEqual([['pecas/102/laudo_exemplo_v02.pdf',604800]]);
+  expect(await baixasP134(page), 'abrir o WhatsApp nao grava').toEqual([]);
+  await SAI_E_VOLTA(page);
+  await expect(page.locator('#folhaTit')).toHaveText('Saiu?');
+  await expect(page.locator('#folha .ms-canal[data-canal="whatsapp"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#msBt')).toHaveText('Enviei por WhatsApp');
+  await page.click('#msBt');
+  await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'whatsapp',p_dest:'Cliente de exemplo',p_prova_path:null}]);
+  expect(erros).toEqual([]);
+});
+
+test('p134 Mesa: sem sair do painel nao pergunta; Nao saiu nao grava; link que falha fecha a aba e nada sai', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await abaFalsa(page);
+  await page.evaluate(()=>{ window.__storageUrl=p=>'https://exemplo.supabase.co/x/'+p; msAbrirId(102); });
+  await page.click('#msBtWhats');
+  await expect.poll(()=>page.evaluate(()=>window.__abas.length)).toBe(1);
+  await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  await page.waitForTimeout(500);
+  await expect(page.locator('#folhaTit'), 'nao saiu do painel: nao pergunta').not.toHaveText('Saiu?');
+  await SAI_E_VOLTA(page);
+  await expect(page.locator('#folhaTit')).toHaveText('Saiu?');
+  await page.click('#envioNao');
+  await expect(page.locator('#tmsg')).toContainText('Nada foi gravado');
+  expect(await baixasP134(page)).toEqual([]);
+  await page.evaluate(()=>{ window.__storageErro=true; msAbrirId(102); });
+  await page.click('#msBtWhats');
+  await expect(page.locator('#tmsg')).toContainText('Não consegui gerar o link da peça');
+  expect(await page.evaluate(()=>window.__abas[1].closed), 'a aba vazia fecha').toBe(true);
+  await SAI_E_VOLTA(page);
+  await page.waitForTimeout(500);
+  await expect(page.locator('#folhaTit')).not.toHaveText('Saiu?');
+  expect(await baixasP134(page)).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('p134 Mesa: Compartilhar o arquivo leva o arquivo junto e pergunta o canal; cancelar nao pergunta', async ({page})=>{
+  await page.addInitScript(()=>{ window.__shares=[]; window.__shareErro=null;
+    navigator.canShare=d=>!!(d&&d.files&&d.files.length);
+    navigator.share=d=>{ window.__shares.push({n:(d.files||[]).map(f=>f.name+'|'+f.size)}); if(window.__shareErro){const e=new Error('x');e.name=window.__shareErro;return Promise.reject(e);} return Promise.resolve(); }; });
+  await page.route('https://arquivo.exemplo.test/**', r=>r.fulfill({status:200, contentType:'application/pdf', body:'%PDF-1.4'+String.fromCharCode(10)}));
+  const erros = await abrirMesa(page);
+  await page.evaluate(()=>{ window.__storageUrl=p=>'https://arquivo.exemplo.test/'+p; window.__shareErro='AbortError'; msAbrirId(102); });
+  await page.click('#msBtCompart');
+  await expect.poll(()=>page.evaluate(()=>window.__shares.length)).toBe(1);
+  await expect(page.locator('#tmsg')).toContainText('Compartilhar cancelado');
+  await expect(page.locator('#folhaTit')).not.toHaveText('Saiu?');
+  await page.evaluate(()=>{ window.__shareErro=null; });
+  await page.click('#msBtCompart');
+  await expect(page.locator('#folhaTit')).toHaveText('Saiu?');
+  expect(await page.evaluate(()=>window.__shares[1].n), 'o arquivo vai junto, com o nome da peca').toEqual(['laudo_exemplo_v02.pdf|9']);
+  expect(await page.evaluate(()=>window.__storage.filter(c=>c.op==='createSignedUrl').length), 'baixou uma vez so').toBe(1);
+  await page.click('#msBt');
+  await expect(page.locator('#msAviso'), 'sem canal a baixa nao grava').toContainText('Escolha por onde');
+  expect(await baixasP134(page)).toEqual([]);
+  await page.click('#folha .ms-canal[data-canal="outro"]');
+  await page.click('#msBt');
+  await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'outro',p_dest:'Cliente de exemplo',p_prova_path:null}]);
+  expect(erros).toEqual([]);
+});
+
+test('p134 cobranca: WhatsApp e volta perguntam Cobrou?; Sim grava cobrar pelo mesmo caminho do Cobrei agora', async ({page})=>{
+  await page.addInitScript(c=>{ window.__dados={cob3:c}; }, COB3);
+  await page.addInitScript(ABRE_JANELA);
+  const erros = await abrir(page);
+  await page.locator('#cob3Box .cob3').nth(0).locator('button[aria-label="Abrir no WhatsApp"]').click();
+  await SAI_E_VOLTA(page);
+  await expect(page.locator('#folhaTit')).toHaveText('Cobrou?');
+  await expect(page.locator('#folha')).toContainText('Cobrar resposta de exemplo');
+  await page.click('#envioSim');
+  await expect.poll(()=>page.evaluate(()=>PEND&&PEND.verbo)).toBe('cobrar');
+  expect(await page.evaluate(()=>PEND.ref)).toBe('7');
+  expect(erros).toEqual([]);
+});
