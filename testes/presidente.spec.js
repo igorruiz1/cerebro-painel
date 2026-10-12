@@ -91,7 +91,7 @@ const DUBLE = `(()=>{
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
       createSignedUrl:(p,s)=>{window.__storage.push({b,op:'createSignedUrl',p,s});
-        return Promise.resolve(window.__storageErro?{data:null,error:{message:'objeto nao encontrado'}}:{data:{signedUrl:'about:blank'},error:null});},
+        return Promise.resolve(window.__storageErro?{data:null,error:{message:'objeto nao encontrado'}}:{data:{signedUrl:typeof window.__storageUrl==='function'?window.__storageUrl(p):(window.__storageUrl||'about:blank')},error:null});},
       upload:(p,f)=>{window.__storage.push({b,op:'upload',p,tipo:f&&f.type});return Promise.resolve({data:{path:p},error:null});}})},
     auth:{getSession:()=>Promise.resolve({data:{session:{user:{id:'x'}}}}),
           onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
@@ -1340,6 +1340,89 @@ test('Mesa: o relatorio abre a folha; o PDF sai do botao pelo link assinado do b
 const deliberacoes = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_deliberar').map(c=>c.a));
 const abaFalsa = page=>page.evaluate(()=>{ window.__abas=[]; window.open=()=>{ const w={closed:false,location:{href:''},close(){this.closed=true;}}; window.__abas.push(w); return w; }; });
 
+/* p4.50 (s2867, card 2307): auditoria da Mesa (doc 4005). A peca 703 (.xlsx) abria aba em branco no iPhone com o aviso
+   "Peca aberta"; 26 de 63 pecas nao eram PDF. A classe: todo formato tem um caminho que o Safari mostra. */
+const MESA_FMT = ()=>({hoje:new Date().toISOString().slice(0,10), em_jogo:0, horas_mes:0, producao_hoje:{}, saiu_hoje:[], relatorios:[], fechamentos:[],
+  valor_hora:{recebido:0,horas:0,por_hora:0,piso:63.03,teto:480},
+  estoque:[{id:201,frente:'20-contrato-pj',titulo:'Nota de exemplo em texto',ato:'ler',dias:1,peca:'pecas/201/nota_exemplo_v01.md'},
+    {id:202,frente:'20-contrato-pj',titulo:'Relatorio de exemplo em pagina',ato:'decidir',dias:1,peca:'pecas/202/relatorio_exemplo_v01.html'},
+    {id:203,frente:'20-contrato-pj',titulo:'Planilha de exemplo',ato:'entregar',dias:1,peca:'pecas/203/planilha_exemplo_v01.xlsx',drive:'1AbCdEfGhIjKlMnOp_exemplo'},
+    {id:204,frente:'20-contrato-pj',titulo:'Minuta de exemplo em Word',ato:'aprovar',dias:1,peca:'pecas/204/minuta_exemplo_v01.docx'},
+    {id:205,frente:'20-contrato-pj',titulo:'Laudo de exemplo em PDF',ato:'ler',dias:1,peca:'pecas/205/laudo_exemplo_v01.pdf'},
+    {id:206,frente:'20-contrato-pj',titulo:'Resposta de exemplo sem arquivo',ato:null,dias:0,peca:null}]});
+const abrirMesaFmt = async page=>{
+  await page.route('https://exemplo.supabase.co/**', r=>{ const pagina=/\.html/.test(r.request().url());
+    r.fulfill({status:200, headers:{'access-control-allow-origin':'*','content-type':pagina?'text/html; charset=utf-8':'text/markdown; charset=utf-8'},
+      body:pagina?'<h2>Relatorio de exemplo</h2><script>window.parent.__vazou=1</script>'
+                 :'# Titulo de exemplo\n\n- item **forte**\n- outro item\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n<img src=x onerror="window.__vazou=2">'}); });
+  const erros = await abrir(page);
+  await page.evaluate(m=>{ window.__mesa=m; window.__storageUrl=p=>'https://exemplo.supabase.co/storage/v1/object/sign/mesa/'+p+'?token=t'; }, MESA_FMT());
+  await page.evaluate(()=>ir('mesa'));
+  await page.waitForSelector('#ms-raiz .ms-item');
+  await abaFalsa(page);
+  return erros;
+};
+
+test('Mesa: cada formato abre do jeito que o iPhone mostra (texto e pagina na folha, planilha pelo Drive, Word com aviso)', async ({page})=>{
+  const erros = await abrirMesaFmt(page);
+  /* .md: le dentro da folha, com titulo, negrito e lista; HTML da peca nao vira tag */
+  await page.evaluate(()=>msAbrirId(201));
+  await expect(page.locator('#msPeca')).toHaveText('Ler a peça aqui');
+  await page.click('#msPeca');
+  await expect(page.locator('#msLeitura')).toBeVisible();
+  await expect(page.locator('#msLeitura h4')).toHaveText('Titulo de exemplo');
+  await expect(page.locator('#msLeitura b')).toHaveText('forte');
+  await expect(page.locator('#msLeitura li')).toHaveCount(2);
+  await expect(page.locator('#msLeitura img')).toHaveCount(0);
+  await expect(page.locator('#msPeca')).toHaveText('Fechar a leitura');
+  expect(await page.evaluate(()=>window.__abas.length), 'texto nao abre aba').toBe(0);
+  await page.click('#msPeca');
+  await expect(page.locator('#msLeitura')).toBeHidden();
+  /* .html: moldura isolada, sem script */
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(202); });
+  await expect(page.locator('#msPeca')).toHaveText('Ler a peça aqui');
+  await page.click('#msPeca');
+  const q = page.locator('#msLeitura iframe.ms-quadro');
+  await expect(q).toHaveAttribute('sandbox','');
+  expect(await q.getAttribute('srcdoc')).toContain('Relatorio de exemplo');
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(()=>window.__vazou), 'script da peca nao roda').toBeUndefined();
+  /* .xlsx com id do Drive: abre o Drive na aba criada no toque, sem ir ao bucket */
+  const antes = await page.evaluate(()=>window.__storage.length);
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(203); });
+  await expect(page.locator('#msPeca')).toHaveText('Abrir no Google Drive');
+  await page.click('#msPeca');
+  expect(await page.evaluate(()=>window.__abas.map(w=>w.location.href))).toEqual(['https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp_exemplo/view']);
+  expect(await page.evaluate(()=>window.__storage.length), 'planilha com Drive nao pede link ao bucket').toBe(antes);
+  /* .docx sem id do Drive: baixa e diz onde achar, nunca "Peca aberta" */
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(204); });
+  await expect(page.locator('#msPeca')).toHaveText('Baixar a peça (.docx)');
+  await page.click('#msPeca');
+  await expect(page.locator('#tmsg')).toContainText('abra pelo app Arquivos, em Downloads');
+  await expect(page.locator('#tmsg')).not.toContainText('Peça aberta');
+  /* .pdf segue como antes */
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(205); });
+  await expect(page.locator('#msPeca')).toHaveText('Abrir a peça');
+  expect(erros).toEqual([]);
+});
+
+test('Mesa: peca sem arquivo nao mostra Aprovar e o gravar recusa aprovar sem ver', async ({page})=>{
+  const erros = await abrirMesaFmt(page);
+  await page.evaluate(()=>msAbrirId(206));
+  await expect(page.locator('#msPeca')).toHaveCount(0);
+  await expect(page.locator('#msBtAprovar')).toHaveCount(0);
+  await expect(page.locator('#folha')).toContainText('Ainda sem arquivo para abrir');
+  await expect(page.locator('#msAbreAjustar')).toBeVisible();
+  const rpc0 = await page.evaluate(()=>window.__rpc.length);
+  await page.evaluate(()=>msDecidir('aprovado'));
+  await expect(page.locator('#msAvisoDec')).toContainText('aprovar fica para quando a cópia subir');
+  expect(await page.evaluate(r0=>window.__rpc.slice(r0).filter(c=>c.n==='mesa_deliberar').length, rpc0), 'nada vai ao banco').toBe(0);
+  /* peca com arquivo continua com Aprovar */
+  await page.evaluate(()=>{ fecharFolha(); msAbrirId(205); });
+  await expect(page.locator('#msBtAprovar')).toBeVisible();
+  expect(erros).toEqual([]);
+});
+
 test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca sem copia avisa e nao tem o botao', async ({page})=>{
   const erros = await abrirMesa(page);
   await abaFalsa(page);
@@ -1358,7 +1441,7 @@ test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca s
   await page.evaluate(()=>fecharFolha());
   await page.click('#ms-raiz .ms-item >> nth=2');
   await expect(page.locator('#msPeca')).toHaveCount(0);
-  await expect(page.locator('#folha')).toContainText('A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.');
+  await expect(page.locator('#folha')).toContainText('Ainda sem arquivo para abrir. A aprovação fica liberada quando a cópia da peça subir.');
   /* erro do bucket vira aviso e a aba vazia fecha */
   await page.evaluate(()=>{ fecharFolha(); window.__storageErro=true; });
   await page.click('#ms-raiz .ms-item >> nth=0');
@@ -1830,7 +1913,7 @@ test('Hoje p4.14: entram as pecas novas e as 3 de maior valor; adiada e o resto 
   expect(r.sit).toContain('2 peças da Mesa');
   expect(r.selo, 'o selo de Hoje conta cards e pecas').toBe(String(r.n+2));
   await page.evaluate(()=>{ const m=JSON.parse(JSON.stringify(MS.dados)), h=m.hoje;
-    const p=(id,rs,o)=>Object.assign({id,frente:'20-contrato-pj',titulo:'Peca '+id,ato:'enviar',dest:'Alguem',canal:'gmail',rs,dias:3,motivo:'x',copia:null,novo:false,peca:null},o||{});
+    const p=(id,rs,o)=>Object.assign({id,frente:'20-contrato-pj',titulo:'Peca '+id,ato:'enviar',dest:'Alguem',canal:'gmail',rs,dias:3,motivo:'x',copia:null,novo:false,peca:'pecas/'+id+'/peca_exemplo.pdf'},o||{});
     m.estoque=[p(201,900),p(202,800),p(203,700),p(204,600),p(205,99999,{adiado_ate:'2999-01-01'}),p(206,null)];
     window.__mesa=m; msCarregar(); });
   await expect.poll(()=>pecasNaHoje(page), 'top 3 por valor; adiada e sem valor fora').toEqual(['Peca 201','Peca 202','Peca 203']);

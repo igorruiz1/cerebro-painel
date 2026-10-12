@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-mJ0ER/uKimJbA5DyY0X+J0LvEDAcer526ZZEMur78Fg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-yJEkXRaFhXCIc9CYhmlkqbAGL/I3Bv7AlZlBRI8AuTc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -447,6 +447,13 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 /* p4.49 (p137): o atalho do app do banco e um link com cara de botao */
 .campo .abrir-app{display:flex;align-items:center;justify-content:center;flex:none;text-decoration:none;color:var(--ink)}
 .campo .copiar-cod{flex:none}
+/* p4.50 (card 2307): leitura da peca dentro da folha */
+.ms-leitura{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.ms-texto{padding:12px 14px;max-height:70vh;overflow:auto;overflow-wrap:anywhere;font-size:var(--fs-3);line-height:1.5}
+.ms-texto h4{margin:10px 0 4px}
+.ms-texto ul{margin:4px 0 8px 18px}
+.ms-tab{white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--fs-2);margin:6px 0}
+.ms-quadro{display:block;width:100%;height:70vh;border:0;background:var(--branco)}
 </style>
 </head>
 <body>
@@ -587,7 +594,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.49";
+const VERP="p4.50";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -2858,14 +2865,14 @@ function msAbrirP(p){
   const r=MS.ritual, amanha=somaDias(1), aprov=msAprovEm(p);
   mostrarFolha(`${r?`<p class="ms-ritual">Encerrar o dia · ${esc(r.i+1)} de ${esc(r.ids.length)}</p>`:""}<h3 id="folhaTit">${esc(p.titulo||"peça sem título")}</h3>
     <div class="chips"><span class="chip">${esc(msCap(msAto(p.ato)))}</span>${p.frente?`<span class="chip">${esc(msFrente(p.frente))}</span>`:""}<span class="chip ${+p.dias>=7?"w":""}">${esc(msParada(p.dias))}</span>${p.novo===true?`<span class="chip ok">nova hoje</span>`:""}${p.adiado_ate?`<span class="chip">adiada até ${esc(msAlvo(p.adiado_ate))}</span>`:""}</div>
-    ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" data-acao="msAbrirPeca">Abrir a peça</button>`:`<p class="mut ms-sem-copia">A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.</p>`}
+    ${p.peca?`<button type="button" class="pri ms-abrir" id="msPeca" data-acao="msAbrirPeca">${esc(msRotPeca(p))}</button><div class="ms-leitura" id="msLeitura" hidden></div>`:`<p class="mut ms-sem-copia">Ainda sem arquivo para abrir. A aprovação fica liberada quando a cópia da peça subir.</p>`}
     <div class="bloco"><span class="rot">Para quem</span><p>${p.dest?esc(p.dest)+".":"Sem destinatário escrito."}${p.canal?" Previsto por "+esc(msCanal(p.canal))+".":""}</p></div>
     <div class="bloco"><span class="rot">Valor</span><p class="${msTemRs(p.rs)?"num":""}">${msTemRs(p.rs)?esc(msRs2(p.rs)):"sem valor"}</p></div>
     <div class="bloco"><span class="rot">O que falta</span><p>${p.motivo?esc(p.motivo):"Sem motivo escrito."}</p></div>
     <div class="bloco ms-decide"><span class="rot">Sua decisão</span>
       ${aprov?`<p class="ms-aprovada" id="msAprovada"><b>Aprovada por você em ${esc(aprov)}.</b> Falta ${esc(p.ato==="enviar"?"enviar":msAto(p.ato))}: quando sair, dê a baixa em "Já enviei", logo abaixo.</p>`:""}
       <div class="ms-decisoes" role="group" aria-label="Sua decisão">
-        ${aprov?"":`<button type="button" class="pri" id="msBtAprovar" data-acao="msDecidir" data-a1="aprovado">Aprovar</button>`}
+        ${aprov||!p.peca?"":`<button type="button" class="pri" id="msBtAprovar" data-acao="msDecidir" data-a1="aprovado">Aprovar</button>`}
         <button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" data-acao="msMotivo" data-a1="ajustar">Pedir ajuste</button>
         <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" data-acao="msMotivo" data-a1="adiar">Adiar</button>
         <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" data-acao="msMotivo" data-a1="largar">Largar</button>
@@ -2942,6 +2949,7 @@ async function msDecidir(dec){
   const p=MS.peca, c=MS_DEC[dec]; if(!p||!c||MS.gravando)return;
   const av=document.getElementById("msAvisoDec");
   const diz=t=>{ if(av)av.textContent=t; toast(t,"bad",false,5000); };
+  if(dec==="aprovado"&&!p.peca){ diz("Ainda sem arquivo para abrir: aprovar fica para quando a cópia subir."); return; }
   let nota=null;
   if(c.txt){
     const el=document.getElementById(c.txt); nota=el?el.value.trim():"";
@@ -3005,9 +3013,9 @@ async function msAbrirAssinado(bucket,caminho,segundos,t){
     if(w)try{w.close();}catch(e){}
     toast("Não consegui abrir "+t.o+": "+(error?error.message:"o link veio vazio")+".","bad",false,6000); return;
   }
-  if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast(t.aberto+" em outra aba.",null,false,2500); return; }
+  if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast(t.ok||t.aberto+" em outra aba.",null,false,t.ok?6000:2500); return; }
   let w2=null; try{ w2=window.open(url,"_blank"); }catch(e){}
-  if(w2)toast(t.aberto+" em outra aba.",null,false,2500);
+  if(w2)toast(t.ok||t.aberto+" em outra aba.",null,false,t.ok?6000:2500);
   else toast("O navegador bloqueou a aba "+t.da+". Libere janelas deste site e toque de novo.","bad",false,6000);
 }
 /* p4.12: o toque no relatorio abre a folha dele (versao vigente, ciencia do dia, versoes anteriores); o PDF sai do
@@ -3093,11 +3101,80 @@ async function msCienciaLote(){
     :/^RECUSADO/i.test(txt)?txt.replace(/^RECUSADO:?\s*/i,"Não gravou: "):"Não gravou: "+(txt||"o banco não respondeu nada")+".";
   if(av)av.textContent=m.slice(0,240); toast(m.slice(0,240),"bad",false,5000);
 }
-/* p4.5: a copia da peca sobe do PC para mesa/pecas/<id>/...; link de 10 min */
+/* p4.5: a copia da peca sobe do PC para mesa/pecas/<id>/...; link de 10 min
+   p4.50 (s2867, card 2307, auditoria da Mesa doc 4005): o Safari do iPhone so mostra PDF e imagem numa aba; .xlsx e .docx
+   viravam aba em branco com o aviso "Peca aberta" (peca 703, 12/10). Agora: texto (.md, .txt, .csv) e pagina (.html) se leem
+   dentro da folha, a pagina numa moldura isolada (sandbox, sem script); planilha e Word abrem pelo Google Drive quando o
+   banco tem o id; sem id, o aviso diz que o arquivo foi baixado e onde achar. */
+const MS_FMT_TEXTO=new Set(["md","txt","csv"]), MS_FMT_PAGINA=new Set(["html","htm"]), MS_FMT_ABA=new Set(["pdf","png","jpg","jpeg","gif","webp","heic"]), MS_TETO_LEITURA=600000;
+const msFmt=p=>{ const m=/\.([a-z0-9]{1,5})$/i.exec(String(p&&p.peca||"")); return m?m[1].toLowerCase():""; };
+const msDriveOk=p=>!!(p&&/^[\w-]{10,}$/.test(String(p.drive||"")));
+function msRotPeca(p){
+  const x=msFmt(p);
+  if(MS_FMT_TEXTO.has(x)||MS_FMT_PAGINA.has(x))return "Ler a peça aqui";
+  if(MS_FMT_ABA.has(x)||!x)return "Abrir a peça";
+  return msDriveOk(p)?"Abrir no Google Drive":"Baixar a peça (."+x+")";
+}
+function msMd(t){
+  const inl=x=>x.replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>");
+  const out=[]; let lista=false, tab=[];
+  const fechaLista=()=>{ if(lista){out.push("</ul>");lista=false;} };
+  const fechaTab=()=>{ if(tab.length){out.push('<pre class="ms-tab">'+tab.join("\n")+"</pre>");tab=[];} };
+  for(const l of esc(t).split(/\r?\n/)){
+    if(/^\s*\|/.test(l)){ fechaLista(); if(!/^\s*\|[\s:|-]+\|\s*$/.test(l))tab.push(l.trim()); continue; }
+    fechaTab();
+    let m;
+    if((m=/^\s{0,3}#{1,6}\s+(.*)$/.exec(l))){ fechaLista(); out.push("<h4>"+inl(m[1])+"</h4>"); }
+    else if((m=/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/.exec(l))){ if(!lista){out.push("<ul>");lista=true;} out.push("<li>"+inl(m[1])+"</li>"); }
+    else if(!l.trim()){ fechaLista(); }
+    else { fechaLista(); out.push("<p>"+inl(l)+"</p>"); }
+  }
+  fechaLista(); fechaTab();
+  return out.join("");
+}
+async function msLerPeca(p,x){
+  const caixa=document.getElementById("msLeitura"), bt=document.getElementById("msPeca");
+  if(!caixa)return;
+  if(!caixa.hidden){ caixa.hidden=true; caixa.textContent=""; if(bt)bt.textContent=msRotPeca(p); return; }
+  if(bt)bt.textContent="Carregando a peça…";
+  let txt=null, erro=null;
+  if(DEMO) txt=MS_FMT_PAGINA.has(x)?'<h2>Documento fictício</h2><p>Na demonstração, a peça aparece aqui dentro.</p>':"# Documento fictício\n\nNa demonstração, a peça aparece **aqui dentro**.";
+  else {
+    const {data,error}=await msPedir(()=>sb.storage.from(MS_BUCKET_PECA).createSignedUrl(p.peca,MS_URL_PECA),LIMITE_ACAO,"peca");
+    const url=data&&data.signedUrl;
+    if(error||!url) erro=error?error.message:"o link veio vazio";
+    else {
+      try{ const r=await comTeto(fetch(url),LIMITE_ACAO,"peca"); if(!r.ok)throw new Error("o servidor respondeu "+r.status); txt=await r.text(); }
+      catch(e){ erro=ehTeto(e)?"sem resposta em "+LIMITE_ACAO/1000+" s":(e&&e.message)||"a leitura falhou"; }
+    }
+  }
+  if(MS.peca!==p)return;
+  if(txt===null){ if(bt)bt.textContent=msRotPeca(p); toast("Não consegui ler a peça: "+erro+".","bad",false,6000); return; }
+  if(txt.length>MS_TETO_LEITURA)txt=txt.slice(0,MS_TETO_LEITURA)+"\n\n(peça cortada aqui: grande demais para ler no celular)";
+  caixa.textContent="";
+  if(MS_FMT_PAGINA.has(x)){
+    const f=document.createElement("iframe"); f.className="ms-quadro"; f.title="Peça"; f.setAttribute("sandbox",""); f.setAttribute("referrerpolicy","no-referrer"); f.srcdoc=txt; caixa.appendChild(f);
+  } else {
+    const d=document.createElement("div"); d.className="ms-texto"; d.innerHTML=x==="md"?msMd(txt):'<pre class="ms-tab">'+esc(txt)+"</pre>"; caixa.appendChild(d);
+  }
+  caixa.hidden=false; if(bt)bt.textContent="Fechar a leitura";
+  try{ caixa.scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){}
+}
 function msAbrirPeca(){
   const p=MS.peca;
-  if(!p||!p.peca){ toast("A cópia desta peça ainda não subiu; sai na próxima hora com o PC ligado.","bad",false,5000); return; }
-  return msAbrirAssinado(MS_BUCKET_PECA,p.peca,MS_URL_PECA,{o:"a peça",aberto:"Peça aberta",da:"da peça",rotulo:"peca"});
+  if(!p||!p.peca){ toast("Ainda sem arquivo para abrir. A aprovação fica liberada quando a cópia da peça subir.","bad",false,5000); return; }
+  const x=msFmt(p);
+  if(MS_FMT_TEXTO.has(x)||MS_FMT_PAGINA.has(x))return msLerPeca(p,x);
+  if(MS_FMT_ABA.has(x)||!x)return msAbrirAssinado(MS_BUCKET_PECA,p.peca,MS_URL_PECA,{o:"a peça",aberto:"Peça aberta",da:"da peça",rotulo:"peca"});
+  if(msDriveOk(p)){
+    let w=null; try{ w=window.open("","_blank"); }catch(e){}
+    const url="https://drive.google.com/file/d/"+encodeURIComponent(p.drive)+"/view";
+    if(w&&!w.closed){ try{w.opener=null;}catch(e){} w.location.href=url; toast("Peça aberta no Google Drive, em outra aba.",null,false,2500); }
+    else toast("O navegador bloqueou a aba do Google Drive. Libere janelas deste site e toque de novo.","bad",false,6000);
+    return;
+  }
+  return msAbrirAssinado(MS_BUCKET_PECA,p.peca,MS_URL_PECA,{o:"a peça",aberto:"Peça aberta",da:"da peça",rotulo:"peca",
+    ok:"O iPhone baixa arquivo ."+x+" em vez de mostrar: abra pelo app Arquivos, em Downloads."});
 }
 /* fim modulo:mesa */
 
