@@ -3244,7 +3244,7 @@ test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp na
   await expect(page.locator('#tmsg')).toContainText(/opiado|copie à mão/);
   for (const b of await page.locator('#folha button').all())
     expect(await b.evaluate(x=>x.getBoundingClientRect().height), 'botao da folha abaixo de 44 px').toBeGreaterThanOrEqual(44);
-  expect(await page.evaluate(()=>window.__rpc.filter(c=>!['painel_carga','painel_checkin','painel_ping','atendente_estado','painel_snapshot_montar','painel_medir_decisao','mesa_painel'].includes(c.n)).map(c=>c.n)),
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>!['painel_carga','painel_checkin','painel_ping','atendente_estado','painel_snapshot_montar','painel_medir_decisao','mesa_painel','subida_painel'].includes(c.n)).map(c=>c.n)),
     'nada grava pelo check-in').toEqual([]);
   await page.evaluate(()=>fecharFolha());
   await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
@@ -3769,3 +3769,137 @@ test('p155 aviso_card: carga pede aviso; a folha do card diz que a rotina nao me
   await expect(page.locator('#folha .aviso-rotina'), 'aviso de decisao com o mesmo numero nao entra no card de tarefa').toHaveCount(0);
   expect(erros).toEqual([]);
 });
+
+/* t2198 (12/10/2026, s2867): fila "Subir ao compartilhado" na aba Mesa (item 5 do plano de reestruturacao, four-eyes).
+   Criterio do card: a fila mostra a peca, a pasta destino e o que ela substitui; so o clique aprova; o teste reprova
+   subida sem clique. Carregar, abrir a folha e marcar "Vi os achados" nao podem chamar subida_decidir; peca marcada
+   pelo filtro de muro (REPROVADO ou SEM_LEITURA) nao sobe sem a ciencia. O duble geral devolve null para RPC que nao
+   conhece, entao o caso injeta a fila trocando sb.rpc depois da carga. Tudo ficticio. */
+const SB_FILA=[
+  {id:7,titulo:'Ata de exemplo v02',origem:'ata_exemplo_v02.md',md5:'0123456789abcdef0123456789abcdef',destino:'00_Fundacao/VIGENTE',
+    nome:'ata_exemplo_v02.md',substitui:{nome:'ata_exemplo_v01.md',md5:'f'.repeat(32),mtime:'2026-10-01T12:00:00Z'},veredito:'APROVADO',
+    achados:{},porque:'A pasta VIGENTE e da sociedade: so sobe com o seu toque.',estado:'pendente',peca:'pecas/7/ata_exemplo_v02.pdf'},
+  {id:8,titulo:'Transcricao de exemplo',origem:'transcricao_exemplo.txt',md5:'abcdefabcdefabcdefabcdefabcdefab',destino:'06_Operacao/Reunioes',
+    nome:'transcricao_exemplo.txt',substitui:null,veredito:'REPROVADO',porque:'Pasta da sociedade.',estado:'pendente',
+    achados:{resumo:{'outra frente: 11-renda-alt':1,'segredo: senha escrita':1},
+      achados:[{tipo:'outra frente',qual:'11-renda-alt',linha:3},{tipo:'segredo',qual:'senha escrita',linha:9}]}},
+  {id:9,titulo:'Planilha de exemplo',origem:'planilha_exemplo.xlsx',md5:'1111222233334444aaaabbbbccccdddd',destino:'04_Financeiro/Planejamento',
+    nome:'planilha_exemplo.xlsx',substitui:null,veredito:'SEM_LEITURA',porque:'Pasta da sociedade.',estado:'pendente',
+    achados:{motivo:'formato .xlsx nao e texto: conferir a mao'}}];
+async function abrirSubida(page,fila=SB_FILA){
+  const erros=await abrir(page);
+  await page.evaluate(f=>{
+    const rpc=sb.rpc.bind(sb);
+    sb.rpc=(n,a)=>{
+      if(n==='subida_painel'){ window.__rpc.push({n,a}); return Promise.resolve(window.__subidaErro?{data:null,error:window.__subidaErro}:{data:{fila:f,recentes:[]},error:null}); }
+      if(n==='subida_decidir'){ window.__rpc.push({n,a}); return Promise.resolve({data:window.__subidaResp||'OK: aprovado; o PC sobe na proxima rodada',error:null}); }
+      return rpc(n,a); };
+  },fila);
+  await page.evaluate(()=>ir('mesa'));
+  await page.waitForSelector('#sb-raiz .sb-item',{timeout:5000});
+  return erros;
+}
+const sbDecisoes=page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='subida_decidir'));
+
+test('Subida (t2198): a fila mostra a peca, a pasta destino e o que ela substitui; carregar e abrir nao sobem; o clique sobe', async ({page})=>{
+  const erros=await abrirSubida(page);
+  const raiz=page.locator('#sb-raiz');
+  await expect(raiz.locator('.sb-item')).toHaveCount(3);
+  await expect(raiz).toContainText('Subir ao compartilhado (3)');
+  await expect(raiz).toContainText('para 00_Fundacao/VIGENTE · substitui ata_exemplo_v01.md');
+  await expect(raiz).toContainText('peça nova na pasta');
+  await expect(raiz).toContainText('Filtro de muro: nada achado');
+  await expect(raiz).toContainText('Filtro de muro: achou pontos');
+  const txt=await raiz.innerText();
+  for(const cru of ['APROVADO','REPROVADO','SEM_LEITURA','pendente','subida_'])expect(txt,`codigo cru na fila: ${cru}`).not.toContain(cru);
+  /* abrir a folha mostra destino e anterior, e nao chama o banco */
+  await raiz.locator('.sb-item').first().click();
+  await expect(page.locator('#sbDestino')).toHaveText('00_Fundacao/VIGENTE/ata_exemplo_v02.md');
+  await expect(page.locator('#sbSubstitui')).toContainText('ata_exemplo_v01.md');
+  await expect(page.locator('#sbSubstitui')).toContainText('_superado');
+  await page.waitForTimeout(300);
+  expect(await sbDecisoes(page),'subida sem clique: carregar e abrir chamaram subida_decidir').toEqual([]);
+  /* so o toque aprova, com o md5 que a tela mostrou */
+  await page.locator('#sbBtSubir').click();
+  await expect.poll(()=>sbDecisoes(page)).toHaveLength(1);
+  const [d]=await sbDecisoes(page);
+  expect(d.a).toEqual({p_id:7,p_md5:'0123456789abcdef0123456789abcdef',p_decisao:'aprovar',p_ciente:false,p_nota:null});
+  await expect(page.locator('#veu')).toHaveClass(/hidden/);
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='subida_painel').length)).toBeGreaterThan(1);
+  expect(erros).toEqual([]);
+});
+
+test('Subida (t2198): peca marcada pelo filtro de muro nao sobe sem "Vi os achados"; com ele vai com p_ciente', async ({page})=>{
+  const erros=await abrirSubida(page);
+  await page.evaluate(()=>sbAbrir(8));
+  const ach=page.locator('#sbAchados');
+  await expect(ach).toContainText('Assunto de outra frente: Renda Alternativa');
+  await expect(ach).toContainText('linha 3');
+  await expect(ach).toContainText('Senha ou chave');
+  await page.locator('#sbBtSubir').click();
+  await expect(page.locator('#sbAviso')).toContainText('Vi os achados');
+  await page.waitForTimeout(300);
+  expect(await sbDecisoes(page),'REPROVADO subiu sem a ciencia dos achados').toEqual([]);
+  await page.locator('#sbCiente').click();
+  await expect(page.locator('#sbCiente')).toHaveAttribute('aria-pressed','true');
+  expect(await sbDecisoes(page),'marcar "Vi os achados" nao e o clique de subir').toEqual([]);
+  await page.locator('#sbBtSubir').click();
+  await expect.poll(()=>sbDecisoes(page)).toHaveLength(1);
+  expect((await sbDecisoes(page))[0].a).toMatchObject({p_id:8,p_decisao:'aprovar',p_ciente:true});
+  /* SEM_LEITURA: o mesmo portao, e a folha diz o formato sem codigo cru */
+  await page.evaluate(()=>sbAbrir(9));
+  await expect(page.locator('#sbAchados')).toContainText('arquivo .xlsx');
+  await page.locator('#sbBtSubir').click();
+  await expect(page.locator('#sbAviso')).toContainText('Vi os achados');
+  expect(await sbDecisoes(page)).toHaveLength(1);
+  expect(erros).toEqual([]);
+});
+
+test('Subida (t2198): "Nao subir" sem motivo nao grava; com motivo vai recusar; RECUSADO do banco fica na folha', async ({page})=>{
+  const erros=await abrirSubida(page);
+  await page.evaluate(()=>sbAbrir(7));
+  await page.locator('#sbAbreRecusar').click();
+  await expect(page.locator('#sbAbreRecusar')).toHaveAttribute('aria-expanded','true');
+  await page.locator('#sbBtRecusar').click();
+  await expect(page.locator('#sbAviso')).toContainText('Diga por que');
+  expect(await sbDecisoes(page)).toEqual([]);
+  await page.locator('#sbTxtRecusar').fill('Falta a assinatura de exemplo');
+  await page.locator('#sbBtRecusar').click();
+  await expect.poll(()=>sbDecisoes(page)).toHaveLength(1);
+  expect((await sbDecisoes(page))[0].a).toMatchObject({p_id:7,p_decisao:'recusar',p_nota:'Falta a assinatura de exemplo'});
+  /* recusa do banco (peca mudou depois da fila): a folha continua aberta e diz por que */
+  await page.evaluate(()=>{window.__subidaResp='RECUSADO: a peca mudou desde que a fila foi montada; recarregue e confira de novo';sbAbrir(7);});
+  await page.locator('#sbBtSubir').click();
+  await expect(page.locator('#sbAviso')).toContainText('a peca mudou');
+  await expect(page.locator('#veu')).not.toHaveClass(/hidden/);
+  expect(erros).toEqual([]);
+});
+
+test('Subida (t2198): fila vazia ou banco sem a funcao nao poe nada na Mesa; erro de leitura vira aviso', async ({page})=>{
+  const erros=await abrirSubida(page);
+  await page.evaluate(async()=>{window.__subidaErro={code:'PGRST202',message:'Could not find the function public.subida_painel'};await sbCarregar();});
+  await expect(page.locator('#sb-raiz')).toBeHidden();
+  await page.evaluate(async()=>{window.__subidaErro={message:'falha de teste'};await sbCarregar();});
+  await expect(page.locator('#sb-raiz [role=alert]')).toContainText('Não consegui ler a fila do compartilhado');
+  expect(erros).toEqual([]);
+});
+
+for (const largura of [360, 1280]) {
+  test(`Subida (t2198) a ${largura}px: fila e folha sem controle abaixo de 44 px e sem rolagem horizontal`, async ({page})=>{
+    await page.setViewportSize({width:largura, height:820});
+    const erros=await abrirSubida(page);
+    const medir=sel=>page.evaluate(s=>{
+      const r=[...document.querySelectorAll(s)].filter(e=>{const b=e.getBoundingClientRect();return b.width>0&&(b.height<44||b.width<44);})
+        .map(e=>(e.getAttribute('aria-label')||e.textContent||e.id).trim().slice(0,30));
+      return {r, W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth};
+    },sel);
+    const f=await medir('#sb-raiz button,#sb-raiz summary');
+    expect(f.r,'controles pequenos na fila').toEqual([]);
+    expect(f.SW,'rolagem horizontal com a fila').toBe(f.W);
+    await page.evaluate(()=>{sbAbrir(8);sbRecusarAbre();});
+    const g=await medir('#folha button,#folha textarea');
+    expect(g.r,'controles pequenos na folha da subida').toEqual([]);
+    expect(g.SW,'rolagem horizontal com a folha aberta').toBe(g.W);
+    expect(erros).toEqual([]);
+  });
+}
