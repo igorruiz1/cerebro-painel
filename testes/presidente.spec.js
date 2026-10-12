@@ -3120,6 +3120,57 @@ test('p4.40 apito: o sw.js mostra o aviso recebido e o toque abre o painel', asy
   expect(sw, 'sem cache: o painel le o banco ao vivo').not.toMatch(/caches\.|addEventListener\('fetch'/);
 });
 
+/* p4.51 (s2878, 12/10/2026, p136): o Igor tocou no aviso das 7h e o app abriu na ultima tela. Com a janela ja aberta em
+   segundo plano, o sw.js so fazia focus(). Agora a janela recebe o destino e vai ate ele; o aviso leva o destino no link. */
+function rodarSW(janelas, url){
+  const vm = require('vm');
+  const sw = require('fs').readFileSync(path.resolve(__dirname, '..', 'sw.js'), 'utf8');
+  const ouv = {}, abertos = [], msgs = [], focos = [];
+  const self = { addEventListener:(t,f)=>{ ouv[t]=f; }, skipWaiting(){},
+    registration:{ scope:'https://x.test/cerebro-painel/', showNotification:()=>Promise.resolve() },
+    clients:{ claim(){}, openWindow:u=>{ abertos.push(u); return Promise.resolve(null); },
+      matchAll:()=>Promise.resolve(janelas.map(u=>({ url:u, focus(){ focos.push(u); return Promise.resolve(this); }, postMessage(m){ msgs.push(m); } }))) } };
+  vm.runInNewContext(sw, { self, URL });
+  let espera = Promise.resolve();
+  ouv.notificationclick({ notification:{ close(){}, data:url?{url}:{} }, waitUntil:p=>{ espera=p; } });
+  return espera.then(()=>({ abertos, msgs, focos }));
+}
+test('p4.51 aviso: tocar com o app aberto leva ao destino do aviso, nao a ultima tela', async ()=>{
+  const destino = 'https://x.test/cerebro-painel/presidente.html?abrir=mesa';
+  const aberto = await rodarSW(['https://x.test/cerebro-painel/presidente.html'], './presidente.html?abrir=mesa');
+  expect(aberto.msgs, 'a janela aberta recebe o destino').toEqual([{ tipo:'abrir', url:destino }]);
+  expect(aberto.focos.length, 'e vem para a frente').toBe(1);
+  expect(aberto.abertos, 'sem abrir janela nova').toEqual([]);
+  const fechado = await rodarSW([], './presidente.html?abrir=mesa');
+  expect(fechado.abertos, 'app fechado abre ja no destino').toEqual([destino]);
+  const semUrl = await rodarSW([], null);
+  expect(semUrl.abertos, 'aviso sem destino abre o Hoje').toEqual(['https://x.test/cerebro-painel/presidente.html?abrir=hoje']);
+});
+test('p4.51 aviso: o link ?abrir= abre a aba na partida e sai da barra', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA+'?abrir=caixa');
+  await expect(page.locator('#tituloAba')).toHaveText('Caixa');
+  expect(page.url(), 'o parametro sai da barra').not.toContain('abrir=');
+  await page.goto(PAGINA+'?abrir=nao-existe');
+  await expect(page.locator('#tituloAba')).toHaveText('Hoje');
+  expect(erros).toEqual([]);
+});
+test('p4.51 aviso: com o app aberto, o toque leva a aba ou a peca e rele o banco', async ({page})=>{
+  const erros = await abrirMesa(page);
+  const p = await page.evaluate(()=>{ const x=msEst(MS.dados)[0]; return {id:x.id, titulo:x.titulo}; });
+  await page.evaluate(()=>ir('hoje'));
+  const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length);
+  await page.evaluate(()=>aoAvisoTocado({tipo:'abrir', url:'https://x.test/cerebro-painel/presidente.html?abrir=caixa'}));
+  await expect(page.locator('#tituloAba')).toHaveText('Caixa');
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'rele o banco').toBeGreaterThan(cargas0);
+  await page.evaluate(id=>aoAvisoTocado({tipo:'abrir', url:'./presidente.html?peca='+id}), p.id);
+  await expect(page.locator('#tituloAba')).toHaveText('Mesa');
+  await expect(page.locator('#folhaTit')).toHaveText(p.titulo);
+  expect(erros).toEqual([]);
+});
+
 /* p4.42 (p127, s1898 11/10/2026): o bastidor deixa de decidir, entao a decisao da bandeja vem para o presidente. Card PRONTO
    mostra o que aconteceu com a peca (Feito, Enviei, Refazer, Descartar); DECISAO da bandeja mostra Recusar. Tudo vai pela
    painel_responder, so depois dos 6 s de desfazer; Refazer e Recusar levam motivo opcional. Card fora da bandeja nao ganha
