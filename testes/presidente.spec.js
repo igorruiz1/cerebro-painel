@@ -53,6 +53,8 @@ const DUBLE = `(()=>{
     band:[],
     /* p4.47 (p158): sem sugestao esperando aceite por padrao; o teste do p158 troca por window.__dados */
     sug:[],
+    /* p4.48 (p167 e5): plano mestre vazio por padrao; o teste do plano troca por window.__dados */
+    plm:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -3206,5 +3208,50 @@ test('p4.47 sugestoes: snapshot sem a chave sug esconde o grupo e diz que a part
   const erros = await abrir(page);
   await expect(page.locator('#falha'), 'chave faltando vira aviso, nunca silencio').toContainText('sug');
   await expect(page.locator('#sugBox')).toBeHidden();
+  expect(erros).toEqual([]);
+});
+
+/* p4.48 (p167 etapa 5, s2655 11/10/2026): plano mestre. O plano unico mora no banco (v_plano_mestre, chave plm do snapshot)
+   e a aba Frentes abre uma folha por etapa, com dono e prazo de cada item aberto; o atrasado ganha a marca. Abrir o plano
+   nao grava nada. O origin/main (p4.47) reprova: nao ha #btPlano nem a chave plm na carga. */
+const PLM = [
+  {id:1,etapa:'E1',etapa_nome:'Fila e aceite',titulo:'Item um de exemplo',dono:'automacao',prazo:'2026-10-20',dias_para_prazo:5,atrasado:false},
+  {id:2,etapa:'E1',etapa_nome:'Fila e aceite',titulo:'Item dois de exemplo',dono:'igor',prazo:'2026-10-10',dias_para_prazo:-1,atrasado:true},
+  {id:3,etapa:'avulso',etapa_nome:'Itens avulsos',titulo:'Item avulso de exemplo',dono:'claude',prazo:null,dias_para_prazo:null,atrasado:false}];
+test('p4.48 plano mestre: carga pede plm; a aba Frentes abre a folha por etapa, com dono e prazo, sem gravar nada', async ({page})=>{
+  await page.setViewportSize({width:360, height:800});
+  await page.addInitScript(c=>{ window.__dados={plm:c}; }, PLM);
+  const erros = await abrir(page);
+  const carga = await page.evaluate(()=>window.__rpc.find(c=>c.n==='painel_carga'));
+  expect(carga.a.p_chaves, 'a carga pede a chave plm').toContain('plm');
+  await page.evaluate(()=>ir('frentes'));
+  const bt = page.locator('#btPlano');
+  await expect(bt).toBeVisible();
+  expect(await bt.evaluate(b=>b.getBoundingClientRect().height), 'botao abaixo de 44 px').toBeGreaterThanOrEqual(44);
+  const n0 = await page.evaluate(()=>window.__rpc.length);
+  await bt.click();
+  const folha = page.locator('#folha');
+  await expect(folha.locator('#folhaTit')).toHaveText('Plano mestre');
+  await expect(folha.locator('.bloco.plano .rot')).toHaveText(['Fila e aceite','Itens avulsos']);
+  await expect(folha.locator('.bloco.plano .fonte')).toHaveCount(3);
+  await expect(folha.locator('.bloco.plano .fonte').nth(0)).toContainText('máquina · até 20/10');
+  await expect(folha.locator('.bloco.plano .fonte').nth(1)).toContainText('você · atrasado desde 10/10');
+  await expect(folha.locator('.bloco.plano .fonte').nth(2)).toContainText('Claude · sem prazo');
+  await expect(folha.locator('.chips')).toContainText('3 itens abertos');
+  await expect(folha.locator('.chips')).toContainText('1 atrasado');
+  const ruins = (await page.evaluate(contrasteDos, '#folha *')).filter(m=>m.razao<4.5);
+  expect(ruins, 'texto da folha abaixo de 4,5:1').toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360').toBe(true);
+  expect(await page.evaluate(()=>window.__rpc.length), 'abrir o plano nao chama o banco').toBe(n0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.48 plano mestre: snapshot sem a chave plm avisa a falta e a folha diz que o plano nao chegou', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['plm']; });
+  const erros = await abrir(page);
+  await expect(page.locator('#falha'), 'chave faltando vira aviso, nunca silencio').toContainText('plm');
+  await page.evaluate(()=>ir('frentes'));
+  await page.locator('#btPlano').click();
+  await expect(page.locator('#folha')).toContainText('O plano não chegou');
   expect(erros).toEqual([]);
 });
