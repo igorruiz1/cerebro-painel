@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OR62K9OLWMceR2+s8ZbenA9j25JnBFyP64VekU9RNcI=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-jgCWSGJW5bPm1LPLvImrzFYxcaJa1Cf4qxnx3LyW2Do=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -225,7 +225,7 @@ h2{margin:0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
 .frente .pio{font-style:normal;font-weight:500;font-size:var(--fs-2);color:var(--warn)}
 
 /* navegacao */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
   background:rgba(var(--navy-a),.97);backdrop-filter:blur(14px);border-top:1px solid var(--line2);padding-bottom:max(8px,env(safe-area-inset-bottom))}
 .nav button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:0;color:var(--mut);font-size:var(--fs-2);font-weight:600}
 .nav button .selo{font-family:var(--mono);font-size:var(--fs-3);min-width:30px;height:28px;padding:0 6px;border-radius:9px;display:flex;align-items:center;justify-content:center}
@@ -506,6 +506,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
     <button data-aba="caixa" data-acao="ir" data-a1="caixa">Caixa<span class="selo" id="r-caixa"></span></button>
     <button data-aba="frentes" data-acao="ir" data-a1="frentes">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" data-acao="ir" data-a1="mesa">Mesa<span class="selo" id="r-mesa"></span></button>
+    <button data-aba="semana" data-acao="ir" data-a1="semana">Semana<span class="selo" id="r-semana"></span></button>
     <div class="pe"><span id="saudeRail"></span><br><span id="frescoRail"></span><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
   </nav>
 
@@ -586,6 +587,17 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
         <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
       </section>
 
+      <section class="pane" id="p-semana" aria-label="Semana">
+        <div class="grande" id="semTopo"></div>
+        <h2>Números da semana</h2>
+        <div class="pilha" id="semNumeros"></div>
+        <h2>Decisões da semana</h2>
+        <div class="pilha" id="semDecisoes"></div>
+        <h2>Próxima semana</h2>
+        <div class="pilha" id="semPlano"></div>
+        <button class="pri" id="semFechar" data-acao="semFechar">Fechar a revisão da semana</button>
+      </section>
+
       <div class="rodape so-real"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
     </main>
   </div>
@@ -596,6 +608,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
     <button data-aba="caixa" data-acao="ir" data-a1="caixa"><span class="selo" id="n-caixa">R$</span><span>Caixa</span></button>
     <button data-aba="frentes" data-acao="ir" data-a1="frentes"><span class="selo" id="n-frentes"></span><span>Frentes</span></button>
     <button data-aba="mesa" data-acao="ir" data-a1="mesa"><span class="selo" id="n-mesa"></span><span>Mesa</span></button>
+    <button data-aba="semana" data-acao="ir" data-a1="semana"><span class="selo" id="n-semana"></span><span>Semana</span></button>
   </nav>
 </div>
 
@@ -604,7 +617,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.57";
+const VERP="p4.58";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -736,6 +749,18 @@ function demoBase(){
     band:[],
     /* p4.47 (p158): sem sugestao na demonstracao; com uma, o Hoje a 390 passava do piso do canone (3,2 telas, teste 106) */
     sug:[],
+    /* p4.58 (p144): semana da demonstracao, seis numeros, poucas decisoes e o plano */
+    semana:[{bloco:"numero",ordem:1,titulo:"Fôlego do caixa no pior cenário",ref:"caixa.sobrevida_dias",valor:41,ha_7d:37,meta:30,unidade:"dias",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+      {bloco:"numero",ordem:2,titulo:"Fechamentos pelo painel",ref:"painel.fechamentos_pelo_painel_pct",valor:72,ha_7d:65,meta:80,unidade:"pct",direcao:"maior_melhor",detalhe:"fora",dono:"igor"},
+      {bloco:"numero",ordem:3,titulo:"Propostas paradas",ref:"comercial.proposta_parada_n",valor:2,ha_7d:3,meta:0,unidade:"num",direcao:"menor_melhor",detalhe:"fora",dono:"igor"},
+      {bloco:"numero",ordem:4,titulo:"Menor saldo do trimestre",ref:"caixa.menor_saldo_13s",valor:12400,ha_7d:9800,meta:0,unidade:"num",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+      {bloco:"numero",ordem:5,titulo:"Rotinas no ponto",ref:"motor.rotinas_no_ponto_pct",valor:100,ha_7d:92,meta:100,unidade:"pct",direcao:"maior_melhor",detalhe:"dentro",dono:"claude"},
+      {bloco:"decisao_total",ordem:1,titulo:"ratificacao",valor:18},{bloco:"decisao_total",ordem:2,titulo:"escolha_em_card",valor:3},
+      {bloco:"decisao",ordem:1,titulo:"Reforma da Padaria Central: mandar o orçamento revisado com prazo maior",detalhe:"escolha_em_card",frente:"11-consultoria",quando:dd(-1)},
+      {bloco:"decisao",ordem:2,titulo:"Acordo da cobrança: parcelado com entrada",detalhe:"escolha_em_card",frente:"05-cobranca",quando:dd(-3)},
+      {bloco:"plano",ordem:1,titulo:"Rotina sugere, o dono aceita",dono:"automacao",quando:dd(3)},
+      {bloco:"plano",ordem:2,titulo:"Conciliar o caixa de obra em cada marco",dono:"claude",detalhe:"atrasado",quando:dd(-1)},
+      {bloco:"cards",ordem:1,titulo:"cards",valor:7,detalhe:"1",dono:"igor"}],
     /* p4.55 (p109): funil da demonstracao; as pecas prontas sao as da Mesa de exemplo (701, 702, 706) */
     funil:[{elo:"pronta",ordem:1,origem:"mesa",ref:"701",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",frente_slug:"11-consultoria",valor_rs:180000,margem_rs:180000,desde:dd(-5),idade_d:5,detalhe:"enviar"},
       {elo:"pronta",ordem:1,origem:"mesa",ref:"706",titulo:"Laudo de vistoria da Clínica Horizonte v02",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-3),idade_d:3,detalhe:"entregar"},
@@ -888,7 +913,7 @@ const FRENTE_4B=DEMO?"08-startup":"08-dabli-tech", VISAO_4B="v_dabli_presidente"
    vesp entra no p4.35 (plano 68): v_painel_vespera, os cards de amanha enquanto a pergunta da vespera esta aberta.
    band entra no p4.42 (p127, s1898): v_bandeja_presidente, o tipo da bandeja por card (PRONTO, DECISAO). Era so do
    index.html, que deixa de decidir; os atos da peca pronta e o recusar vem para ca. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil"];
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana"];
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -994,7 +1019,7 @@ const ACOES={
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:()=>abrirCheckin(), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugAto(el.dataset.a1,"aceito"), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"), sugAceitar:el=>sugAto(el.dataset.a1,"aceito"), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
-  buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
+  buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1), concluirCom:el=>agir(el.dataset.a1,el.dataset.a2,"Concluído"),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3), pagoCom:el=>pagoCom(el.dataset.a1,el.dataset.a2,el.dataset.a3), copiarCodigo:()=>copiarCodigo(),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1021,7 +1046,7 @@ function recInfo(r){
   return {texto:t,data:d[0]+"/"+d[1],dias,velha:dias>7};
 }
 const plural=(n,s1,s2)=>n+" "+(+n===1?s1:s2);
-const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes",mesa:"Mesa"};
+const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes",mesa:"Mesa",semana:"Semana"};
 
 /* Verbo do banco -> verbo de gente. O banco continua recebendo o verbo dele; so o rotulo muda.
    Verbo que o banco oferecer e nao estiver aqui aparece com o rotulo que o banco mandou. */
@@ -1156,6 +1181,7 @@ function ir(aba){
   document.getElementById("tituloAba").textContent=NOMES[aba];
   window.scrollTo(0,0);
   if(aba==="mesa")msCarregar();
+  if(aba==="semana"&&!SEM_ABERTA)SEM_ABERTA=Date.now();
 }
 function irColuna(c){COL=c;renderFila();ir("fila");}
 function alternarBusca(){const b=document.getElementById("busca");b.classList.toggle("hidden");if(!b.classList.contains("hidden"))document.getElementById("q").focus();}
@@ -1309,7 +1335,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSelos();renderSaude();msRender();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderSelos();renderSaude();msRender();}
 function renderHoje(){
   const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
   /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.
@@ -1671,6 +1697,62 @@ function grafico13(s,base,iMin){
   return g+`</svg><span class="mut">Caso base. Vermelho: saldo negativo. Laranja: a semana mais apertada.</span>`;
 }
 
+/* ---------- Semana ----------
+   p4.58 (p144, s3409, 12/10/2026): revisao semanal no painel, no molde do weekly review do GTD e do scorecard do EOS,
+   ao lado das sessoes de estrutura (decisao do Igor em 10/10). Fonte: chave semana (v_semana_painel): os numeros do
+   placar (kpi.no_placar, 5 a 15; o p147 decide o conjunto), as decisoes dos ultimos 7 dias (o total por tipo e as
+   que nao sao ratificacao), o plano dos proximos 7 dias e a revisao da semana. "Fechar a revisao" grava em
+   revisao_semanal os minutos desde que a aba abriu nesta visita (meta: ate 30). */
+let SEM_ABERTA=0;
+const SEM_FONTE={ratificacao:"ratificações",fato_decidido:"fatos decididos",escolha_em_card:"escolhas em card",deliberacao:"deliberações"};
+const semB=b=>(D.semana||[]).filter(x=>x.bloco===b).sort((a,b)=>(+a.ordem)-(+b.ordem));
+function semValor(x){
+  if(x.valor==null||isNaN(+x.valor))return "—";
+  const v=+x.valor;
+  if(x.unidade==="pct")return Math.round(v)+"%";
+  if(x.unidade==="dias")return plural(Math.round(v),"dia","dias");
+  if(/saldo|_rs$/.test(String(x.ref||"")))return mil(v);
+  return Math.round(v*10)/10>=1000?mil(v):String(Math.round(v*10)/10).replace(".",",");
+}
+function semRevisao(){ return semB("revisao")[0]||null; }
+/* a tendencia vai em palavra: o canone conta numero (regua 8, EOS) e o valor da semana passada fica no titulo */
+function semTend(x){ if(x.ha_7d==null||x.valor==null||isNaN(+x.ha_7d)||isNaN(+x.valor))return "sem semana anterior";
+  const d=(+x.valor)-(+x.ha_7d); if(!d)return "igual"; return (d>0)===(x.direcao!=="menor_melhor")?"melhorou":"piorou"; }
+function renderSemana(){
+  const top=document.getElementById("semTopo"); if(!top)return;
+  if(!Array.isArray(D.semana)){ top.innerHTML=`<span class="mut">A semana não chegou nesta carga.</span>`; return; }
+  const rv=semRevisao(), num=semB("numero"), fora=num.filter(x=>x.detalhe==="fora").length;
+  top.innerHTML=rv?`<span class="mut">Revisão desta semana</span><span class="v">feita</span><span class="mut">em ${esc(ddmm(rv.quando))}, ${esc(plural(+rv.valor,"minuto","minutos"))}${+rv.valor>30?" (passou dos 30)":""}.</span>`
+    :`<span class="mut">Revisão desta semana</span><span class="v">em aberto</span><span class="mut">${num.length} números, ${fora} fora da meta.</span>`;
+  document.getElementById("semNumeros").innerHTML=num.length?num.map(x=>`<div class="linha-r" title="na semana passada: ${esc(semValor({...x,valor:x.ha_7d}))}"><span class="t"><span class="l2">${esc(String(x.titulo||"").replace(/^★\s*/,""))}</span><small>meta ${esc(semValor({...x,valor:x.meta}))} · ${esc(semTend(x))} · ${esc(x.dono==="igor"?"seu":"da máquina")}</small></span><span class="r ${x.detalhe==="fora"?"w":""}">${esc(semValor(x))}</span></div>`).join("")
+    :`<div class="vazio">Nenhum número no placar.</div>`;
+  const tot=semB("decisao_total"), dec=semB("decisao");
+  document.getElementById("semDecisoes").innerHTML=(tot.length?`<div class="chips">${tot.map(t=>`<span class="chip">${esc(Math.round(+t.valor))} ${esc(SEM_FONTE[t.titulo]||"outras")}</span>`).join("")}</div>`:`<div class="vazio">Nenhuma decisão em 7 dias.</div>`)
+    +dec.slice(0,8).map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(SEM_FONTE[x.detalhe]||"decisão")}${x.frente?" · "+esc(nomeFrente(x.frente)):""}</small></span></div>`).join("")
+    +(dec.length>8?`<button class="sec" data-acao="semTodas">Ver as ${dec.length} decisões</button>`:"");
+  const pl=semB("plano"), cd=semB("cards")[0];
+  document.getElementById("semPlano").innerHTML=pl.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(x.dono==="igor"?"seu":"da máquina")} ${x.detalhe==="atrasado"?` · <span class="w">atrasado, era ${esc(ddmm(x.quando))}</span>`:""}</small></span></div>`).join("")
+    +(cd?`<button class="linha-r" data-acao="ir" data-a1="fila"><span class="t"><span class="l2">${esc(plural(Math.round(+cd.valor),"card seu","cards seus"))} com prazo na próxima semana</span><small>${+cd.detalhe>0?"inclui vencido · ":""}abrir a fila</small></span></button>`:"")
+    +(!pl.length&&!cd?`<div class="vazio">Nada com prazo nos próximos 7 dias.</div>`:"");
+  const bt=document.getElementById("semFechar"); if(bt)bt.textContent=rv?"Revisar de novo e regravar":"Fechar a revisão da semana";
+}
+function semTodas(){
+  const dec=semB("decisao");
+  mostrarFolha(`<h3 id="folhaTit">Decisões dos últimos 7 dias</h3>
+    <div class="pilha">${dec.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(SEM_FONTE[x.detalhe]||"decisão")} · ${esc(ddmm(x.quando))}${x.frente?" · "+esc(nomeFrente(x.frente)):""}</small></span></div>`).join("")}</div>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
+async function semFechar(){
+  const min=Math.max(1,Math.round((Date.now()-(SEM_ABERTA||Date.now()))/60000));
+  if(DEMO){ toast("Na demonstração nada é gravado. No painel real, a revisão fica registrada com "+plural(min,"minuto","minutos")+".",null,false,4000); return; }
+  const bt=document.getElementById("semFechar"); if(bt)bt.disabled=true;
+  let r; try{ r=await comTeto(sb.rpc("semana_revisao_fechar",{p_minutos:min,p_nota:null}),LIMITE_ACAO,"semana_revisao_fechar"); }catch(e){ r={error:e}; }
+  if(bt)bt.disabled=false;
+  const t=r.error?String(r.error.message||"falha"):String(r.data||"");
+  if(!r.error&&/^OK/.test(t)){ SEM_ABERTA=Date.now(); toast("Revisão da semana fechada em "+plural(min,"minuto","minutos")+".",null,false,3500); carregar(true); return; }
+  toast("Não gravou: "+t.replace(/^RECUSADO:?\s*/i,"").slice(0,160),"bad",false,6000);
+}
+
 /* ---------- Frentes ---------- */
 /* p4.32 (plano 113 = B2 do plano 101; s1274, 08/10/2026): o teto de estrutura a vista. Medido em 08/10: 68% das sessoes
    humanas de 7 dias foram na frente do proprio sistema, contra o teto de 25% aceito pelo Igor. A linha dessa frente troca
@@ -1764,6 +1846,8 @@ function renderSelos(){
   const nf=INV?INV.filter(t=>t.dono==="igor"&&t.status!=="feita").length:"";
   set("n-fila",nf);set("r-fila",nf);
   const rw=(D.rw||[])[0]||{}; set("r-caixa",rw.dias_sobrevida_pior!=null?rw.dias_sobrevida_pior+" d":"");
+  /* p4.58: a Semana marca so a revisao em aberto */
+  if(Array.isArray(D.semana)){ const rv=semRevisao(); set("r-semana",rv?"":"aberta"); set("n-semana",rv?"":"•"); }
   const nfr=ARV?ARV.filter(a=>a.nivel===1).length:""; set("n-frentes",nfr);set("r-frentes",nfr);
 }
 
