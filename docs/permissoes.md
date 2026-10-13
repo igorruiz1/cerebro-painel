@@ -423,7 +423,7 @@ história.
 | `~/.claude/settings.json` **da sua máquina** | sessão de nuvem: *"not read"*. O PR #7 nasceu morto para a nuvem. Não confunda com `/root/.claude/settings.json` **do container**, que é lido (rota 1) |
 | botão *sempre permitir* do prompt | grava em `.claude/settings.local.json`, que a nuvem não lê e o `.gitignore` descarta |
 | gravar qualquer settings durante a sessão | a permissão é lida uma vez, no boot. Medido: não tirou um único prompt |
-| `env`, `statusLine` ou `hooks` no `managed-settings.json` pelo setup script | arquivo no disco 9 min antes do boot e nada valeu: Explore em Opus, sem env, sem hook (13/10/2026, fato 2071) |
+| `env`, `statusLine` ou `hooks` no `managed-settings.json` pelo setup script | arquivo no disco 9 min antes do boot e nada valeu: Explore em Opus, sem env, sem hook (13/10/2026, fato 2071). Para o subagente, use as Variáveis de ambiente do ambiente (medido em 13/10, s4734) |
 | hook `SessionStart` que instala a regra | roda *"After Claude Code launches"*, depois da leitura que tentaria alterar |
 | medir rota pela ausência de prompt | o launcher já pré-aprova `Bash`, `Write`, `Edit` e 23 ferramentas Supabase. Use o controle da rota 1 |
 | sonda de permissão com `echo` | comando sem efeito colateral é aprovado sozinho, com ou sem regra |
@@ -677,3 +677,20 @@ Conclusão: o arquivo chega a tempo e as chaves `env`, `statusLine` e `hooks` n�
 nem pelo kit nem pelo `.claude/settings.json` do repo, que tinha os mesmos blocos. O que o setup script entrega
 de comprovado continua sendo `permissions` (medido em 18/09). Economia de contexto na nuvem fica por conta
 da disciplina da sessão, não do gatilho.
+
+### Medido em 13/10/2026 (s4734): as Variáveis de ambiente do ambiente levam o subagente a Sonnet
+
+A rota que sobrou para o subagente é o campo **Variáveis de ambiente** do próprio ambiente (não o Setup
+script nem settings). O Igor gravou lá `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` e
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`, e a sessão seguinte (só com o `cerebro-painel`, Claude Code 2.1.296)
+mediu:
+
+| Medida | Resultado |
+| --- | --- |
+| variável no shell filho do `claude` | presente (`sonnet`, `1`) |
+| variável em `/proc/<pid do claude>/environ` | ausente: o processo pré-aquecido (`--preload spare.sock`) recebe o env depois do `exec`, e o `/proc` só mostra o env do boot. O shell filho é a prova que vale |
+| Explore chamado **sem** `model` | rodou em `claude-sonnet-5-5` (2 mensagens no `subagents/agent-*.jsonl`) |
+
+Conclusão: na nuvem, o Sonnet do subagente vem das Variáveis de ambiente; passar `model: "sonnet"` na
+chamada fica como reforço (o parâmetro da chamada vence tudo). `statusLine` e `hooks` continuam sem caminho
+na nuvem: a regra dos 150k é manual lá. A prova automática do gatilho fica na máquina do Igor.

@@ -30,8 +30,12 @@ A auditoria de 13/10 mediu que 73% do custo foi releitura de contexto. Por isso:
 - **Bastão perto de 150k.** `.claude/contexto.mjs` mostra o contexto na linha de status e avisa
   em 120k e a cada mensagem de 150k em diante. Ele é cópia: a fonte está no `igor-cerebro-plugin`
   (`plugins/igor-cerebro/scripts/contexto.mjs`), e a cópia nunca se edita aqui.
-- **Subagente sempre em Sonnet**, Explore e Plan incluídos (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`
-  no `.claude/settings.json`, exige Claude Code v2.1.257+). Opus fica para decisão, na conversa principal.
+- **Subagente sempre em Sonnet**, Explore e Plan incluídos. Na máquina do Igor vem do `env` do
+  `.claude/settings.json` (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`, exige Claude Code v2.1.257+). Na nuvem,
+  env, statusLine e hooks do settings são ignorados (fato 2071): o Sonnet vem das Variáveis de ambiente do
+  ambiente (medido na s4734), e toda chamada de subagente (Agent/Task) passa `model: "sonnet"` como reforço;
+  o parâmetro na chamada vence tudo (doc oficial sub-agents). Contexto: na nuvem a regra dos 150k é manual.
+  Opus fica para decisão, na conversa principal.
 - PDF ou imagem grande nunca se lê inteiro; resultado grande vai para arquivo.
 
 ## Nuvem e local não são o mesmo ambiente
