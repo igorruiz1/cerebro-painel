@@ -53,20 +53,23 @@
 
 set -uo pipefail
 
-MANAGED_DIR=/etc/claude-code
+# CEREBRO_* so existem para o teste local (testes/setup-nuvem.sh): no ambiente
+# de nuvem nenhuma delas esta definida e valem os caminhos reais.
+MANAGED_DIR=${CEREBRO_MANAGED_DIR:-/etc/claude-code}
+RAIZ_REPOS=${CEREBRO_RAIZ_REPOS:-/home/user}
 MANAGED=$MANAGED_DIR/managed-settings.json
 # ${HOME:-/root} e nao $HOME: com set -u um HOME vazio mataria o script, e setup
 # script que sai diferente de zero IMPEDE A SESSAO DE ABRIR. O fallback /root
 # nao e chute: medido em 18/09/2026, a sessao de nuvem roda como root com
 # HOME=/root, mesmo usuario e mesmo home do setup script.
-USUARIO=${HOME:-/root}/.claude/settings.json
+USUARIO=${CEREBRO_USUARIO:-${HOME:-/root}/.claude/settings.json}
 
 # A fonte da verdade e a allowlist versionada no repo. O clone acontece antes do
 # setup script, entao na maioria das vezes ela esta aqui e nao precisamos manter
 # duas listas. A lista embutida abaixo e so a rede de seguranca para quando o
 # clone ainda nao existir (ambiente novo, outro layout de workspace).
 FONTE=""
-for candidato in /home/user/*/.claude/settings.json; do
+for candidato in "$RAIZ_REPOS"/*/.claude/settings.json; do
   [ -f "$candidato" ] || continue
   FONTE="$candidato"
   break
@@ -175,6 +178,55 @@ mkdir -p "$MANAGED_DIR" 2>/dev/null || true
 fundir "$MANAGED"
 fundir "$USUARIO"
 
+# GUARDA DE CONTEXTO (fato 2023; s4679 em 13/10/2026)
+# O .claude/settings.json do repo traz env (subagente em Sonnet), statusLine e o
+# gatilho de 120k/150k, mas na nuvem ele chega tarde: o Claude Code sobe do cache
+# do ambiente antes do fetch. Medido pela s4680 (fato 2048): Explore rodou em
+# Opus, nenhuma statusLine, nenhum env. Aqui eles entram pelos mesmos dois alvos
+# da allowlist, que sao lidos antes do boot e valem tambem com varios repos.
+#
+# O script vai para um caminho FIXO, que nao depende de qual repo a sessao abriu.
+# Fonte: a copia de qualquer repo clonado; sem clone, a do repo publico. Sem
+# nenhuma das duas, so este bloco e pulado. A copia nova so chega quando o cache
+# do ambiente e refeito (salvar este script de novo refaz na hora).
+GUARDA=$MANAGED_DIR/contexto.mjs
+for candidato in "$RAIZ_REPOS"/*/.claude/contexto.mjs; do
+  [ -f "$candidato" ] || continue
+  cp "$candidato" "$GUARDA" 2>/dev/null && break
+done
+if [ ! -s "$GUARDA" ] && [ -z "${CEREBRO_SEM_REDE:-}" ] && command -v curl >/dev/null 2>&1; then
+  curl -fsS --max-time 15 -o "$GUARDA" \
+    https://raw.githubusercontent.com/igorruiz1/cerebro-painel/main/.claude/contexto.mjs 2>/dev/null \
+    || rm -f "$GUARDA" 2>/dev/null || true
+fi
+
+guardar() {
+  local destino=$1
+  [ -s "$GUARDA" ] && command -v node >/dev/null 2>&1 || return 0
+  node -e '
+    const fs = require("fs")
+    const [destino, guarda] = process.argv.slice(1)
+    let atual = {}
+    if (fs.existsSync(destino)) {
+      try { atual = JSON.parse(fs.readFileSync(destino, "utf8") || "{}") } catch (e) { process.exit(3) }
+    }
+    const cmd = (modo) => `node "${guarda}" ${modo}`
+    // Variavel que alguem ja pos a mao fica como esta; so entra a que falta.
+    atual.env = { CLAUDE_CODE_SUBAGENT_MODEL: "sonnet", CLAUDE_CODE_SUBAGENT_MODEL_FORCE: "1", ...(atual.env ?? {}) }
+    // statusLine alheia nao se troca: so entra se nao houver nenhuma.
+    if (!atual.statusLine) atual.statusLine = { type: "command", command: cmd("status") }
+    atual.hooks = atual.hooks ?? {}
+    const lista = atual.hooks.UserPromptSubmit ?? []
+    const ja = lista.some((g) => (g.hooks ?? []).some((h) => String(h.command ?? "").includes("contexto.mjs")))
+    if (!ja) lista.push({ hooks: [{ type: "command", command: cmd("aviso"), timeout: 10 }] })
+    atual.hooks.UserPromptSubmit = lista
+    fs.writeFileSync(destino, JSON.stringify(atual, null, 2) + "\n")
+  ' "$destino" "$GUARDA" 2>/dev/null || true
+}
+
+guardar "$MANAGED"
+guardar "$USUARIO"
+
 # Marcador de diagnostico: na proxima sessao da para ler este arquivo e saber se
 # o setup script rodou, de onde veio a lista e quantas regras entraram — sem
 # depender da minha memoria nem da sua.
@@ -188,7 +240,9 @@ fundir "$USUARIO"
   echo "negadas=$(printf '%s' "$NEGAR" | grep -o 'mcp__Supabase__' | wc -l)"
   echo "managed=$MANAGED"
   echo "usuario=$USUARIO"
+  # guarda=0 quer dizer versao anterior a s4679 ou contexto.mjs nao achado.
+  echo "guarda=$([ -s "$GUARDA" ] && echo 1 || echo 0)"
 } > "$MANAGED_DIR/.origem-cerebro" 2>/dev/null || true
 
-echo "allowlist Supabase instalada antes do boot (fonte: $FONTE)"
+echo "allowlist Supabase instalada antes do boot (fonte: $FONTE); guarda de contexto: $([ -s "$GUARDA" ] && echo instalada || echo ausente)"
 exit 0
