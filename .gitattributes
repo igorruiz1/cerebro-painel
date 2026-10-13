@@ -24,3 +24,6 @@
 *.pdf binary
 *.woff binary
 *.woff2 binary
+
+# copia da guarda de contexto: byte a byte igual a fonte do plugin (validar.py --copia)
+.claude/contexto.mjs text eol=lf
