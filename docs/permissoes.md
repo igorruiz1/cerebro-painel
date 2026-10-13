@@ -646,3 +646,13 @@ carimbado, segunda rodada não escreve nada.
 - `"Bash(git status:*)"` — prefixo: casa `git status` e o que vier depois.
 - Uma regra literal longa demais casa com uma invocação só e não serve para
   nada. Foi o caso da regra de commit que saiu na limpeza de setembro/2026.
+
+### Medido em 13/10/2026 (s4680, fato 2048): env, statusLine e hooks do repo também chegam tarde
+
+A rota 3 não falha só para a allowlist. Numa sessão de nuvem com só o `cerebro-painel`, aberta logo depois do
+merge do #128, o `.claude/settings.json` do repo tinha `env` (subagente em Sonnet), `statusLine` e o gatilho
+`UserPromptSubmit`, e nenhum valeu: o Explore rodou em `claude-opus-5-5`, nenhuma linha de status rodou e o env
+do shell não tinha a variável. Causa: a mesma do snapshot acima. O `setup-nuvem.sh` passou a levar os três
+blocos aos dois alvos, com o `contexto.mjs` num caminho fixo (`/etc/claude-code/contexto.mjs`), o que também
+cobre sessão com vários repos. Quando o repo e o kit registram o gatilho juntos, o `contexto.mjs` deixa só um
+falar por mensagem. Prova pendente: sessão nova depois de salvar o setup script no ambiente.

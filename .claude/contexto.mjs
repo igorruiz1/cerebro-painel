@@ -1,4 +1,4 @@
-// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 1233030852619ec8b1d8e4f87b3f85ba8cd5bcf17fdc2cd54f31f399b7863385
+// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: cd17551fb4593c88dcefceab49cc00103d7a15bf8893e23398096e73904141db
 // Guarda de contexto da simbiose (fato 2023, 13/10/2026).
 //
 // Por que existe: a auditoria de 13/10 mediu que 73% do custo foi RELEITURA de
@@ -28,9 +28,12 @@
 // copia em .claude/contexto.mjs, porque sessao de nuvem nao instala plugin. Mexeu
 // aqui: rode `python3 skills/igor-plugin-empacotar/scripts/validar.py . --carimbar`
 // e copie o arquivo para os 3 repos. A primeira linha leva o hash do corpo; o
-// validador e o teste do painel reprovam copia editada a mao.
+// validador e o teste do painel reprovam copia editada a mao. Na nuvem, o
+// scripts/setup-nuvem.sh do cerebro-painel instala uma copia em /etc/claude-code
+// (o settings do repo chega tarde: cache do ambiente, fato 2048).
 
-import { readFileSync, writeFileSync, existsSync, openSync, readSync, fstatSync, closeSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, openSync, readSync, fstatSync, closeSync, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -115,6 +118,29 @@ function status() {
   process.stdout.write(`${modelo}ctx ${k(n)}/${k(BASTAO)}${marca}`)
 }
 
+// Na nuvem o gatilho pode estar registrado duas vezes: pelo kit do ambiente
+// (setup-nuvem.sh, /etc/claude-code) e pelo .claude/settings.json do repo, quando
+// o cache do ambiente e novo o bastante para traze-lo. Os dois rodam juntos na
+// mesma mensagem; quem cria a trava primeiro fala, o outro fica calado. A mesma
+// mensagem repetida 30 s depois e mensagem nova e volta a ser avisada.
+function primeiroDestaMensagem(e) {
+  const chave = createHash('sha1').update(`${e.session_id}\n${e.prompt ?? ''}`).digest('hex').slice(0, 16)
+  const trava = join(tmpdir(), `cerebro-ctx-${chave}.trava`)
+  try {
+    closeSync(openSync(trava, 'wx'))
+    return true
+  } catch (erro) {
+    if (erro.code !== 'EEXIST') return true
+    try {
+      if (Date.now() - statSync(trava).mtimeMs < 30000) return false
+      writeFileSync(trava, '')
+      return true
+    } catch {
+      return true
+    }
+  }
+}
+
 function aviso(doPlugin) {
   const e = lerStdin()
   if (doPlugin) {
@@ -136,7 +162,7 @@ function aviso(doPlugin) {
       'Feche o que esta aberto e prepare o bastao; nao abra frente nova.'
     gravarEstado(e.session_id, { ...estado, avisou: true })
   }
-  if (!texto) return
+  if (!texto || !primeiroDestaMensagem(e)) return
   process.stdout.write(
     JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: texto } })
   )
