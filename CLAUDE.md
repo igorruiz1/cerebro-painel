@@ -20,6 +20,20 @@ O `gh` **não existe** na máquina do Igor — use a API, como acima. Branch
 **entre nele** — commit na branch dele. Abrir PR concorrente sobre o mesmo
 arquivo é perda garantida.
 
+## Economia de contexto (fato 2023, 13/10/2026)
+
+A auditoria de 13/10 mediu que 73% do custo foi releitura de contexto. Por isso:
+
+- **1 sessão = 1 tarefa = 1 repo.** Sessão de nuvem com mais de um repo não carrega o gatilho de
+  nenhum (doc oficial, cloud-environments). Outro repo entra só quando a tarefa pede (`add_repo`).
+  O `cerebro-backup` roda sozinho no Actions e só entra em sessão para mexer no workflow.
+- **Bastão perto de 150k.** `.claude/contexto.mjs` mostra o contexto na linha de status e avisa
+  em 120k e a cada mensagem de 150k em diante. Ele é cópia: a fonte está no `igor-cerebro-plugin`
+  (`plugins/igor-cerebro/scripts/contexto.mjs`), e a cópia nunca se edita aqui.
+- **Subagente sempre em Sonnet**, Explore e Plan incluídos (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`
+  no `.claude/settings.json`, exige Claude Code v2.1.257+). Opus fica para decisão, na conversa principal.
+- PDF ou imagem grande nunca se lê inteiro; resultado grande vai para arquivo.
+
 ## Nuvem e local não são o mesmo ambiente
 
 O mesmo servidor MCP tem nomes diferentes nas duas superfícies, e a regra de

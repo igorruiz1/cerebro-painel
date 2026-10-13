@@ -26,5 +26,26 @@
       "Bash(git checkout:*)",
       "Bash(git -c *)"
     ]
+  },
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"$CLAUDE_PROJECT_DIR/.claude/contexto.mjs\" status"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/contexto.mjs\" aviso",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }
