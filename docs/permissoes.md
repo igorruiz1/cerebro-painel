@@ -423,6 +423,7 @@ história.
 | `~/.claude/settings.json` **da sua máquina** | sessão de nuvem: *"not read"*. O PR #7 nasceu morto para a nuvem. Não confunda com `/root/.claude/settings.json` **do container**, que é lido (rota 1) |
 | botão *sempre permitir* do prompt | grava em `.claude/settings.local.json`, que a nuvem não lê e o `.gitignore` descarta |
 | gravar qualquer settings durante a sessão | a permissão é lida uma vez, no boot. Medido: não tirou um único prompt |
+| `env`, `statusLine` ou `hooks` no `managed-settings.json` pelo setup script | arquivo no disco 9 min antes do boot e nada valeu: Explore em Opus, sem env, sem hook (13/10/2026, fato 2071) |
 | hook `SessionStart` que instala a regra | roda *"After Claude Code launches"*, depois da leitura que tentaria alterar |
 | medir rota pela ausência de prompt | o launcher já pré-aprova `Bash`, `Write`, `Edit` e 23 ferramentas Supabase. Use o controle da rota 1 |
 | sonda de permissão com `echo` | comando sem efeito colateral é aprovado sozinho, com ou sem regra |
@@ -655,4 +656,24 @@ merge do #128, o `.claude/settings.json` do repo tinha `env` (subagente em Sonne
 do shell não tinha a variável. Causa: a mesma do snapshot acima. O `setup-nuvem.sh` passou a levar os três
 blocos aos dois alvos, com o `contexto.mjs` num caminho fixo (`/etc/claude-code/contexto.mjs`), o que também
 cobre sessão com vários repos. Quando o repo e o kit registram o gatilho juntos, o `contexto.mjs` deixa só um
-falar por mensagem. Prova pendente: sessão nova depois de salvar o setup script no ambiente.
+falar por mensagem.
+
+### Medido em 13/10/2026 (s4733, fato 2071): o kit no Setup script não alcança env, statusLine nem hooks
+
+A prova do kit falhou duas vezes. Na primeira sessão depois de salvar o ambiente (s4732, fato 2070), o
+processo `claude` subiu 78 s antes de o setup gravar o arquivo, e o atraso parecia a causa. A segunda sessão
+(s4733) derrubou essa leitura: o `/etc/claude-code/.origem-cerebro` já estava no disco com
+`escrito_em=17:05 -04` (mtime idêntico ao da s4732, ou seja, veio do cache do ambiente) e o `claude` subiu
+às 17:14:49 -04, **9 min 46 s depois**. O `managed-settings.json` tinha os três blocos e mesmo assim:
+
+| Item do fato 2048 | Resultado |
+| --- | --- |
+| `CLAUDE_CODE_SUBAGENT_MODEL` em `/proc/<pid do claude>/environ` e no shell filho | ausente |
+| `contexto.mjs aviso` com `CEREBRO_CTX_AVISO=1000` | o script responde quando rodado à mão; como hook, nenhum registro no transcript |
+| Explore em Sonnet | rodou em `claude-opus-5-5` |
+| `/tmp/cerebro-ctx-<sessão>.json` | não existia antes do teste manual |
+
+Conclusão: o arquivo chega a tempo e as chaves `env`, `statusLine` e `hooks` não valem na sessão de nuvem,
+nem pelo kit nem pelo `.claude/settings.json` do repo, que tinha os mesmos blocos. O que o setup script entrega
+de comprovado continua sendo `permissions` (medido em 18/09). Economia de contexto na nuvem fica por conta
+da disciplina da sessão, não do gatilho.
