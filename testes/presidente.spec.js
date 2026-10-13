@@ -3816,7 +3816,7 @@ test('Subida (t2198): a fila mostra a peca, a pasta destino e o que ela substitu
   await raiz.locator('.sb-item').first().click();
   await expect(page.locator('#sbDestino')).toHaveText('00_Fundacao/VIGENTE/ata_exemplo_v02.md');
   await expect(page.locator('#sbSubstitui')).toContainText('ata_exemplo_v01.md');
-  await expect(page.locator('#sbSubstitui')).toContainText('_superado');
+  await expect(page.locator('#sbSubstitui')).toContainText('_ARQUIVO do mês');
   await page.waitForTimeout(300);
   expect(await sbDecisoes(page),'subida sem clique: carregar e abrir chamaram subida_decidir').toEqual([]);
   /* so o toque aprova, com o md5 que a tela mostrou */

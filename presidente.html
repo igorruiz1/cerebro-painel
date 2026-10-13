@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-zRZ4Z7V9gZb54qrrJH6N/ARNHK+1mqkUS8Dpyl1a2eA=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WITalGEMac3Dy/V6W/xCUXzOMtJEXncM2BAxO8flSbc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -3485,7 +3485,7 @@ function sbAbrir(id){
   SB.item=p; SB.ciente=false; SB.gravando=false;
   const v=sbVer(p), marcada=sbMarcada(p);
   const sub=p.substitui&&p.substitui.nome
-    ?`<p><b class="sb-arq">${esc(p.substitui.nome)}</b>${p.substitui.mtime?", de "+esc(ddmm(p.substitui.mtime)):""}. Sai da pasta para _superado e continua guardada.</p>`
+    ?`<p><b class="sb-arq">${esc(p.substitui.nome)}</b>${p.substitui.mtime?", de "+esc(ddmm(p.substitui.mtime)):""}. Sai da pasta para _ARQUIVO do mês, na raiz do compartilhado, e continua guardada.</p>`
     :`<p>Nada: é peça nova nesta pasta.</p>`;
   const decide=p.estado==="pendente"?`<div class="bloco ms-decide"><span class="rot">Sua decisão</span>
       ${marcada?`<button type="button" class="sec sb-ciente" id="sbCiente" aria-pressed="false" data-acao="sbCiente">Vi os achados: pode subir assim</button>`:""}
@@ -3533,7 +3533,7 @@ function sbSubir(){
   const p=SB.item; if(!p)return;
   if(sbMarcada(p)&&!SB.ciente){ const av=document.getElementById("sbAviso");
     if(av)av.textContent="O filtro de muro marcou esta peça. Leia o que ele achou e toque em “Vi os achados” antes de subir. Nada foi gravado."; return; }
-  return sbGravar({p_decisao:"aprovar",p_ciente:sbMarcada(p)&&SB.ciente,p_nota:null},"Aprovada. O PC sobe na próxima hora e guarda a anterior em _superado.");
+  return sbGravar({p_decisao:"aprovar",p_ciente:sbMarcada(p)&&SB.ciente,p_nota:null},"Aprovada. O PC sobe na próxima hora e guarda a anterior no _ARQUIVO do mês.");
 }
 function sbRecusar(){
   const t=document.getElementById("sbTxtRecusar"), nota=t?t.value.trim():"";
