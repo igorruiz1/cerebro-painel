@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-PUQzTjkHO2OoHQQQW8ts6iT/CHhb9biQ3hwOlSWWd1M=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WITalGEMac3Dy/V6W/xCUXzOMtJEXncM2BAxO8flSbc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -461,6 +461,17 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 /* p4.56 (p134): botoes do Enviar daqui, mesmo desenho das decisoes da peca */
 .ms-envio{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ms-envio button{min-width:0;line-height:1.2;overflow-wrap:anywhere}
+/* estilo:subida · t2198 (12/10/2026, s2867): fila Subir ao compartilhado. So classes sb-, so tokens e var(--fs-*). */
+.sb-raiz{display:flex;flex-direction:column;gap:10px;min-width:0}
+.sb-raiz[hidden]{display:none}
+.sb-ver{white-space:nowrap}
+.sb-ver.ok{color:var(--ok)}
+.sb-ver.w{color:var(--warn)}
+.sb-arq{overflow-wrap:anywhere}
+.sb-lista{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:var(--fs-2);overflow-wrap:anywhere}
+.sb-ciente[aria-pressed="true"]{border-color:var(--ok);color:var(--ok);font-weight:700}
+.sb-recentes summary{min-height:44px;display:flex;align-items:center;font-size:var(--fs-2);color:var(--mut)}
+/* fim estilo:subida */
 </style>
 </head>
 <body>
@@ -584,6 +595,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
       </section>
 
       <section class="pane" id="p-mesa" aria-label="Mesa">
+        <div id="sb-raiz" class="sb-raiz" hidden></div>
         <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
       </section>
 
@@ -618,7 +630,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.61";
+const VERP="p4.62";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -1109,7 +1121,7 @@ async function carregar(forcar){
 async function carregar_(forcar){
   falha("");
   /* p4.4: a Mesa tem leitura propria (mesa_painel), em paralelo; erro dela fica na aba, nao aqui */
-  msCarregar();
+  msCarregar(); sbCarregar();
   const avisos=[];
   if(forcar){ const m=await comTetoR(sb.rpc("painel_snapshot_montar",{p_chaves:CHAVES}),LIMITE_ACAO,"painel_snapshot_montar");
     if(semSessao(m))return sessaoCaiu();
@@ -1184,7 +1196,7 @@ function ir(aba){
   document.querySelectorAll("[data-aba]").forEach(b=>{const on=b.dataset.aba===aba;b.setAttribute("aria-current",on?"page":"false");});
   document.getElementById("tituloAba").textContent=NOMES[aba];
   window.scrollTo(0,0);
-  if(aba==="mesa")msCarregar();
+  if(aba==="mesa"){ msCarregar(); sbCarregar(); }
   if(aba==="semana"&&!SEM_ABERTA)SEM_ABERTA=Date.now();
 }
 function irColuna(c){COL=c;renderFila();ir("fila");}
@@ -3411,6 +3423,131 @@ function msAbrirPeca(){
     ok:"O iPhone baixa arquivo ."+x+" em vez de mostrar: abra pelo app Arquivos, em Downloads."});
 }
 /* fim modulo:mesa */
+
+/* modulo:subida · t2198 (12/10/2026, s2867): fila "Subir ao compartilhado" da Dabli (item 5 do plano de reestruturacao
+   v01, four-eyes). O que e final e pertence a VIGENTE ou Fundacao nao cruza sozinho: vira pedido nesta fila com a peca,
+   a pasta destino, o que ela substitui e o veredito do filtro de muro (card 2212). So o toque em "Subir ao
+   compartilhado" chama subida_decidir; o PC sobe na rodada seguinte, guarda a anterior e confere o md5.
+   Carregar a fila, abrir a folha e marcar "Vi os achados" nunca chamam o banco. Peca REPROVADA ou SEM_LEITURA so sobe
+   depois de marcar que viu os achados. O banco repete as travas: subida_decidir exige o JWT do dono, o md5 igual ao
+   que a tela mostrou e a ciencia dos achados; o gatilho da fila nao deixa a maquina aprovar.
+   Fala com a casca por: sb, comTetoR, LIMITE_RECARGA, LIMITE_ACAO, esc, toast, mostrarFolha, fecharFolha, ddmm,
+   nomeFrente, ACOES e, para abrir a copia da peca, msAbrirAssinado do modulo:mesa. Desenha em #sb-raiz. */
+const SB_VER={APROVADO:{rot:"Filtro de muro: nada achado",cls:"ok"},REPROVADO:{rot:"Filtro de muro: achou pontos",cls:"w"},
+  SEM_LEITURA:{rot:"Filtro não lê este formato",cls:"w"}};
+const SB_VER_OUTRO={rot:"Filtro de muro sem veredito",cls:"w"};
+const SB_EST={pendente:"esperando você",aprovado:"aprovada, sobe na próxima hora",falhou:"não subiu",subido:"subiu",recusado:"não sobe"};
+const SB_ACHADO={"outra frente":"Assunto de outra frente","segredo":"Senha ou chave","dado pessoal":"Dado pessoal"};
+const SB={dados:null,erro:"",carga:null,item:null,ciente:false,gravando:false};
+const sbFila=d=>d&&Array.isArray(d.fila)?d.fila:[];
+const sbRecentes=d=>d&&Array.isArray(d.recentes)?d.recentes:[];
+const sbVer=p=>SB_VER[p&&p.veredito]||SB_VER_OUTRO;
+const sbMarcada=p=>!p||p.veredito!=="APROVADO";
+const sbPedir=(fn,ms,rot)=>comTetoR(Promise.resolve().then(fn),ms,rot);
+function sbCarregar(){ if(!SB.carga)SB.carga=sbCarregar_().finally(()=>{SB.carga=null;}); return SB.carga; }
+async function sbCarregar_(){
+  const {data,error}=await sbPedir(()=>sb.rpc("subida_painel"),LIMITE_RECARGA,"subida_painel");
+  /* banco sem a fila ainda (funcao nao existe): a aba segue sem o bloco, sem aviso */
+  if(error&&(error.code==="PGRST202"||/could not find the function/i.test(error.message||""))){ SB.erro=""; SB.dados=null; }
+  else if(error) SB.erro="Não consegui ler a fila do compartilhado: "+error.message+". Toque em recarregar.";
+  else{ SB.erro=""; SB.dados=data&&typeof data==="object"?data:null; }
+  sbRender();
+}
+function sbRender(){
+  const raiz=document.getElementById("sb-raiz"); if(!raiz)return;
+  const fila=sbFila(SB.dados), rec=sbRecentes(SB.dados);
+  if(!fila.length&&!rec.length&&!SB.erro){ raiz.hidden=true; raiz.innerHTML=""; return; }
+  const pend=fila.filter(p=>p.estado==="pendente").length;
+  raiz.hidden=false;
+  raiz.innerHTML=(SB.erro?`<div class="aviso" role="alert">${esc(SB.erro)}</div>`:"")
+    +(fila.length?`<h2>Subir ao compartilhado${pend?" ("+esc(pend)+")":""}</h2><div class="pilha">${fila.map(sbItemHtml).join("")}</div>`:"")
+    +(rec.length?`<details class="sb-recentes"><summary>Compartilhado, últimos 7 dias (${esc(rec.length)})</summary><div class="pilha">${rec.map(p=>`<div class="ms-saiu"><span class="ms-tit l2">${esc(p.titulo||p.nome||"peça sem título")}</span><span class="ms-meta">${esc(SB_EST[p.estado]||"estado desconhecido")} · ${esc(p.destino||"")}</span></div>`).join("")}</div></details>`:"");
+}
+function sbItemHtml(p){
+  const v=sbVer(p), sub=p.substitui&&p.substitui.nome?"substitui "+p.substitui.nome:"peça nova na pasta";
+  return `<button type="button" class="ms-item sb-item" data-acao="sbAbrir" data-a1="${+p.id}">
+      <span class="ms-tit l2">${esc(p.titulo||p.nome||"peça sem título")}</span>
+      <span class="ms-meta">para ${esc(p.destino||"pasta sem nome")} · ${esc(sub)}</span>
+      <span class="ms-meta2"><span class="sb-ver ${v.cls}">${esc(v.rot)}</span><span class="ms-dias ${p.estado==="falhou"?"w":""}">${esc(SB_EST[p.estado]||"estado desconhecido")}</span></span>
+    </button>`;
+}
+function sbAchados(p){
+  const a=p.achados&&typeof p.achados==="object"?p.achados:{};
+  if(p.veredito==="SEM_LEITURA"){ const m=String(a.motivo||"").match(/formato (\.[a-z0-9]{1,6})/i);
+    return `<p>O filtro não lê ${m?"arquivo "+esc(m[1].toLowerCase()):"este formato"}. Abra a peça e confira à mão antes de subir.</p>`; }
+  const l=Array.isArray(a.achados)?a.achados:[];
+  if(!l.length)return `<p>O filtro marcou a peça sem dizer onde. Abra a peça e confira.</p>`;
+  const qual=x=>x.tipo==="outra frente"?nomeFrente(String(x.qual||"")):String(x.qual||"");
+  return `<ul class="sb-lista">${l.slice(0,12).map(x=>`<li>${esc(SB_ACHADO[x.tipo]||"Ponto do muro")}${x.qual?": "+esc(qual(x)):""}${x.linha!=null?` <span class="mut">linha ${esc(x.linha)}</span>`:""}</li>`).join("")}</ul>${l.length>12?`<p class="mut">E mais ${esc(l.length-12)}.</p>`:""}`;
+}
+function sbAbrir(id){
+  const p=sbFila(SB.dados).find(x=>+x.id===+id); if(!p)return;
+  SB.item=p; SB.ciente=false; SB.gravando=false;
+  const v=sbVer(p), marcada=sbMarcada(p);
+  const sub=p.substitui&&p.substitui.nome
+    ?`<p><b class="sb-arq">${esc(p.substitui.nome)}</b>${p.substitui.mtime?", de "+esc(ddmm(p.substitui.mtime)):""}. Sai da pasta para _ARQUIVO do mês, na raiz do compartilhado, e continua guardada.</p>`
+    :`<p>Nada: é peça nova nesta pasta.</p>`;
+  const decide=p.estado==="pendente"?`<div class="bloco ms-decide"><span class="rot">Sua decisão</span>
+      ${marcada?`<button type="button" class="sec sb-ciente" id="sbCiente" aria-pressed="false" data-acao="sbCiente">Vi os achados: pode subir assim</button>`:""}
+      <div class="ms-decisoes" role="group" aria-label="Sua decisão">
+        <button type="button" class="pri" id="sbBtSubir" data-acao="sbSubir">Subir ao compartilhado</button>
+        <button type="button" class="sec" id="sbAbreRecusar" aria-expanded="false" aria-controls="sbNotaRecusar" data-acao="sbRecusarAbre">Não subir</button>
+      </div>
+      <p class="ms-aviso" id="sbAviso" role="alert"></p>
+      <div class="campo ms-nota" id="sbNotaRecusar" hidden><label for="sbTxtRecusar" class="mut">Por que não sobe</label><textarea id="sbTxtRecusar" rows="3"></textarea><button type="button" class="pri" id="sbBtRecusar" data-acao="sbRecusar">Confirmar</button></div>
+    </div>`
+    :p.estado==="falhou"?`<div class="aviso" id="sbErro">Não subiu: ${esc(p.erro||"sem motivo escrito")}. Nada mudou no compartilhado.</div>`
+    :`<p class="mut" id="sbEstado">Aprovada por você${p.decidido_em?" em "+esc(ddmm(p.decidido_em)):""}. O PC sobe na próxima hora, com ele ligado.</p>`;
+  mostrarFolha(`<h3 id="folhaTit">${esc(p.titulo||p.nome||"peça sem título")}</h3>
+    <div class="chips"><span class="chip ${v.cls}">${esc(v.rot)}</span><span class="chip">${esc(SB_EST[p.estado]||"estado desconhecido")}</span></div>
+    ${p.peca?`<button type="button" class="sec ms-abrir" id="sbPeca" data-acao="sbAbrirPeca">Abrir a peça</button>`:""}
+    <div class="bloco"><span class="rot">A peça</span><p class="sb-arq">${esc(p.origem||p.nome||"")} <span class="mut num">md5 ${esc(String(p.md5||"").slice(0,8))}</span></p></div>
+    <div class="bloco"><span class="rot">Vai para</span><p class="sb-arq" id="sbDestino">${esc(p.destino||"")}/${esc(p.nome||"")}</p></div>
+    <div class="bloco"><span class="rot">O que ela substitui</span><div id="sbSubstitui">${sub}</div></div>
+    <div class="bloco"><span class="rot">Por que pede o seu toque</span><p>${esc(p.porque||"Pasta da sociedade.")}</p></div>
+    ${marcada?`<div class="bloco sb-achados" id="sbAchados"><span class="rot">O que o filtro achou</span>${sbAchados(p)}</div>`:""}
+    ${decide}`);
+}
+function sbCiente(){
+  SB.ciente=!SB.ciente;
+  const b=document.getElementById("sbCiente"); if(b)b.setAttribute("aria-pressed",SB.ciente?"true":"false");
+  const av=document.getElementById("sbAviso"); if(av)av.textContent="";
+}
+function sbRecusarAbre(){
+  const c=document.getElementById("sbNotaRecusar"), b=document.getElementById("sbAbreRecusar"); if(!c)return;
+  c.hidden=!c.hidden; if(b)b.setAttribute("aria-expanded",c.hidden?"false":"true");
+  if(!c.hidden){ const t=document.getElementById("sbTxtRecusar"); if(t)t.focus(); }
+}
+/* uma escrita por vez; o banco devolve OK... ou RECUSADO... como a Mesa */
+async function sbGravar(args,okTxt){
+  const p=SB.item, av=document.getElementById("sbAviso"); if(!p||SB.gravando)return;
+  SB.gravando=true; document.querySelectorAll("#sbBtSubir,#sbBtRecusar").forEach(b=>{b.disabled=true;});
+  const {data,error}=await sbPedir(()=>sb.rpc("subida_decidir",Object.assign({p_id:+p.id,p_md5:p.md5||null},args)),LIMITE_ACAO,"subida_decidir");
+  SB.gravando=false; document.querySelectorAll("#sbBtSubir,#sbBtRecusar").forEach(b=>{b.disabled=false;});
+  const txt=error?"":String(data==null?"":data);
+  if(!error&&/^OK/.test(txt)){ fecharFolha(); toast(okTxt,null,false,6000); sbCarregar(); return; }
+  const msg=error?"Não gravei: "+error.message+".":"O banco não aceitou: "+(txt.replace(/^RECUSADO:\s*/,"")||"sem resposta")+".";
+  if(av)av.textContent=msg; else toast(msg,"bad",false,6000);
+}
+function sbSubir(){
+  const p=SB.item; if(!p)return;
+  if(sbMarcada(p)&&!SB.ciente){ const av=document.getElementById("sbAviso");
+    if(av)av.textContent="O filtro de muro marcou esta peça. Leia o que ele achou e toque em “Vi os achados” antes de subir. Nada foi gravado."; return; }
+  return sbGravar({p_decisao:"aprovar",p_ciente:sbMarcada(p)&&SB.ciente,p_nota:null},"Aprovada. O PC sobe na próxima hora e guarda a anterior no _ARQUIVO do mês.");
+}
+function sbRecusar(){
+  const t=document.getElementById("sbTxtRecusar"), nota=t?t.value.trim():"";
+  if(!nota){ const av=document.getElementById("sbAviso"); if(av)av.textContent="Diga por que a peça não sobe. Sem isso, nada é gravado."; return; }
+  return sbGravar({p_decisao:"recusar",p_ciente:false,p_nota:nota},"Ficou só na sua pasta. Nada subiu.");
+}
+function sbAbrirPeca(){
+  const p=SB.item; if(!p||!p.peca)return;
+  return msAbrirAssinado(MS_BUCKET_PECA,p.peca,MS_URL_PECA,{o:"a peça",aberto:"Peça aberta",da:"da peça",rotulo:"peca"});
+}
+/* as acoes entram no mesmo dicionario: ligarAcoes confere o nome na hora do toque */
+Object.assign(ACOES,{sbAbrir:el=>sbAbrir(+el.dataset.a1),sbCiente:()=>sbCiente(),sbSubir:()=>sbSubir(),
+  sbRecusarAbre:()=>sbRecusarAbre(),sbRecusar:()=>sbRecusar(),sbAbrirPeca:()=>sbAbrirPeca()});
+/* fim modulo:subida */
 
 /* p4.12: porta da saida da demonstracao (ver portaFator_) */
 async function demoPortaSaida(){

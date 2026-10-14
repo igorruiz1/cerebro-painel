@@ -105,3 +105,24 @@ Sem `p_prova_path` (null), o banco registra a baixa como declaração datada; co
 4. Chame `msCarregar()` ao abrir a aba e no recarregar, e `msRender()` quando a casca redesenhar.
 5. Crie no banco as três RPC e os dois buckets com a mesma RLS de dono. Os testes do módulo estão em
    `testes/presidente.spec.js`, nos testes que começam com "Mesa:".
+
+## Fila "Subir ao compartilhado" (t2198, 12/10/2026)
+
+Peça final da sociedade (pasta VIGENTE, Fundação e as demais fora da área do dono) não cruza sozinha para o
+compartilhado: vira pedido numa fila que aparece no topo da aba Mesa, com a peça, a pasta destino, o que ela
+substitui e o veredito do filtro de muro. Só o toque em "Subir ao compartilhado" aprova. O painel não escreve em
+disco: quem copia é o PC, na rodada seguinte, só para pedido aprovado; ele guarda a anterior e confere o md5.
+
+| Peça | O que faz |
+| --- | --- |
+| `rpc("subida_painel")` | Leitura. Devolve `{fila: [...], recentes: [...]}`. Banco sem a função: o bloco some, sem aviso. |
+| `rpc("subida_decidir", {p_id, p_md5, p_decisao, p_ciente, p_nota})` | `aprovar` leva o md5 que a tela mostrou; `recusar` exige nota. Devolve `OK...` ou `RECUSADO...`. |
+
+Linha da fila: `{id, titulo, origem, md5, destino, nome, substitui: {nome, md5, mtime} | null, veredito, achados, porque,
+estado, pedido_em, decidido_em, subido_em, erro, arquivado, peca}`. `veredito`: `APROVADO`, `REPROVADO` ou
+`SEM_LEITURA`; `estado`: `pendente`, `aprovado`, `falhou` (na fila), `subido`, `recusado` (em recentes).
+
+- Carregar, abrir a folha e marcar "Vi os achados" não chamam o banco.
+- Peça `REPROVADO` ou `SEM_LEITURA` só sobe depois de "Vi os achados"; sem isso a tela avisa e não grava.
+- O banco repete as travas: `subida_decidir` exige o JWT do dono e o md5 igual; o gatilho da fila não deixa a
+  máquina aprovar nem o dono marcar como subido. Testes: os que começam com "Subida (t2198)".
