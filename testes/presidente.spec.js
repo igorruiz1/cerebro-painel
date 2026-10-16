@@ -3343,19 +3343,59 @@ test('p4.47 sugestoes: grupo no Hoje; Virar card e Descartar gravam pela painel_
   expect(ruins, 'texto do grupo abaixo de 4,5:1').toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 360').toBe(true);
   await linhas.nth(0).locator('button[data-acao="sugAceitar"]').click();
+  await page.locator('button[data-acao="sugConfirmar"]').click();
   await expect(linhas, 'a sugestao aceita sai do grupo na hora').toHaveCount(1);
   expect(await responder(page), 'nada grava antes do desfazer').toEqual([]);
   await page.locator('#tbtn').click();
   await expect(linhas, 'desfazer devolve a sugestao').toHaveCount(2);
   expect(await responder(page)).toEqual([]);
   await linhas.nth(0).locator('button[data-acao="sugAceitar"]').click();
+  await page.locator('button[data-acao="sugConfirmar"]').click();
   await page.evaluate(()=>enviar());
-  expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:41,p_ato:'aceito',p_nota:null}]);
+  const aceite = await responder(page);
+  expect(aceite.length).toBe(1);
+  expect(aceite[0]).toMatchObject({p_tipo:'SUGESTAO',p_id:41,p_ato:'aceito',p_nota:null});
+  expect(aceite[0].p_prazo, 'o aceite leva a data do card').toMatch(/^\d{4}-\d{2}-\d{2}$/);
   await page.evaluate(()=>{window.__rpc=[];});
   await box.locator('button[data-acao="sugDescartar"]').first().click();
   await page.evaluate(()=>enviar());
   expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:42,p_ato:'descartar',p_nota:null}]);
   expect(erros).toEqual([]);
+});
+
+/* p4.63 (fato 2217 item 0b, s5417 16/10/2026): Virar card pede a data antes de confirmar. Padrao: o prazo da sugestao, se houver
+   e nao passou; senao hoje pelo relogio de Cuiaba (o teste roda com o navegador em Tokyo, onde a data local ja e a de amanha).
+   Data no passado e recusada; Descartar nao pede data; sem a data escolhida nada grava. O origin/main (p4.62) reprova:
+   Virar card gravava direto, sem folha #sugDt e sem p_prazo. */
+test('p4.63 Virar card pede a data: padrao = prazo da sugestao, senao hoje de Cuiaba; vai como p_prazo', async ({browser})=>{
+  const ctx = await browser.newContext({timezoneId:'Asia/Tokyo', viewport:{width:360,height:800}});
+  const page = await ctx.newPage();
+  const cuiaba = await page.evaluate(()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Cuiaba'}).format(new Date()));
+  const futuro = new Date(Date.now()+9*864e5).toISOString().slice(0,10);
+  await page.addInitScript(c=>{ window.__dados={sug:c}; },
+    [{id:51,fonte:'sensor-dabli',frente_slug:'20-contrato-pj',titulo:'Sugestao com prazo',dias:1,prazo:futuro},
+     {id:52,fonte:'sensor-arquivo',frente_slug:'11-renda-alt',titulo:'Sugestao sem prazo',dias:0,prazo:null}]);
+  const erros = await abrir(page);
+  const linhas = page.locator('#sugBox .cob3');
+  await linhas.nth(0).locator('button[data-acao="sugAceitar"]').click();
+  await expect(page.locator('#sugDt'), 'com prazo na sugestao, a data abre nele').toHaveValue(futuro);
+  expect(await responder(page), 'abrir a folha nao grava').toEqual([]);
+  await page.locator('#sugDt').fill('2020-01-01');
+  await page.locator('button[data-acao="sugConfirmar"]').click();
+  await expect(page.locator('#sugErro'), 'data no passado e recusada').toBeVisible();
+  await expect(linhas, 'recusada, a sugestao fica').toHaveCount(2);
+  await page.locator('#sugDt').fill(futuro);
+  await page.locator('button[data-acao="sugConfirmar"]').click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:51,p_ato:'aceito',p_nota:null,p_prazo:futuro}]);
+  await page.evaluate(()=>{window.__rpc=[];});
+  await page.locator('#sugBox .cob3').first().locator('button[data-acao="sugAceitar"]').click();
+  await expect(page.locator('#sugDt'), 'sem prazo, o padrao e hoje de Cuiaba, nao o do aparelho').toHaveValue(cuiaba);
+  await page.locator('button[data-acao="sugConfirmar"]').click();
+  await page.evaluate(()=>enviar());
+  expect(await responder(page)).toEqual([{p_tipo:'SUGESTAO',p_id:52,p_ato:'aceito',p_nota:null,p_prazo:cuiaba}]);
+  expect(erros).toEqual([]);
+  await ctx.close();
 });
 
 test('p4.47 sugestoes: snapshot sem a chave sug esconde o grupo e diz que a parte nao chegou, sem erro', async ({page})=>{
