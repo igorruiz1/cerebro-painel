@@ -2882,6 +2882,40 @@ test('p4.38 frente do socio: quatro blocos da v_dabli_presidente no lugar da lis
   expect(erros).toEqual([]);
 });
 
+/* p4.64 (card 1562, s5706, 16/10/2026): o bloco A chegou a 43 itens e virou a lista generica de novo. A classe que se cobra:
+   bloco A sem teto. Mostra 7, na ordem da view, e o resto atras de "ver todos"; os outros blocos nao tem teto. A p4.63 reprova. */
+test('p4.64 frente do socio: bloco A mostra 7 itens e o resto atras de "ver todos", sem rolagem a 360', async ({page})=>{
+  await page.addInitScript(()=>{
+    const a=Array.from({length:12},(_,i)=>({ordem:1,bloco:'A · EXEMPLO',ref:'t'+(100+i),item:'Item de exemplo '+(i+1),detalhe:'ato do Igor',prazo:null,dias_parado:0,recomendacao:'decida na data'}));
+    const b=Array.from({length:9},(_,i)=>({ordem:2,bloco:'B · EXEMPLO',ref:'t'+(200+i),item:'Terceiro de exemplo '+(i+1),detalhe:'Terceiro',prazo:null,dias_parado:0,recomendacao:'quem deve a proxima resposta: o terceiro'}));
+    window.__tab={v_dabli_presidente:a.concat(b)}; });
+  const erros = await abrir(page);
+  await page.setViewportSize({width:360, height:820});
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  const b = page.locator('#folha section.d4');
+  await expect(b).toHaveCount(4);
+  expect(await b.nth(0).locator('.rot').textContent(), 'a contagem segue sendo o total').toBe('Só o presidente decide12');
+  const visiveis = b.nth(0).locator('.d4i:visible');
+  await expect(visiveis, 'bloco A com 7 visiveis').toHaveCount(7);
+  expect(await visiveis.locator('.t').allTextContents(), 'os 7 primeiros, na ordem da view').toEqual(
+    [1,2,3,4,5,6,7].map(i=>'Item de exemplo '+i));
+  await expect(b.nth(1).locator('.d4i:visible'), 'bloco B sem teto').toHaveCount(9);
+  await expect(b.nth(1).locator('.d4mais')).toHaveCount(0);
+  const btn = b.nth(0).locator('.d4mais');
+  await expect(btn).toHaveText('ver todos (mais 5)');
+  await expect(btn).toHaveAttribute('aria-expanded','false');
+  const m = await page.evaluate(()=>({W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}));
+  expect(m.SW, 'rolagem horizontal a 360').toBe(m.W);
+  await btn.click();
+  await expect(b.nth(0).locator('.d4i:visible'), 'ver todos abre os 12').toHaveCount(12);
+  await expect(btn).toHaveText('ver menos');
+  await expect(btn).toHaveAttribute('aria-expanded','true');
+  await btn.click();
+  await expect(b.nth(0).locator('.d4i:visible')).toHaveCount(7);
+  await expect(btn).toHaveText('ver todos (mais 5)');
+  expect(erros).toEqual([]);
+});
+
 test('p4.38 frente do socio: leitura que falha se declara no lugar dos blocos', async ({page})=>{
   await page.addInitScript(()=>{ window.__pendura=['v_dabli_presidente']; });
   const erros = await abrir(page);
