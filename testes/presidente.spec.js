@@ -3869,6 +3869,24 @@ test('p143: atendente so aparece com pedido esperando, com o prazo de 2 h uteis;
   expect(erros).toEqual([]);
 });
 
+/* p4.71 (t3627, s7285, 17/10/2026): com a rotina do atendente pausada, a linha dizia "Atendente dormindo", que
+   esconde a causa. Com rotina_ativa=false ela diz "Atendente pausado"; sem a chave (banco antigo), fica como antes.
+   No main de antes (p4.70) a linha dizia "dormindo" com a rotina pausada: o teste reprova. */
+test('t3627: rotina_ativa=false vira "Atendente pausado"; sem a chave, segue "dormindo"', async ({page})=>{
+  await page.addInitScript(()=>{ window.webkitSpeechRecognition=undefined; window.SpeechRecognition=undefined;
+    window.__atd={despertador:'ligado',pendentes:3,sessao_viva:false,ultimo_despertar_em:'2026-10-01T00:00:00Z',http:200,atrasados:0,
+      rotina_ativa:false}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>atendenteEstado());
+  await expect(page.locator('#atd')).toContainText('Atendente pausado · 3 esperando');
+  await expect(page.locator('#atd')).not.toContainText('dormindo');
+  await page.evaluate(()=>{ window.__atd={...window.__atd,rotina_ativa:true}; return atendenteEstado(); });
+  await expect(page.locator('#atd')).toContainText('Atendente dormindo · 3 esperando');
+  await page.evaluate(()=>{ const a={...window.__atd}; delete a.rotina_ativa; window.__atd=a; return atendenteEstado(); });
+  await expect(page.locator('#atd'), 'sem a chave, como hoje').toContainText('Atendente dormindo · 3 esperando');
+  expect(erros).toEqual([]);
+});
+
 /* p4.58 (p144, s3409, 12/10/2026): revisao semanal no painel. A classe que mata: revisao que so existe no chat, sem
    numero com meta, sem o que foi decidido e sem prova de que foi feita. A aba Semana mostra os numeros do placar com
    meta e a semana anterior, as decisoes de 7 dias, o plano de 7 dias; "Fechar a revisao" grava os minutos. No main de
