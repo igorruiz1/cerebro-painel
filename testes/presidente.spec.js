@@ -4010,7 +4010,7 @@ test('p4.65 pi 170: um rotulo por verbo do banco, sem sinonimo em botao, e docs 
     rot:{feita:ROT.feita,fechar:ROT.fechar,arquivar:ROT.arquivar,descartar:ROT.descartar},
     feito:{feita:ROT_FEITO.feita,feito:ROT_FEITO.feito,largar:ROT_FEITO.largar,arquivar:ROT_FEITO.arquivar,descartar:ROT_FEITO.descartar,aprovado:ROT_FEITO.aprovado},
     mesa:{aprovado:MS_DEC.aprovado.rot,largar:MS_DEC.largar.rot}, pronto:Object.fromEntries(ATOS_PRONTO), espera:ESPERA_MS}));
-  expect(g.G).toEqual({concluir:'Concluir',concluido:'Concluído',descartar:'Descartar',descartado:'Descartado',aprovar:'Aprovar',aprovado:'Aprovado'});
+  expect(g.G).toEqual({concluir:'Concluir',concluido:'Concluído',descartar:'Descartar',descartado:'Descartado',aprovar:'Aprovar',aprovado:'Aprovado',resolver:'Resolver'});
   expect(g.rot, 'botao: fechar = Concluir, desistir = Descartar').toEqual({feita:'Concluir',fechar:'Concluir',arquivar:'Descartar',descartar:'Descartar'});
   expect(g.feito, 'historico no particípio, um por ato').toEqual({feita:'Concluído',feito:'Concluído',largar:'Descartado',arquivar:'Descartado',descartar:'Descartado',aprovado:'Aprovado'});
   expect(g.mesa).toEqual({aprovado:'Aprovar',largar:'Descartar'});
@@ -4406,4 +4406,85 @@ test('p4.66 onda 2: erro por chave e chave ausente acendem a saude por fonte com
   await page.evaluate(async()=>{ fecharFolha(); window.__errosCarga=null; window.__sem=[]; await carregar(); });
   await expect(page.locator('#saude'), 'carga boa apaga').toHaveText('sistema ok');
   expect(erros).toEqual([]);
+});
+
+/* ---------- p4.67 · pi 181, a escrita das questoes (s6857, 17/10/2026) ----------
+   Criterio do 181: "+ Nova cria questao; a Semana mostra as 3 primeiras; resolver vira card com dono". Na demonstracao as RPCs
+   questao_criar, questao_resolver e questao_descartar mexem so na memoria da pagina. Cada teste reprova o main (p4.66). */
+async function questAbrirNova(page, de, para, titulo){
+  await page.evaluate(d=>{ ir('frentes'); abrirFrente(d); }, de);
+  await page.locator('#folha button:has-text("+ Nova questão")').click();
+  await page.locator('#qnPara').selectOption(para);
+  await page.locator('#qnTit').fill(titulo);
+  await page.locator('#folha button:has-text("Criar questão")').click();
+}
+test('p4.67 pi 181: + Nova questao na ficha cria a questao e ela aparece na Semana; repetir avisa que ja existia', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await questAbrirNova(page, '11-consultoria', '20-contrato-pj', 'Quem aprova o aditivo?');
+  await expect(page.locator('#tmsg')).toContainText('Questão criada para');
+  await expect(page.locator('#folha')).toBeHidden();
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semQuest .quest')).toHaveCount(2);
+  await expect(page.locator('#semQuest .quest').nth(1)).toContainText('Quem aprova o aditivo?');
+  await expect(page.locator('#semQuest .quest').nth(1).locator('small')).toContainText('Consultoria de obras → Contrato de engenharia (PJ)');
+  await questAbrirNova(page, '11-consultoria', '20-contrato-pj', 'Quem aprova o aditivo?');
+  await expect(page.locator('#tmsg')).toContainText('já existia');
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semQuest .quest'), 'nada duplicado').toHaveCount(2);
+  /* formulario incompleto nao chama o banco */
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('11-consultoria'); });
+  await page.locator('#folha button:has-text("+ Nova questão")').click();
+  await page.locator('#folha button:has-text("Criar questão")').click();
+  await expect(page.locator('#qErro')).toContainText('Escreva o título');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
+  expect(rede).toEqual([]); expect(erros).toEqual([]);
+});
+
+test('p4.67 pi 181: Resolver pede solucao e titulo com verbo, cria o card com dono e tira a questao da lista; o erro do banco aparece', async ({page})=>{
+  const {erros} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('semana'));
+  await page.locator('#semQuest .quest').first().click();
+  await expect(page.locator('#folha button:has-text("Resolver")')).toHaveCount(1);
+  await page.locator('#folha button:has-text("Resolver")').click();
+  await expect(page.locator('#qrDt'), 'prazo padrao: hoje de Cuiaba').toHaveValue(await page.evaluate(()=>hojeCuiaba()));
+  await page.locator('#folha button:has-text("Criar o card")').click();
+  await expect(page.locator('#qErro')).toContainText('Escreva a solução');
+  await page.locator('#qrSol').fill('Fechar com 10% de desconto à vista');
+  await page.locator('#qrCard').fill('Preço do plano anual');
+  await page.locator('#folha button:has-text("Criar o card")').click();
+  await expect(page.locator('#tmsg'), 'erro do banco no toast').toContainText('sem verbo');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#qErro'), 'e na folha, que segue aberta').toContainText('sem verbo');
+  await page.locator('#qrCard').fill('Responder o preço do plano anual');
+  await page.locator('#folha button:has-text("Criar o card")').click();
+  await expect(page.locator('#tmsg')).toContainText(/card t\d+ criado em Consultoria de obras para você/);
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semQuest')).toHaveText('Nenhuma questão aberta entre frentes.');
+  await expect.poll(()=>page.evaluate(()=>INV.some(t=>t.titulo==='Responder o preço do plano anual'&&t.frente==='11-consultoria'&&t.dono==='igor'&&t.prazo===hojeCuiaba()))).toBe(true);
+  expect(erros).toEqual([]);
+});
+
+test('p4.67 pi 181: Descartar pede o motivo e tira a questao da lista; o glossario aceita Resolver', async ({page})=>{
+  const {erros} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('semana'));
+  await page.locator('#semQuest .quest').first().click();
+  expect(await page.locator('#folha button').allTextContents()).toEqual(expect.arrayContaining(['Resolver','Descartar']));
+  await page.locator('#folha button:has-text("Descartar")').click();
+  await page.locator('#folha button:has-text("Descartar a questão")').click();
+  await expect(page.locator('#qErro')).toContainText('Diga o motivo');
+  await page.locator('#qdMot').fill('Já decidido em reunião');
+  await page.locator('#folha button:has-text("Descartar a questão")').click();
+  await expect(page.locator('#tmsg')).toContainText('Questão descartada');
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semQuest')).toHaveText('Nenhuma questão aberta entre frentes.');
+  expect(await page.evaluate(()=>GLOSSARIO.resolver)).toBe('Resolver');
+  expect(erros).toEqual([]);
+});
+
+test('p4.67 pi 181: na tela compartilhada o destino da nova questao nao oferece frente PF nem de vida', async ({page})=>{
+  await page.addInitScript(()=>{ window.__dados={uni:[{slug:'u-vida',nome:'Vida',tipo:'vida',entidade:'IGV',dono:'igor'}]}; });
+  await abrirTela(page, [{slug:'11-renda-alt',entidade:'PF',unidade:null},{slug:'20-contrato-pj',entidade:'DABLI',unidade:null},{slug:'04-obra-residencial',entidade:'IGV',unidade:'u-vida'},{slug:'09-teste',entidade:'DABLI',unidade:null}]);
+  await page.evaluate(()=>{ ARV=ARV.concat([{nivel:1,no:'04-obra-residencial',rotulo:'Obra Vida'},{nivel:1,no:'09-teste',rotulo:'Frente Teste'}]).filter(a=>!privada(a.no)); questNova('20-contrato-pj'); });
+  expect(await page.$$eval('#qnPara option', o=>o.map(x=>x.value))).toEqual(['09-teste']);
+  expect((await page.locator('#folha').innerText()).match(/R\$\s?-?\d/g)||[]).toEqual([]);
 });
