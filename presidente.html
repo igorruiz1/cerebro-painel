@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ImVMMjDALt0aGaL+JJAeckxuzympSDtFoVg79/E2uyI=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-S7co+XF6cUs8VnHkxLNZMDyzS2yqYgP8Xvq9Qf9CO/8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -353,13 +353,6 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .ms-raiz{display:flex;flex-direction:column;gap:14px;min-width:0}
 .ms-dia{margin:0;font-size:var(--fs-4);line-height:1.4;text-wrap:balance;overflow-wrap:anywhere}
 .ms-dia b{font-weight:600}
-.ms-hora{display:flex;flex-direction:column;gap:6px;font-size:var(--fs-2);color:var(--ink2);max-width:460px;overflow-wrap:anywhere}
-.ms-hora b.w{color:var(--warn)}
-.ms-regua{position:relative;display:block;height:8px;margin:4px 0 0;border-radius:6px;background:var(--chip)}
-.ms-regua i{position:absolute;top:-4px;width:4px;height:16px;margin-left:-2px;border-radius:2px;background:var(--ok)}
-.ms-regua i.w{background:var(--warn)}
-.ms-regua-rot{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-2);color:var(--mut)}
-.ms-regua-rot span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ms-item,.ms-rel,.ms-saiu{min-height:64px;width:100%;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;justify-content:center;text-align:left}
 .ms-saiu{background:transparent;border-style:dashed}
 .ms-tit{font-size:var(--fs-3);line-height:1.3;max-width:100%}
@@ -371,7 +364,6 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .ms-dias{white-space:nowrap}
 .ms-dias.w{color:var(--warn)}
 .ms-aprovada{margin:0}
-.ms-lote{width:100%}
 .ms-novo{font-size:var(--fs-2);font-weight:700;line-height:1.5;color:var(--accInk);background:var(--acc);border-radius:999px;padding:0 8px}
 .ms-mais{flex:none}
 .bloco.ms-baixa{gap:10px;border-top:1px solid var(--line2);padding-top:12px}
@@ -394,16 +386,7 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .ms-decisoes .sec[aria-expanded="true"]{border-color:var(--acc);font-weight:700}
 .ms-nota[hidden]{display:none}
 .ms-nota .pri{flex:none}
-/* p4.12: Encerrar o dia (ritual de fim de dia), adiadas e a folha do relatorio */
-.ms-fecho{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;overflow-wrap:anywhere}
-.ms-fecho.limpa{border-color:var(--ok)}
-.ms-fecho-num{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-2);color:var(--ink2)}
-.ms-fecho-num b{font-family:var(--mono);color:var(--ink)}
-.ms-barra{display:block;height:8px;border-radius:6px;background:var(--chip);overflow:hidden}
-.ms-barra i{display:block;height:100%;background:var(--ok)}
-.ms-fecho .pri,.ms-fecho .sec{flex:none}
-.ms-ritual{margin:0;font-size:var(--fs-2);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.ms-ritual-pe{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+/* p4.12: adiadas e a folha do relatorio (o Encerrar o dia saiu na p4.53; o CSS dele saiu na p4.65) */
 .ms-adiadas summary{min-height:var(--tap);display:flex;align-items:center;cursor:pointer;font-weight:600}
 .ms-adiadas .pilha,.ms-adiadas .ms-versoes{margin-top:8px}
 .ms-filtro{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
@@ -414,6 +397,11 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .ms-versoes .sec{flex:none}
 /* fim estilo:mesa */
 /* estilo:demo · p4.12: aviso fixo de demonstracao no topo do conteudo */
+/* p4.65 (pi 172): tela compartilhada esconde a aba Caixa e o caminho para o bastidor (que mostra tudo) */
+.tela-comp [data-aba="caixa"],.tela-comp a[href="index.html"]{display:none}
+.bt-tela[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--accInk);font-weight:700}
+.quieto{margin:0;font-size:var(--fs-2)}
+.quieto[hidden]{display:none}
 .demo-aviso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:var(--fs-2);color:var(--ink2);overflow-wrap:anywhere}
 .demo-aviso b{color:var(--ink)}
 .demo-aviso span{flex:1 1 220px;min-width:0}
@@ -523,7 +511,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
     <button data-aba="frentes" data-acao="ir" data-a1="frentes">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" data-acao="ir" data-a1="mesa">Mesa<span class="selo" id="r-mesa"></span></button>
     <button data-aba="semana" data-acao="ir" data-a1="semana">Semana<span class="selo" id="r-semana"></span></button>
-    <div class="pe"><span id="saudeRail"></span><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><button type="button" class="sec bt-tela" id="btTela" aria-pressed="false" data-acao="telaAlternar">Tela compartilhada</button><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
   </nav>
 
   <div class="col">
@@ -547,11 +535,13 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
       <input id="q" type="search" data-ao-digitar="buscar" data-ao-tecla="buscaTecla" autocomplete="off">
       <div class="teclas"><kbd>/</kbd> abre a busca · <kbd>Enter</kbd> abre o primeiro · <kbd>N</kbd> cria card · no card aberto: <kbd>X</kbd> conclui, <kbd>S</kbd> adia, <kbd>1</kbd>–<kbd>5</kbd> escolhe, <kbd>R</kbd> responde · <kbd>Z</kbd> desfaz</div>
       <button class="sec" data-acao="abrirAtos">Últimos atos · desfazer até 1 dia</button>
+      <button class="sec bt-tela" id="btTelaBusca" aria-pressed="false" data-acao="telaAlternar">Tela compartilhada: esconder o pessoal e os valores</button>
       <div id="qres" class="pilha"></div>
     </div>
 
     <main>
       <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><button type="button" class="sec" data-acao="demoSair">Sair da demonstração</button></div>
+      <div id="telaAviso" class="demo-aviso tela-aviso hidden" role="note"><span>Tela compartilhada.</span><button type="button" class="sec" data-acao="telaAlternar">Desligar</button></div>
       <div id="falha" class="aviso hidden" role="alert"></div>
       <button id="novaVersao" class="pri hidden" data-acao="atualizarPainel"></button>
 
@@ -571,6 +561,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
             <div class="pilha hidden" id="cob3Box"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
             <div class="pilha hidden" id="vespBox"><div class="cob3l" id="vespLista"></div></div>
             <div class="pilha hidden" id="sugBox"><h2>Sugestões das rotinas</h2><div class="cob3l" id="sugLista"></div></div>
+            <p class="mut quieto" id="hojeQuieto" hidden></p>
           </div>
         </div>
       </section>
@@ -635,7 +626,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.64";
+const VERP="p4.65";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -909,7 +900,7 @@ function demoCliente(){
     '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
   return {
     rpc:(n,a)=>ok(RPC[n]?RPC[n](a||{}):null),
-    from:v=>consulta(v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):v===VISAO_4B?copia(B().socio4):[]),
+    from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:/^0[07]-/.test(n.no)?"PF":"PJ"})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):v===VISAO_4B?copia(B().socio4):[]),
     channel:()=>{const ch={on:()=>ch,subscribe:cb=>{if(cb)cb("SUBSCRIBED");return ch;},unsubscribe:()=>ok(null)};return ch;},
     removeChannel:()=>ok(null),
     storage:{from:()=>({createSignedUrl:(p,s)=>ok({signedUrl:arquivo(p,s)}),upload:p=>ok({path:p})})},
@@ -987,6 +978,58 @@ async function conferirFator(factorId,code){
 const comTetoR=(b,ms,rotulo)=>comTeto(b,ms,rotulo).catch(e=>({data:null,
   error:{message:ehTeto(e)?"sem resposta do banco em "+ms/1000+" s":(e&&e.message)||"falha de rede",teto:ehTeto(e)}}));
 const D={}; let INV=null, ARV=null, SEM=null, ABA="hoje", COL="semana", PEND=null, F=null, IDADE=0;
+/* p4.65 (pi 172, achado 3 do canone v02, LC-01): o painel de tudo veste a marca Dabli e o Igor escolheu mantê-la; a
+   salvaguarda do muro vira obrigatória. Modo tela compartilhada (botão no topo ou ?tela=compartilhada): some a frente PF
+   (pessoal e vida), some o caixa consolidado (rw, c13, c13i, var7, a aba Caixa e todo número "caixa.") e todo valor em R$
+   vira "R$ •••". O filtro age na ENTRADA do dado (carga, inventário, árvore, Mesa e subida), não no desenho: aba nova
+   nasce coberta. Fail-closed: frente que o banco não classificou, ou lista de frentes que não veio, também some. Fonte da
+   classificação: frente.entidade (o dono lê; RLS is_dono). Vale até o Igor desligar, inclusive ao recarregar a aba. */
+const TELA_CHAVE="cerebro.tela";
+let TELA=(()=>{ try{ if(new URL(location.href).searchParams.get("tela")==="compartilhada")sessionStorage.setItem(TELA_CHAVE,"1");
+  return sessionStorage.getItem(TELA_CHAVE)==="1"; }catch(e){ return /[?&]tela=compartilhada\b/.test(location.search); } })();
+let ENT=null, ENT_FALHOU=false;
+const SLUG_FRENTE=/^\d{2}-[a-z0-9-]+$/, CAMPOS_FRENTE=["frente","frente_slug","slug","no"];
+const CHAVES_CAIXA=new Set(["rw","c13","c13i","var7"]);
+const privada=s=>{ s=String(s==null?"":s); return SLUG_FRENTE.test(s)&&(!ENT||!ENT[s]||ENT[s]==="PF"); };
+const doCaixa=x=>["chave","ref","metrica"].some(k=>/^caixa\./.test(String(x[k]||"")))||x.bloco==="caixa";
+const aVista=x=>!x||typeof x!=="object"||!(CAMPOS_FRENTE.some(k=>privada(x[k]))||doCaixa(x));
+const veu=v=>!TELA||!Array.isArray(v)?v:v.filter(aVista).map(x=>x&&typeof x==="object"&&"valor_txt" in x?{...x,valor_txt:null}:x);
+function veuObj(o){ if(!TELA||!o||typeof o!=="object")return o; const r={};
+  for(const k of Object.keys(o)) r[k]=CHAVES_CAIXA.has(k)?[]:veu(o[k]); return r; }
+async function carregarEnt(){
+  let r; try{ r=await comTetoR(sb.from("frente").select("slug,entidade"),LIMITE_RECARGA,"frente"); }catch(e){ r={error:e}; }
+  ENT_FALHOU=!!r.error||!Array.isArray(r.data);
+  ENT=ENT_FALHOU?{}:Object.fromEntries(r.data.map(f=>[f.slug,f.entidade]));
+}
+/* R$ some no texto, nao no formatador: rs mora no bloco comum:escapa (igual byte a byte no index.html). O observador roda
+   antes da pintura (microtarefa), entao o valor nunca chega a tela; cobre folha, toast e aba que ainda nao existem. */
+const RS_TELA=/-?R\$\s?-?\d[\d.,]*(\s?mil)?/g;
+function mascararRs(raiz){
+  if(!TELA||!raiz)return;
+  if(raiz.nodeType===3){ if(/R\$\s?-?\d/.test(raiz.nodeValue))raiz.nodeValue=raiz.nodeValue.replace(RS_TELA,"R$ •••"); return; }
+  if(raiz.nodeType!==1)return;
+  const w=document.createTreeWalker(raiz,NodeFilter.SHOW_TEXT); let n;
+  while((n=w.nextNode())) if(/R\$\s?-?\d/.test(n.nodeValue))n.nodeValue=n.nodeValue.replace(RS_TELA,"R$ •••");
+}
+const OBS_RS=new MutationObserver(ms=>{ if(!TELA)return;
+  for(const m of ms){ if(m.type==="characterData")mascararRs(m.target); else m.addedNodes.forEach(mascararRs); } });
+function telaUi(){
+  OBS_RS.disconnect(); if(TELA){ OBS_RS.observe(document.body,{subtree:true,childList:true,characterData:true}); mascararRs(document.body); }
+  document.body.classList.toggle("tela-comp",TELA);
+  document.querySelectorAll(".bt-tela").forEach(b=>b.setAttribute("aria-pressed",String(TELA)));
+  const a=document.getElementById("telaAviso"); if(a){ a.classList.toggle("hidden",!TELA);
+    a.querySelector("span").textContent=ENT_FALHOU?"Tela compartilhada. A lista de frentes não veio: tudo que é de frente ficou escondido.":"Tela compartilhada. Frentes pessoais, caixa e valores em R$ estão escondidos."; }
+  if(TELA&&ABA==="caixa")ir("hoje");
+}
+async function telaAlternar(){
+  TELA=!TELA; try{ TELA?sessionStorage.setItem(TELA_CHAVE,"1"):sessionStorage.removeItem(TELA_CHAVE); }catch(e){}
+  if(!TELA){ try{ const u=new URL(location.href); if(u.searchParams.has("tela")){ u.searchParams.delete("tela"); history.replaceState(null,"",u.pathname+u.search+u.hash); } }catch(e){} }
+  if(ENT_FALHOU){ ENT=null; ENT_FALHOU=false; }
+  fecharFolha(); telaUi();
+  for(const k of Object.keys(D)) delete D[k];
+  INV=null; ARV=null; SEM=null; MS.dados=null; SB.dados=null; render();
+  await carregar();
+}
 
 /* v71 · R7: texto do banco entra no HTML por esc() (texto e atributo entre aspas duplas), por escAttr()
    quando e argumento JS entre aspas simples dentro de onclick (esc ali deixa a aspa voltar como &#39;,
@@ -1028,7 +1071,7 @@ const semNumero=t=>String(t||"").replace(/^\d+\s+/,"");
    no document e despacha para ACOES, a lista fechada do que a tela faz: nome fora dela nao roda.
    Sem JavaScript dentro de atributo, escAttr deixa de ser preciso aqui e o unsafe-inline pode sair. */
 const ACOES={
-  entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msEnviarWhats:()=>msEnviarWhats(),msCompartilhar:()=>msCompartilhar(),envioNaoSaiu:()=>envioNaoSaiu(),envioCobrei:el=>envioCobrei(el.dataset.a1),
+  telaAlternar:()=>telaAlternar(),entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msEnviarWhats:()=>msEnviarWhats(),msCompartilhar:()=>msCompartilhar(),envioNaoSaiu:()=>envioNaoSaiu(),envioCobrei:el=>envioCobrei(el.dataset.a1),
   fatorDigitou:el=>{el.value=el.value.replace(/\D/g,"").slice(0,6);if(el.value.length===6)entrarFator();},
   fatorEnter:(el,ev)=>{if(ev.key==="Enter")entrarFator();},
   demoEntrar:()=>demoEntrar(), avisoAtivar:()=>avisoAtivar(), recarregar:()=>carregar(true), buscar:el=>buscar(el.value),
@@ -1069,11 +1112,18 @@ const plural=(n,s1,s2)=>n+" "+(+n===1?s1:s2);
 const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes",mesa:"Mesa",semana:"Semana"};
 
 /* Verbo do banco -> verbo de gente. O banco continua recebendo o verbo dele; so o rotulo muda.
-   Verbo que o banco oferecer e nao estiver aqui aparece com o rotulo que o banco mandou. */
-const ROT={feita:"Concluí",fechar:"Concluí",repactuar:"Mudar data",deliberar:"Pedir análise",pedir_analise:"Pediu análise",
-           arquivar:"Largar",esperar:"Passei para alguém",cobrar:"Cobrei agora",
-           enviado:"Enviei",refazer:"Pediu para refazer",descartar:"Descartou",recusado:"Recusou",
+   Verbo que o banco oferecer e nao estiver aqui aparece com o rotulo que o banco mandou.
+   p4.65 (pi 170, achado 7 do canone v02): o mesmo ato tinha tres nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito).
+   GLOSSARIO e a fonte unica: botao no infinitivo, historico no particípio. Fechar com resultado = Concluir (feita, fechar,
+   feito); desistir = Descartar (arquivar, largar, descartar); a peca da Mesa aprovada = Aprovar (aprovado). Teste cobra. */
+const GLOSSARIO={concluir:"Concluir",concluido:"Concluído",descartar:"Descartar",descartado:"Descartado",aprovar:"Aprovar",aprovado:"Aprovado"};
+const ROT={feita:GLOSSARIO.concluir,fechar:GLOSSARIO.concluir,repactuar:"Mudar data",deliberar:"Pedir análise",pedir_analise:"Pediu análise",
+           arquivar:GLOSSARIO.descartar,esperar:"Passei para alguém",cobrar:"Cobrei agora",
+           enviado:"Enviei",refazer:"Pediu para refazer",descartar:GLOSSARIO.descartar,recusado:"Recusou",
            esconder:"Adiou (só esconde)",desfazer:"Desfez"};
+/* historico (Ultimos atos, fio do card): o ato ja feito fala no particípio */
+const ROT_FEITO={feita:GLOSSARIO.concluido,fechar:GLOSSARIO.concluido,feito:GLOSSARIO.concluido,arquivar:GLOSSARIO.descartado,
+           largar:GLOSSARIO.descartado,descartar:GLOSSARIO.descartado,aprovado:GLOSSARIO.aprovado};
 const CONCLUIR=new Set(["feita","fechar"]);
 
 /* ---------- login: so conta que ja existe (shouldCreateUser:false) ---------- */
@@ -1125,6 +1175,8 @@ async function carregar(forcar){
 }
 async function carregar_(forcar){
   falha("");
+  /* p4.65 (pi 172): com a tela compartilhada, a classificacao das frentes vem antes de qualquer dado */
+  if(TELA&&!ENT){ await carregarEnt(); telaUi(); }
   /* p4.4: a Mesa tem leitura propria (mesa_painel), em paralelo; erro dela fica na aba, nao aqui */
   msCarregar(); sbCarregar();
   const avisos=[];
@@ -1136,7 +1188,7 @@ async function carregar_(forcar){
   if(semSessao(rc))return sessaoCaiu();
   const {data,error}=rc;
   if(error||!data){CARGA_FALHOU=true;falha("Não consegui ler o banco: "+(error?error.message:"resposta vazia")+". Toque em recarregar."+(avisos.length?" Também: "+avisos.join("; ")+".":""));return;}
-  Object.assign(D,data.dados||{});
+  Object.assign(D,veuObj(data.dados||{}));
   const falt=CHAVES.filter(k=>!(k in (data.dados||{})));
   const ruins=Object.keys(data.erros||{}).map(k=>k+": "+String(data.erros[k]).slice(0,120));
   const partes=[];
@@ -1162,7 +1214,7 @@ async function carregar_(forcar){
   render();
   garantirLazy();
   /* o builder do supabase-js so dispara no then: sem ele o ping nunca saia */
-  sb.rpc("painel_ping",{p_versao:VERP,p_origem:location.host||"local"}).then(()=>{},()=>{});
+  ouvirFonte("ping",comTeto(sb.rpc("painel_ping",{p_versao:VERP,p_origem:location.host||"local"}),LIMITE_ACAO,"painel_ping"));
 }
 /* Versao nova: o GitHub Pages deixa o navegador guardar a pagina por ate 10 min. Medido em 02/10/2026:
    o deploy da p3.1 terminou 23h22m56 e o iPhone abriu a p3 as 23h23m16, testou a versao velha e o
@@ -1185,7 +1237,7 @@ function garantirLazy(){ if(!LAZY)LAZY=garantirLazy_().finally(()=>{LAZY=null;})
 async function garantirLazy_(){
   const t=[], ruins=[];
   /* falha vira lista vazia como antes, mas agora se declara: vazio e falha nao sao a mesma coisa */
-  const ler=(b,rot,poe)=>comTetoR(b,LIMITE_RECARGA,rot).then(r=>{ if(r.error||!r.data)ruins.push(rot+": "+(r.error?r.error.message:"resposta vazia")); poe(r.error?[]:r.data||[]); });
+  const ler=(b,rot,poe)=>comTetoR(b,LIMITE_RECARGA,rot).then(r=>{ if(r.error||!r.data)ruins.push(rot+": "+(r.error?r.error.message:"resposta vazia")); poe(r.error?[]:veu(r.data||[])); });
   if(!INV)t.push(ler(sb.from("v_inventario_frente").select("id,frente,dono,status,prazo,parado_dias,titulo,resumo,criterio_pronto,acoes,opcoes,escolha"),"inventário",d=>{INV=d;}));
   if(!ARV)t.push(ler(sb.from("v_arvore_caixa").select("nivel,no,rotulo,margem_30d,margem_total,itens,veredito").lte("nivel",1),"frentes",d=>{ARV=d;}));
   if(!SEM)t.push(ler(sb.from("v_frente_semanas").select("slug,semanas,vencidos,idade_d,piorou"),"semanas das frentes",d=>{SEM=d;}));
@@ -1196,6 +1248,7 @@ async function garantirLazy_(){
 
 /* ---------- navegacao ---------- */
 function ir(aba){
+  if(TELA&&aba==="caixa")aba="hoje";
   ABA=aba;
   document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+aba));
   document.querySelectorAll("[data-aba]").forEach(b=>{const on=b.dataset.aba===aba;b.setAttribute("aria-current",on?"page":"false");});
@@ -1301,6 +1354,15 @@ const BACKUP="backup-cerebro", RUIM_MO=new Set(["atrasada","nunca"]);
    olhava o ultimo ponto bom: a vigia-testes rodou 07 e 08/10 com casos reprovados e aparecia como "ultimo dado 06/10",
    igual a rotina parada; a sensor-dabli falhou em 08/10 e nao acendia nada (estado "nova"). Fonte: ultima_tentativa,
    ultima_ok e ultima_falha da v_painel_motor (chave mo). Carga sem as colunas novas: nada muda. */
+/* p4.65 (pi 171, achado 7 do canone v02; Google SRE: falha silenciosa e o pior alerta): quatro chamadas falhavam num
+   then vazio e a saude seguia "ok". Agora cada uma acende a propria fonte, com hora e motivo, e apaga no proximo sucesso. */
+const FALHAS={}, FONTE_TELA={ping:"Registro de abertura do painel",medir:"Medição do tempo de decisão",d4:"Quatro blocos da Dabli",
+  atendente:"Estado do atendente"};
+function fonteFalhou(k,e){
+  const m=!e?"sem resposta":ehTeto(e)?"não respondeu a tempo":String(e.message||e.erro||e).slice(0,110);
+  FALHAS[k]={em:new Date().toISOString(),motivo:m}; renderSaude(); }
+function fonteVoltou(k){ if(FALHAS[k]){ delete FALHAS[k]; renderSaude(); } }
+const ouvirFonte=(k,p)=>Promise.resolve(p).then(r=>{ if(r&&r.error)fonteFalhou(k,r.error); else fonteVoltou(k); },e=>fonteFalhou(k,e));
 const falhou=r=>!!r&&r.ultima_ok===false&&!!r.ultima_tentativa&&(!r.ultimo_ponto||Date.parse(r.ultima_tentativa)>Date.parse(r.ultimo_ponto));
 function saude(){
   const mot=[], det=[], fr=(D.fresc||[])[0], mo=D.mo, eb=D.eb;
@@ -1322,6 +1384,7 @@ function saude(){
     if(bm&&bm.estado==="nova") det.push("backup novo: ainda sem a primeira execução esperada");
   }
   if(ultimo) det.push("último backup "+ddmm(ultimo)+" "+hhmm(ultimo));
+  Object.keys(FALHAS).forEach(k=>{ mot.push(FONTE_TELA[k].toLowerCase()+" falhou"); det.push(FONTE_TELA[k]+": "+FALHAS[k].motivo); });
   return {ok:!mot.length, mot, det};
 }
 /* p4.33 (plano 114 = A5 do plano 101; s1274, 08/10/2026): saude por fonte, no molde do Andon do Sistema Toyota de Producao:
@@ -1337,6 +1400,7 @@ function fontes(){
     l.push({n:legivel(r.nome),falha:f,ruim:RUIM_MO.has(r.estado)||f,
       q:f?"falhou "+ddmm(r.ultima_tentativa)+" "+hhmm(r.ultima_tentativa)+": "+curto(r.ultima_falha||"sem motivo registrado",110)+(r.ultimo_ponto?" · último dado bom "+ddmm(r.ultimo_ponto):"")
         :r.ultimo_ponto?"último dado "+ddmm(r.ultimo_ponto)+" "+hhmm(r.ultimo_ponto):"nunca rodou"}); });
+  Object.keys(FALHAS).forEach(k=>l.push({n:FONTE_TELA[k],falha:true,ruim:true,q:"falhou "+ddmm(FALHAS[k].em)+" "+hhmm(FALHAS[k].em)+": "+FALHAS[k].motivo}));
   return l.map((x,i)=>({...x,i})).sort((a,b)=>(b.ruim-a.ruim)||(a.i-b.i));
 }
 function abrirFontes(){
@@ -1402,7 +1466,7 @@ function renderHoje(){
    O card que espera terceiro so aparecia na coluna Esperando, em outra aba; medido em 08/10 no banco: 6 de 9 com o
    retorno combinado vencido ou vencendo hoje. Fonte: chave cob3 do snapshot (v_painel_cobrar_terceiro, retorno_esperado
    ate hoje pela data de Cuiaba). "Copiar cobranca" leva o rascunho para a area de transferencia e nada sai daqui;
-   "Cobrei agora" grava o verbo cobrar (registra a cobranca e move o retorno 2 dias) com os 6 s de desfazer. Card que
+   "Cobrei agora" grava o verbo cobrar (registra a cobranca e move o retorno 2 dias) com os 8 s de desfazer. Card que
    ja esta na lista de Hoje nao repete aqui; sem a chave cob3 (snapshot antigo) o grupo some e o aviso de parte faltando
    nomeia cob3, como toda chave do snapshot. */
 function cobrarTerceiros(){
@@ -1411,7 +1475,7 @@ function cobrarTerceiros(){
 }
 function renderCobrar(){
   const l=cobrarTerceiros();
-  document.getElementById("cob3Box").classList.toggle("hidden",!l.length);
+  document.getElementById("cob3Box").classList.toggle("hidden",!l.length); renderQuieto();
   document.getElementById("cob3Lista").innerHTML=l.map(x=>{const d=Math.max(0,+x.dias||0);
     return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(x.terceiro||"sem nome de quem responde")} · <span class="espera w">cobrar · ${d===0?"vence hoje":esc(d)+" d"}</span></small></span><span class="bts"><button class="sec" data-acao="copiarCobranca" data-a1="${esc(x.ref)}" aria-label="Copiar cobrança">Copiar</button>${String(x.rascunho||"").trim()?`<button class="sec" data-acao="whatsCobranca" data-a1="${esc(x.ref)}" aria-label="Abrir no WhatsApp">WhatsApp</button>`:""}<button class="pri" data-acao="cobreiAgora" data-a1="${esc(x.ref)}" aria-label="Cobrei agora">Cobrei</button></span></div>`;}).join("");
 }
@@ -1467,7 +1531,7 @@ function checkinWhats(){ abrirWhats(textoCheckin()); }
    as perguntas de 08/10 e 09/10 passaram do dia sem resposta e 16 cards estavam vencidos. Molde: o replanejar do dia
    seguinte do Todoist e do Sunsama, onde cada card ganha data num toque e o lote se confirma de uma vez. Fonte: chave vesp
    do snapshot (v_painel_vespera), que só traz linhas enquanto a pergunta da véspera está aberta. "Mantenho as datas"
-   responde a pergunta pela escolher() e o grupo some; nova data num card grava repactuar só nele. Os dois têm os 6 s de
+   responde a pergunta pela escolher() e o grupo some; nova data num card grava repactuar só nele. Os dois têm os 8 s de
    desfazer. A lista mostra todos os cards de amanhã, mesmo os que já estão na ordem de Hoje, porque a decisão é do lote. */
 function vespera(){
   const l=(D.vesp||[]).filter(x=>x&&x.vesp_id!=null);
@@ -1478,7 +1542,7 @@ const datasVespera=()=>{const vistos=new Set([somaDias(1)]);
   return [["+3 dias",somaDias(3)],["próx. segunda",proxSegunda()],["+2 semanas",somaDias(14)]].filter(([,d])=>!vistos.has(d)&&vistos.add(d));};
 function renderVespera(){
   const v=vespera(), box=document.getElementById("vespBox"), n=v?v.cards.length:0;
-  box.classList.toggle("hidden",!n);
+  box.classList.toggle("hidden",!n); renderQuieto();
   if(!n){document.getElementById("vespLista").innerHTML="";return;}
   /* uma linha so no Hoje (piso do canone, teste 106): a data card a card fica na folha, que cabe 6 cards ou 20 */
   document.getElementById("vespLista").innerHTML=`<div class="cob3"><span class="t"><b>${esc(plural(n,"card vence","cards vencem"))} amanhã, ${esc(diaCurto(v.prazo)||ddmm(v.prazo))}</b><small>${esc(v.cards.map(x=>curto(x.titulo,48)).join(" · "))}</small></span><span class="bts"><button class="pri" data-acao="vespManter" data-a1="${esc(v.id)}">Mantenho as datas</button><button class="sec" data-acao="abrirVespera">Mudar datas</button></span></div>`;
@@ -1502,14 +1566,25 @@ function vespData(ref,data){
 }
 /* p4.47 (p158, E1.6 do WL, s2655 11/10/2026): rotina sugere, o Igor aceita. O sensor de arquivo grava sugestao e o card so
    nasce aqui: "Virar card" cria o card ou junta ao card aberto do mesmo aviso; "Descartar" tira a sugestao e a mesma
-   referencia nao volta. Os dois vao pela painel_responder (tipo SUGESTAO) so depois dos 6 s de desfazer. Fonte: chave sug
+   referencia nao volta. Os dois vao pela painel_responder (tipo SUGESTAO) so depois dos 8 s de desfazer. Fonte: chave sug
    do snapshot (v_sugestao_nova); sem a chave (snapshot antigo) o grupo some e o aviso de parte faltando nomeia sug. */
 function sugestoes(){ return (D.sug||[]).filter(x=>x&&x.id!=null&&!FEITOS.has("sugestao|"+String(x.id))); }
 function renderSugestoes(){
   const l=sugestoes(), box=document.getElementById("sugBox"); if(!box)return;
-  box.classList.toggle("hidden",!l.length);
+  box.classList.toggle("hidden",!l.length); renderQuieto();
   document.getElementById("sugLista").innerHTML=l.map(x=>{const d=Math.max(0,+x.dias||0);
-    return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(nomeFrente(x.frente_slug))} · ${esc(x.fonte||"rotina")} · ${d===0?"hoje":esc(d)+" d"}</small></span><span class="bts"><button class="sec" data-acao="sugDescartar" data-a1="${esc(x.id)}" aria-label="Descartar sugestão">Descartar</button><button class="pri" data-acao="sugAceitar" data-a1="${esc(x.id)}" aria-label="Virar card">Virar card</button></span></div>`;}).join("");
+    return `<div class="cob3"><span class="t"><span class="l2">${esc(x.titulo)}</span><small>${esc(nomeFrente(x.frente_slug))} · ${esc(x.fonte||"rotina")} · ${d===0?"hoje":esc(d)+" d"}</small></span><span class="bts"><button class="sec" data-acao="sugDescartar" data-a1="${esc(x.id)}" aria-label="Descartar sugestão">${GLOSSARIO.descartar}</button><button class="pri" data-acao="sugAceitar" data-a1="${esc(x.id)}" aria-label="Virar card">Virar card</button></span></div>`;}).join("");
+}
+/* p4.65 (pi 171, achado 7 do canone v02): Cobrar, Vence amanhã e Sugestões sumiam calados quando vazios, e vazio parecia
+   falha de carga. Agora o grupo vazio diz que está vazio, numa linha só para os três (piso do canone, teste 106). Chave que
+   não veio no snapshot não entra aqui: o aviso de parte faltando já a nomeia. */
+function renderQuieto(){
+  const el=document.getElementById("hojeQuieto"); if(!el)return;
+  const q=[];
+  if(Array.isArray(D.cob3)&&!cobrarTerceiros().length)q.push("Cobrar: ninguém com retorno vencido");
+  if(Array.isArray(D.vesp)&&!vespera())q.push("Vence amanhã: nada para decidir");
+  if(Array.isArray(D.sug)&&!sugestoes().length)q.push("Sugestões das rotinas: nenhuma nova");
+  el.hidden=!q.length; el.textContent=q.length?q.join(" · ")+".":"";
 }
 /* p4.63 (fato 2217 item 0b, s5417 16/10/2026): "Virar card" pede a data antes de confirmar. Padrao: o prazo da sugestao,
    se houver e nao passou; senao hoje pelo relogio de Cuiaba. A data vai como p_prazo da painel_responder; Descartar segue direto. */
@@ -1874,6 +1949,7 @@ function ver4Todos(b){
 async function carregar4B(){
   const el=()=>document.getElementById("d4");
   let r; try{ r=await comTeto(sb.from(VISAO_4B).select("ordem,bloco,ref,item,detalhe,prazo,dias_parado,recomendacao"),LIMITE_RECARGA,VISAO_4B); }catch(e){ r={error:e}; }
+  if(r.error||!Array.isArray(r.data))fonteFalhou("d4",r.error||null); else fonteVoltou("d4");
   if(!el())return;
   if(r.error||!Array.isArray(r.data)){el().innerHTML=`<div class="vazio">Os quatro blocos não vieram agora. Feche e abra a frente de novo.</div>`;return;}
   el().innerHTML=blocos4(r.data);
@@ -1956,7 +2032,7 @@ document.addEventListener("keydown",e=>{
 /* ---------- p4.36 (plano 116 = A1 do plano 101): Nova pendencia em uma linha ----------
    O titulo segue o padrao do banco (padrao_titulo_ok: verbo no infinitivo, 8 a 70 caracteres), a frente vem sugerida
    pelas palavras do titulo contra os cards abertos de cada frente, e o prazo vem sugerido no primeiro dia com vaga no
-   teto de 8 cards seus por dia. O Igor confirma os tres e o card nasce pela painel_nova_tarefa(), com os 6 s de
+   teto de 8 cards seus por dia. O Igor confirma os tres e o card nasce pela painel_nova_tarefa(), com os 8 s de
    desfazer. A porta do banco cobra as mesmas regras; recusa volta com a folha aberta e o texto guardado. */
 const VERBO_RE=/^([a-zà-ú]+-)?(ir|pôr|[a-zà-ú]*[a-zà-ú](ar|er|ir|or|ôr))(?![a-zà-ú0-9_])/i, TETO_DIA=8;
 let NP={titulo:"",frente:null,prazo:null,frenteMao:false};
@@ -2118,7 +2194,7 @@ async function abrirAtos(){
   let r; try{ r=await comTetoR(sb.rpc("painel_atos_recentes"),LIMITE_RECARGA,"painel_atos_recentes"); }catch(e){ r={error:e}; }
   const el=document.getElementById("atos"); if(!el)return;
   if(r.error||!Array.isArray(r.data)){ el.innerHTML=`<li class="mut">Não consegui ler os atos agora.</li>`; return; }
-  el.innerHTML=r.data.length?r.data.map(x=>`<li><span><span class="q">${esc(hhmm(x.agido_em))}</span> ${esc(ROT[x.verbo]||ROT_ATO[x.verbo]||"Ato")} · ${esc(curto(String(x.titulo||""),70))}</span>${x.pode?`<button class="sec" data-acao="desfazerAto" data-a1="${esc(x.acao_id)}">Desfazer</button>`:`<span class="mut">${esc(x.motivo||"")}</span>`}</li>`).join(""):`<li class="mut">Nenhum ato seu nas últimas 24 horas.</li>`;
+  el.innerHTML=r.data.length?r.data.map(x=>`<li><span><span class="q">${esc(hhmm(x.agido_em))}</span> ${esc(ROT_FEITO[x.verbo]||ROT[x.verbo]||ROT_ATO[x.verbo]||"Ato")} ·${esc(curto(String(x.titulo||""),70))}</span>${x.pode?`<button class="sec" data-acao="desfazerAto" data-a1="${esc(x.acao_id)}">Desfazer</button>`:`<span class="mut">${esc(x.motivo||"")}</span>`}</li>`).join(""):`<li class="mut">Nenhum ato seu nas últimas 24 horas.</li>`;
 }
 async function desfazerAto(id){
   const n=Math.round(+id); if(!(n>0))return;
@@ -2133,10 +2209,10 @@ async function desfazerAto(id){
 /* p4.42 (p127, s1898 11/10/2026): a decisao da bandeja mora aqui, e o index.html passa a so ler. Peca PRONTO pede
    o que de fato aconteceu (feito, enviei, refazer, descartar), porque um toque so marcando "enviado" falsificaria o
    funil (LC-14); DECISAO da bandeja ganha Recusar. Refazer e Recusar levam motivo opcional. Os dois gravam por
-   painel_responder(), a porta definer com is_dono() (o painel so tem SELECT em tarefa), com os 6 s de desfazer. */
+   painel_responder(), a porta definer com is_dono() (o painel so tem SELECT em tarefa), com os 8 s de desfazer. */
 const tipoBand=(origem,ref)=>{ if(origem!=="tarefa")return null;
   const b=(D.band||[]).find(x=>String(x.item_id)===String(ref)); return b&&(b.tipo==="PRONTO"||b.tipo==="DECISAO")?b.tipo:null; };
-const ATOS_PRONTO=[["feito","Feito"],["enviado","Enviei"],["refazer","Refazer"],["descartar","Descartar"]];
+const ATOS_PRONTO=[["feito",GLOSSARIO.concluir],["enviado","Enviei"],["refazer","Refazer"],["descartar",GLOSSARIO.descartar]];
 function bandHtml(c){
   if(c.band==="PRONTO") return `<div class="bloco band" id="band"><span class="rot">O que aconteceu com a peça?</span><p class="mut">Diga o que de fato aconteceu: enviei só se ela saiu.</p>
     <div class="acoes">${ATOS_PRONTO.map(([a,l])=>`<button class="${a==="feito"||a==="enviado"?"pri":"sec"}" data-acao="${a==="refazer"?"bandMotivo":"bandAto"}" data-a1="${a}">${l}</button>`).join("")}</div></div>`;
@@ -2146,7 +2222,7 @@ function bandHtml(c){
 }
 function bandAto(ato,nota){
   const c=F; if(!c||!c.band)return;
-  const rot={feito:"Feito",enviado:"Enviei",descartar:"Descartado",refazer:"Volta para refazer",recusado:"Recusado"}[ato]||ato;
+  const rot={feito:GLOSSARIO.concluido,enviado:"Enviei",descartar:GLOSSARIO.descartado,refazer:"Volta para refazer",recusado:"Recusado"}[ato]||ato;
   medirAto(c,ato==="feito"||ato==="enviado"?"a":"r");
   pendurar({origem:c.origem,ref:c.ref,verbo:ato,valor:nota||null,responder:c.band},rot+" · "+curto(c.titulo,60),c);
 }
@@ -2226,7 +2302,7 @@ async function historico(c){
   let r; try{ r=await comTeto(sb.from("acao").select("verbo,valor,agido_em").eq("origem",c.origem).eq("ref",c.ref).order("agido_em",{ascending:false}).limit(5),LIMITE_RECARGA,"acao"); }catch(e){ r={error:e}; }
   if(!el()||F!==c)return;
   if(r.error||!r.data){el().innerHTML=`<li class="mut">Histórico indisponível agora.</li>`;return;}
-  el().innerHTML=r.data.length?r.data.map(x=>`<li><span class="q">${esc(ddmm(x.agido_em))}</span><span>${esc(ROT[x.verbo]||x.verbo)}${x.valor?": "+esc(curto(x.valor,90)):""}</span></li>`).join(""):`<li class="mut">Nenhuma ação registrada pelo painel ainda.</li>`;
+  el().innerHTML=r.data.length?r.data.map(x=>`<li><span class="q">${esc(ddmm(x.agido_em))}</span><span>${esc(ROT_FEITO[x.verbo]||ROT[x.verbo]||x.verbo)}${x.valor?": "+esc(curto(x.valor,90)):""}</span></li>`).join(""):`<li class="mut">Nenhuma ação registrada pelo painel ainda.</li>`;
 }
 function escolher(verbo){
   const a=F&&F.acoes.find(x=>x.verbo===verbo); if(!a)return;
@@ -2240,7 +2316,7 @@ function escolher(verbo){
       <textarea id="cv" rows="3"></textarea><button class="pri" data-acao="confirmarAnalise">Pedir análise</button></div>`;
   }else if(CONCLUIR.has(verbo)){
     /* p4.16 (06/10/2026, pedido do Igor): a prova tambem vai como print ou PDF, pelo botao ou colando (Ctrl+V)
-       no campo. O arquivo so sobe quando o ato vai ao banco, depois dos 6 s de desfazer, para o bucket privado
+       no campo. O arquivo so sobe quando o ato vai ao banco, depois dos 8 s de desfazer, para o bucket privado
        mesa-provas (o mesmo da baixa da Mesa); o caminho entra no texto da prova, que o banco ja exige. */
     /* p4.34 (plano 115 = A3 do plano 101; s1274, 08/10/2026): 3 provas provaveis concluem num toque, sem digitar. Medido
        em 07/10: 19% dos fechamentos do Igor passaram pelo painel; o atrito era escrever. As 3 falam da VOLTA (resposta,
@@ -2258,8 +2334,8 @@ function escolher(verbo){
     campo.innerHTML=`<div class="campo"><span class="mut">${esc(a.rot)}</span><div class="datas">${op.map(o=>`<button data-acao="agir" data-a1="${esc(verbo)}" data-a2="${esc(o[1])}" data-a3="${esc(a.rot+" para "+diaCurto(o[1]))}">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div>
       <label for="cv" class="mut">ou escolha o dia</label><input id="cv" type="date" min="${somaDias(0)}" value="${somaDias(7)}"><button class="sec" data-acao="confirmar" data-a1="${esc(verbo)}" data-a2="10" data-a3="Escolha uma data.">Usar esta data</button></div>`;
   }else if(verbo==="arquivar"){
-    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Por que largar? Uma linha basta: fica registrado que a decisão foi sua.</label><textarea id="cv" rows="2"></textarea>
-      <button class="pri" data-acao="confirmar" data-a1="arquivar" data-a2="5" data-a3="Diga o motivo em pelo menos 5 letras.">Largar este card</button></div>`;
+    campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Por que descartar? Uma linha basta: fica registrado que a decisão foi sua.</label><textarea id="cv" rows="2"></textarea>
+      <button class="pri" data-acao="confirmar" data-a1="arquivar" data-a2="5" data-a3="Diga o motivo em pelo menos 5 letras.">${GLOSSARIO.descartar} este card</button></div>`;
   }else if(verbo==="esperar"){
     campo.innerHTML=`<div class="campo"><label for="cv" class="mut">Com quem está a bola, e quando você cobra?</label><textarea id="cv" rows="2" placeholder="Ex.: fiscal da obra, cobrar em 2 dias"></textarea>
       <div class="datas">${[["em 2 dias",somaDias(2)],["próx. segunda",proxSegunda()],["em 1 semana",somaDias(7)]].map(o=>`<button data-acao="confirmarEsperar" data-a1="${esc(o[1])}">${o[0]} <span class="mut">${diaCurto(o[1])}</span></button>`).join("")}</div></div>`;
@@ -2406,7 +2482,7 @@ async function avisoAtivar(){
   }catch(e){toast("Não ativou os avisos: "+String(e&&e.message||e).slice(0,160),"bad",false,6000);}
 }
 
-/* ---------- acoes: tudo passa por agir(), com 6 s para desfazer ---------- */
+/* ---------- acoes: tudo passa por agir(), com 8 s para desfazer ---------- */
 function toast(t,cls,comBotao,ms){
   const el=document.getElementById("toast");document.getElementById("tmsg").textContent=t;
   el.className="toast"+(cls?" "+cls:"");document.getElementById("tbtn").classList.toggle("hidden",!comBotao);
@@ -2453,7 +2529,7 @@ function medirAto(c,k){
   if(!c||!k||!c.t0)return null;
   const a={p_origem:c.origem,p_ref:String(c.ref),p_ato:k,p_ms:Math.round(Math.max(0,Date.now()-c.t0)),p_modo:"presidente"};
   c.t0=null;
-  try{ comTeto(sb.rpc("painel_medir_decisao",a),LIMITE_ACAO,"painel_medir_decisao").then(()=>{},()=>{}); }catch(e){}
+  try{ ouvirFonte("medir",comTeto(sb.rpc("painel_medir_decisao",a),LIMITE_ACAO,"painel_medir_decisao")); }catch(e){ fonteFalhou("medir",e); }
   return a;
 }
 /* ---------- p4.3: atalhos da folha ----------
@@ -2654,7 +2730,7 @@ async function enviar_(p,ato){
    espera {texto}; (2) reconhecimento do navegador (Web Speech, gratis). Sem nenhum dos dois, o campo
    continua aceitando o ditado do teclado do celular.
    Sempre revisar (decisao do Igor 02/10/2026): nada vai ao banco sem o toque em Enviar, e o envio
-   tem 6 s para desfazer. URL e chave da API ficam so no localStorage deste aparelho, nunca no
+   tem 8 s para desfazer. URL e chave da API ficam so no localStorage deste aparelho, nunca no
    repositorio, que e publico. Contrato da API em docs/instrucao-por-audio.md. */
 const VOZ_PREFIXO="[voz] ", VOZ_CHAVE="cerebro.voz.api", VOZ_MAX_S=120, VOZ_MIN=3, VOZ_API_S=30;
 const VOZ={rascunho:"",rec:null,grav:null,ouvindo:false,base:"",t:null,corte:0,vistos:0,reabrir:false};
@@ -2822,7 +2898,9 @@ const FIO_CHEIO=`Fio cheio: ${FIO_MAX} trocas em ${FIO_DIAS} dias neste card. O 
 const hhmm=s=>{const d=new Date(s);return !s||isNaN(d)?"":pad(d.getHours())+"h"+pad(d.getMinutes());};
 const minDesde=s=>{const d=new Date(s);return !s||isNaN(d)?null:Math.max(0,Math.round((Date.now()-d)/6e4));};
 async function atendenteEstado(){
-  try{ const {data,error}=await comTeto(sb.rpc("atendente_estado"),LIMITE_ACAO,"atendente_estado"); if(!error&&data&&!data.erro)ATD=data; }catch(e){}
+  try{ const {data,error}=await comTeto(sb.rpc("atendente_estado"),LIMITE_ACAO,"atendente_estado");
+    if(!error&&data&&!data.erro)ATD=data;
+    if(error||(data&&data.erro))fonteFalhou("atendente",error||data); else fonteVoltou("atendente"); }catch(e){ fonteFalhou("atendente",e); }
   atdUi(); return ATD;
 }
 /* acordado: o ultimo POST saiu ha menos de 3 min, ou a sessao bateu ponto nos ultimos 10 */
@@ -2966,7 +3044,7 @@ setInterval(()=>{ if(!INICIADO||RT_OK||document.hidden||!ATD||!ATD.pendentes)ret
    a gaveta. Relatorio so na versao vigente; o toque abre a folha dele (ciencia, versoes anteriores) e o PDF sai do
    botao. Antes, o toque abria o PDF direto e nao havia onde dar ciencia nem decidir. */
 /* p4.53 (s3056, 12/10/2026, t2308; onda 2 da auditoria da Mesa, doc 4005, decisao 2 do Igor): dois caminhos por tipo de
-   peca. Leitura e decisao: Ok, Ajustar, Adiar e Descartar. Envio, entrega, assinatura e protocolo: "Enviei por", que aprova
+   peca. Leitura e decisao: Aprovar (era Ok ate a p4.64), Ajustar, Adiar e Descartar. Envio, entrega, assinatura e protocolo: "Enviei por", que aprova
    e da baixa num toque so (mesa_baixa_painel), com Ajustar, Adiar e Descartar ao lado. Sairam a ciencia do dia, a ciencia
    em lote, Lidos, Arquivo, o ritual "Encerrar o dia" e a regua "Sua hora" (zero uso no dia desde 06/10). "Aprovada" vem do
    campo mesa_item.aprovada_em, nunca do texto do motivo. */
@@ -2979,14 +3057,14 @@ const MS_BUCKET_REL="mesa", MS_BUCKET_PECA="mesa", MS_BUCKET_PROVA="mesa-provas"
 /* p4.5: a decisao vai ao banco pelo codigo (a chave); a tela so mostra rotulo e frase.
    Ajuste e largar exigem nota escrita: sem ela a tela nao chama o banco. */
 const MS_DEC={
-  aprovado:{bt:"msBtAprovar",rot:"Ok",ok:"Ok gravado: a peça saiu da sua mesa.",pend:"Ok"},
+  aprovado:{bt:"msBtAprovar",rot:GLOSSARIO.aprovar,ok:"Aprovada: a peça saiu da sua mesa.",pend:GLOSSARIO.aprovado},
   ajustar:{abre:"msAbreAjustar",campo:"msNotaAjustar",txt:"msTxtAjustar",bt:"msBtAjustar",rot:"Enviar pedido",
     falta:"Diga o que precisa mudar na peça. Sem isso, o pedido não vai.",ok:"Pedido de ajuste gravado.",pend:"Ajuste pedido"},
-  largar:{abre:"msAbreLargar",campo:"msNotaLargar",txt:"msTxtLargar",bt:"msBtLargar",rot:"Descartar",
-    falta:"Diga por que descartar a peça. Sem o motivo, nada é gravado.",ok:"Peça descartada.",pend:"Descartada"},
+  largar:{abre:"msAbreLargar",campo:"msNotaLargar",txt:"msTxtLargar",bt:"msBtLargar",rot:GLOSSARIO.descartar,
+    falta:"Diga por que descartar a peça. Sem o motivo, nada é gravado.",ok:"Peça descartada.",pend:GLOSSARIO.descartado},
   adiar:{abre:"msAbreAdiar",campo:"msNotaAdiar",txt:"msTxtAdiar",bt:"msBtAdiar",rot:"Adiar",
     falta:"Escolha a data em que a peça volta. Sem ela, nada é gravado.",ok:"Peça adiada.",pend:"Adiada"}};
-const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false,rel:[],ritual:null,ordem:"valor",frente:""};
+const MS={dados:null,erro:"",carga:null,peca:null,canal:null,dec:null,todosRel:false,gravando:false,rel:[],ordem:"valor",frente:""};
 /* p4.16 (06/10/2026, pedido do Igor): ordenar a mesa por data e filtrar por frente. "valor" e a ordem do banco
    (maior valor, depois a mais parada). Escolha fica no aparelho; storage bloqueado so volta ao padrao. */
 const MS_ORDENS=[["valor","Maior valor (padrão)"],["antigas","Mais antigas primeiro"],["recentes","Mais recentes primeiro"]];
@@ -3025,7 +3103,6 @@ const msAto=a=>MS_ATO[a]||"ato seu";
 const msCanal=c=>MS_CANAL_NOME[c]||"outro canal";
 const msTemRs=v=>v!=null&&v!==""&&!isNaN(+v);
 const msRs2=v=>!msTemRs(v)?"sem valor":(+v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:2});
-const msHoras=h=>(+h).toLocaleString("pt-BR",{maximumFractionDigits:1})+" h";
 const msParada=d=>d==null||d===""||isNaN(+d)?"sem data de entrada":(+d<=0?"parada desde hoje":"parada há "+Math.floor(+d)+" d");
 const msFrente=f=>f?nomeFrente(f):"";
 /* p4.17 (06/10/2026): peca de envio aprovada fica na mesa ate a baixa. p4.53: o estado vem do campo
@@ -3051,7 +3128,7 @@ async function msCarregar_(){
   if(!MS.dados)msRender();
   const {data,error}=await msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel");
   if(error||!data||typeof data!=="object")MS.erro="Não consegui ler a mesa: "+(error?error.message:"resposta vazia")+". Toque em recarregar.";
-  else{ MS.erro=""; MS.dados=data; }
+  else{ MS.erro=""; MS.dados=veuObj(data); }
   msRender();
   /* p4.14: Hoje mostra pecas da Mesa; so redesenha depois que a carga do painel chegou (D.fila) */
   if(D.fila){ renderHoje(); renderSelos(); }
@@ -3067,14 +3144,10 @@ function msVigentes(rel){
     else a.anteriores.push({versao:r.versao,path:r.path}); });
   const v=[...m.values()]; v.forEach(r=>r.anteriores.sort((a,b)=>String(b.versao||"").localeCompare(String(a.versao||"")))); return v;
 }
-const msHojeD=()=>String((MS.dados&&MS.dados.hoje)||somaDias(0)).slice(0,10);
-const msDiaMenos=(d,n)=>{const x=new Date(String(d).slice(0,10)+"T12:00:00");x.setDate(x.getDate()-n);return iso(x);};
 const msEst=d=>d&&Array.isArray(d.estoque)?d.estoque:[];
 const msPend=d=>msEst(d).filter(p=>!p.adiado_ate);
 const msAdiadas=d=>msEst(d).filter(p=>!!p.adiado_ate);
 const msHora=t=>{const x=new Date(t);return isNaN(x)?"":x.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});};
-const msFechDia=dia=>MS.dados&&Array.isArray(MS.dados.fechamentos)?MS.dados.fechamentos.find(f=>String(f.dia).slice(0,10)===String(dia).slice(0,10)):null;
-const msFechDe=r=>r&&r.tipo==="dia"?msFechDia(r.alvo):null;
 function msItemHtml(p){
   return `<button class="ms-item" data-acao="msAbrirId" data-a1="${+p.id}">
       <span class="ms-tit l2">${esc(p.titulo||"peça sem título")}</span>
@@ -3119,17 +3192,16 @@ function msRender(){
 /* ---------- folha da peca e baixa de envio ---------- */
 /* p4.14: o banco diz se o card ligado fechou junto ou ficou aberto; a tela traduz */
 const msCardTxt=t=>/concluido junto/.test(t)?" O card ligado foi concluído junto.":/ficou aberto/.test(t)?" O card ligado ficou aberto: conclua pelo card.":"";
-function msAbrir(i){ const p=msEst(MS.dados)[i]; if(p)msAbrirP(p); }
 function msAbrirId(id){ const p=msEst(MS.dados).find(x=>+x.id===+id); if(p)msAbrirP(p); }
 function msAbrirP(p){
   MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
   const amanha=somaDias(1), aprov=msAprovEm(p), saida=MS_ATO_SAIDA.has(p.ato);
   const outros=`<button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" data-acao="msMotivo" data-a1="ajustar">Ajustar</button>
         <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" data-acao="msMotivo" data-a1="adiar">Adiar</button>
-        <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" data-acao="msMotivo" data-a1="largar">Descartar</button>`;
+        <button type="button" class="sec" id="msAbreLargar" aria-expanded="false" aria-controls="msNotaLargar" data-acao="msMotivo" data-a1="largar">${GLOSSARIO.descartar}</button>`;
   const notas=`<div class="campo ms-nota" id="msNotaAjustar" hidden><label for="msTxtAjustar" class="mut">O que ajustar</label><textarea id="msTxtAjustar" rows="3"></textarea><button type="button" class="pri" id="msBtAjustar" data-acao="msDecidir" data-a1="ajustar">Enviar pedido</button></div>
       <div class="campo ms-nota" id="msNotaAdiar" hidden><label for="msTxtAdiar" class="mut">Volta para a mesa em</label><input id="msTxtAdiar" type="date" min="${amanha}" max="${somaDias(30)}" value="${amanha}"><button type="button" class="pri" id="msBtAdiar" data-acao="msDecidir" data-a1="adiar">Adiar</button></div>
-      <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que descartar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" data-acao="msDecidir" data-a1="largar">Descartar</button></div>
+      <div class="campo ms-nota" id="msNotaLargar" hidden><label for="msTxtLargar" class="mut">Por que descartar</label><textarea id="msTxtLargar" rows="3"></textarea><button type="button" class="pri" id="msBtLargar" data-acao="msDecidir" data-a1="largar">${GLOSSARIO.descartar}</button></div>
       <p class="ms-aviso" id="msAvisoDec" role="alert"></p>`;
   /* p4.53: peca de saida tem um caminho so, "Enviei por", que aprova e da baixa; peca de leitura ou decisao nunca mostra
      o bloco de envio. Antes as duas coisas moravam na mesma folha e "Aprovar" num envio nao tirava a peca da mesa. */
@@ -3153,7 +3225,7 @@ function msAbrirP(p){
     </div>`
     :`<div class="bloco ms-decide"><span class="rot">Sua decisão</span>
       <div class="ms-decisoes" role="group" aria-label="Sua decisão">
-        ${p.peca?`<button type="button" class="pri" id="msBtAprovar" data-acao="msDecidir" data-a1="aprovado">Ok</button>`:""}
+        ${p.peca?`<button type="button" class="pri" id="msBtAprovar" data-acao="msDecidir" data-a1="aprovado">${GLOSSARIO.aprovar}</button>`:""}
         ${outros}
       </div>
       <span class="mut">Ok tira a peça da sua mesa. Adiar tira da conta de hoje até a data.</span>
@@ -3183,7 +3255,7 @@ async function msBaixa(){
   const destEl=document.getElementById("msDest"), dest=destEl?destEl.value.trim():"";
   if(dest.length<2){ diz("Diga para quem a peça foi."); if(destEl)destEl.focus(); return; }
   const arqEl=document.getElementById("msArq"), arq=arqEl&&arqEl.files&&arqEl.files[0]||null, canal=MS.canal;
-  /* p4.19: a aprovacao que ainda espera os 6 s vai antes da baixa; recusada, a baixa nao vai */
+  /* p4.19: a aprovacao que ainda espera os 8 s vai antes da baixa; recusada, a baixa nao vai */
   if(PEND&&PEND.mesa&&await enviar()===false)return;
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
   const volta=()=>{ MS.gravando=false; if(bt&&document.body.contains(bt)){bt.disabled=false;bt.textContent=msBtBaixa();} };
@@ -3309,7 +3381,7 @@ async function msDecidir(dec){
     const el=document.getElementById(c.txt); nota=el?el.value.trim():"";
     if(!nota){ diz(c.falta); if(el)el.focus(); return; }
   }
-  /* p4.19 (plano 84): a decisao espera 6 s com desfazer, como os atos da folha. A folha fecha na hora e o banco so
+  /* p4.19 (plano 84): a decisao espera 8 s com desfazer, como os atos da folha. A folha fecha na hora e o banco so
      recebe depois do prazo. p4.53: sem ritual e sem aprovar envio (que sai pelo "Enviei por"). */
   if(PEND)enviar();
   const m={p,dec,nota};
@@ -3324,7 +3396,7 @@ function msVolta(m){
   msAbrirP(p);
   if(c&&c.campo){ msMotivo(dec); const t=document.getElementById(c.txt); if(t)t.value=nota; }
 }
-/* p4.19: a decisao vai ao banco so aqui, depois dos 6 s. Sucesso fica calado se outro ato ja espera (resultado);
+/* p4.19: a decisao vai ao banco so aqui, depois dos 8 s. Sucesso fica calado se outro ato ja espera (resultado);
    recusa nunca some: toast de erro e, com a folha livre ou ainda nesta peca, a peca volta com o aviso. */
 async function msGravarDec(m){
   const {p,dec,nota}=m, c=MS_DEC[dec];
@@ -3482,13 +3554,16 @@ async function sbCarregar_(){
   /* banco sem a fila ainda (funcao nao existe): a aba segue sem o bloco, sem aviso */
   if(error&&(error.code==="PGRST202"||/could not find the function/i.test(error.message||""))){ SB.erro=""; SB.dados=null; }
   else if(error) SB.erro="Não consegui ler a fila do compartilhado: "+error.message+". Toque em recarregar.";
-  else{ SB.erro=""; SB.dados=data&&typeof data==="object"?data:null; }
+  else{ SB.erro=""; SB.dados=data&&typeof data==="object"?veuObj(data):null; }
   sbRender();
 }
 function sbRender(){
   const raiz=document.getElementById("sb-raiz"); if(!raiz)return;
   const fila=sbFila(SB.dados), rec=sbRecentes(SB.dados);
-  if(!fila.length&&!rec.length&&!SB.erro){ raiz.hidden=true; raiz.innerHTML=""; return; }
+  /* p4.65 (pi 171): fila lida e vazia diz que está vazia; so a funcao ausente no banco (SB.dados null) esconde o bloco */
+  if(!fila.length&&!rec.length&&!SB.erro){
+    if(!SB.dados){ raiz.hidden=true; raiz.innerHTML=""; return; }
+    raiz.hidden=false; raiz.innerHTML=`<h2>Subir ao compartilhado</h2><div class="vazio">Nada esperando subida, e nada subiu nos últimos 7 dias.</div>`; return; }
   const pend=fila.filter(p=>p.estado==="pendente").length;
   raiz.hidden=false;
   raiz.innerHTML=(SB.erro?`<div class="aviso" role="alert">${esc(SB.erro)}</div>`:"")
@@ -3621,7 +3696,7 @@ function aoAvisoTocado(d){
 let INICIADO=false;
 function iniciar(){ if(INICIADO)return; INICIADO=true;
   document.getElementById("login").classList.add("hidden");document.getElementById("fator").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");ir("hoje");carregar();checarVersao();atendenteEstado();ouvirAtendente();destinoDoLink();
+  document.getElementById("app").classList.remove("hidden");telaUi();ir("hoje");carregar();checarVersao();atendenteEstado();ouvirAtendente();destinoDoLink();
   if(DESTINO_PENDENTE){ destinoDoLink(DESTINO_PENDENTE); DESTINO_PENDENTE=null; } }
 /* t1745: toda partida passa pela porta do segundo fator (bloco comum:fator); uma leitura em voo por vez */
 let FATOR=null, PORTA=null, CONFERINDO=false;

@@ -7,7 +7,7 @@ resposta aparece sozinha: ver `docs/resposta-por-evento.md`.
 
 ## Para onde a instrução vai (medido em 02/10/2026)
 
-1. **Enviar.** Depois dos 6 s para desfazer, `inbox(p_texto)` confere que é o dono (`is_dono()`) e grava
+1. **Enviar.** Depois dos 8 s para desfazer, `inbox(p_texto)` confere que é o dono (`is_dono()`) e grava
    uma linha em `comando`: `origem = 'painel'`, `status = 'pendente'`, texto com o prefixo `[voz] `.
 2. **Gatilho.** O `INSERT` dispara `trg_comando_acorda_atendente`, que chama `fn_acordar_atendente()` para
    acordar o atendente na hora pela API da rotina (cota do Max). Em 03/10/2026 o token no vault ainda era
@@ -37,7 +37,7 @@ Decisões do Igor (02/10/2026):
 
 - **Lugar:** botão no topo, sem um quinto destino na barra.
 - **Motor:** só a transcrição grátis enquanto não houver API.
-- **Envio:** sempre revisar. Nada vai ao banco sem o toque em Enviar, e o envio tem 6 s para
+- **Envio:** sempre revisar. Nada vai ao banco sem o toque em Enviar, e o envio tem 8 s para
   desfazer. Desfazer devolve o texto para a caixa.
 - **API:** presa ao aparelho, porque a voz é só pelo celular.
 

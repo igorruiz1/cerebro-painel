@@ -8,7 +8,7 @@ A p4.5 (05/10/2026) fecha o ciclo na própria folha: abrir a cópia da peça e d
 largar). Antes, decidir uma peça da Mesa exigia sair do painel.
 
 > **p4.53 (12/10/2026, s3056, t2308): dois caminhos por tipo de peça.** Onda 2 da auditoria da Mesa (doc 4005),
-> decisão 2 do Igor. Peça de leitura ou decisão: **Ok**, **Ajustar**, **Adiar**, **Descartar** (`mesa_deliberar`
+> decisão 2 do Igor. Peça de leitura ou decisão: **Aprovar** (era Ok até a p4.64), **Ajustar**, **Adiar**, **Descartar** (`mesa_deliberar`
 > `aprovado`, `ajustar`, `adiar`, `largar`). Peça de envio, entrega, assinatura ou protocolo: **Enviei por**
 > (`mesa_baixa_painel`), que aprova e dá a baixa num toque e conta como decisão pelo painel; Ajustar, Adiar e Descartar
 > ficam ao lado. Saíram a ciência do dia, a ciência em lote, Lidos, Arquivo, o ritual "Encerrar o dia" e a régua
@@ -80,13 +80,13 @@ Sem `p_prova_path` (null), o banco registra a baixa como declaração datada; co
   (gmail: E-mail), prova vira frase (documental: com comprovante). Código desconhecido vira rótulo genérico.
 - Baixa sem canal não chama o banco (LC-14: concluir sem prova não grava). Sem destinatário também não.
 - O print sobe antes da RPC. Se não subir, nada é gravado.
-- Decisão (p4.5, desfazer na p4.19): Pedir ajuste, Adiar e Largar abrem um campo ("O que ajustar", "Volta
-  para a mesa em", "Por que largar"); vazio não chama o banco e diz o que falta. Válida, a decisão espera
-  6 s com desfazer, como os atos da folha: a folha anda na hora (fecha, ou passa à próxima no ritual) e
+- Decisão (p4.5, desfazer na p4.19): Ajustar, Adiar e Descartar abrem um campo ("O que ajustar", "Volta
+  para a mesa em", "Por que descartar"); vazio não chama o banco e diz o que falta. Válida, a decisão espera
+  8 s com desfazer, como os atos da folha: a folha anda na hora (fecha, ou passa à próxima no ritual) e
   `mesa_deliberar` só sai depois do prazo. Desfazer devolve a peça com a nota no campo; no ritual, volta ao
   mesmo passo. `OK` avisa e recarrega a aba; `RECUSADO` vira aviso de erro e, com a folha livre, a peça volta
   com o texto do banco. Aprovar tira da mesa o que é leitura ou decisão; o que é envio continua lá até a baixa.
-- Baixa e ciência gravam antes a decisão que ainda espera os 6 s. Aprovação recusada segura a baixa.
+- Baixa e ciência gravam antes a decisão que ainda espera os 8 s. Aprovação recusada segura a baixa.
 - Baixa e ciência: uma escrita por vez. A decisão não trava a seguinte: no ritual, o toque na próxima peça
   vale enquanto a anterior grava.
 - Erro de leitura fica na própria aba; erro de relatório e de baixa vira aviso. Nunca tela em branco.

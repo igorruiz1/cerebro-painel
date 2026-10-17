@@ -204,7 +204,7 @@ test('verbo do banco nunca aparece cru: feita, repactuar, deliberar e arquivar v
   await page.evaluate(()=>abrirFila(0));
   const botoes = await page.$$eval('#foco button, #folha button', bs=>bs.map(b=>b.textContent.trim().toLowerCase()));
   for (const cru of ['feita','repactuar','deliberar','arquivar']) expect(botoes, 'verbo cru '+cru).not.toContain(cru);
-  expect(botoes).toContain('concluí');
+  expect(botoes).toContain('concluir');
   expect(botoes).toContain('mudar data');
   expect(botoes).toContain('pedir análise');
   expect(botoes).toContain('dar minha posição');
@@ -226,7 +226,7 @@ test('concluir sem prova escrita nao chama o banco; com prova, grava depois do p
   expect(agir).toEqual([{p_origem:'tarefa',p_ref:'2',p_verbo:'feita',p_valor:'e-mail do fiscal 08/10'}]);
 });
 
-test('desfazer dentro dos 6 s nao grava nada', async ({page})=>{
+test('desfazer dentro dos 8 s nao grava nada', async ({page})=>{
   await abrir(page);
   await page.evaluate(()=>{abrirFila(0);escolher('repactuar');});
   await page.click('#campo .datas button >> nth=0');
@@ -1460,7 +1460,7 @@ test('Mesa: "Abrir a peça" pede o link assinado da copia ao bucket mesa; peca s
   expect(erros).toEqual([]);
 });
 
-test('Mesa: "Ok" chama mesa_deliberar com a peca certa, fecha a folha e recarrega; recusa volta a folha', async ({page})=>{
+test('Mesa: "Aprovar" chama mesa_deliberar com a peca certa, fecha a folha e recarrega; recusa volta a folha', async ({page})=>{
   const erros = await abrirMesa(page);
   const cargas0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length);
   await page.click('#ms-raiz .ms-item >> nth=0');
@@ -1471,7 +1471,7 @@ test('Mesa: "Ok" chama mesa_deliberar com a peca certa, fecha a folha e recarreg
   await page.evaluate(()=>enviar());
   await expect.poll(()=>deliberacoes(page)).toEqual([{p_doc:101,p_decisao:'aprovado',p_nota:null}]);
   await expect(page.locator('#toast')).not.toHaveClass(/bad/);
-  await expect(page.locator('#tmsg')).toHaveText('Ok gravado: a peça saiu da sua mesa.');
+  await expect(page.locator('#tmsg')).toHaveText('Aprovada: a peça saiu da sua mesa.');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_painel').length), 'a aba recarrega').toBeGreaterThan(cargas0);
   /* RECUSADO: toast de erro com o texto do banco, folha aberta e botoes de volta */
   await page.evaluate(()=>{ window.__deliberar='RECUSADO: doc 101 ja saiu da mesa'; });
@@ -1483,7 +1483,7 @@ test('Mesa: "Ok" chama mesa_deliberar com a peca certa, fecha a folha e recarreg
   await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 101 ja saiu da mesa');
   await expect(page.locator('#veu')).toBeVisible();
   await expect(page.locator('#msBtAprovar')).toBeEnabled();
-  await expect(page.locator('#msBtAprovar')).toHaveText('Ok');
+  await expect(page.locator('#msBtAprovar')).toHaveText('Aprovar');
   expect((await deliberacoes(page)).map(a=>a.p_doc)).toEqual([101,101]);
   expect(erros).toEqual([]);
 });
@@ -1547,8 +1547,8 @@ test('Mesa: nenhum codigo da decisao aparece cru na folha nem no aviso', async (
     const limpo = t.replace(/ /g,' ').split('O que ajustar').join('');
     for (const cru of [...CRUS_DEC, ...CRUS_MESA]) expect(limpo, 'codigo cru: '+cru).not.toContain(cru);
   }
-  const rot = await page.evaluate(()=>{ msAbrir(0); return [...document.querySelectorAll('#folha .ms-decide button, #folha .ms-decide label, #msPeca')].map(e=>e.textContent.trim()); });
-  expect(rot).toEqual(['Abrir a peça','Ok','Ajustar','Adiar','Descartar','O que ajustar','Enviar pedido','Volta para a mesa em','Adiar','Por que descartar','Descartar']);
+  const rot = await page.evaluate(()=>{ msAbrirP(msEst(MS.dados)[0]); return [...document.querySelectorAll('#folha .ms-decide button, #folha .ms-decide label, #msPeca')].map(e=>e.textContent.trim()); });
+  expect(rot).toEqual(['Abrir a peça','Aprovar','Ajustar','Adiar','Descartar','O que ajustar','Enviar pedido','Volta para a mesa em','Adiar','Por que descartar','Descartar']);
   expect(erros).toEqual([]);
 });
 
@@ -1927,7 +1927,7 @@ test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a p
 });
 
 /* p4.16 (06/10/2026, pedido do Igor): a prova do card tambem vai como print ou PDF, anexado ou colado (Ctrl+V).
-   O arquivo so sobe quando o ato vai ao banco (depois dos 6 s de desfazer), para o bucket privado mesa-provas,
+   O arquivo so sobe quando o ato vai ao banco (depois dos 8 s de desfazer), para o bucket privado mesa-provas,
    e o caminho entra no texto da prova. O codigo p4.15 nao tinha campo de arquivo: estes testes reprovam nele. */
 test('Card p4.16: print anexado sobe para mesa-provas so no envio e o caminho entra na prova', async ({page})=>{
   const erros = await abrir(page);
@@ -1938,7 +1938,7 @@ test('Card p4.16: print anexado sobe para mesa-provas so no envio e o caminho en
   await page.click('#campo .pri');
   await expect(page.locator('#tmsg')).toContainText('Concluído com anexo');
   let up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
-  expect(up, 'dentro dos 6 s nada sobe').toEqual([]);
+  expect(up, 'dentro dos 8 s nada sobe').toEqual([]);
   await page.evaluate(()=>enviar());
   up = await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload'));
   expect(up).toHaveLength(1);
@@ -2036,7 +2036,7 @@ test('Mesa p4.53: aprovada vem do campo aprovada_em do banco, nunca do texto do 
 /* p4.19 (06/10/2026, plano 84): a decisao da Mesa era o unico toque do painel sem volta: aprovar, ajustar, adiar e
    largar gravavam na hora. Agora esperam 6 s com desfazer, como os atos da folha. O p4.18 reprova aqui: o toque
    gravava antes do prazo e o desfazer nao existia. */
-test('Mesa p4.19: decisão espera 6 s com desfazer; desfazer devolve a peça com a nota', async ({page})=>{
+test('Mesa p4.19: decisão espera 8 s com desfazer; desfazer devolve a peça com a nota', async ({page})=>{
   const erros = await abrirMesa(page);
   await page.clock.install();
   await page.click('#ms-raiz .ms-item >> nth=1');
@@ -2047,7 +2047,7 @@ test('Mesa p4.19: decisão espera 6 s com desfazer; desfazer devolve a peça com
   await expect(page.locator('#tbtn'), 'com desfazer').toBeVisible();
   await expect(page.locator('#tmsg')).toContainText('Ajuste pedido: Laudo de exemplo');
   await page.clock.fastForward(5500);
-  expect(await deliberacoes(page), 'nada vai antes dos 6 s').toEqual([]);
+  expect(await deliberacoes(page), 'nada vai antes dos 8 s').toEqual([]);
   await page.click('#tbtn');
   await expect(page.locator('#veu'), 'desfazer devolve a peça').toBeVisible();
   await expect(page.locator('#folhaTit')).toHaveText('Laudo de exemplo');
@@ -2074,7 +2074,7 @@ test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; a
   await expect(page.locator('#veu'), 'a peca volta').toBeVisible();
   await expect(page.locator('#msAvisoDec')).toContainText('Não gravou: doc 101 ja saiu da mesa');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
-  /* Ok numa peca e "Enviei por" noutra dentro dos 6 s: o Ok vai primeiro */
+  /* Ok numa peca e "Enviei por" noutra dentro dos 8 s: o Ok vai primeiro */
   await page.evaluate(()=>{ fecharFolha(); window.__deliberar='OK: aprovado'; });
   await page.click('#ms-raiz .ms-item >> nth=0');
   await page.click('#msBtAprovar');
@@ -2113,7 +2113,7 @@ test('t2308: peca de leitura ou decisao nao mostra o bloco de envio', async ({pa
   await expect(page.locator('#msBaixaBloco'), 'sem Ja enviei em peca de leitura').toHaveCount(0);
   await expect(page.locator('#folha .ms-canal')).toHaveCount(0);
   await expect(page.locator('#msDest')).toHaveCount(0);
-  await expect(page.locator('#folha .ms-decisoes button')).toHaveText(['Ok','Ajustar','Adiar','Descartar']);
+  await expect(page.locator('#folha .ms-decisoes button')).toHaveText(['Aprovar','Ajustar','Adiar','Descartar']);
   const folha = await page.locator('#folha').innerText();
   expect(folha).not.toMatch(/Já enviei|Dar baixa|Para quem/);
   expect(erros).toEqual([]);
@@ -2393,7 +2393,7 @@ test('87 fecho: CSP do presidente sem unsafe-inline e com o hash do script que r
 
 /* p4.29 (plano 95, s1226 08/10/2026): card com opcoes gravadas e uma recomendada mostra Recomendo, Ratifico e
    Retifico. Ratifico grava a recomendada pela escolher(); Retifico mostra as outras e grava a tocada; os dois
-   esperam os 6 s de desfazer. Antes a tela filtrava o verbo escolher: 7 cards com opcoes nao andavam por aqui. */
+   esperam os 8 s de desfazer. Antes a tela filtrava o verbo escolher: 7 cards com opcoes nao andavam por aqui. */
 const CARD_DECISAO = {id:8,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:null,parado_dias:2,titulo:'Card com opcoes',
   acoes:[{verbo:'deliberar',rotulo:'deliberar',arg:'texto'}],escolha:null,
   opcoes:[{label:'Assinar agora',recomendada:true,consequencia:'Fecha hoje; custo zero.'},
@@ -2493,7 +2493,7 @@ test('96 Dar minha posição grava deliberar pelo agir; com opcoes na folha, a p
 /* p4.31 (plano 112 = A2 do plano 101, s1274 08/10/2026): grupo Cobrar no Hoje, no molde da lista Aguardando do GTD. O card
    que espera terceiro com o retorno vencido so aparecia na coluna Esperando, em outra aba (medido em 08/10: 6 de 9). A classe
    que se cobra: cobranca que ninguem ve e cobranca que sai sem o Igor. Copiar nao chama o banco; Cobrei agora grava o verbo
-   cobrar so depois dos 6 s de desfazer; card que ja esta em Hoje nao repete; sem a chave cob3 o grupo some, sem erro.
+   cobrar so depois dos 8 s de desfazer; card que ja esta em Hoje nao repete; sem a chave cob3 o grupo some, sem erro.
    A p4.30 reprova: nao ha #cob3Box nem a chave cob3 na carga. */
 const COB3 = [
   {origem:'tarefa',ref:'5',titulo:'Nao deve repetir: ja esta em Hoje',terceiro:'Alguem',retorno_esperado:'2026-10-01',dias:7,rascunho:'nao'},
@@ -2618,7 +2618,7 @@ test('p4.33 saude por fonte: o selo abre a lista com hora por fonte, a atrasada 
 
 /* p4.34 (plano 115 = A3 do plano 101, s1274 08/10/2026): concluir em um toque com prova provavel. Medido em 07/10: 19% dos
    fechamentos do Igor passaram pelo painel; o atrito era escrever a prova. Tres provas prontas concluem num toque, com os
-   6 s de desfazer. A classe que se cobra (LC-14): prova que fala da saida em vez da volta, prova sem data e prova curta
+   8 s de desfazer. A classe que se cobra (LC-14): prova que fala da saida em vez da volta, prova sem data e prova curta
    demais para a guarda do banco. A p4.33 reprova: a folha de concluir so tinha o campo de texto. */
 test('p4.34 concluir: tres provas provaveis falam da volta, com a data de hoje; um toque grava feita so depois do desfazer', async ({page})=>{
   await page.setViewportSize({width:390, height:800});
@@ -3184,7 +3184,7 @@ test('p4.51 aviso: com o app aberto, o toque leva a aba ou a peca e rele o banco
 
 /* p4.42 (p127, s1898 11/10/2026): o bastidor deixa de decidir, entao a decisao da bandeja vem para o presidente. Card PRONTO
    mostra o que aconteceu com a peca (Feito, Enviei, Refazer, Descartar); DECISAO da bandeja mostra Recusar. Tudo vai pela
-   painel_responder, so depois dos 6 s de desfazer; Refazer e Recusar levam motivo opcional. Card fora da bandeja nao ganha
+   painel_responder, so depois dos 8 s de desfazer; Refazer e Recusar levam motivo opcional. Card fora da bandeja nao ganha
    o bloco. A p4.41 reprova aqui: o presidente nao lia a chave band e nao tinha porta para a peca pronta. */
 const CARD_BAND = {id:8,frente:'20-contrato-pj',dono:'igor',status:'pendente',prazo:null,parado_dias:2,titulo:'Peca da bandeja',
   acoes:[{verbo:'feita',rotulo:'feita',arg:null}]};
@@ -3198,7 +3198,7 @@ test('p127: a carga pede a bandeja e o card PRONTO grava o que aconteceu pela pa
   await page.evaluate(c=>{window.__dados={band:[{tipo:'PRONTO',item_id:8},{tipo:'DECISAO',item_id:9}]};D.band=window.__dados.band;INV.push(c);abrirInv(8);}, CARD_BAND);
   const bloco = page.locator('#folha #band');
   await expect(bloco).toContainText('O que aconteceu com a peça?');
-  for (const nome of ['Feito','Enviei','Refazer','Descartar']) {
+  for (const nome of ['Concluir','Enviei','Refazer','Descartar']) {
     const h = await bloco.locator(`button:has-text("${nome}")`).evaluate(b=>b.getBoundingClientRect().height);
     expect(h, nome+' abaixo de 44 px').toBeGreaterThanOrEqual(44);
   }
@@ -3355,7 +3355,7 @@ test('p108: aba Frentes em small multiples, 8 barras por frente na mesma escala 
 });
 
 /* p4.47 (p158, E1.6 do WL, s2655 11/10/2026): rotina sugere, o Igor aceita. O sensor de arquivo grava sugestao e o card so
-   nasce no aceite. O grupo aparece no Hoje com Virar card e Descartar; nada grava antes dos 6 s de desfazer; o ato vai pela
+   nasce no aceite. O grupo aparece no Hoje com Virar card e Descartar; nada grava antes dos 8 s de desfazer; o ato vai pela
    painel_responder com tipo SUGESTAO; desfazer devolve a linha; sem a chave sug o grupo some e a falta e avisada.
    O origin/main (p4.46) reprova: nao ha #sugBox nem a chave sug na carga. */
 const SUG = [{id:41,fonte:'sensor-dabli',frente_slug:'20-contrato-pj',titulo:'Ler arquivos novos do socio no compartilhado',dias:1},
@@ -3554,7 +3554,7 @@ test('p157 X conclui e Z desfaz: com ato esperando, Z cancela; sem, abre os Ulti
   await expect(page.locator('#folhaTit'), 'Z sem ato esperando abre os Ultimos atos').toHaveText('Últimos atos');
   const lis = page.locator('#atos li');
   await expect(lis).toHaveCount(2);
-  await expect(lis.nth(0)).toContainText('Concluí');
+  await expect(lis.nth(0)).toContainText('Concluído');
   await expect(lis.nth(1), 'o que nao volta diz por que').toContainText('o card mudou depois do ato');
   await expect(lis.nth(1).locator('button')).toHaveCount(0);
   const bt = lis.nth(0).locator('button', {hasText:'Desfazer'});
@@ -3977,3 +3977,143 @@ for (const largura of [360, 1280]) {
     expect(erros).toEqual([]);
   });
 }
+
+/* ---------- p4.65 · onda 0 do canone v02 (pi 170, 171 e 172; s6127, 17/10/2026) ----------
+   pi 170: o mesmo ato tinha tres nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito) e os docs diziam 6 s para desfazer
+   com o codigo em 8 s. A classe que se cobra: sinonimo que volta por um botao novo, e doc que desmente o codigo. */
+test('p4.65 pi 170: um rotulo por verbo do banco, sem sinonimo em botao, e docs com os 8 s do codigo', async ({page})=>{
+  const erros = await abrir(page);
+  const g = await page.evaluate(()=>({G:GLOSSARIO,
+    rot:{feita:ROT.feita,fechar:ROT.fechar,arquivar:ROT.arquivar,descartar:ROT.descartar},
+    feito:{feita:ROT_FEITO.feita,feito:ROT_FEITO.feito,largar:ROT_FEITO.largar,arquivar:ROT_FEITO.arquivar,descartar:ROT_FEITO.descartar,aprovado:ROT_FEITO.aprovado},
+    mesa:{aprovado:MS_DEC.aprovado.rot,largar:MS_DEC.largar.rot}, pronto:Object.fromEntries(ATOS_PRONTO), espera:ESPERA_MS}));
+  expect(g.G).toEqual({concluir:'Concluir',concluido:'Concluído',descartar:'Descartar',descartado:'Descartado',aprovar:'Aprovar',aprovado:'Aprovado'});
+  expect(g.rot, 'botao: fechar = Concluir, desistir = Descartar').toEqual({feita:'Concluir',fechar:'Concluir',arquivar:'Descartar',descartar:'Descartar'});
+  expect(g.feito, 'historico no particípio, um por ato').toEqual({feita:'Concluído',feito:'Concluído',largar:'Descartado',arquivar:'Descartado',descartar:'Descartado',aprovado:'Aprovado'});
+  expect(g.mesa).toEqual({aprovado:'Aprovar',largar:'Descartar'});
+  expect(g.pronto.feito).toBe('Concluir'); expect(g.pronto.descartar).toBe('Descartar');
+  expect(g.espera, 'o desfazer e de 8 s').toBe(8000);
+  /* o fonte nao tem sinonimo escrito em botao nem em rotulo de ato */
+  const src = fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  const SINONIMOS = /(>\s*|"|`)(Largar|Arquivar|Ok|Feito|Concluí)(\s*<|"|`| este)/g;
+  expect(src.match(SINONIMOS)||[], 'sinonimo de ato no fonte').toEqual([]);
+  /* tela: o card com arquivar mostra Descartar; nenhum botao visivel diz Largar, Arquivar, Ok, Feito ou Concluí */
+  await page.evaluate(()=>{ ir('fila'); abrirInv(4); });
+  const bts = await page.locator('#folha button').allTextContents();
+  expect(bts.map(s=>s.trim())).toContain('Descartar');
+  for (const s of bts) expect(s.trim(), 'botao com sinonimo').not.toMatch(/^(Largar|Arquivar|Ok|Feito|Concluí)\b/);
+  /* docs e fonte nao falam mais em 6 s de desfazer */
+  const docs = fs.readdirSync(path.resolve(__dirname,'..','docs')).filter(f=>f.endsWith('.md'))
+    .map(f=>[f, fs.readFileSync(path.resolve(__dirname,'..','docs',f),'utf8')]).concat([['presidente.html',src]]);
+  for (const [f,t] of docs) expect(t.match(/\b6 s (de|para) desfazer|os 6 s\b|espera 6 s/g)||[], f+' fala em 6 s').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+/* pi 171: bloco vazio ou com falha diz por que, nunca some calado (Google SRE: falha silenciosa e o pior alerta). */
+test('p4.65 pi 171: Cobrar, Vence amanhã e Sugestões vazios dizem que estão vazios; chave ausente não finge vazio', async ({page})=>{
+  const erros = await abrir(page);
+  const q = page.locator('#hojeQuieto');
+  await expect(q).toBeVisible();
+  await expect(q).toHaveText('Cobrar: ninguém com retorno vencido · Vence amanhã: nada para decidir · Sugestões das rotinas: nenhuma nova.');
+  await page.evaluate(()=>{ delete D.cob3; delete D.sug; renderCobrar(); });
+  await expect(q, 'sem a chave, o aviso de parte faltando fala; aqui nao').toHaveText('Vence amanhã: nada para decidir.');
+  await page.evaluate(()=>{ D.cob3=[{origem:'tarefa',ref:'90',titulo:'Cobrar retorno de exemplo',terceiro:'Fiscal de exemplo',dias:1}]; D.sug=[]; D.vesp=[]; renderCobrar(); renderSugestoes(); });
+  await expect(page.locator('#cob3Box')).toBeVisible();
+  await expect(q).not.toContainText('Cobrar');
+  expect(erros).toEqual([]);
+});
+test('p4.65 pi 171: Subir ao compartilhado lida e vazia mostra o estado vazio; função ausente segue escondida', async ({page})=>{
+  await abrirSubida(page);
+  await page.evaluate(async()=>{ const rpc=sb.rpc; sb.rpc=(n,a)=>n==='subida_painel'?Promise.resolve({data:{fila:[],recentes:[]},error:null}):rpc(n,a); await sbCarregar(); });
+  await expect(page.locator('#sb-raiz')).toBeVisible();
+  await expect(page.locator('#sb-raiz')).toContainText('Subir ao compartilhado');
+  await expect(page.locator('#sb-raiz .vazio')).toContainText('Nada esperando subida');
+  await page.evaluate(async()=>{window.__subidaErro={code:'PGRST202',message:'Could not find the function public.subida_painel'};
+    const rpc=sb.rpc; sb.rpc=(n,a)=>n==='subida_painel'?Promise.resolve({data:null,error:window.__subidaErro}):rpc(n,a); await sbCarregar();});
+  await expect(page.locator('#sb-raiz')).toBeHidden();
+});
+test('p4.65 pi 171: ping, medição, 4 blocos da Dabli e atendente que falham acendem a saúde por fonte e apagam ao voltar', async ({page})=>{
+  const erros = await abrir(page);
+  await expect(page.locator('#saude')).toHaveText('sistema ok');
+  await page.evaluate(async()=>{
+    window.__rpcOk=sb.rpc; window.__fromOk=sb.from;
+    sb.rpc=(n,a)=>n==='painel_ping'||n==='painel_medir_decisao'?Promise.resolve({data:null,error:{message:'funcao '+n+' sumiu'}})
+      :n==='atendente_estado'?Promise.resolve({data:{erro:'sem permissao'},error:null}):window.__rpcOk(n,a);
+    sb.from=v=>v===VISAO_4B?{select:()=>Promise.resolve({data:null,error:{message:'view fora do ar'}})}:window.__fromOk(v);
+    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado(); await carregar4B();
+  });
+  await expect(page.locator('#saude')).toContainText('sistema degradado');
+  await page.locator('button.estado').click();
+  const acesas = page.locator('#folha .fonte.w');
+  await expect(acesas).toHaveCount(4);
+  for (const n of ['Registro de abertura do painel','Medição do tempo de decisão','Quatro blocos da Dabli','Estado do atendente'])
+    await expect(page.locator('#folha .fonte.w', {hasText:n}), n).toContainText('falhou');
+  await expect(page.locator('#folha')).toContainText('view fora do ar');
+  await page.evaluate(async()=>{ fecharFolha(); sb.rpc=window.__rpcOk; sb.from=window.__fromOk;
+    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado(); await carregar4B(); });
+  await expect(page.locator('#saude'), 'tudo voltou: a saude apaga').toHaveText('sistema ok');
+  expect(erros).toEqual([]);
+});
+
+/* pi 172: a marca Dabli fica e o muro (LC-01) vira obrigatorio na tela compartilhada. Prova a 390 e a 1280: nenhuma frente PF,
+   nenhum caixa consolidado e nenhum R$ com numero em nenhuma aba; frente sem classificacao tambem some (fail-closed). */
+const FRENTES_TELA = [{slug:'11-renda-alt',entidade:'PF'},{slug:'20-contrato-pj',entidade:'DABLI'},{slug:'04-obra-residencial',entidade:'IGV'}];
+async function abrirTela(page, frentes=FRENTES_TELA){
+  const erros=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(f=>{ window.__tab={frente:f}; }, frentes);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA+'?tela=compartilhada');
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  return erros;
+}
+const PF_TEXTOS = ['Renda Alternativa','Card de exemplo','Laudo de exemplo','Laudo L1','11-renda-alt','renda alt'];
+for (const w of [390, 1280]) {
+  test(`p4.65 pi 172 a ${w}px: ?tela=compartilhada esconde a frente PF, o caixa consolidado e todo valor em R$`, async ({page})=>{
+    await page.setViewportSize({width:w, height:900});
+    const erros = await abrirTela(page);
+    await expect(page.locator('#telaAviso')).toBeVisible();
+    await expect(page.locator('#telaAviso')).toContainText('Frentes pessoais, caixa e valores em R$ estão escondidos');
+    expect(await page.evaluate(()=>window.__rpc.some(c=>c.n==='painel_carga')), 'a carga veio').toBe(true);
+    for (const aba of ['hoje','fila','frentes','mesa','semana']) {
+      await page.evaluate(a=>{ ir(a); if(a==='mesa') return msCarregar(); }, aba);
+      await page.waitForTimeout(50);
+      const txt = await page.evaluate(()=>document.body.innerText);
+      for (const s of PF_TEXTOS) expect(txt, `aba ${aba} mostra "${s}"`).not.toContain(s);
+      expect(txt.match(/R\$\s?-?\d/g)||[], `aba ${aba} mostra valor em R$`).toEqual([]);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth), 'rolagem horizontal').toBeLessThanOrEqual(0);
+    }
+    await expect(page.locator('#foco'), 'a frente Dabli segue na tela').toContainText('Segundo card');
+    /* caixa consolidado: a aba some, o link ?abrir=caixa cai no Hoje, a frase do folego some */
+    for (const b of await page.locator('[data-aba="caixa"]').all()) await expect(b).toBeHidden();
+    await page.evaluate(()=>ir('caixa'));
+    expect(await page.evaluate(()=>ABA)).toBe('hoje');
+    expect(await page.evaluate(()=>({rw:D.rw.length,c13:D.c13.length,c13i:D.c13i.length}))).toEqual({rw:0,c13:0,c13i:0});
+    await expect(page.locator('#situacao')).not.toContainText('caixa aguenta');
+    await expect(page.locator('a[href="index.html"]').first(), 'o bastidor mostra tudo: o link some').toBeHidden();
+    /* folha aberta tambem: valor de card nao vaza */
+    await page.evaluate(()=>{ ir('hoje'); abrirInv(3); });
+    expect((await page.locator('#folha').innerText()).match(/R\$\s?-?\d/g)||[]).toEqual([]);
+    /* desligar devolve tudo, e o valor volta */
+    await page.evaluate(()=>fecharFolha());
+    await page.locator('#telaAviso button').click();
+    await expect(page.locator('#telaAviso')).toBeHidden();
+    await expect.poll(()=>page.evaluate(()=>document.body.innerText.includes('Card de exemplo'))).toBe(true);
+    expect(await page.evaluate(()=>new URL(location.href).searchParams.has('tela')), 'o parametro sai da barra').toBe(false);
+    expect(erros).toEqual([]);
+  });
+}
+test('p4.65 pi 172: frente sem classificação some (fail-closed) e o botão liga pelo trilho', async ({page})=>{
+  await page.setViewportSize({width:1280, height:900});
+  const erros = await abrir(page);
+  await expect(page.locator('#foco')).toContainText('Card de exemplo');
+  await page.evaluate(()=>{ window.__tab={frente:[{slug:'20-contrato-pj',entidade:'DABLI'}]}; });
+  await page.locator('#btTela').click();
+  await expect(page.locator('#btTela')).toHaveAttribute('aria-pressed','true');
+  await expect.poll(()=>page.evaluate(()=>document.body.innerText.includes('Card de exemplo'))).toBe(false);
+  const txt = await page.evaluate(()=>document.body.innerText);
+  expect(txt, 'a frente IGV sem linha em frente.entidade some').not.toContain('Item para decidir');
+  expect(txt.match(/R\$\s?-?\d/g)||[]).toEqual([]);
+  expect(erros).toEqual([]);
+});
