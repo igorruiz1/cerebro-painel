@@ -61,6 +61,8 @@ const DUBLE = `(()=>{
     semana:[],
     /* p4.61 (p155): sem aviso da rotina por padrao; o teste do p155 troca por window.__dados */
     aviso:[],
+    /* p4.66 (onda 2): chaves novas vazias por padrao (pg vazio = vale o numero do codigo); os testes da onda 2 trocam por window.__dados */
+    pg:[], cxe:[], rwe:[], uni:[], ficha:[], quest:[], bloq:[], trava:[],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -2833,29 +2835,33 @@ test('p4.37 saude: rotina que falhou depois do ultimo ponto bom acende com o mot
   expect(erros).toEqual([]);
 });
 
-/* p4.38 (card 1562, s1322, 09/10/2026; desenho do Igor de 02/10): a frente do socio abre em quatro blocos de presidente
-   (v_dabli_presidente), no lugar da lista generica de cards. A classe que se cobra: bloco que some quando vem vazio (a view
-   so devolve linha de bloco com item), lista generica que volta junto, detalhe que quebra em varias linhas e rolagem
-   horizontal no celular. Teste de layout sem o elemento passa vazio: exige 4 blocos e 4 linhas. A p4.37 reprova aqui. */
+/* p4.38 (card 1562, s1322, 09/10/2026; desenho do Igor de 02/10) criou os quatro blocos de presidente so para a frente do socio,
+   lidos de v_dabli_presidente. p4.66 (pi 179, s6857, 17/10/2026): a ficha vale para TODA frente, com os blocos A a E lidos de
+   v_frente_ficha (chave ficha do painel_carga), sem caso especial. A classe que se cobra: bloco que some quando vem vazio,
+   ficha so de uma frente, lista generica que volta junto, detalhe que quebra em varias linhas e rolagem horizontal no celular.
+   Teste de layout sem o elemento passa vazio: exige 5 blocos e 4 linhas. A p4.65 reprova aqui (nao le a chave ficha). */
 const LINHAS_4B = `(()=>{ const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
-  window.__tab={v_dabli_presidente:[
-    {ordem:1,bloco:'A · EXEMPLO',ref:'D9',item:'Decidir o preco do plano de exemplo',detalhe:'Detalhe de exemplo '+'bem comprido '.repeat(30),prazo:null,dias_parado:9,recomendacao:'decisao aberta na frente: ratifique ou retifique'},
-    {ordem:1,bloco:'A · EXEMPLO',ref:'t91',item:'Assinar o termo de exemplo',detalhe:'ato do Igor',prazo:d(-2),dias_parado:2,recomendacao:'VENCIDO ha 2 dia(s): repactue ou feche'},
-    {ordem:2,bloco:'B · EXEMPLO',ref:'t92',item:'Receber a minuta do terceiro de exemplo',detalhe:'Terceiro de exemplo',prazo:d(4),dias_parado:-4,recomendacao:'quem deve a proxima resposta: o terceiro'},
-    {ordem:4,bloco:'D · EXEMPLO',ref:'receber',item:'Mensalidade de exemplo',detalhe:'R$ 1.000,00 (fatia de exemplo) · status previsto',prazo:d(6),dias_parado:-6,recomendacao:'confira no extrato'}]}; })();`;
+  const F='20-contrato-pj';
+  window.__dados={ficha:[
+    {frente_slug:F,ordem:1,bloco:'A · EXEMPLO',ref:'D9',item:'Decidir o preco do plano de exemplo',detalhe:'Detalhe de exemplo '+'bem comprido '.repeat(30),prazo:null,dias_parado:9,recomendacao:'decisao aberta na frente: ratifique ou retifique'},
+    {frente_slug:F,ordem:1,bloco:'A · EXEMPLO',ref:'t91',item:'Assinar o termo de exemplo',detalhe:'ato do Igor',prazo:d(-2),dias_parado:2,recomendacao:'VENCIDO ha 2 dia(s): repactue ou feche'},
+    {frente_slug:F,ordem:2,bloco:'B · EXEMPLO',ref:'t92',item:'Receber a minuta do terceiro de exemplo',detalhe:'Terceiro de exemplo',prazo:d(4),dias_parado:-4,recomendacao:'quem deve a proxima resposta: o terceiro'},
+    {frente_slug:F,ordem:4,bloco:'D · EXEMPLO',ref:'receber',item:'Mensalidade de exemplo',detalhe:'R$ 1.000,00 (fatia de exemplo) · status previsto',prazo:d(6),dias_parado:-6,recomendacao:'confira no extrato'},
+    {frente_slug:'11-renda-alt',ordem:1,bloco:'A · EXEMPLO',ref:'t99',item:'Item de outra frente',detalhe:'ato do Igor',prazo:null,dias_parado:0,recomendacao:'decida na data'}]}; })();`;
 
-test('p4.38 frente do socio: quatro blocos da v_dabli_presidente no lugar da lista de cards, vazio diz "nada aqui", sem rolagem a 360, 390 e 1280', async ({page})=>{
+test('p4.66 pi 179: a ficha de qualquer frente abre os blocos A a E de v_frente_ficha, vazio diz "nada aqui", sem rolagem a 360, 390 e 1280', async ({page})=>{
   await page.addInitScript(LINHAS_4B);
   const erros = await abrir(page);
-  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('20-contrato-pj'); });
   const b = page.locator('#folha section.d4');
-  await expect(b, 'quatro blocos, o vazio inclusive').toHaveCount(4);
-  await expect(page.locator('#folha .d4i'), 'uma linha por item da view').toHaveCount(4);
+  await expect(b, 'cinco blocos, o vazio inclusive').toHaveCount(5);
+  await expect(page.locator('#folha section.d4 .d4i'), 'uma linha por item da ficha desta frente (o item de outra frente fica fora)').toHaveCount(4);
   expect(await b.locator('.rot').allTextContents(), 'ordem da view, titulo curto e contagem').toEqual(
-    ['Só o presidente decide2','Terceiro esperando ou me devendo1','O sócio entregou e espera palavra0','Dinheiro da frente1']);
+    ['Só o presidente decide2','Terceiro esperando ou me devendo1','Entregue, espera sua palavra0','Dinheiro da frente1','Números0']);
   await expect(b.nth(2).locator('.d4i')).toHaveCount(0);
   await expect(b.nth(2).locator('.d4v')).toHaveText('nada aqui');
-  await expect(page.locator('#folha .item'), 'a lista generica de cards saiu (substitui, nao soma)').toHaveCount(0);
+  await expect(b.nth(4).locator('.d4v'), 'o bloco E vazio tambem diz').toHaveText('nada aqui');
+  await expect(page.locator('#folha .item:visible'), 'a lista de cards fica recolhida, nao soma ao lado dos blocos').toHaveCount(0);
   const l = b.nth(0).locator('.d4i');
   await expect(l.nth(0)).toContainText('Decidir o preco do plano de exemplo');
   await expect(l.nth(0).locator('.d4m')).toHaveText('parado há 9 d');
@@ -2871,29 +2877,55 @@ test('p4.38 frente do socio: quatro blocos da v_dabli_presidente no lugar da lis
     await page.setViewportSize({width:w, height:820});
     const m = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; const f=document.getElementById('folha');
       return {W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth, FW:f.clientWidth, FSW:f.scrollWidth, n:f.querySelectorAll('section.d4').length}; });
-    expect(m.n, `blocos a ${w}`).toBe(4);
+    expect(m.n, `blocos a ${w}`).toBe(5);
     expect(m.SW, `rolagem horizontal da pagina a ${w}`).toBe(m.W);
     expect(m.FSW, `rolagem horizontal da folha a ${w}`).toBe(m.FW);
   }
-  /* as outras frentes seguem com a lista de cards */
-  await page.evaluate(()=>{ fecharFolha(); abrirFrente('20-contrato-pj'); });
+  /* os cards seus seguem a um toque, recolhidos */
+  expect(await page.$$eval('#folha .fi-cards .item .t', e=>e.map(x=>x.textContent))).toEqual(['Item esperando','Item depois']);
+  await page.locator('#folha .fi-cards summary').click();
+  await expect(page.locator('#folha .fi-cards .item:visible')).toHaveCount(2);
+  /* outra frente, sem linha na ficha: os cinco blocos dizem "nada aqui" em vez de sumir; o item dela nao vaza para esta */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('04-obra-residencial'); });
+  await expect(page.locator('#folha section.d4')).toHaveCount(5);
+  await expect(page.locator('#folha section.d4 .d4v')).toHaveCount(5);
+  await expect(page.locator('#folha section.d4 .d4i')).toHaveCount(0);
+  await expect(page.locator('#folha button:has-text("Check-in de segunda")'), 'o check-in vale para toda frente').toHaveCount(1);
+  expect(erros).toEqual([]);
+});
+
+test('p4.66 pi 179: bloco E mostra rotulo e valor em uma linha e nao tem teto; sem a chave ficha a folha declara', async ({page})=>{
+  await page.addInitScript(()=>{ window.__dados={ficha:[
+    {frente_slug:'20-contrato-pj',ordem:5,bloco:'E · NUMEROS',ref:'margem_30d',item:'Margem em 30 dias',detalhe:'R$ 1.000,00',prazo:null,dias_parado:null,recomendacao:null},
+    {frente_slug:'20-contrato-pj',ordem:5,bloco:'E · NUMEROS',ref:'cards_abertos',item:'Cards abertos',detalhe:'3',prazo:null,dias_parado:null,recomendacao:null},
+    {frente_slug:'20-contrato-pj',ordem:5,bloco:'E · NUMEROS',ref:'cards_vencidos',item:'Cards vencidos',detalhe:'0',prazo:null,dias_parado:null,recomendacao:null}]}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>abrirFrente('20-contrato-pj'));
+  const e = page.locator('#folha section.d4').nth(4);
+  await expect(e.locator('.rot')).toHaveText('Números3');
+  await expect(e.locator('.d4e')).toHaveCount(3);
+  await expect(e.locator('.d4e').nth(0)).toContainText('Margem em 30 dias');
+  await expect(e.locator('.d4e b').nth(0)).toHaveText('R$ 1.000,00');
+  await expect(e.locator('.d4v'), 'bloco com linha nao diz "nada aqui"').toHaveCount(0);
+  /* a chave some do snapshot: nada de bloco vazio fingindo que esta tudo certo */
+  await page.evaluate(()=>{ delete D.ficha; abrirFrente('20-contrato-pj'); });
+  await expect(page.locator('#d4')).toContainText('A ficha não chegou nesta carga');
   await expect(page.locator('#folha section.d4')).toHaveCount(0);
-  expect(await page.$$eval('#folha .item .t', e=>e.map(x=>x.textContent))).toEqual(['Item esperando','Item depois']);
   expect(erros).toEqual([]);
 });
 
 /* p4.64 (card 1562, s5706, 16/10/2026): o bloco A chegou a 43 itens e virou a lista generica de novo. A classe que se cobra:
    bloco A sem teto. Mostra 7, na ordem da view, e o resto atras de "ver todos"; os outros blocos nao tem teto. A p4.63 reprova. */
-test('p4.64 frente do socio: bloco A mostra 7 itens e o resto atras de "ver todos", sem rolagem a 360', async ({page})=>{
+test('p4.64 ficha: bloco A mostra 7 itens e o resto atras de "ver todos", sem rolagem a 360', async ({page})=>{
   await page.addInitScript(()=>{
-    const a=Array.from({length:12},(_,i)=>({ordem:1,bloco:'A · EXEMPLO',ref:'t'+(100+i),item:'Item de exemplo '+(i+1),detalhe:'ato do Igor',prazo:null,dias_parado:0,recomendacao:'decida na data'}));
-    const b=Array.from({length:9},(_,i)=>({ordem:2,bloco:'B · EXEMPLO',ref:'t'+(200+i),item:'Terceiro de exemplo '+(i+1),detalhe:'Terceiro',prazo:null,dias_parado:0,recomendacao:'quem deve a proxima resposta: o terceiro'}));
-    window.__tab={v_dabli_presidente:a.concat(b)}; });
+    const a=Array.from({length:12},(_,i)=>({frente_slug:'20-contrato-pj',ordem:1,bloco:'A · EXEMPLO',ref:'t'+(100+i),item:'Item de exemplo '+(i+1),detalhe:'ato do Igor',prazo:null,dias_parado:0,recomendacao:'decida na data'}));
+    const b=Array.from({length:9},(_,i)=>({frente_slug:'20-contrato-pj',ordem:2,bloco:'B · EXEMPLO',ref:'t'+(200+i),item:'Terceiro de exemplo '+(i+1),detalhe:'Terceiro',prazo:null,dias_parado:0,recomendacao:'quem deve a proxima resposta: o terceiro'}));
+    window.__dados={ficha:a.concat(b)}; });
   const erros = await abrir(page);
   await page.setViewportSize({width:360, height:820});
-  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('20-contrato-pj'); });
   const b = page.locator('#folha section.d4');
-  await expect(b).toHaveCount(4);
+  await expect(b).toHaveCount(5);
   expect(await b.nth(0).locator('.rot').textContent(), 'a contagem segue sendo o total').toBe('Só o presidente decide12');
   const visiveis = b.nth(0).locator('.d4i:visible');
   await expect(visiveis, 'bloco A com 7 visiveis').toHaveCount(7);
@@ -2916,26 +2948,17 @@ test('p4.64 frente do socio: bloco A mostra 7 itens e o resto atras de "ver todo
   expect(erros).toEqual([]);
 });
 
-test('p4.38 frente do socio: leitura que falha se declara no lugar dos blocos', async ({page})=>{
-  await page.addInitScript(()=>{ window.__pendura=['v_dabli_presidente']; });
-  const erros = await abrir(page);
-  await page.clock.install();
-  const lim = await page.evaluate(()=>LIMITE_RECARGA);
-  await page.evaluate(()=>abrirFrente('08-dabli-tech'));
-  await expect(page.locator('#d4')).toContainText('carregando');
-  await page.clock.fastForward(lim+100);
-  await expect(page.locator('#d4')).toContainText('não vieram agora');
-  await expect(page.locator('#folha section.d4')).toHaveCount(0);
-  expect(erros).toEqual([]);
-});
-
-test('p4.38 demonstracao: a frente ficticia do socio abre os quatro blocos inventados, sem rede e sem marca real', async ({page})=>{
+test('p4.66 pi 179: demonstracao: a ficha de exemplo da startup abre A a E inventados, sem rede e sem marca real', async ({page})=>{
   const {erros, rede} = await abrirDemo(page, 390);
   await page.evaluate(()=>ir('frentes'));
   await page.locator('#frentesLista .frente', {hasText:'Startup de tecnologia'}).click();
-  await expect(page.locator('#folha section.d4')).toHaveCount(4);
-  await expect(page.locator('#folha .d4i')).toHaveCount(5);
+  await expect(page.locator('#folha section.d4')).toHaveCount(5);
+  await expect(page.locator('#folha section.d4 .d4i'), 'linhas dos blocos A, B e D').toHaveCount(5);
   await expect(page.locator('#folha section.d4').nth(2).locator('.d4v')).toHaveText('nada aqui');
+  await expect(page.locator('#folha section.d4').nth(4).locator('.d4e'), 'bloco E com os tres numeros').toHaveCount(3);
+  /* nenhuma frente de exemplo fica sem ficha: a da consultoria tambem abre com numeros */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('11-consultoria'); });
+  await expect(page.locator('#folha section.d4').nth(4).locator('.d4e')).toHaveCount(3);
   expect(await page.locator('#folha').innerText(), 'marca real na folha').not.toMatch(/Dabli/);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
   expect(await page.evaluate(()=>window.__rpc.length), 'o duble do banco nao recebe nada').toBe(0);
@@ -3258,8 +3281,7 @@ test('p4.44 cobrar: Abrir no WhatsApp leva o rascunho ao wa.me sem numero e nao 
   expect(erros).toEqual([]);
 });
 
-test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp nao gravam; a frente do socio tem o botao; recusa se declara', async ({page})=>{
-  await page.addInitScript(LINHAS_4B);
+test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp nao gravam; toda frente tem o botao (p4.66); recusa se declara', async ({page})=>{
   await page.addInitScript(ABRE_JANELA);
   const erros = await abrir(page);
   await page.locator('body').click({position:{x:2,y:2}});
@@ -3269,7 +3291,7 @@ test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp na
   await expect(ta).toHaveValue(/^Check-in Exemplo · seg 13\/10\n1\. Fiz: /);
   await expect(ta).not.toHaveAttribute('readonly', /.*/);
   const ch = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_checkin').map(c=>c.a));
-  expect(ch, 'o texto vem do banco, da frente do socio').toEqual([{p_frente:'08-dabli-tech'}]);
+  expect(ch, 'o texto vem do banco, da frente do proximo passo de Hoje (p4.66: nao ha mais frente fixa)').toEqual([{p_frente:'11-renda-alt'}]);
   /* revisar antes de mandar: o WhatsApp leva o texto como ficou na folha */
   await ta.fill('Check-in revisado de exemplo');
   await page.locator('#folha button:has-text("Abrir no WhatsApp")').click();
@@ -3281,18 +3303,19 @@ test('p4.44 check-in: C abre o texto do banco para revisar; Copiar e WhatsApp na
   expect(await page.evaluate(()=>window.__rpc.filter(c=>!['painel_carga','painel_checkin','painel_ping','atendente_estado','painel_snapshot_montar','painel_medir_decisao','mesa_painel','subida_painel'].includes(c.n)).map(c=>c.n)),
     'nada grava pelo check-in').toEqual([]);
   await page.evaluate(()=>fecharFolha());
-  await page.evaluate(()=>{ ir('frentes'); abrirFrente('08-dabli-tech'); });
+  await page.evaluate(()=>{ ir('frentes'); abrirFrente('20-contrato-pj'); });
   const bt = page.locator('#folha button:has-text("Check-in de segunda")');
-  await expect(bt, 'a frente do socio oferece o check-in').toHaveCount(1);
+  await expect(bt, 'qualquer frente oferece o check-in').toHaveCount(1);
   await page.evaluate(()=>{ window.__checkin='RECUSADO: sessao sem dono autorizado.'; });
   await bt.click();
+  expect((await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_checkin').map(c=>c.a))).pop(), 'o botao leva a frente da ficha').toEqual({p_frente:'20-contrato-pj'});
   await expect(page.locator('#chkErro')).toHaveText('Não montou: sessao sem dono autorizado.');
   await expect(page.locator('#chkTxt')).toHaveValue('');
   await page.locator('#folha button:has-text("Abrir no WhatsApp")').click();
   expect((await page.evaluate(()=>window.__abertos)).length, 'texto recusado nao vai ao WhatsApp').toBe(1);
-  /* as outras frentes nao tem o botao */
-  await page.evaluate(()=>{ fecharFolha(); abrirFrente('20-contrato-pj'); });
-  await expect(page.locator('#folha button:has-text("Check-in de segunda")')).toHaveCount(0);
+  /* e outra frente tambem tem o botao */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('04-obra-residencial'); });
+  await expect(page.locator('#folha button:has-text("Check-in de segunda")')).toHaveCount(1);
   expect(erros).toEqual([]);
 });
 
@@ -4032,25 +4055,23 @@ test('p4.65 pi 171: Subir ao compartilhado lida e vazia mostra o estado vazio; f
     const rpc=sb.rpc; sb.rpc=(n,a)=>n==='subida_painel'?Promise.resolve({data:null,error:window.__subidaErro}):rpc(n,a); await sbCarregar();});
   await expect(page.locator('#sb-raiz')).toBeHidden();
 });
-test('p4.65 pi 171: ping, medição, 4 blocos da Dabli e atendente que falham acendem a saúde por fonte e apagam ao voltar', async ({page})=>{
+test('p4.65 pi 171: ping, medição e atendente que falham acendem a saúde por fonte e apagam ao voltar', async ({page})=>{
   const erros = await abrir(page);
   await expect(page.locator('#saude')).toHaveText('sistema ok');
   await page.evaluate(async()=>{
     window.__rpcOk=sb.rpc; window.__fromOk=sb.from;
     sb.rpc=(n,a)=>n==='painel_ping'||n==='painel_medir_decisao'?Promise.resolve({data:null,error:{message:'funcao '+n+' sumiu'}})
       :n==='atendente_estado'?Promise.resolve({data:{erro:'sem permissao'},error:null}):window.__rpcOk(n,a);
-    sb.from=v=>v===VISAO_4B?{select:()=>Promise.resolve({data:null,error:{message:'view fora do ar'}})}:window.__fromOk(v);
-    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado(); await carregar4B();
+    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado();
   });
   await expect(page.locator('#saude')).toContainText('sistema degradado');
   await page.locator('button.estado').click();
   const acesas = page.locator('#folha .fonte.w');
-  await expect(acesas).toHaveCount(4);
-  for (const n of ['Registro de abertura do painel','Medição do tempo de decisão','Quatro blocos da Dabli','Estado do atendente'])
+  await expect(acesas).toHaveCount(3);
+  for (const n of ['Registro de abertura do painel','Medição do tempo de decisão','Estado do atendente'])
     await expect(page.locator('#folha .fonte.w', {hasText:n}), n).toContainText('falhou');
-  await expect(page.locator('#folha')).toContainText('view fora do ar');
   await page.evaluate(async()=>{ fecharFolha(); sb.rpc=window.__rpcOk; sb.from=window.__fromOk;
-    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado(); await carregar4B(); });
+    await carregar(); medirAto({origem:'tarefa',ref:'2',t0:Date.now()-500},'a'); await atendenteEstado(); });
   await expect(page.locator('#saude'), 'tudo voltou: a saude apaga').toHaveText('sistema ok');
   expect(erros).toEqual([]);
 });
@@ -4115,5 +4136,274 @@ test('p4.65 pi 172: frente sem classificação some (fail-closed) e o botão lig
   const txt = await page.evaluate(()=>document.body.innerText);
   expect(txt, 'a frente IGV sem linha em frente.entidade some').not.toContain('Item para decidir');
   expect(txt.match(/R\$\s?-?\d/g)||[]).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+/* ---------- p4.66 · onda 2 do canone v02 (pi 177 a 182, s6857, 17/10/2026) ----------
+   Cada teste abaixo reprova o origin/main (p4.65): a prova esta no PR. Os dados vem de window.__dados (as chaves novas do
+   painel_carga: pg, cxe, rwe, uni, ficha, quest, bloq, trava) e de window.__tab.frente (frente.unidade). */
+const CXE_DADOS = `(()=>{ const sem=(n,pior,base,fin)=>Array.from({length:13},(_,i)=>({entidade:n,semana:i+1,inicio:'2026-10-12',fim:'2026-10-18',
+    saldo_pior:pior(i),saldo_base:base(i),financiada_pela_pf_pior:!!(fin&&fin(i))}));
+  window.__dados={
+    rwe:[{entidade:'EMP-A',dias_caixa:60,dias_caixa_pior:45,financiamento:'Gera caixa para a PF'},
+      {entidade:'EMP-B',dias_caixa:null,dias_caixa_pior:12,financiamento:'Consome caixa da PF'},
+      {entidade:'PF',dias_caixa:20,dias_caixa_pior:20,financiamento:''}],
+    cxe:sem('EMP-A',i=>1000+i*600,i=>2000+i*750).concat(sem('EMP-B',i=>(i>=2&&i<=4)?-3000:500,i=>500+i*100,i=>i>=2&&i<=4),sem('PF',i=>300-i*10,i=>400))};
+  })();`;
+
+test('p4.66 pi 177: Caixa abre no consolidado e traz uma quebra por entidade, minis na mesma escala, com o zero e a marca da PF', async ({page})=>{
+  await page.addInitScript(CXE_DADOS);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('caixa'));
+  const L = page.locator('#cxEnt .cxe-l');
+  await expect(L, 'uma linha por entidade').toHaveCount(3);
+  await expect(L.nth(0)).toContainText('EMP-A');
+  await expect(L.nth(0).locator('.dias'), 'dias no pior caso / no base').toHaveText('45 / 60 d');
+  await expect(L.nth(1).locator('.dias'), 'dias do base ausente vira traco, nunca zero').toHaveText('12 / — d');
+  await expect(L.nth(1).locator('.dias'), 'abaixo do alerta de caixa acende').toHaveClass(/\bw\b/);
+  await expect(L.nth(0).locator('.dias')).not.toHaveClass(/\bw\b/);
+  await expect(L.nth(1)).toContainText('Consome caixa da PF');
+  await expect(L.nth(0)).toContainText('Gera caixa para a PF');
+  /* o consolidado fica no topo, a quebra vem depois do grafico de 13 semanas */
+  expect(await page.evaluate(()=>{ const c=document.getElementById('caixaTopo'), g=document.getElementById('semanas'), e=document.getElementById('cxEnt');
+    return {topo:!!(c.compareDocumentPosition(e)&4), graf:!!(g.compareDocumentPosition(e)&4)}; }), 'ordem na aba').toEqual({topo:true, graf:true});
+  /* Tufte: mesma escala vertical para todas (minimo e maximo globais) e a linha do zero no mesmo lugar */
+  const esc = await page.$$eval('#cxEnt svg', s=>s.map(x=>({min:x.dataset.min, max:x.dataset.max, zero:+x.querySelector('.zero').getAttribute('y1'),
+    h:(b=>b.height)(x.querySelector('.pior').getBBox()), fin:x.querySelectorAll('rect.fin').length, nfin:x.dataset.fin})));
+  expect(esc.map(x=>x.min), 'minimo global igual em todas').toEqual(['-3000','-3000','-3000']);
+  expect(esc.map(x=>x.max), 'maximo global igual em todas').toEqual(['11000','11000','11000']);
+  expect(new Set(esc.map(x=>x.zero)).size, 'o zero cai na mesma altura em todas').toBe(1);
+  expect(esc[0].zero).toBeCloseTo(2+(11000/14000)*32, 1);
+  expect(esc[1].h, 'a entidade pequena desenha menos altura que a grande: a escala e comum, nao esticada').toBeLessThan(esc[0].h);
+  expect(esc.map(x=>x.fin), 'marca da semana financiada pela PF so onde o banco marcou').toEqual([0,3,0]);
+  expect(esc[1].nfin).toBe('3');
+  await expect(page.locator('#cxEnt svg').nth(1)).toHaveAttribute('aria-label', /a PF financia 3 semanas/);
+  for (const w of [360, 390, 1280]) {
+    await page.setViewportSize({width:w, height:820});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth), `rolagem horizontal a ${w}`).toBeLessThanOrEqual(0);
+  }
+  /* sem a chave, a aba diz que a quebra nao veio, em vez de sumir */
+  await page.evaluate(()=>{ delete D.cxe; renderCaixa(); });
+  await expect(page.locator('#cxEnt')).toContainText('A quebra por entidade não chegou nesta carga');
+  expect(erros).toEqual([]);
+});
+
+test('p4.66 pi 177: demonstracao tem a quebra por entidade em tres entidades inventadas, com a marca da PF', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('caixa'));
+  await expect(page.locator('#cxEnt .cxe-l')).toHaveCount(3);
+  expect(await page.locator('#cxEnt svg rect.fin').count(), 'uma entidade da demonstracao e financiada pela PF').toBeGreaterThan(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+const UNI_DADOS = `(()=>{ window.__dados={uni:[
+    {slug:'u-neg',nome:'Unidade Negocio',tipo:'negocio',entidade:'DABLI',dono:'igor',ratificada_em:'2026-10-10'},
+    {slug:'u-apoio',nome:'Unidade Apoio',tipo:'apoio',entidade:'DABLI',dono:'claude',ratificada_em:'2026-10-10'},
+    {slug:'u-vida',nome:'Unidade Vida',tipo:'vida',entidade:'PF',dono:'igor',ratificada_em:'2026-10-10'}]}; })();`;
+
+test('p4.66 pi 178: a unidade vem de frente.unidade e o cabecalho traz nome, dono e a margem somada dos 30 dias', async ({page})=>{
+  await page.addInitScript(UNI_DADOS);
+  await page.addInitScript(()=>{ window.__tab={frente:[{slug:'11-renda-alt',entidade:'PJ',unidade:'u-neg'},{slug:'20-contrato-pj',entidade:'PJ',unidade:'u-neg'}]}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('frentes'));
+  const h = page.locator('#frentesLista .un');
+  await expect(h, 'so a unidade com frente aparece').toHaveCount(1);
+  await expect(h).toContainText('Unidade Negocio');
+  await expect(h).toContainText('dono você');
+  await expect(h.locator('.r'), 'margem somada: 2.000 + 1.000').toHaveText('R$ 3 mil');
+  await expect(page.locator('#frentesLista .frente')).toHaveCount(2);
+  expect(erros).toEqual([]);
+});
+
+test('p4.66 pi 178: Frentes agrupa por unidade na ordem negocio, apoio, vida; sem unidade (ou unidade fora de uni) vai ao topo com aviso', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>{
+    D.uni=[{slug:'u-vida',nome:'Unidade Vida',tipo:'vida',dono:'igor'},{slug:'u-apoio',nome:'Unidade Apoio',tipo:'apoio',dono:'claude'},{slug:'u-neg',nome:'Unidade Negocio',tipo:'negocio',dono:'igor'}];
+    ARV=[{nivel:0,no:'CAIXA'},{nivel:1,no:'11-renda-alt',rotulo:'Renda Alt',margem_30d:2000,margem_total:2000},{nivel:1,no:'20-contrato-pj',rotulo:'Contrato PJ',margem_30d:1000,margem_total:3000},
+      {nivel:1,no:'04-obra-residencial',rotulo:'Obra Vida',margem_30d:0,margem_total:0},{nivel:1,no:'08-apoio',rotulo:'Apoio X',margem_30d:0,margem_total:0},
+      {nivel:1,no:'09-sem-unidade',rotulo:'Sem Un',margem_30d:500,margem_total:500},{nivel:1,no:'10-fantasma',rotulo:'Fantasma',margem_30d:200,margem_total:200}];
+    INV=INV.concat([{id:91,frente:'08-apoio',dono:'igor',status:'pendente',prazo:null,parado_dias:0,titulo:'Card de apoio',acoes:[]}]);
+    UNID={'11-renda-alt':'u-neg','20-contrato-pj':'u-neg','04-obra-residencial':'u-vida','08-apoio':'u-apoio','09-sem-unidade':null,'10-fantasma':'u-que-nao-existe'};
+    ir('frentes'); renderFrentes(); });
+  const grupos = await page.evaluate(()=>{ const g=[]; for(const e of document.getElementById('frentesLista').children){
+    if(e.tagName==='H3') g.push({u:e.dataset.unidade, t:e.textContent.replace(/\s+/g,' ').trim(), f:[]});
+    else if(e.classList.contains('frente')) g[g.length-1].f.push(e.querySelector('b').textContent.trim()); } return g; });
+  expect(grupos.map(g=>g.u), 'pendencia no topo, depois negocio, apoio e vida').toEqual(['', 'u-neg', 'u-apoio', 'u-vida']);
+  expect(grupos[0].t).toContain('Sem unidade · pendência');
+  expect(grupos[0].f.sort(), 'as duas frentes sem unidade valida').toEqual(['Fantasma','Sem Un']);
+  expect(grupos[1].f).toEqual(['Renda Alt','Contrato PJ']);
+  expect(grupos[1].t).toContain('Unidade Negocio'); expect(grupos[1].t).toContain('dono você'); expect(grupos[1].t).toContain('R$ 3 mil');
+  expect(grupos[2].t).toContain('dono Claude'); expect(grupos[2].f).toEqual(['Apoio X']);
+  expect(grupos[3].f).toEqual(['Obra Vida']);
+  await expect(page.locator('#frentesLista .aviso')).toContainText('2 frentes sem unidade');
+  expect(erros).toEqual([]);
+});
+
+for (const w of [390, 1280]) {
+  test(`p4.66 onda 2 a ${w}px: tela compartilhada esconde unidade de vida, entidade PF, grupo de pendencia e todo R$ dos blocos novos`, async ({page})=>{
+    await page.setViewportSize({width:w, height:900});
+    await page.addInitScript(()=>{ window.__dados={
+      uni:[{slug:'u-neg',nome:'Unidade Negocio',tipo:'negocio',entidade:'DABLI',dono:'igor'},{slug:'u-vida',nome:'Unidade Vida',tipo:'vida',entidade:'IGV',dono:'igor'}],
+      cxe:[{entidade:'PF',semana:1,saldo_pior:-100,saldo_base:100}], rwe:[{entidade:'PF',dias_caixa:5,dias_caixa_pior:3,financiamento:'consome R$ 500 da PF'}],
+      quest:[{id:1,ordem:1,top3:true,titulo:'Questao com frente privada',de_frente:'20-contrato-pj',de_nome:'Contrato PJ',para_frente:'11-renda-alt',para_nome:'Renda Alternativa',dono:'igor',idade_dias:2},
+        {id:2,ordem:2,top3:true,titulo:'Questao so de frente aberta',de_frente:'20-contrato-pj',de_nome:'Contrato PJ',para_frente:'20-contrato-pj',para_nome:'Contrato PJ',dono:'igor',idade_dias:3}],
+      bloq:[{tarefa_id:5,frente_slug:'20-contrato-pj',rotulo:'bloqueado por Renda Alternativa',frentes_bloqueadoras:['11-renda-alt']},
+        {tarefa_id:6,frente_slug:'20-contrato-pj',rotulo:'bloqueado por Contrato PJ',frentes_bloqueadoras:['20-contrato-pj']}],
+      trava:[{frente_slug:'20-contrato-pj',n_cards_travados:1,frentes_travadas:['04-obra-residencial'],itens:[{titulo:'Card travado da vida',frente_slug:'04-obra-residencial'}]}],
+      ficha:[{frente_slug:'20-contrato-pj',ordem:4,bloco:'D',ref:'pagar',item:'Pagar o fornecedor de exemplo',detalhe:'R$ 900,00 (sua parte)',prazo:null,dias_parado:0,recomendacao:null}]}; });
+    const erros = await abrirTela(page, [{slug:'11-renda-alt',entidade:'PF',unidade:'u-neg'},{slug:'20-contrato-pj',entidade:'DABLI',unidade:'u-neg'},{slug:'04-obra-residencial',entidade:'IGV',unidade:'u-vida'}]);
+    for (const aba of ['hoje','fila','frentes','semana']) {
+      await page.evaluate(a=>{ if(a==='fila'){ COL='depois'; renderFila(); } ir(a); }, aba);
+      await page.waitForTimeout(50);
+      const txt = await page.evaluate(()=>document.body.innerText);
+      expect(txt, `aba ${aba} mostra a unidade de vida`).not.toContain('Unidade Vida');
+      expect(txt, `aba ${aba} mostra a frente de vida`).not.toContain('Item para decidir');
+      expect(txt, `aba ${aba} mostra pendencia`).not.toContain('Sem unidade');
+      expect(txt, `aba ${aba} mostra bloqueio por frente privada`).not.toContain('bloqueado por Renda Alternativa');
+      expect(txt, `aba ${aba} mostra questao de frente privada`).not.toContain('Questao com frente privada');
+      expect(txt.match(/R\$\s?-?\d/g)||[], `aba ${aba} mostra valor em R$`).toEqual([]);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth), 'rolagem horizontal').toBeLessThanOrEqual(0);
+    }
+    await page.evaluate(()=>ir('frentes'));
+    await expect(page.locator('#frentesLista .un'), 'a unidade de negocio aparece, sem margem').toHaveCount(1);
+    await expect(page.locator('#frentesLista .un')).toContainText('Unidade Negocio');
+    await expect(page.locator('#frentesLista .un .r')).toHaveCount(0);
+    await page.evaluate(()=>ir('semana'));
+    await expect(page.locator('#semQuest')).toContainText('Questao so de frente aberta');
+    await page.evaluate(()=>{ COL='depois'; renderFila(); ir('fila'); });
+    await expect(page.locator('#kanban .bloq')).toContainText('bloqueado por Contrato PJ');
+    await page.evaluate(()=>abrirFrente('20-contrato-pj'));
+    const folha = await page.locator('#folha').innerText();
+    expect(folha.match(/R\$\s?-?\d/g)||[], 'valor na ficha').toEqual([]);
+    expect(folha, 'o que a frente trava nas de vida some').not.toContain('Card travado da vida');
+    expect(await page.evaluate(()=>({cxe:D.cxe.length, rwe:D.rwe.length, uni:D.uni.map(u=>u.slug)})), 'caixa por entidade e unidade de vida saem na entrada do dado').toEqual({cxe:0, rwe:0, uni:['u-neg']});
+    expect(erros).toEqual([]);
+  });
+}
+
+const PG = `(()=>{ const l=(chave,valor)=>({chave,rotulo:chave,valor,fonte:'banco',padrao:valor,unidade:'n',dono:'igor',desde:'2026-10-01'});
+  window.__dados={pg:[l('caixa.meta_dias',120),l('caixa.alerta_dias',10),l('idade.parado_dias',3),l('wip.teto_hoje',9),l('fila.teto_novos_dia',3),l('semana.teto_numeros',2)],
+    semana:[1,2,3,4].map(i=>({bloco:'numero',ordem:i,titulo:'Numero '+i,ref:'x.n'+i,valor:i,ha_7d:i-1,meta:5,unidade:'num',direcao:'maior_melhor',detalhe:'dentro',dono:'igor'}))}; })();`;
+
+test('p4.66 pi 180: os parametros de gestao vem de pg e mudam a tela; sem a chave, ou com valor que nao e numero, vale o numero do codigo', async ({page})=>{
+  await page.addInitScript(PG);
+  const erros = await abrir(page);
+  /* com pg: meta de caixa, alerta (16 dias nao acende com alerta de 10), parado, WIP, teto de novos por dia e teto da Semana */
+  await page.evaluate(()=>ir('caixa'));
+  await expect(page.locator('#caixaTopo')).toContainText('Meta: 120 dias.');
+  await expect(page.locator('#caixaTopo .v.numero'), 'alerta de caixa 10: 16 dias nao acende').not.toHaveClass(/\bw\b/);
+  await expect(page.locator('#situacao .numero'), 'o mesmo alerta no Hoje').not.toHaveClass(/\bw\b/);
+  await expect(page.locator('#wip .num'), 'teto de Hoje do banco').toHaveText('2/9');
+  await page.evaluate(()=>{ INV.find(t=>t.id===2).parado_dias=4; renderFila(); });
+  await expect(page.locator('#kanban .item', {hasText:'Card de exemplo'}).locator('.idade'), 'parado a partir de 3 dias').toContainText('parado 4 d');
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semNumeros .linha-r'), 'teto de numeros da Semana do banco').toHaveCount(2);
+  await page.evaluate(()=>abrirNova('Ligar para o cliente de exemplo'));
+  await expect(page.locator('#folha')).toContainText('teto de 3 cards seus por dia');
+  await page.evaluate(()=>fecharFolha());
+  /* sem a chave pg (ou valor que nao e numero) vale o fallback do codigo */
+  await page.evaluate(()=>{ D.pg=[{chave:'caixa.meta_dias',valor:'abc'},{chave:'wip.teto_hoje',valor:null}]; render(); });
+  await page.evaluate(()=>ir('caixa'));
+  await expect(page.locator('#caixaTopo'), 'valor invalido: fallback 90').toContainText('Meta: 90 dias.');
+  await expect(page.locator('#wip .num'), 'valor nulo: o teto da linha de Hoje (5)').toHaveText('2/5');
+  await page.evaluate(()=>{ delete D.pg; render(); });
+  await expect(page.locator('#caixaTopo .v.numero'), 'sem pg o alerta volta a 30: 16 dias acende').toHaveClass(/\bw\b/);
+  await expect(page.locator('#kanban .item', {hasText:'Card de exemplo'}).locator('.idade'), 'sem pg parado so a partir de 7').not.toContainText('parado');
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semNumeros .linha-r'), 'sem pg o teto da Semana volta a 14').toHaveCount(4);
+  await page.evaluate(()=>abrirNova('Ligar para o cliente de exemplo'));
+  await expect(page.locator('#folha')).toContainText('teto de 8 cards seus por dia');
+  expect(erros).toEqual([]);
+});
+
+const QUEST = `(()=>{ const q=(id,ordem,top3,titulo,de,para)=>({id,ordem,top3,titulo,detalhe:'Detalhe '+id,estado:'aberta',dono:'igor',prioridade:ordem,de_frente:de[0],de_nome:de[1],para_frente:para[0],para_nome:para[1],criada_em:'2026-10-10T10:00:00Z',idade_dias:id+4});
+  window.__dados={quest:[q(1,1,true,'Quem fecha o preco do plano?',['20-contrato-pj','Contrato PJ'],['11-renda-alt','Renda Alt']),
+    q(2,2,true,'Qual prazo da entrega?',['11-renda-alt','Renda Alt'],['20-contrato-pj','Contrato PJ']),
+    q(3,3,true,'Quem paga a ART?',['20-contrato-pj','Contrato PJ'],['04-obra-residencial','Obra']),
+    q(4,4,false,'Questao fora do top tres',['04-obra-residencial','Obra'],['20-contrato-pj','Contrato PJ'])]}; })();`;
+
+test('p4.66 pi 181: a Semana mostra as 3 primeiras questoes com de, para, dono e idade; a ficha mostra as da frente; vazio explica por que', async ({page})=>{
+  await page.addInitScript(QUEST);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  const q = page.locator('#semQuest .quest');
+  await expect(q, 'top 3, nao as 4').toHaveCount(3);
+  await expect(q.nth(0)).toContainText('Quem fecha o preco do plano?');
+  await expect(q.nth(0).locator('small')).toHaveText('Contrato PJ → Renda Alt, dono você, 5 d');
+  await expect(page.locator('#semQuest')).not.toContainText('Questao fora do top tres');
+  await expect(page.locator('#semQuest')).toContainText('1 outra aberta, fora do top 3');
+  /* ficha: as questoes em que a frente e a destinataria (inclui a que nao esta no top 3) */
+  await page.evaluate(()=>abrirFrente('20-contrato-pj'));
+  const s = page.locator('#folha .fi-sec[aria-label="Questões para esta frente"]');
+  await expect(s.locator('.rot')).toHaveText('Questões para esta frente2');
+  await expect(s.locator('.d4i')).toHaveCount(2);
+  await expect(s.locator('.d4i').nth(0)).toContainText('Qual prazo da entrega?');
+  await expect(s.locator('.d4i').nth(1)).toContainText('Questao fora do top tres');
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('11-renda-alt'); });
+  await expect(page.locator('#folha .fi-sec[aria-label="Questões para esta frente"] .d4i')).toHaveCount(1);
+  /* vazio explicado e chave ausente declarada */
+  await page.evaluate(()=>{ fecharFolha(); D.quest=[]; render(); abrirFrente('20-contrato-pj'); });
+  await expect(page.locator('#folha .fi-sec[aria-label="Questões para esta frente"]')).toContainText('nada aqui: nenhuma questão aberta para esta frente');
+  await page.evaluate(()=>{ fecharFolha(); ir('semana'); });
+  await expect(page.locator('#semQuest')).toHaveText('Nenhuma questão aberta entre frentes.');
+  await page.evaluate(()=>{ delete D.quest; render(); });
+  await expect(page.locator('#semQuest')).toContainText('As questões não chegaram nesta carga');
+  await page.evaluate(()=>{ D.quest=[]; render(); });
+  for (const w of [360, 390]) {
+    await page.setViewportSize({width:w, height:820});
+    expect(await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; return document.documentElement.scrollWidth-document.documentElement.clientWidth; }), `rolagem horizontal a ${w}`).toBeLessThanOrEqual(0);
+  }
+  expect(erros).toEqual([]);
+});
+
+const BLOQ = `(()=>{ window.__dados={
+  bloq:[{tarefa_id:2,frente_slug:'11-renda-alt',titulo:'Card de exemplo',dono:'igor',prazo:null,status:'pendente',n_bloqueios:1,rotulo:'bloqueado por Frente Exemplo',frentes_bloqueadoras:['20-contrato-pj'],entre_frentes:true,bloqueado_por:[]},
+    {tarefa_id:5,frente_slug:'20-contrato-pj',titulo:'Segundo card',dono:'igor',prazo:null,status:'pendente',n_bloqueios:1,rotulo:'bloqueado por Outra Frente',frentes_bloqueadoras:['11-renda-alt'],entre_frentes:true,bloqueado_por:[]}],
+  trava:[{frente_slug:'20-contrato-pj',nome:'Contrato PJ',n_cards_travados:2,n_cards_meus:1,frentes_travadas:['11-renda-alt','04-obra-residencial'],
+    itens:[{tarefa_id:2,titulo:'Card travado de exemplo',frente_slug:'11-renda-alt'}]}]}; })();`;
+
+test('p4.66 pi 182: Hoje e Fila mostram "bloqueado por <frente>" no card da tarefa bloqueada; a ficha mostra o que a frente trava; vazio explica', async ({page})=>{
+  await page.addInitScript(BLOQ);
+  const erros = await abrir(page);
+  await expect(page.locator('#foco .chip.bloq'), 'o proximo passo (tarefa 2) vem com o selo').toHaveText('bloqueado por Frente Exemplo');
+  await expect(page.locator('#ordem .bloq'), 'a lista de Hoje tambem (tarefa 5)').toHaveText('bloqueado por Outra Frente');
+  await page.evaluate(()=>ir('fila'));
+  await expect(page.locator('#kanban .item', {hasText:'Card de exemplo'}).locator('.bloq')).toHaveText('bloqueado por Frente Exemplo');
+  await expect(page.locator('#kanban .item', {hasText:'Item esperando'}).locator('.bloq'), 'card sem bloqueio nao leva selo').toHaveCount(0);
+  /* a ficha da frente que trava */
+  await page.evaluate(()=>abrirFrente('20-contrato-pj'));
+  const t = page.locator('#folha .fi-sec[aria-label="O que esta frente trava nas outras"]');
+  await expect(t.locator('.rot')).toHaveText('O que esta frente trava nas outras2');
+  await expect(t).toContainText('2 cards travados em Renda Alternativa, obra residencial');
+  await expect(t).toContainText('Card travado de exemplo');
+  /* frente que nao trava ninguem: o vazio diz por que */
+  await page.evaluate(()=>{ fecharFolha(); abrirFrente('04-obra-residencial'); });
+  await expect(page.locator('#folha .fi-sec[aria-label="O que esta frente trava nas outras"]')).toContainText('nada aqui: esta frente não segura nenhum card de outra frente');
+  /* sem bloqueio no banco, nenhum selo */
+  await page.evaluate(()=>{ fecharFolha(); D.bloq=[]; D.trava=[]; render(); });
+  await expect(page.locator('.bloq')).toHaveCount(0);
+  await page.evaluate(()=>{ delete D.trava; abrirFrente('20-contrato-pj'); });
+  await expect(page.locator('#folha')).toContainText('O que a frente trava não chegou nesta carga');
+  for (const w of [360, 390]) {
+    await page.setViewportSize({width:w, height:820});
+    expect(await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px'; return document.documentElement.scrollWidth-document.documentElement.clientWidth; }), `rolagem horizontal a ${w}`).toBeLessThanOrEqual(0);
+  }
+  expect(erros).toEqual([]);
+});
+
+test('p4.66 onda 2: erro por chave e chave ausente acendem a saude por fonte com o motivo e apagam na carga boa', async ({page})=>{
+  const erros = await abrir122(page);
+  await expect(page.locator('#saude')).toHaveText('sistema ok');
+  await page.evaluate(async()=>{ window.__errosCarga={ficha:'canceling statement due to statement timeout'}; window.__sem=['quest']; await carregar(); });
+  await expect(page.locator('#saude')).toContainText('sistema degradado');
+  await expect(page.locator('#saude')).toContainText('ficha das frentes falhou');
+  await expect(page.locator('#saude')).toContainText('questões entre frentes falhou');
+  await page.locator('button.estado').click();
+  await expect(page.locator('#folha .fonte.w', {hasText:'Ficha das frentes'})).toContainText('statement timeout');
+  await expect(page.locator('#folha .fonte.w', {hasText:'Questões entre frentes'})).toContainText('não veio na carga');
+  await page.evaluate(async()=>{ fecharFolha(); window.__errosCarga=null; window.__sem=[]; await carregar(); });
+  await expect(page.locator('#saude'), 'carga boa apaga').toHaveText('sistema ok');
   expect(erros).toEqual([]);
 });
