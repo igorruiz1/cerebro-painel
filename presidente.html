@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-bOIUxVoLo+MlEEYI4GbP787FCF7M9bqW2HCIDtnR2Mg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-m6+7QKTPnOfNtlsF6kxd84OqiqzeJJ5BrsxDTmN4j4M=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -488,6 +488,11 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 .d4e b{font-family:var(--mono);font-weight:600;color:var(--ink2);text-align:right;overflow-wrap:anywhere}
 .fi-cards summary{min-height:44px;display:flex;align-items:center;font-size:var(--fs-2);color:var(--mut)}
 .bloq{color:var(--warn)}
+/* p4.67 (pi 181, escrita das questoes): a linha da questao vira botao; nenhum texto novo na aba */
+button.d4i{width:100%;min-height:44px;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer}
+button.linha-r.quest{cursor:pointer}
+.q-sel{width:100%;min-height:44px}
+#qrMotBox[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -652,7 +657,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.66";
+const VERP="p4.67";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -941,6 +946,29 @@ function demoCliente(){
       return "Check-in Startup · seg "+dm(d(1))+"\n1. Fiz: Enviar a ata da reunião de exemplo; Conferir o saldo da conta de exemplo"+
         "\n2. Vou fazer: Fazer o check-in semanal de três linhas com o sócio ("+dm(d(1))+"); Revisar a proposta de exemplo ("+dm(d(3))+")"+
         "\n3. Travado / preciso de você: Validar a planilha de exemplo — com Sócio de exemplo, retorno era "+dm(d(-2)); },
+    /* p4.67 (pi 181): questoes de exemplo; criar, resolver (vira card em b.inv) e descartar mexem so na memoria desta pagina */
+    questao_criar:a=>{ const b=B(), q=b.dados.quest, nm=s=>{ const n=b.arv.find(x=>x.no===s); return n?n.rotulo:s; };
+      const dup=q.find(x=>x.de_frente===a.p_de_frente&&x.para_frente===a.p_para_frente&&x.titulo===a.p_titulo);
+      if(dup)return {id:dup.id,novo:false};
+      const id=Math.max(0,...q.map(x=>+x.id))+1;
+      q.push({id,ordem:id,top3:false,titulo:a.p_titulo,detalhe:a.p_detalhe||null,estado:"aberta",dono:"igor",prioridade:null,de_frente:a.p_de_frente,de_nome:nm(a.p_de_frente),
+        para_frente:a.p_para_frente,para_nome:nm(a.p_para_frente),criada_em:new Date().toISOString(),idade_dias:0});
+      q.forEach((x,i)=>{ x.ordem=i+1; x.top3=i<3; }); return {id,novo:true}; },
+    questao_resolver:a=>{ const b=B(), q=b.dados.quest, x=q.find(y=>+y.id===+a.p_id);
+      if(!x)throw new Error("questao "+a.p_id+" nao esta aberta");
+      if(((String(a.p_solucao||"").match(/\p{L}/gu))||[]).length<10)throw new Error("diga a solucao (10+ letras)");
+      if(!VERBO_RE.test(String(a.p_card_titulo||"").trim()))throw new Error("titulo do card sem verbo no infinitivo");
+      if(!String(a.p_criterio||"").trim())throw new Error("o card precisa de criterio de pronto");
+      if(!["A","S","M"].includes(a.p_automatibilidade))throw new Error("RECUSADO: o card nasce classificado em A/S/M");
+      if(a.p_automatibilidade==="M"&&!VERBO_RE.test(String(a.p_automat_motivo||"").replace(/\s*:.*$/,"").trim()))throw new Error("RECUSADO: no M, o motivo tem de nomear o verbo");
+      const tid=Math.max(...b.inv.map(t=>+t.id))+1;
+      b.inv.push({id:tid,frente:x.para_frente,dono:"igor",status:"pendente",prazo:a.p_prazo||b.dd(0),parado_dias:0,titulo:a.p_card_titulo,criterio_pronto:a.p_criterio,acoes:b.inv[0].acoes});
+      b.dados.quest=q.filter(y=>y!==x); b.dados.quest.forEach((y,i)=>{ y.ordem=i+1; y.top3=i<3; });
+      return {id:x.id,estado:"solucionada",tarefa_id:tid,frente:x.para_frente,dono:"igor"}; },
+    questao_descartar:a=>{ const b=B(), x=b.dados.quest.find(y=>+y.id===+a.p_id);
+      if(!x)throw new Error("questao "+a.p_id+" nao esta aberta");
+      b.dados.quest=b.dados.quest.filter(y=>y!==x); b.dados.quest.forEach((y,i)=>{ y.ordem=i+1; y.top3=i<3; });
+      return {id:x.id,estado:"descartada"}; },
     mesa_painel:mesaVista,
     mesa_deliberar:a=>{ const m=B().mesa, p=m.estoque.find(x=>+x.id===+a.p_doc), nota=String(a.p_nota||"").trim(), h=B().dd(0);
       if(!p)return "RECUSADO: doc "+a.p_doc+" nao esta esperando voce";
@@ -972,7 +1000,7 @@ function demoCliente(){
     '<p>Na demonstração os documentos não existem. No painel real, este toque abre o PDF guardado no armazenamento privado, por um link que vale '+(+s||300)+' segundos.</p>'+
     '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
   return {
-    rpc:(n,a)=>ok(RPC[n]?RPC[n](a||{}):null),
+    rpc:(n,a)=>{ if(!RPC[n])return ok(null); try{ return ok(RPC[n](a||{})); }catch(e){ return Promise.resolve({data:null,error:{message:e.message}}); } },
     from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:/^0[07]-/.test(n.no)?"PF":"PJ",unidade:B().unidadeDe[n.no]||null})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):[]),
     channel:()=>{const ch={on:()=>ch,subscribe:cb=>{if(cb)cb("SUBSCRIBED");return ch;},unsubscribe:()=>ok(null)};return ch;},
     removeChannel:()=>ok(null),
@@ -1166,7 +1194,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
   buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
@@ -1203,7 +1231,7 @@ const NOMES={hoje:"Hoje",fila:"Fila",caixa:"Caixa",frentes:"Frentes",mesa:"Mesa"
    p4.65 (pi 170, achado 7 do canone v02): o mesmo ato tinha tres nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito).
    GLOSSARIO e a fonte unica: botao no infinitivo, historico no particípio. Fechar com resultado = Concluir (feita, fechar,
    feito); desistir = Descartar (arquivar, largar, descartar); a peca da Mesa aprovada = Aprovar (aprovado). Teste cobra. */
-const GLOSSARIO={concluir:"Concluir",concluido:"Concluído",descartar:"Descartar",descartado:"Descartado",aprovar:"Aprovar",aprovado:"Aprovado"};
+const GLOSSARIO={concluir:"Concluir",concluido:"Concluído",descartar:"Descartar",descartado:"Descartado",aprovar:"Aprovar",aprovado:"Aprovado",resolver:"Resolver"};
 const ROT={feita:GLOSSARIO.concluir,fechar:GLOSSARIO.concluir,repactuar:"Mudar data",deliberar:"Pedir análise",pedir_analise:"Pediu análise",
            arquivar:GLOSSARIO.descartar,esperar:"Passei para alguém",cobrar:"Cobrei agora",
            enviado:"Enviei",refazer:"Pediu para refazer",descartar:GLOSSARIO.descartar,recusado:"Recusou",
@@ -1991,8 +2019,89 @@ function renderQuest(){
   const ab=D.quest.filter(q=>q&&q.titulo!=null).sort((a,b)=>(+a.ordem||0)-(+b.ordem||0));
   const top=ab.filter(q=>q.top3===true||q.top3==="true").slice(0,3);
   if(!ab.length){ el.innerHTML=`<div class="vazio">Nenhuma questão aberta entre frentes.</div>`; return; }
-  el.innerHTML=top.map(q=>`<div class="linha-r quest"><span class="t"><span class="l2">${esc(q.titulo)}</span><small>${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))}, dono ${esc(donoTxt(q.dono))}, ${esc(+q.idade_dias||0)} d</small></span></div>`).join("")
+  el.innerHTML=top.map(q=>`<button type="button" class="linha-r quest" data-acao="abrirQuest" data-a1="${esc(q.id)}"><span class="t"><span class="l2">${esc(q.titulo)}</span><small>${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))}, dono ${esc(donoTxt(q.dono))}, ${esc(+q.idade_dias||0)} d</small></span></button>`).join("")
     +(ab.length>top.length?`<div class="mut">${esc(plural(ab.length-top.length,"outra aberta","outras abertas"))}, fora do top 3.</div>`:"");
+}
+/* p4.67 (pi 181, criterio: "+ Nova cria questao; resolver vira card com dono"): a escrita das questoes. Tudo atras de toque
+   (folha), nenhum texto novo nas abas. questao_criar devolve {id, novo}; novo=false diz que ja existia. questao_resolver
+   cria o card (o banco recusa titulo sem verbo; o erro dele aparece) e devolve {tarefa_id, frente, dono}. Erro do banco
+   chega como excecao e vai para o toast e para a linha de erro da folha. Depois do ato a carga e refeita. */
+async function questRpc(nome,args){
+  let r; try{ r=await comTetoR(sb.rpc(nome,args),LIMITE_ACAO,nome); }catch(e){ r={error:e}; }
+  if(r.error){ const t=String(r.error.message||"falha").replace(/^RECUSADO:?\s*/i,"").slice(0,200);
+    const er=document.getElementById("qErro"); if(er){ er.textContent=t; er.classList.remove("hidden"); }
+    toast("Não gravou: "+t,"bad",false,6000); return null; }
+  return r.data==null?{}:r.data;
+}
+const questDe=id=>(Array.isArray(D.quest)?D.quest:[]).find(q=>q&&String(q.id)===String(id));
+const questCab=q=>`<p class="mut">${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))}, dono ${esc(donoTxt(q.dono))}, ${esc(+q.idade_dias||0)} d</p>${q.detalhe?`<p>${esc(q.detalhe)}</p>`:""}`;
+function abrirQuest(id){
+  const q=questDe(id); if(!q)return;
+  mostrarFolha(`<h3 id="folhaTit">${esc(q.titulo)}</h3>${questCab(q)}
+    <button class="pri" data-acao="questResolverForm" data-a1="${esc(q.id)}">${GLOSSARIO.resolver}</button>
+    <button class="sec" data-acao="questDescartarForm" data-a1="${esc(q.id)}">${GLOSSARIO.descartar}</button>
+    <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
+function questNova(de){
+  const outras=(ARV||[]).filter(a=>a.nivel===1&&a.no!==de);
+  mostrarFolha(`<h3 id="folhaTit">Nova questão</h3>
+    <p class="mut">De ${esc(nomeFrente(de))}. Uma pergunta que outra frente precisa responder.</p>
+    <div class="campo"><label for="qnPara" class="mut">Para qual frente</label><select id="qnPara" class="q-sel">${outras.map(a=>`<option value="${esc(a.no)}">${esc(nomeFrente(a.no))}</option>`).join("")}</select></div>
+    <div class="campo"><label for="qnTit" class="mut">Título</label><input id="qnTit" maxlength="140" autocomplete="off"></div>
+    <div class="campo"><label for="qnDet" class="mut">Detalhe (opcional)</label><textarea id="qnDet" rows="3"></textarea></div>
+    <p class="nova-erro hidden" id="qErro" role="alert"></p>
+    <button class="pri" data-acao="questNovaConfirmar" data-a1="${esc(de)}">Criar questão</button>
+    <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
+}
+async function questNovaConfirmar(de){
+  const v=id=>{ const e=document.getElementById(id); return e?String(e.value||"").trim():""; }, para=v("qnPara"), tit=v("qnTit"), det=v("qnDet");
+  const er=document.getElementById("qErro");
+  if(!para||!tit){ if(er){ er.textContent=!para?"Escolha a frente de destino.":"Escreva o título da questão."; er.classList.remove("hidden"); } return; }
+  const d=await questRpc("questao_criar",{p_de_frente:de,p_para_frente:para,p_titulo:tit,p_detalhe:det||null}); if(!d)return;
+  fecharFolha();
+  toast(d.novo===false?"Essa questão já existia (q"+d.id+"): nada foi duplicado.":"Questão criada para "+nomeFrente(para)+".",null,false,4000);
+  carregar(true);
+}
+function questResolverForm(id){
+  const q=questDe(id); if(!q)return;
+  mostrarFolha(`<h3 id="folhaTit">${GLOSSARIO.resolver}: ${esc(curto(q.titulo,70))}</h3>
+    <div class="campo"><label for="qrSol" class="mut">Solução</label><textarea id="qrSol" rows="3"></textarea></div>
+    <div class="campo"><label for="qrCard" class="mut">Título do card, começando pelo verbo</label><input id="qrCard" maxlength="70" autocomplete="off" data-ao-digitar="questMotivoSugerir"></div>
+    <div class="campo"><label for="qrCrit" class="mut">Pronto quando</label><input id="qrCrit" maxlength="140" autocomplete="off"></div>
+    <div class="campo"><label for="qrClasse" class="mut">Quem faz o card</label><select id="qrClasse" class="q-sel" data-ao-mudar="questClasse"><option value="A">A · executor faz</option><option value="S">S · entrego pronto</option><option value="M" selected>M · só você</option></select></div>
+    <div class="campo" id="qrMotBox"><label for="qrMot" class="mut">Motivo, começando pelo verbo (ex.: decidir: …)</label><input id="qrMot" maxlength="140" autocomplete="off" value="decidir: " data-auto="decidir: "></div>
+    <div class="campo"><label for="qrDt" class="mut">Prazo do card · hoje</label><input id="qrDt" type="date" min="${esc(hojeCuiaba())}" value="${esc(hojeCuiaba())}"></div>
+    <p class="nova-erro hidden" id="qErro" role="alert"></p>
+    <button class="pri" data-acao="questResolverConfirmar" data-a1="${esc(q.id)}">Criar o card</button>
+    <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
+}
+async function questResolverConfirmar(id){
+  const v=k=>{ const e=document.getElementById(k); return e?String(e.value||"").trim():""; }, sol=v("qrSol"), card=v("qrCard"), crit=v("qrCrit"), dt=v("qrDt")||hojeCuiaba(), cl=v("qrClasse")||"M", mot=v("qrMot"), er=document.getElementById("qErro");
+  /* as regras do banco, antes de chamar: solucao com 10+ letras, criterio de pronto, classe A/S/M e, na M, motivo que nomeia o verbo */
+  const falta=(sol.match(/\p{L}/gu)||[]).length<10?"Diga a solução (10 letras ou mais).":!card?"Escreva o título do card.":!crit?"Diga quando o card está pronto.":
+    (!/^\d{4}-\d{2}-\d{2}$/.test(dt)||dt<hojeCuiaba())?"Escolha uma data de hoje em diante.":
+    (cl==="M"&&!/^[a-zà-ú]+(ar|er|ir|or|ôr)\s*:\s*\S/i.test(mot))?"No M, o motivo começa pelo verbo, como em: decidir: só você decide.":"";
+  if(falta){ if(er){ er.textContent=falta; er.classList.remove("hidden"); } return; }
+  const d=await questRpc("questao_resolver",{p_id:+id,p_solucao:sol,p_card_titulo:card,p_criterio:crit,p_prazo:dt,p_automatibilidade:cl,p_automat_motivo:cl==="M"?mot:null}); if(!d)return;
+  fecharFolha();
+  toast("card t"+d.tarefa_id+" criado em "+nomeFrente(d.frente)+" para "+donoTxt(d.dono),null,false,5000);
+  carregar(true);
+}
+function questClasse(el){ const b=document.getElementById("qrMotBox"); if(b)b.hidden=el.value!=="M"; }
+function questMotivoSugerir(el){ const m=document.getElementById("qrMot"); if(m&&m.dataset.auto===m.value){ m.value="decidir: "+el.value; m.dataset.auto=m.value; } }
+function questDescartarForm(id){
+  const q=questDe(id); if(!q)return;
+  mostrarFolha(`<h3 id="folhaTit">${GLOSSARIO.descartar}: ${esc(curto(q.titulo,70))}</h3>
+    <div class="campo"><label for="qdMot" class="mut">Motivo</label><textarea id="qdMot" rows="3"></textarea></div>
+    <p class="nova-erro hidden" id="qErro" role="alert"></p>
+    <button class="pri" data-acao="questDescartarConfirmar" data-a1="${esc(q.id)}">${GLOSSARIO.descartar} a questão</button>
+    <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
+}
+async function questDescartarConfirmar(id){
+  const e=document.getElementById("qdMot"), mot=e?String(e.value||"").trim():"", er=document.getElementById("qErro");
+  if(!mot){ if(er){ er.textContent="Diga o motivo."; er.classList.remove("hidden"); } return; }
+  const d=await questRpc("questao_descartar",{p_id:+id,p_motivo:mot}); if(!d)return;
+  fecharFolha(); toast("Questão descartada.",null,false,3500); carregar(true);
 }
 function semTodas(){
   const dec=semB("decisao");
@@ -2077,13 +2186,13 @@ function abrirPlano(){
    ficha do painel_carga), sem caso especial. Bloco vazio diz "nada aqui", nunca some calado. Os cards seus seguem abaixo,
    recolhidos, para o toque que age neles (a ficha lista, o card abre a folha de ato). Em p4.66 tambem entram as questoes
    em que a frente e a destinataria (pi 181) e o que ela trava nas outras (pi 182). */
-const linhaQuest=q=>`<div class="d4i"><span class="t l2">${esc(q.titulo||"questão sem título")}</span><small class="d4d">${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))} · dono ${esc(donoTxt(q.dono))} · ${esc(+q.idade_dias||0)} d</small>${q.detalhe?`<span class="d4r">${esc(curto(q.detalhe,160))}</span>`:""}</div>`;
+const linhaQuest=q=>`<button type="button" class="d4i" data-acao="abrirQuest" data-a1="${esc(q.id)}"><span class="t l2">${esc(q.titulo||"questão sem título")}</span><small class="d4d">${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))} · dono ${esc(donoTxt(q.dono))} · ${esc(+q.idade_dias||0)} d</small>${q.detalhe?`<span class="d4r">${esc(curto(q.detalhe,160))}</span>`:""}</button>`;
 function secFi(tit,n,corpo){ return `<section class="fi-sec" aria-label="${esc(tit)}"><h4 class="rot">${esc(tit)}<span class="d4n">${n}</span></h4>${corpo}</section>`; }
 function questFicha(slug){
   const tit="Questões para esta frente";
   if(!Array.isArray(D.quest))return secFi(tit,0,`<div class="vazio d4v">As questões não chegaram nesta carga. Recarregue o painel.</div>`);
   const l=D.quest.filter(q=>q&&q.para_frente===slug).sort((a,b)=>(+a.ordem||0)-(+b.ordem||0));
-  return secFi(tit,l.length,l.length?`<div class="d4l">${l.map(linhaQuest).join("")}</div>`:`<div class="vazio d4v">nada aqui: nenhuma questão aberta para esta frente</div>`);
+  return secFi(tit,l.length,(l.length?`<div class="d4l">${l.map(linhaQuest).join("")}</div>`:`<div class="vazio d4v">nada aqui: nenhuma questão aberta para esta frente</div>`)+`<button type="button" class="sec" data-acao="questNova" data-a1="${esc(slug)}">+ Nova questão</button>`);
 }
 function travaFicha(slug){
   const tit="O que esta frente trava nas outras";
