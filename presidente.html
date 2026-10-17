@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-m6+7QKTPnOfNtlsF6kxd84OqiqzeJJ5BrsxDTmN4j4M=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-HRevBLNuONaa2fG+s+OLjLUsifWnmBH43wkpP3Lhwzk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -32,7 +32,7 @@
      4. "Frentes e Caixa sao becos": frente abre a propria pagina com os cards; o Caixa mostra as
         13 semanas e o que mais melhora o caixa pela margem do Igor, e cada linha abre o card.
    Concluir pede prova escrita (LC-14, decisao do Igor em 02/10/2026): peca pronta nao fecha card.
-   A telemetria da maquina mora no index.html (bastidor), aberto pelo rodape.
+   O index.html e o diagnostico tecnico da maquina, congelado desde o p4.68 (W3.3), aberto pelo rodape.
    p3 (02/10/2026): instrucao por voz pelo microfone do topo. Ver docs/instrucao-por-audio.md.
    p4 (03/10/2026): resposta por evento. O toque acorda o atendente na hora (rotina por API, no Max) e a
    resposta chega sozinha pelo Realtime. Ver docs/resposta-por-evento.md.
@@ -493,6 +493,10 @@ button.d4i{width:100%;min-height:44px;text-align:left;font:inherit;color:inherit
 button.linha-r.quest{cursor:pointer}
 .q-sel{width:100%;min-height:44px}
 #qrMotBox[hidden]{display:none}
+/* p4.68 (pi 183): prestacao do executor no rodape da Fila */
+.exec-ult summary{cursor:pointer;color:var(--mut)}
+.exec-ult ul{margin:4px 0 0;padding-left:18px}
+.exec-ult li{margin:2px 0}
 </style>
 </head>
 <body>
@@ -539,7 +543,7 @@ button.linha-r.quest{cursor:pointer}
     <button data-aba="frentes" data-acao="ir" data-a1="frentes">Frentes<span class="selo" id="r-frentes"></span></button>
     <button data-aba="mesa" data-acao="ir" data-a1="mesa">Mesa<span class="selo" id="r-mesa"></span></button>
     <button data-aba="semana" data-acao="ir" data-a1="semana">Semana<span class="selo" id="r-semana"></span></button>
-    <div class="pe"><span id="saudeRail"></span><button type="button" class="sec bt-tela" id="btTela" aria-pressed="false" data-acao="telaAlternar">Tela compartilhada</button><a class="so-real" href="index.html">bastidor da máquina</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
+    <div class="pe"><span id="saudeRail"></span><button type="button" class="sec bt-tela" id="btTela" aria-pressed="false" data-acao="telaAlternar">Tela compartilhada</button><a class="so-real" href="index.html">diagnóstico técnico</a><a class="so-real" href="seguranca.html">segurança</a><a class="so-real" href="#" data-acao="demoEntrar">demonstração</a><a class="so-real" href="#" data-acao="sair">sair</a></div>
   </nav>
 
   <div class="col">
@@ -638,7 +642,7 @@ button.linha-r.quest{cursor:pointer}
         <button class="pri" id="semFechar" data-acao="semFechar">Fechar a revisão da semana</button>
       </section>
 
-      <div class="rodape so-real"><a href="index.html">Bastidor da máquina</a> · telemetria, rotinas e KPIs do sistema · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
+      <div class="rodape so-real"><a href="index.html">Diagnóstico técnico</a> · telemetria da máquina (congelado desde 17/10) · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
     </main>
   </div>
 
@@ -657,7 +661,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.67";
+const VERP="p4.68";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -900,7 +904,11 @@ function demoBase(){
     rotulo:"bloqueado por Startup",frentes_bloqueadoras:["08-startup"],entre_frentes:true,bloqueado_por:[{frente_slug:"08-startup",titulo:"Fechar o preço do plano anual do primeiro cliente"}]}];
   const trava=[{frente_slug:"08-startup",nome:"Startup",n_cards_travados:1,n_cards_meus:3,frentes_travadas:["11-consultoria"],
     itens:[{tarefa_id:316,titulo:"Atualizar o portfólio com as três obras do ano",frente_slug:"11-consultoria"}]}];
-  Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava});
+  /* p4.68 (pi 183): prestacao do executor de exemplo, numeros inventados */
+  const exec=[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:[],
+    ultimos:[{id:9001,frente:"11-consultoria",titulo:"Conferir extrato do mês",em:agoraMenos(5)},{id:9002,frente:"08-startup",titulo:"Revisar a lista de pendências",em:agoraMenos(20)},
+      {id:9003,frente:"20-contrato-pj",titulo:"Organizar os comprovantes da semana",em:agoraMenos(30)}]}];
+  Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava,exec});
   /* p4.46 (plano 108): 8 semanas de margem realizada por frente; na consultoria a janela de 4 semanas caiu (2.500 entrou, 3.000 saiu) */
   const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
   const sem=[sm("11-consultoria",[4000,0,9500,3000,0,12000,2500,0],1,34),sm("20-contrato-pj",[0,12000,0,0,0,12000,0,0],0,9),
@@ -1025,8 +1033,9 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    index.html, que deixa de decidir; os atos da peca pronta e o recusar vem para ca. */
 /* p4.66 (onda 2 do canone v02, pi 177-182, s6857): pg (v_parametro_gestao: a regra de gestao vem do banco), cxe e rwe
    (caixa e runway por entidade), uni (unidade), ficha (v_frente_ficha), quest (v_questao_aberta), bloq (v_card_bloqueado)
-   e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte. */
-const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava"];
+   e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte.
+   p4.68 (pi 183, s6946): exec (v_executor_prestacao), a prestacao do executor que morava no bastidor. */
+const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava","exec"];
 const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso"].concat(CHAVES_ONDA2);
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
@@ -1478,7 +1487,7 @@ const BACKUP="backup-cerebro", RUIM_MO=new Set(["atrasada","nunca"]);
    then vazio e a saude seguia "ok". Agora cada uma acende a propria fonte, com hora e motivo, e apaga no proximo sucesso. */
 const FALHAS={}, FONTE_TELA={ping:"Registro de abertura do painel",medir:"Medição do tempo de decisão",
   atendente:"Estado do atendente",pg:"Parâmetros de gestão",cxe:"Caixa por entidade",rwe:"Fôlego por entidade",uni:"Unidades",
-  ficha:"Ficha das frentes",quest:"Questões entre frentes",bloq:"Cards bloqueados",trava:"O que cada frente trava"};
+  ficha:"Ficha das frentes",quest:"Questões entre frentes",bloq:"Cards bloqueados",trava:"O que cada frente trava",exec:"Prestação do executor"};
 function fonteFalhou(k,e){
   const m=!e?"sem resposta":ehTeto(e)?"não respondeu a tempo":String(e.message||e.erro||e).slice(0,110);
   FALHAS[k]={em:new Date().toISOString(),motivo:m}; renderSaude(); }
@@ -1803,7 +1812,19 @@ function renderFila(){
     return `<div class="coluna ${c.id===COL?"on":""}"><h3>${c.h} <span class="mut num">${itens.length}</span></h3><div class="ajuda">${esc(c.a)}</div>
       ${itens.length?itens.map(itemInv).join(""):`<div class="vazio">nada aqui</div>`}</div>`;}).join("");
   const exec=INV.filter(t=>t.dono!=="igor"&&t.status!=="feita").length;
-  document.getElementById("filaRodape").textContent=plural(exec,"card do executor fica","cards do executor ficam")+" fora deste quadro. Ele presta contas no bastidor.";
+  /* p4.68 (pi 183): a prestacao do executor mora aqui (chave exec); o bastidor ficou so de diagnostico tecnico */
+  const rod=document.getElementById("filaRodape"), x=Array.isArray(D.exec)?D.exec[0]:null;
+  if(x){
+    const ab=+x.abertos||0, ve=+x.vencidos||0, es=+x.esperando||0, fe=+x.feitos_7d||0, ro=+x.rotinas||0, rs=+x.rotinas_no_slo||0;
+    const est=Array.isArray(x.estouradas)?x.estouradas:[], ult=veu(Array.isArray(x.ultimos)?x.ultimos:[]);
+    rod.innerHTML=`<b>Executor</b>: ${ab} em aberto (${plural(ve,"vencido","vencidos")}, ${es} esperando); ${plural(fe,"feito","feitos")} em 7 dias; rotinas ${rs} de ${ro} no ponto`
+      +(est.length?`; estouraram o orçamento: ${est.map(n=>esc(legivel(n))).join(", ")}`:"")
+      +`<details class="exec-ult"><summary>últimos fechados</summary><ul>${ult.map(u=>`<li>${esc(ddmm(u.em))} · ${esc(u.titulo)} <span class="mut">${esc(nomeFrente(u.frente))}</span></li>`).join("")}</ul></details>`;
+    rod.setAttribute("data-exec","1");
+  }else{
+    rod.removeAttribute("data-exec");
+    rod.textContent=plural(exec,"card do executor fica","cards do executor ficam")+" fora deste quadro. Prestação do executor sem medida nesta carga.";
+  }
 }
 function idadeTxt(t){
   const p=+t.parado_dias||0, hoje=somaDias(0);

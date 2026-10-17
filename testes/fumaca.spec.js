@@ -2169,3 +2169,24 @@ test('p127 contrato: o bastidor so le, roda sem unsafe-inline e conta Hoje pelas
   expect(await page.evaluate(()=>window.__csp), 'nenhuma violacao de CSP').toEqual([]);
   expect(erros).toEqual([]);
 });
+
+/* 183 (p4.68, s6946, 17/10/2026): o index.html virou diagnostico tecnico e esta CONGELADO (W3.3). Painel, secao, chave de
+   carga ou secao de navegacao nova entra no presidente.html. Se este teste reprova, o bloco novo esta no lugar errado;
+   mexer nas listas abaixo so com ordem do Igor. */
+const FROZEN_PANES = ['p-agora','p-leituras','p-maquina','p-panorama','p-pf','p-sentinela','p-tudo'];
+const FROZEN_SECS = ['s-acervo','s-caixa','s-espelho','s-frentes','s-insights','s-medida','s-movimento','s-rotinas'];
+const FROZEN_CHAVES = ['au','band','c13','c13e','c13i','cap','cont','cor','dv','eb','ev','exp','fila','fr','fresc','frs','fun','garg','hoje','hoje_resumo','ins','kdono','m9','mat','min','mo','nat','op','par','pf','pls','rotp','rw','se','semi','sentN','varr','wip'];
+const FROZEN_SECOES = ['maquina/acervo','maquina/espelho','maquina/medida','maquina/movimento','maquina/rotinas','panorama/caixa','panorama/frentes','panorama/insights'];
+test('183 · index congelado: nenhum painel, secao ou chave nova no bastidor', async ()=>{
+  const t = require('fs').readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+  const MSG = 'index congelado (pi 183): bloco novo vai ao presidente.html';
+  const panes = [...t.matchAll(/<div class="pane[^"]*" id="(p-[\w-]+)"/g)].map(m=>m[1]).sort();
+  const secs = [...t.matchAll(/<section class="sec" id="(s-[\w-]+)"/g)].map(m=>m[1]).sort();
+  const chaves = t.match(/const CHAVES_PAINEL=\[([^\]]*)\]/)[1].match(/"([^"]+)"/g).map(x=>x.slice(1,-1)).sort();
+  const blk = t.match(/const SECOES=\{([\s\S]*?)\r?\n\};/)[1];
+  const secoes = [...blk.matchAll(/(\w+)\s*:\[(.*)\]/g)].flatMap(m=>[...m[2].matchAll(/\["(\w+)"/g)].map(x=>m[1]+'/'+x[1])).sort();
+  expect(panes, MSG).toEqual(FROZEN_PANES);
+  expect(secs, MSG).toEqual(FROZEN_SECS);
+  expect(chaves, MSG).toEqual(FROZEN_CHAVES);
+  expect(secoes, MSG).toEqual(FROZEN_SECOES);
+});

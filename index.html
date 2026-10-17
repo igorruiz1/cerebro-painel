@@ -5,7 +5,7 @@
      liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
      fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
      GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-czC6egDgYDxq5h82/wSwpzTGy61PoqJkJAeHUqRHt7Y=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KndAS/ti+MZ7H61NO9xMGMw0kVWnzJMUkKZpGBy6JKs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1063,6 +1063,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
     <code>v_ponteiro_divergente_arquivo</code> e <code>v_catalogo_recusa</code>.</div>
 </div>
 
+<div class="f5cab" id="congelado">Diagnóstico técnico da máquina. Congelado em 17/10/2026 (W3.3): bloco novo entra no presidente, não aqui.</div>
 </main></div>
 
 <div class="log" id="log"></div>
@@ -1070,7 +1071,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v97";
+const VER="v98";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();

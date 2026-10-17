@@ -63,6 +63,8 @@ const DUBLE = `(()=>{
     aviso:[],
     /* p4.66 (onda 2): chaves novas vazias por padrao (pg vazio = vale o numero do codigo); os testes da onda 2 trocam por window.__dados */
     pg:[], cxe:[], rwe:[], uni:[], ficha:[], quest:[], bloq:[], trava:[],
+    /* p4.68 (pi 183): prestacao do executor, valores ficticios; o teste do 183 troca por window.__dados ou window.__sem */
+    exec:[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:['rotina-exemplo'],ultimos:[{id:9001,frente:'11-renda-alt',titulo:'Conferir extrato do mês',em:'2026-10-16T21:17:56-04:00'},{id:9002,frente:'20-contrato-pj',titulo:'Revisar a lista de pendências',em:'2026-10-15T10:00:00-04:00'}]}],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
     fresc:[{estado:'FRESCO',no_ponto:2,rotinas_total:2}],
     mo:[{nome:'backup-cerebro',estado:'no ponto',janela_horas:26,ultimo_ponto:new Date(Date.now()-3*36e5).toISOString()},{nome:'painel-snapshot',estado:'no ponto'}],
@@ -252,6 +254,7 @@ test('frente abre a propria pagina com os cards do Igor; caixa desenha 13 semana
 });
 
 test('as quatro colunas da fila separam os cards do Igor e deixam o executor fora', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['exec']; });
   await abrir(page);
   const n = await page.evaluate(()=>Object.fromEntries(['semana','esperando','decidir','depois'].map(c=>[c,contar(c)])));
   expect(n).toEqual({semana:1,esperando:1,decidir:1,depois:1});
@@ -4514,4 +4517,38 @@ test('p4.67 pi 181: na tela compartilhada o destino da nova questao nao oferece 
   await page.evaluate(()=>{ ARV=ARV.concat([{nivel:1,no:'04-obra-residencial',rotulo:'Obra Vida'},{nivel:1,no:'09-teste',rotulo:'Frente Teste'}]).filter(a=>!privada(a.no)); questNova('20-contrato-pj'); });
   expect(await page.$$eval('#qnPara option', o=>o.map(x=>x.value))).toEqual(['09-teste']);
   expect((await page.locator('#folha').innerText()).match(/R\$\s?-?\d/g)||[]).toEqual([]);
+});
+
+/* 183 (p4.68, s6946): a prestacao do executor mora na Fila do presidente; o bastidor e so diagnostico tecnico. */
+test('183 · a Fila presta contas do executor sem mandar ao bastidor', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{ ir('fila'); });
+  const rod = page.locator('#filaRodape');
+  await expect(rod).toHaveAttribute('data-exec','1');
+  await expect(rod).toContainText('feitos em 7 dias');
+  await expect(rod).toContainText('no ponto');
+  await expect(rod).toContainText('rotina exemplo');
+  await expect(rod).toContainText('Conferir extrato do mês');
+  expect((await rod.innerText()).toLowerCase()).not.toContain('bastidor');
+  const lk = page.locator('a[href="index.html"]').first();
+  await expect(lk).toHaveText('diagnóstico técnico');
+});
+test('183 · sem a chave exec a Fila diz que a prestacao esta sem medida', async ({page})=>{
+  await page.addInitScript(()=>{ window.__sem=['exec']; });
+  await abrir(page);
+  await page.evaluate(()=>{ ir('fila'); });
+  const rod = page.locator('#filaRodape');
+  await expect(rod).not.toHaveAttribute('data-exec','1');
+  await expect(rod).toContainText('sem medida nesta carga');
+  expect((await rod.innerText()).toLowerCase()).not.toContain('bastidor');
+});
+test('183 · na tela compartilhada a prestacao do executor nao mostra card de frente PF', async ({page})=>{
+  await abrirTela(page);
+  await page.evaluate(()=>{ ir('fila'); });
+  const rod = page.locator('#filaRodape');
+  await expect(rod).toHaveAttribute('data-exec','1');
+  const txt = await rod.evaluate(e=>e.textContent);
+  expect(txt).not.toContain('Conferir extrato do mês');
+  expect(txt).not.toContain('Renda Alternativa');
+  expect(txt).toContain('Revisar a lista de pendências');
 });
