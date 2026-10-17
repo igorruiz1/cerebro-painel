@@ -1766,23 +1766,42 @@ test('Mesa p4.12: Adiar vai com a data; sem data nao grava; a peca adiada sai da
   expect(erros).toEqual([]);
 });
 
+/* A lista de nomes proibidos (pessoas, empresas, bancos, cidade e ids do projeto) vai em SHA-256: escrita em claro,
+   ela mesma vazaria os nomes neste repositorio publico. Cada palavra, e cada par e trio de palavras seguidas, sem
+   acento e em minuscula, e comparada com a lista. Nome novo: gerar o hash do mesmo jeito. Vale para o fonte do
+   bloco de demonstracao e, desde o t3627, para o texto que a demonstracao poe na tela. */
+const PROIBIDOS = new Set(['6ab84705e5d695ef','f1fca769f672a482','eb8b7bef229ddb38','4cb8b3c18423fdf7','57ddbe120c2a5254','4c006c647316bd2e','b748ad66d73dd832',
+  '1fa4c9eed0c8dab6','ff30d1531a8d9f49','fe7870a244a2000b','3a476a05128038e1','a39fdca4bf85865d','b599675130c2a485','e606e9794651b68d','b4fba2288e6a880a',
+  'd86dc6e60b0632e3','91d1699885940621','064d1e677b995c1f','b684e5a7d5767cce','6035dd9902419a84','b8d8a9b672985b1d','b90f4994c4675589','44c2fc7b06e5b214',
+  '948ed6a2a21964d6','80efd4dd27606356','4d9639d39ff3c9aa','c2c64c35e75eda0f','5fbc1daee9d1fa06','4135aa9dc1b842a6','ff06535ac1029cca','8dd28c9b66f34782',
+  'ec0aa35a6ea6b190','7ded2c90172ea13a','7fac0d0407d16331','a0d66abfb6c54bfb',
+  /* t3627: organizacao do banco, contrapartes do lancamento, registro profissional, usuario e dominio */
+  '8f5bc9be9b21fee3','93bfaea430f53d51','ccc084be9e6614bc','bd74b05721c494d9','0c9f8eebe02257cc','c5565caf9cce0da9','fb1b817620f43dd9']);
+const hashDe = t=>require('crypto').createHash('sha256').update(t).digest('hex').slice(0,16);
+function nomesProibidos(texto){
+  const pal = texto.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), achados = [];
+  for (let k=0; k<pal.length; k++) for (let n=1; n<=3 && k+n<=pal.length; n++) { const t=pal.slice(k,k+n).join(' '); if(PROIBIDOS.has(hashDe(t))) achados.push(t); }
+  return achados;
+}
+
 /* a demonstracao entra pelo mesmo arquivo; o duble do supabase continua no lugar, para provar que ninguem o chama */
-async function abrirDemo(page, largura){
+async function abrirDemo(page, largura, perfil){
   const erros=[], rede=[];
   page.on('pageerror',e=>erros.push(String(e)));
   page.on('request',r=>{ const u=r.url(); if(!/^(file|data|blob|about):/.test(u)&&!/cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u))rede.push(u); });
   if(largura)await page.setViewportSize({width:largura, height:820});
   await page.addInitScript(DUBLE);
-  await page.addInitScript(()=>{ try{sessionStorage.setItem('cerebro.demo','1');}catch(e){}
-    const c=window.supabase.createClient; window.supabase.createClient=(...a)=>{ window.__criou=(window.__criou||0)+1; return c(...a); }; });
+  await page.addInitScript(p=>{ try{sessionStorage.setItem('cerebro.demo','1'); if(p)sessionStorage.setItem('cerebro.demo.perfil',String(p));}catch(e){}
+    const c=window.supabase.createClient; window.supabase.createClient=(...a)=>{ window.__criou=(window.__criou||0)+1; return c(...a); }; }, perfil||null);
   await page.route('**cdn.jsdelivr.net**', r=>r.abort());
   await page.goto(PAGINA);
   await page.waitForFunction(()=>!!document.querySelector('#foco .tit') && !!document.querySelector('#kanban .item'));
   return {erros, rede};
 }
 
-test('Demonstracao: nenhum cliente do banco nasce, nada sai para a rede, a marca e neutra e tudo se clica', async ({page})=>{
-  const {erros, rede} = await abrirDemo(page, 360);
+/* t3627: o mesmo roteiro vale para os dois perfis; os ids das pecas (701, 705) sao os mesmos de proposito */
+for (const perfil of [1,2]) test(`Demonstracao (perfil ${perfil}): nenhum cliente do banco nasce, nada sai para a rede, a marca e neutra e tudo se clica`, async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 360, perfil);
   await expect(page.locator('#demoAviso')).toBeVisible();
   await abaFalsa(page);
   for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) {
@@ -1849,23 +1868,100 @@ test('Demonstracao: o bloco do modo nao carrega nome real nem endereco do banco 
   const bloco = fonte.slice(fonte.indexOf('*/', i)+2, f);
   expect(bloco.length).toBeGreaterThan(3000);
   expect(bloco, 'endereco do banco no bloco').not.toMatch(/supabase\.co|@gmail|createClient\(URL_/);
-  /* A lista de nomes proibidos (pessoas, empresas, bancos, cidade e id do projeto) vai em SHA-256: escrita em claro,
-     ela mesma vazaria os nomes neste repositorio publico. Cada palavra do bloco, e cada par e trio de palavras
-     seguidas, sem acento e em minuscula, e comparada com a lista. Nome novo: gerar o hash do mesmo jeito. */
-  const crypto = require('crypto');
-  const PROIBIDOS = new Set(['6ab84705e5d695ef','f1fca769f672a482','eb8b7bef229ddb38','4cb8b3c18423fdf7','57ddbe120c2a5254','4c006c647316bd2e','b748ad66d73dd832',
-    '1fa4c9eed0c8dab6','ff30d1531a8d9f49','fe7870a244a2000b','3a476a05128038e1','a39fdca4bf85865d','b599675130c2a485','e606e9794651b68d','b4fba2288e6a880a',
-    'd86dc6e60b0632e3','91d1699885940621','064d1e677b995c1f','b684e5a7d5767cce','6035dd9902419a84','b8d8a9b672985b1d','b90f4994c4675589','44c2fc7b06e5b214',
-    '948ed6a2a21964d6','80efd4dd27606356','4d9639d39ff3c9aa','c2c64c35e75eda0f','5fbc1daee9d1fa06','4135aa9dc1b842a6','ff06535ac1029cca','8dd28c9b66f34782',
-    'ec0aa35a6ea6b190','7ded2c90172ea13a','7fac0d0407d16331','a0d66abfb6c54bfb']);
-  const h = t=>crypto.createHash('sha256').update(t).digest('hex').slice(0,16);
+
   /* dono:"igor" e valor_igor sao contrato da tela (colunaDe, aCobrar), nao dado: saem antes da varredura */
-  const pal = bloco.replace(/dono:"igor"|valor_igor/g,' ').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  const achados = [];
-  for (let k=0; k<pal.length; k++) for (let n=1; n<=3 && k+n<=pal.length; n++) { const t=pal.slice(k,k+n).join(' '); if(PROIBIDOS.has(h(t))) achados.push(t); }
-  expect(achados, 'nome real no bloco de demonstracao').toEqual([]);
+  expect(nomesProibidos(bloco.replace(/dono:"igor"|valor_igor/g,' ')), 'nome real no bloco de demonstracao').toEqual([]);
   /* o detector detecta: um nome proibido conhecido, posto num texto, tem de ser achado */
-  expect(PROIBIDOS.has(h('kssvzrnjiqfgtvoifboj')), 'a lista de hashes confere com o id do projeto').toBe(true);
+  expect(PROIBIDOS.has(hashDe('kssvzrnjiqfgtvoifboj')), 'a lista de hashes confere com o id do projeto').toBe(true);
+  expect(nomesProibidos('painel do projeto kssvzrnjiqfgtvoifboj'), 'o detector acha o id num texto').toEqual(['kssvzrnjiqfgtvoifboj']);
+});
+
+/* ---------- t3627 (17/10/2026): demonstracao pelo endereco, sem sessao, para o lancamento ----------
+   O cerebro vai ao celular de convidados. Mostrar o painel real cruza o muro (LC-01); a demonstracao abre por
+   presidente.html?demo=1 ou ?demo=2 sem login, como a conta de exemplo do Notion ou do Monday. A trava: o cliente do
+   banco nem nasce (createClient arma uma bomba), nenhum pedido vai a um endereco do Supabase, nenhum websocket abre,
+   e o texto de cada aba, nos dois perfis, passa pela mesma lista de nomes proibidos do fonte. */
+const SUPABASE_RE = /supabase\.(co|in|io)|kssvzrnjiqfgtvoifboj/;
+async function abrirDemoUrl(page, perfil){
+  const erros=[], rede=[], ws=[];
+  page.on('pageerror',e=>erros.push(String(e)));
+  page.on('request',r=>{ const u=r.url(); if(!/^(file|data|blob|about):/.test(u))rede.push(u); });
+  page.on('websocket',w=>ws.push(w.url()));
+  await page.setViewportSize({width:390, height:844});
+  /* sem duble de sessao: se a pagina chamar o cliente real, a bomba estoura e o teste conta */
+  await page.addInitScript(()=>{ window.__criou=0; window.supabase={createClient:()=>{ window.__criou++; throw new Error('a demonstracao criou cliente do banco'); }}; });
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA+'?demo='+perfil);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit') && !!document.querySelector('#kanban .item'));
+  return {erros, rede, ws};
+}
+
+for (const perfil of [1,2]) test(`t3627 demo pelo endereco (perfil ${perfil}): sem sessao, nenhum pedido ao Supabase e nenhum nome real em aba nenhuma`, async ({page})=>{
+  const {erros, rede, ws} = await abrirDemoUrl(page, perfil);
+  await expect(page.locator('#demoAviso'), 'a demonstracao se anuncia').toBeVisible();
+  await expect(page.locator('#demoAviso')).toContainText('Dados fictícios');
+  await expect(page.locator(`#demoAviso [data-acao=demoPerfil][data-p="${perfil}"]`)).toHaveAttribute('aria-pressed','true');
+  expect(await page.title(), 'a aba do navegador diz demonstracao').toMatch(/^Demonstração/);
+  await expect(page.locator('#login'), 'nenhum login pedido').toBeHidden();
+  const textos = [];
+  for (const aba of ['hoje','fila','caixa','frentes','mesa','semana']) {
+    await page.evaluate(a=>ir(a), aba);
+    if(aba==='mesa') await page.waitForSelector('#ms-raiz .ms-item');
+    await page.waitForTimeout(150);
+    textos.push([aba, await page.evaluate(()=>document.body.innerText)]);
+  }
+  /* o card aberto tambem: a recomendacao so aparece inteira ali */
+  await page.evaluate(()=>{ ir('hoje'); abrirFila(0); });
+  await expect(page.locator('#veu')).toBeVisible();
+  textos.push(['card', await page.evaluate(()=>document.body.innerText)]);
+  await page.evaluate(()=>fecharFolha());
+  for (const [aba, txt] of textos) {
+    expect(nomesProibidos(txt), `nome real na tela, aba ${aba}`).toEqual([]);
+    expect(txt, `marca ou endereco real na aba ${aba}`).not.toMatch(/Dabli|supabase|@gmail/i);
+  }
+  /* coerencia entre abas: o folego da Semana e o do Caixa sao a mesma conta */
+  const c = await page.evaluate(()=>({rw:D.rw[0].dias_sobrevida_pior, sem:(D.semana.find(x=>x.ref==='caixa.sobrevida_dias')||{}).valor}));
+  expect(c.sem, 'Semana e Caixa dizem o mesmo folego').toBe(c.rw);
+  expect(await page.evaluate(()=>sessionStorage.getItem('cerebro.demo')), 'a marca fica na aba: tirar o ?demo nao abre o painel real').toBe('1');
+  expect(await page.evaluate(()=>window.__criou), 'createClient chamado na demonstracao').toBe(0);
+  expect(rede.filter(u=>SUPABASE_RE.test(u)&&!/cdn\.jsdelivr\.net/.test(u)), 'pedido ao Supabase').toEqual([]);
+  expect(rede.filter(u=>!/cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u)), 'nada sai para a rede').toEqual([]);
+  expect(ws, 'nenhum websocket (Realtime) abre').toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('t3627 demo: os dois perfis tem dados proprios, e o detector de rede pega um pedido ao Supabase', async ({page})=>{
+  const {rede} = await abrirDemoUrl(page, 1);
+  const t1 = await page.evaluate(()=>document.body.innerText);
+  /* a sonda: um pedido de verdade a um endereco do Supabase, feito pelo teste, tem de cair no filtro */
+  await page.evaluate(()=>fetch('https://exemplo.supabase.co/rest/v1/sonda').catch(()=>{}));
+  await expect.poll(()=>rede.filter(u=>SUPABASE_RE.test(u)).length, 'o filtro de rede enxerga o Supabase').toBe(1);
+  await page.click('#demoAviso [data-acao=demoPerfil][data-p="2"]');
+  await page.waitForURL(/\?demo=2$/);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  const t2 = await page.evaluate(()=>document.body.innerText);
+  await expect(page.locator('#demoAviso [data-acao=demoPerfil][data-p="2"]'), 'o seletor marca o perfil 2').toHaveAttribute('aria-pressed','true');
+  const fila = await page.evaluate(()=>D.fila.map(x=>x.titulo));
+  expect(fila.filter(x=>t1.includes(x)), 'o perfil 2 nao repete os cards do perfil 1').toEqual([]);
+  expect(t2).not.toEqual(t1);
+});
+
+test('t3627 demo: sair da demonstracao aberta pelo endereco tira o ?demo e pede o codigo antes de dado real', async ({page})=>{
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.addInitScript(()=>{ window.__aal='aal2'; window.__fatores=[{id:'f1',status:'verified',factor_type:'totp'}];
+    const c=window.supabase.createClient; window.supabase.createClient=(...a)=>{ window.__criou=(window.__criou||0)+1; return c(...a); }; });
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.goto(PAGINA+'?demo=2');
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  expect(await page.evaluate(()=>window.__criou||0), 'na demonstracao o cliente nao nasce').toBe(0);
+  await page.click('#demoAviso [data-acao=demoSair]');
+  await page.waitForURL(u=>!String(u).includes('demo='));
+  await expect(page.locator('#fator')).toBeVisible();
+  await expect(page.locator('#fatorTxt')).toContainText('sair da demonstração');
+  await expect(page.locator('#demoAviso')).toBeHidden();
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_carga').length), 'nada real carrega antes do codigo').toBe(0);
+  expect(erros).toEqual([]);
 });
 
 /* ---------- p4.14 (06/10/2026, s03): Hoje e Mesa numa fila so ----------
