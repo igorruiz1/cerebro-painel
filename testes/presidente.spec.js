@@ -4440,27 +4440,54 @@ test('p4.67 pi 181: + Nova questao na ficha cria a questao e ela aparece na Sema
   expect(rede).toEqual([]); expect(erros).toEqual([]);
 });
 
-test('p4.67 pi 181: Resolver pede solucao e titulo com verbo, cria o card com dono e tira a questao da lista; o erro do banco aparece', async ({page})=>{
+test('p4.67 pi 181: Resolver manda criterio, prazo e classe A/S/M ao banco, valida as 3 regras antes de chamar e mostra a recusa do banco; vira card com dono', async ({page})=>{
   const {erros} = await abrirDemo(page, 390);
-  await page.evaluate(()=>ir('semana'));
+  await page.evaluate(()=>{ window.__qc=[]; const r=sb.rpc; sb.rpc=(n,a)=>{ if(/^questao_/.test(n))window.__qc.push({n,a}); return r(n,a); }; ir('semana'); });
+  const chamadas = ()=>page.evaluate(()=>window.__qc.filter(c=>c.n==='questao_resolver').length);
   await page.locator('#semQuest .quest').first().click();
-  await expect(page.locator('#folha button:has-text("Resolver")')).toHaveCount(1);
   await page.locator('#folha button:has-text("Resolver")').click();
   await expect(page.locator('#qrDt'), 'prazo padrao: hoje de Cuiaba').toHaveValue(await page.evaluate(()=>hojeCuiaba()));
-  await page.locator('#folha button:has-text("Criar o card")').click();
-  await expect(page.locator('#qErro')).toContainText('Escreva a solução');
+  await expect(page.locator('#qrClasse'), 'classe padrao M').toHaveValue('M');
+  const criar = page.locator('#folha button:has-text("Criar o card")');
+  /* validacao local: nada vai ao banco */
+  await criar.click(); await expect(page.locator('#qErro')).toContainText('Diga a solução');
+  await page.locator('#qrSol').fill('curta'); await criar.click(); await expect(page.locator('#qErro')).toContainText('10 letras');
   await page.locator('#qrSol').fill('Fechar com 10% de desconto à vista');
-  await page.locator('#qrCard').fill('Preço do plano anual');
-  await page.locator('#folha button:has-text("Criar o card")').click();
-  await expect(page.locator('#tmsg'), 'erro do banco no toast').toContainText('sem verbo');
-  await expect(page.locator('#toast')).toHaveClass(/bad/);
-  await expect(page.locator('#qErro'), 'e na folha, que segue aberta').toContainText('sem verbo');
   await page.locator('#qrCard').fill('Responder o preço do plano anual');
-  await page.locator('#folha button:has-text("Criar o card")').click();
+  await expect(page.locator('#qrMot'), 'motivo do M pre-preenchido com o titulo').toHaveValue('decidir: Responder o preço do plano anual');
+  await criar.click(); await expect(page.locator('#qErro')).toContainText('quando o card está pronto');
+  expect(await chamadas(), 'nenhuma chamada com a folha incompleta').toBe(0);
+  await page.locator('#qrCrit').fill('Resposta enviada ao cliente');
+  await page.locator('#qrMot').fill('so o Igor decide');
+  await criar.click(); await expect(page.locator('#qErro'), 'M sem verbo no motivo').toContainText('começa pelo verbo');
+  expect(await chamadas()).toBe(0);
+  /* recusa do banco (titulo sem verbo) aparece no toast e na folha, que segue aberta */
+  await page.locator('#qrMot').fill('decidir: so o Igor decide a solucao');
+  await page.locator('#qrCard').fill('Preço do plano anual');
+  await criar.click();
+  await expect(page.locator('#tmsg')).toContainText('sem verbo'); await expect(page.locator('#toast')).toHaveClass(/bad/);
+  await expect(page.locator('#qErro')).toContainText('sem verbo');
+  await page.locator('#qrCard').fill('Responder o preço do plano anual');
+  /* A: o motivo some e vai nulo */
+  await page.locator('#qrClasse').selectOption('A');
+  await expect(page.locator('#qrMotBox')).toBeHidden();
+  await criar.click();
   await expect(page.locator('#tmsg')).toContainText(/card t\d+ criado em Consultoria de obras para você/);
+  const c = await page.evaluate(()=>window.__qc.filter(c=>c.n==='questao_resolver').pop().a);
+  expect(c).toEqual({p_id:1,p_solucao:'Fechar com 10% de desconto à vista',p_card_titulo:'Responder o preço do plano anual',p_criterio:'Resposta enviada ao cliente',
+    p_prazo:await page.evaluate(()=>hojeCuiaba()),p_automatibilidade:'A',p_automat_motivo:null});
   await page.evaluate(()=>ir('semana'));
   await expect(page.locator('#semQuest')).toHaveText('Nenhuma questão aberta entre frentes.');
-  await expect.poll(()=>page.evaluate(()=>INV.some(t=>t.titulo==='Responder o preço do plano anual'&&t.frente==='11-consultoria'&&t.dono==='igor'&&t.prazo===hojeCuiaba()))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>INV.some(t=>t.titulo==='Responder o preço do plano anual'&&t.frente==='11-consultoria'&&t.dono==='igor'&&t.criterio_pronto==='Resposta enviada ao cliente'))).toBe(true);
+  expect(erros).toEqual([]);
+});
+
+test('p4.67 pi 181: a RPC fictícia do Resolver aplica as recusas do banco (criterio, 10 letras, classe e motivo do M)', async ({page})=>{
+  const {erros} = await abrirDemo(page, 390);
+  const r = await page.evaluate(async()=>{ const ok={p_id:1,p_solucao:'Solucao com letras suficientes',p_card_titulo:'Responder o cliente',p_criterio:'Enviado',p_prazo:hojeCuiaba(),p_automatibilidade:'M',p_automat_motivo:'decidir: x'};
+    const q=async o=>(await sb.rpc('questao_resolver',{...ok,...o})).error?.message||'ok';
+    return {semCrit:await q({p_criterio:null}), curta:await q({p_solucao:'curta'}), semClasse:await q({p_automatibilidade:null}), mSemVerbo:await q({p_automat_motivo:'sei la'}), bom:await q({})}; });
+  expect(r.semCrit).toContain('criterio de pronto'); expect(r.curta).toContain('10+ letras'); expect(r.semClasse).toContain('A/S/M'); expect(r.mSemVerbo).toContain('verbo'); expect(r.bom).toBe('ok');
   expect(erros).toEqual([]);
 });
 

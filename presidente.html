@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aH3IEdnvQ2VxWloyAFAvwRWX8VpsKNNpyY7BHLuu4h0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-m6+7QKTPnOfNtlsF6kxd84OqiqzeJJ5BrsxDTmN4j4M=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -492,6 +492,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 button.d4i{width:100%;min-height:44px;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer}
 button.linha-r.quest{cursor:pointer}
 .q-sel{width:100%;min-height:44px}
+#qrMotBox[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -955,9 +956,13 @@ function demoCliente(){
       q.forEach((x,i)=>{ x.ordem=i+1; x.top3=i<3; }); return {id,novo:true}; },
     questao_resolver:a=>{ const b=B(), q=b.dados.quest, x=q.find(y=>+y.id===+a.p_id);
       if(!x)throw new Error("questao "+a.p_id+" nao esta aberta");
+      if(((String(a.p_solucao||"").match(/\p{L}/gu))||[]).length<10)throw new Error("diga a solucao (10+ letras)");
       if(!VERBO_RE.test(String(a.p_card_titulo||"").trim()))throw new Error("titulo do card sem verbo no infinitivo");
+      if(!String(a.p_criterio||"").trim())throw new Error("o card precisa de criterio de pronto");
+      if(!["A","S","M"].includes(a.p_automatibilidade))throw new Error("RECUSADO: o card nasce classificado em A/S/M");
+      if(a.p_automatibilidade==="M"&&!VERBO_RE.test(String(a.p_automat_motivo||"").replace(/\s*:.*$/,"").trim()))throw new Error("RECUSADO: no M, o motivo tem de nomear o verbo");
       const tid=Math.max(...b.inv.map(t=>+t.id))+1;
-      b.inv.push({id:tid,frente:x.para_frente,dono:"igor",status:"pendente",prazo:a.p_prazo||b.dd(0),parado_dias:0,titulo:a.p_card_titulo,acoes:b.inv[0].acoes});
+      b.inv.push({id:tid,frente:x.para_frente,dono:"igor",status:"pendente",prazo:a.p_prazo||b.dd(0),parado_dias:0,titulo:a.p_card_titulo,criterio_pronto:a.p_criterio,acoes:b.inv[0].acoes});
       b.dados.quest=q.filter(y=>y!==x); b.dados.quest.forEach((y,i)=>{ y.ordem=i+1; y.top3=i<3; });
       return {id:x.id,estado:"solucionada",tarefa_id:tid,frente:x.para_frente,dono:"igor"}; },
     questao_descartar:a=>{ const b=B(), x=b.dados.quest.find(y=>+y.id===+a.p_id);
@@ -1189,7 +1194,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
   buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
@@ -2061,21 +2066,29 @@ function questResolverForm(id){
   const q=questDe(id); if(!q)return;
   mostrarFolha(`<h3 id="folhaTit">${GLOSSARIO.resolver}: ${esc(curto(q.titulo,70))}</h3>
     <div class="campo"><label for="qrSol" class="mut">Solução</label><textarea id="qrSol" rows="3"></textarea></div>
-    <div class="campo"><label for="qrCard" class="mut">Título do card, começando pelo verbo</label><input id="qrCard" maxlength="70" autocomplete="off"></div>
+    <div class="campo"><label for="qrCard" class="mut">Título do card, começando pelo verbo</label><input id="qrCard" maxlength="70" autocomplete="off" data-ao-digitar="questMotivoSugerir"></div>
+    <div class="campo"><label for="qrCrit" class="mut">Pronto quando</label><input id="qrCrit" maxlength="140" autocomplete="off"></div>
+    <div class="campo"><label for="qrClasse" class="mut">Quem faz o card</label><select id="qrClasse" class="q-sel" data-ao-mudar="questClasse"><option value="A">A · executor faz</option><option value="S">S · entrego pronto</option><option value="M" selected>M · só você</option></select></div>
+    <div class="campo" id="qrMotBox"><label for="qrMot" class="mut">Motivo, começando pelo verbo (ex.: decidir: …)</label><input id="qrMot" maxlength="140" autocomplete="off" value="decidir: " data-auto="decidir: "></div>
     <div class="campo"><label for="qrDt" class="mut">Prazo do card · hoje</label><input id="qrDt" type="date" min="${esc(hojeCuiaba())}" value="${esc(hojeCuiaba())}"></div>
     <p class="nova-erro hidden" id="qErro" role="alert"></p>
     <button class="pri" data-acao="questResolverConfirmar" data-a1="${esc(q.id)}">Criar o card</button>
     <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
 }
 async function questResolverConfirmar(id){
-  const v=k=>{ const e=document.getElementById(k); return e?String(e.value||"").trim():""; }, sol=v("qrSol"), card=v("qrCard"), dt=v("qrDt"), er=document.getElementById("qErro");
-  const falta=!sol?"Escreva a solução.":!card?"Escreva o título do card.":(dt&&(!/^\d{4}-\d{2}-\d{2}$/.test(dt)||dt<hojeCuiaba()))?"Escolha uma data de hoje em diante.":"";
+  const v=k=>{ const e=document.getElementById(k); return e?String(e.value||"").trim():""; }, sol=v("qrSol"), card=v("qrCard"), crit=v("qrCrit"), dt=v("qrDt")||hojeCuiaba(), cl=v("qrClasse")||"M", mot=v("qrMot"), er=document.getElementById("qErro");
+  /* as regras do banco, antes de chamar: solucao com 10+ letras, criterio de pronto, classe A/S/M e, na M, motivo que nomeia o verbo */
+  const falta=(sol.match(/\p{L}/gu)||[]).length<10?"Diga a solução (10 letras ou mais).":!card?"Escreva o título do card.":!crit?"Diga quando o card está pronto.":
+    (!/^\d{4}-\d{2}-\d{2}$/.test(dt)||dt<hojeCuiaba())?"Escolha uma data de hoje em diante.":
+    (cl==="M"&&!/^[a-zà-ú]+(ar|er|ir|or|ôr)\s*:\s*\S/i.test(mot))?"No M, o motivo começa pelo verbo, como em: decidir: só você decide.":"";
   if(falta){ if(er){ er.textContent=falta; er.classList.remove("hidden"); } return; }
-  const d=await questRpc("questao_resolver",{p_id:+id,p_solucao:sol,p_card_titulo:card,p_prazo:dt||null}); if(!d)return;
+  const d=await questRpc("questao_resolver",{p_id:+id,p_solucao:sol,p_card_titulo:card,p_criterio:crit,p_prazo:dt,p_automatibilidade:cl,p_automat_motivo:cl==="M"?mot:null}); if(!d)return;
   fecharFolha();
   toast("card t"+d.tarefa_id+" criado em "+nomeFrente(d.frente)+" para "+donoTxt(d.dono),null,false,5000);
   carregar(true);
 }
+function questClasse(el){ const b=document.getElementById("qrMotBox"); if(b)b.hidden=el.value!=="M"; }
+function questMotivoSugerir(el){ const m=document.getElementById("qrMot"); if(m&&m.dataset.auto===m.value){ m.value="decidir: "+el.value; m.dataset.auto=m.value; } }
 function questDescartarForm(id){
   const q=questDe(id); if(!q)return;
   mostrarFolha(`<h3 id="folhaTit">${GLOSSARIO.descartar}: ${esc(curto(q.titulo,70))}</h3>
