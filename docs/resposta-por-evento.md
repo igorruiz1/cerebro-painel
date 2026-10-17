@@ -7,7 +7,7 @@ Antes, tudo o que precisava do Claude esperava a passagem fixa da rotina.
 
 | Interação | Caminho | Espera |
 | --- | --- | --- |
-| Verbo em card (Concluí, Mudar data, Largar) | `agir()` grava na hora | 0 s, já era instantâneo |
+| Verbo em card (Concluir, Mudar data, Descartar) | `agir()` grava na hora | 0 s, já era instantâneo |
 | "Quero uma recomendação" (deliberar, 121 em 30 dias) | `dialogo` → atendente | p50 11 min, p90 2,2 h |
 | Texto e voz | `inbox()` → `comando` → atendente | p50 50 min, p90 6,7 h, máx. 9,4 h |
 

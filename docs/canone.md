@@ -106,7 +106,7 @@ Achado é o que a régua não pega e a leitura do fonte pega. Cada um vira item 
    dias de caixa. Não dá para ver quando uma entidade financia a outra.
 3. **Marca e muro.** O painel de tudo veste a marca Dabli Tech. O Igor escolheu manter a marca; por
    isso a salvaguarda do muro (LC-01) vira obrigatória: modo tela compartilhada que esconde o
-   privativo.
+   privativo. *p4.65 (pi 172): botão no trilho e na busca e `?tela=compartilhada`; some a frente PF, o caixa consolidado e todo R$; frente sem classificação também some.*
 4. **Rituais incompletos.** Há semanal; o diário saiu na p4.53 (Hoje é o diário). Não há mensal
    (resultado por unidade, valor da hora) nem trimestral (prioridades).
 5. **Prateleira.** O banco já entrega valor da hora, horas do mês, produção do dia e fechamentos, e a
@@ -115,7 +115,7 @@ Achado é o que a régua não pega e a leitura do fonte pega. Cada um vira item 
    "parado" e a frente com ficha especial estão fixos no HTML (régua 24).
 7. **Comunicação.** O mesmo ato tem três nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito).
    Quatro blocos somem calados quando vazios e cinco falhas não acendem a saúde. Os docs dizem 6 s
-   para desfazer; o código usa 8 s. Há funções e classes sem uso.
+   para desfazer; o código usa 8 s. Há funções e classes sem uso. *p4.65 (pi 170 e 171): glossário único (Concluir, Descartar, Aprovar), docs em 8 s, 6 funções e 10 classes mortas fora; os quatro blocos dizem quando estão vazios e as quatro falhas acendem a saúde por fonte.*
 
 ## O plano em ondas
 
