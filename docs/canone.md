@@ -1,6 +1,6 @@
 # O presidente contra o cânone
 
-Régua de mercado do `presidente.html` e plano para fechar o que falta. v01, 08/10/2026, s1274.
+Régua de mercado do `presidente.html` e plano para fechar o que falta. v02, 17/10/2026, s6120 (v01: 08/10, s1274).
 
 Este arquivo é público, igual ao resto do repo. Número de caixa, nome de frente e valor de KPI
 ficam no banco: aqui entra só o que se mede na tela.
@@ -8,13 +8,22 @@ ficam no banco: aqui entra só o que se mede na tela.
 ## Por que existe
 
 Em 29/08 o `index.html` v28 foi auditado contra 18 réguas tiradas de modelos que já são referência
-(doc 409 do cérebro). Deu 39%, subiu para 56% na v29 e **nunca mais foi remedido**. O
-`presidente.html` nasceu depois (p1, 02/10) e virou a casa: o `manifest.json` abre nele. Até esta
-rodada, ele nunca tinha passado pela régua.
+(doc 409 do cérebro). Deu 39%, subiu para 56% na v29 e nunca mais foi remedido. O `presidente.html`
+virou a casa (o `manifest.json` abre nele) e passou pela régua pela primeira vez em 08/10 (v01).
 
-Uma régua que não acompanha o crescimento vira enfeite. Por isso este arquivo guarda a régua junto
-do código. O plano 106 faz um script remedi-la a cada versão e gravar
-`painel.presidente_canone24_pct` na `evolucao`.
+**Por que a v02.** Em 17/10 a v01 já mentia em três pontos: o placar era o da p4.30 (a tela está na
+p4.64), a tabela do plano mostrava como pendentes 9 itens que o banco já tinha descartado, e a tela
+tinha crescido sem remedida. Medido com `npm run canone` a 1280 px, entre 08/10 e 17/10:
+
+| Medida | 08/10 (p4.31) | 17/10 (p4.64) | Variação |
+|---|---|---|---|
+| Palavras nas abas | 1.442 (5 abas) | 1.814 (6 abas) | +26% |
+| Números nas abas | 243 | 296 | +22% |
+| Telas de Hoje (1280 / 390) | 1,4 / 2,8 | 1,4 / 2,9 | igual |
+
+Uma régua que não acompanha o crescimento vira enfeite. A regra passa a ser: **o plano vive só no
+banco** (`plano_item`); esta página guarda a régua, o placar e a ordem das ondas, nunca o estado dos
+itens.
 
 ## De onde vêm as réguas
 
@@ -28,108 +37,158 @@ Nenhuma régua é inventada aqui. As 18 primeiras vêm do doc 409:
 - EOS Scorecard (5 a 15 números, dono, meta);
 - NN/g (divulgação progressiva, informação que sobrevive sem cor).
 
-As 6 novas (19 a 24) vêm do que um painel **de dono de empresa** cobra e um painel de operação não:
-- tesouraria de 13 semanas com previsto x realizado (IBCS: AC x FC);
-- Profit First (margem do dono, não receita);
-- observabilidade de dado (frescor visível);
-- Balanced Scorecard (financeiro, cliente/funil, processo, pessoa);
-- EOS L10 e Amazon WBR como ritual semanal;
-- painel governado por dado (cresce sem tocar no HTML).
+As réguas 19 a 24 (v01) vêm do que um painel **de dono de empresa** cobra e um painel de operação não:
+tesouraria de 13 semanas (IBCS), Profit First, frescor do dado, Balanced Scorecard, ritual semanal e
+painel governado por dado.
 
-## Placar da p4.30
+As réguas 25 a 30 (v02) são os **6 componentes do EOS** (Traction, Gino Wickman). Em 17/10 o Igor
+escolheu o EOS como espinha da gestão: ele foi feito para empresa tocada pelo dono, e a tela já tinha
+metade dele (scorecard semanal com dono e meta). OKR + BSC e 4DX foram comparados e perderam: o
+primeiro pesa demais para um dono só, o segundo cobre mal várias unidades ao mesmo tempo.
 
-Cada régua vale SIM = 1, PARCIAL = 0,5 ou NÃO = 0. A medida foi feita no modo demonstração a 390 e
-1280 px, com leitura do fonte.
+## Placar da p4.64
 
-| # | Régua | p4.30 | Evidência |
-|---|---|---|---|
-| 1 | Essencial numa tela, sem rolagem | PARCIAL | Hoje ocupa 1,4 tela a 1280 e 2,3 a 390. A frase de situação, o próximo passo e 4 blocos cabem na dobra. |
-| 2 | Série temporal | PARCIAL | Zero sparkline. Só a variação de 7 dias (`var7`) e a previsão de 13 semanas. |
-| 3 | Número com meta, período anterior ou faixa | PARCIAL | Só o fôlego do caixa traz meta e "desde dd/mm". |
-| 4 | Normal x anomalia só olhando | NÃO | Não há banda de normalidade. |
-| 5 | Mesmo período do ano anterior | NÃO | A casa tem menos de 12 meses. Entra quando houver. |
-| 6 | Entrada controlável antes de saída | SIM | O próximo passo (alavanca) divide a dobra com o fôlego (resultado). |
-| 7 | Dono e meta em cada número | PARCIAL | O dono é implícito ("esperando você") e só o caixa tem meta. |
-| 8 | 5 a 15 números principais | SIM | 7 números na frase e nos blocos de Hoje. |
-| 9 | Teste dos 5 s e leitura em 20 min | SIM | 1.442 palavras nas 5 abas, contra 8.936 do index v28. |
-| 10 | Panorama, depois detalhe | SIM | Bloco, lista e folha do card. |
-| 11 | Todo vermelho com ação definida | SIM | Cada item vem com verbo: Concluí, Cobrar, nova data. |
-| 12 | Alerta por orçamento ou janela dupla | PARCIAL | Só o selo de saúde usa orçamento de erro (`eb`). |
-| 13 | Métrica sem uso fora da tela | SIM | Fica no bastidor (`index.html`). |
-| 14 | WIP, teto e idade do aberto | SIM | "há N d", "parados: manter ou largar?" e capacidade em horas. |
-| 15 | Zero chartjunk | SIM | Um gráfico de barras, sem pizza, gauge ou biblioteca. |
-| 16 | Frentes lado a lado | PARCIAL | Lista ordenada por margem, mas com 1 número por frente e sem série. |
-| 17 | Celular empilha e prioriza | SIM | Testes a 360 e 390 px, alvo ≥ 44 px, sem rolagem lateral. |
-| 18 | Sobrevive sem cor | PARCIAL | O gráfico do caixa usa cor como sinal único (vermelho e laranja). |
-| 19 | 13 semanas com previsto x realizado | PARCIAL | Só o caso base. O pior caso e o realizado não aparecem no gráfico. |
-| 20 | Margem do dono, nunca o bruto | SIM | Frentes e "melhora o caixa" ordenadas por margem. |
-| 21 | Frescor do dado visível | SIM | "dados de hh:mm" e selo de saúde no topo. |
-| 22 | Cobertura BSC: financeiro, funil, processo, pessoa | PARCIAL | Tem financeiro e processo. Não tem o funil LC-14 (pronta, enviada, aceita, paga) nem sinal das frentes de vida. |
-| 23 | Ritual semanal (scorecard EOS/WBR) | NÃO | O presidente é só diário. O placar semanal vive no bastidor. |
-| 24 | Cresce sem tocar no HTML | PARCIAL | Frente nova entra sozinha. KPI ou chave nova pede código (`CHAVES` fixo). |
+SIM = 1, PARCIAL = 0,5, NÃO = 0. Réguas de tela medidas por script; as de julgamento, à mão, com
+leitura do fonte em 17/10.
 
-- **18 réguas:** 12,5 de 18 = **69%**. Comparável com o index: 39% em 29/08 e 56% em 30/08.
-- **24 réguas:** 16 de 24 = **67%**. É a linha de base do cânone ampliado.
+| # | Régua | p4.30 | p4.64 | Evidência na p4.64 |
+|---|---|---|---|---|
+| 1 | Essencial numa tela, sem rolagem | PARCIAL | PARCIAL | Hoje ocupa 1,4 tela a 1280 e 2,9 a 390. |
+| 2 | Série temporal | PARCIAL | PARCIAL | Sparkline só nas frentes; caixa e Semana sem série. |
+| 3 | Número com meta, período anterior ou faixa | PARCIAL | PARCIAL | A Semana traz meta e semana anterior; Hoje e Caixa só o fôlego. |
+| 4 | Normal x anomalia só olhando | NÃO | NÃO | Sem banda de normalidade. |
+| 5 | Mesmo período do ano anterior | NÃO | NÃO | Menos de 12 meses de série. |
+| 6 | Entrada controlável antes de saída | SIM | SIM | Próximo passo divide a dobra com o fôlego. |
+| 7 | Dono e meta em cada número | PARCIAL | PARCIAL | Semana tem dono e meta; o resto não. |
+| 8 | 5 a 15 números principais | SIM | SIM | Teto de 14 na Semana. |
+| 9 | Teste dos 5 s e leitura em 20 min | SIM | SIM | 1.814 palavras nas 6 abas, contra 8.936 do index v28. |
+| 10 | Panorama, depois detalhe | SIM | SIM | Bloco, lista e folha. |
+| 11 | Todo vermelho com ação definida | SIM | SIM | Cada item vem com verbo. |
+| 12 | Alerta por orçamento ou janela dupla | PARCIAL | PARCIAL | Só o selo de saúde usa orçamento de erro. |
+| 13 | Métrica sem uso fora da tela | SIM | SIM | Fica no bastidor. |
+| 14 | WIP, teto e idade do aberto | SIM | SIM | WIP na Fila, idade e "manter ou largar?". |
+| 15 | Zero chartjunk | SIM | SIM | SVG puro, sem biblioteca. |
+| 16 | Frentes lado a lado | PARCIAL | **SIM** | Small multiples de 8 semanas na mesma escala (plano 108). |
+| 17 | Celular empilha e prioriza | SIM | SIM | Testes a 360 e 390 px. |
+| 18 | Sobrevive sem cor | PARCIAL | PARCIAL | Gráfico do caixa usa cor como sinal único. |
+| 19 | 13 semanas com previsto x realizado | PARCIAL | PARCIAL | Só o caso base; um saldo único, sem quebra por entidade. |
+| 20 | Margem do dono, nunca o bruto | SIM | SIM | Frentes, alavancas e funil por margem. |
+| 21 | Frescor do dado visível | SIM | SIM | Carimbo e saúde por fonte (plano 114). |
+| 22 | Cobertura BSC | PARCIAL | PARCIAL | Funil entrou (plano 109); a perspectiva pessoa, não. |
+| 23 | Ritual semanal (scorecard EOS/WBR) | NÃO | **SIM** | Aba Semana: norte, números com dono e meta, revisão fechada. |
+| 24 | Cresce sem tocar no HTML | PARCIAL | PARCIAL | Meta de caixa, WIP, tetos e a frente com 4 blocos estão no código. |
+| 25 | EOS Visão: norte e prioridades do trimestre | | PARCIAL | Norte existe; prioridade do trimestre, não. |
+| 26 | EOS Pessoas: cada setor com dono no organograma | | NÃO | Frentes são lista plana; não há unidade, apoio nem entidade. |
+| 27 | EOS Dados: scorecard semanal | | SIM | Números da Semana com dono, meta e semana anterior. |
+| 28 | EOS Questões: lista única entre setores (IDS) | | NÃO | Uma frente não tem como abrir questão para outra. |
+| 29 | EOS Processo: rito padrão por setor | | PARCIAL | Só uma frente tem ficha própria (4 blocos e check-in), escrita no código. |
+| 30 | EOS Tração: prioridades + reunião semanal | | PARCIAL | Revisão semanal existe; sem prioridades nem questões. |
+
+- **18 réguas:** 13 de 18 = **72%** (p4.30: 69%).
+- **24 réguas:** 17,5 de 24 = **73%** (p4.30: 67%).
+- **30 réguas:** 20 de 30 = **67%**. É a linha de base do cânone com EOS.
 
 ## O que está acima do mercado e não se mexe
 
-- **Ação antes de número.** A tela abre em "o que fazer agora", não em gráfico. Painel pago abre em
-  KPI.
+- **Ação antes de número.** A tela abre em "o que fazer agora". Painel pago abre em KPI.
 - **Margem, não receita.** Quase nenhuma ferramenta de mercado ordena por margem do dono.
-- **Edição.** A tela tem 6 vezes menos palavras e 5 vezes menos números que o index v28, com a mesma
-  cobertura de ação.
-- **181 testes**, que cobram a tela e não o código: contraste, alvo de toque, CSP por hash e prova
-  antes de concluir (LC-14).
+- **Prova para concluir (LC-14)** e desfazer em todo ato.
+- **181+ testes** que cobram a tela, não o código.
 
-## O plano
+## Achados da revisão de 17/10
 
-O dono é `claude` (sessão), `automacao` (rotina) ou `igor`. Os itens vivem em `plano_item` no banco;
-esta tabela é cópia de leitura de 08/10.
+Achado é o que a régua não pega e a leitura do fonte pega. Cada um vira item de onda.
 
-Em 08/10 este plano foi **fundido com o plano 101**: as 9 propostas que comparam o presidente com o
-painel de um parceiro (doc 2482 do cérebro). O Igor aceitou 8 delas; a A6, e-mail não lido como cartão, ficou fora
-porque exige um sensor no PC e a A2 já cobre a cobrança. A trava "código só depois de 20/10" caiu,
-porque o plano 87 fechou em 07/10.
+1. **A empresa não aparece como empresa.** As frentes são uma lista plana. Não há unidade de
+   negócio, área de apoio, frente de vida nem entidade (cada CNPJ e a PF). Uma frente não tem como
+   abrir assunto para outra; a única ligação entre setores é card↔peça e fluxo↔frente.
+2. **Caixa consolidado sem quebra.** Um saldo único soma PF e empresas; o custo de vida PF entra nos
+   dias de caixa. Não dá para ver quando uma entidade financia a outra.
+3. **Marca e muro.** O painel de tudo veste a marca Dabli Tech. O Igor escolheu manter a marca; por
+   isso a salvaguarda do muro (LC-01) vira obrigatória: modo tela compartilhada que esconde o
+   privativo.
+4. **Rituais incompletos.** Há semanal; o diário saiu na p4.53 (Hoje é o diário). Não há mensal
+   (resultado por unidade, valor da hora) nem trimestral (prioridades).
+5. **Prateleira.** O banco já entrega valor da hora, horas do mês, produção do dia e fechamentos, e a
+   tela ignora; o pior caso das 13 semanas vem e não é lido. As frentes de vida não dão sinal.
+6. **Regra no código.** Meta de caixa, limiar de alerta, WIP, teto de cards por dia, corte de
+   "parado" e a frente com ficha especial estão fixos no HTML (régua 24).
+7. **Comunicação.** O mesmo ato tem três nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito).
+   Quatro blocos somem calados quando vazios e cinco falhas não acendem a saúde. Os docs dizem 6 s
+   para desfazer; o código usa 8 s. Há funções e classes sem uso.
 
-| Plano | O quê | Dono | Pronto quando | Prazo |
-|---|---|---|---|---|
-| 102 | `seguranca.html` com CSP por hash | claude | **Feito 08/10** (PR 92), conferido no ar | 10/10 |
-| 103 | KPI vermelho em 100% de 30 dias ganha destino | claude | Lista com recalibrar, virar plano com dono ou ir para o bastidor, pronta para o gate | 13/10 |
-| 104 | Gate único do presidente | igor | Destino dos vermelhos, números da Semana, sinal das frentes de vida, prazo ou descarte dos itens sem data | 14/10 |
-| 106 | Régua do cânone por script a cada versão | claude | Script no repo, gravação por PR, teste de piso | 15/10 |
-| 112 | A2 Grupo Cobrar na tela Hoje | claude | Retorno de terceiro vencido sobe para Hoje com rascunho pronto, nunca enviado pela máquina | 16/10 |
-| 113 | B2 Teto de estrutura à vista | claude | Fração de sessões na 00-memoria visível; aviso acima de 25% | 16/10 |
-| 105 | KPI grava 1 linha por dia | automacao | Linhas/dia ≤ KPIs vivos × 1,2 por 7 dias | 17/10 |
-| 114 | A5 Saúde por fonte e ritmo de 7 dias | claude | Hora do último dado de cada fonte, mais cards fechados em 7 dias | 20/10 |
-| 111 | Uso do index medido; congelar ou fundir | claude | Pings por página em 14 dias e proposta com recomendação | 22/10 |
-| 115 | A3 Concluir em 1 toque | claude | 3 provas prováveis e a prova da LC-14 mantida; fechamentos pelo painel de 19% para 50% | 23/10 |
-| 107 | Aba Semana: scorecard EOS + WBR | claude | 5 a 15 números com dono, meta, sparkline de 13 semanas e banda p10-p90 | 27/10 |
-| 116 | A1 + Nova e tecla N | claude | Card de uma linha criado na hora, dentro do teto de 8 por dia | 27/10 |
-| 109 | Funil LC-14 no Caixa | claude | 4 elos com margem e idade; pronta nunca soma em paga | 30/10 |
-| 117 | B1 Sessão aberta pelo card | claude | Abertura ≤ 3.000 caracteres, contra 17.472 | 30/10 |
-| 118 | B3 Card só nasce com ato | claude | Cards fechados sem ato de 22% para menos de 10% | 30/10 |
-| 119 | A4 Origem legível no card | claude | Origem escrita embaixo do título | 03/11 |
-| 108 | Frentes em small multiples | claude | Sparkline de margem de 8 semanas na mesma escala; comparar sem tocar | 06/11 |
-| 110 | 13 semanas no padrão IBCS | claude | Realizado ao lado do previsto, erro semanal, pior caso como faixa | 10/11 |
+## O plano em ondas
+
+Os itens vivem em `plano_item` (ids 169 a 188, criados em 17/10). Esta tabela diz a ordem e o porquê,
+não o estado.
+
+| Onda | Itens | O que fecha | Réguas |
+|---|---|---|---|
+| 0 · Verdade e higiene | W0.1 cânone v02 · W0.2 um verbo por ato · W0.3 vazio e falha falam · W0.4 muro na tela compartilhada | Achados 3 e 7 | 12, 24 |
+| 1 · Estrutura no banco | W1.1 unidade e entidade · W1.2 Igor ratifica o mapa · W1.3 parâmetros de gestão · W1.4 caixa por entidade | Achados 1, 2 e 6 (dado) | 19, 24, 26 |
+| 2 · Estrutura na tela | W2.1 caixa consolidado e por entidade · W2.2 frentes por unidade · W2.3 ficha padrão de setor · W2.4 tela lê parâmetros | Achados 1, 2 e 6 (tela) | 19, 24, 26, 29 |
+| 3 · Setores conversam | W3.1 lista de questões (IDS) · W3.2 depende de / bloqueia · W3.3 index congelado, executor migra | Achado 1 | 28 |
+| 4 · Rituais EOS | W4.1 Semana vira L10 · W4.2 prioridades do trimestre · W4.3 fechamento mensal e valor da hora · W4.4 sinal das frentes de vida | Achados 4 e 5 | 22, 25, 30 |
+| 5 · Medir e podar | W5.1 cânone v03 e poda do que não foi usado em 30 dias | Fecho | todas |
+
+**Referências por item, para não reinventar:**
+- Unidade, apoio e vida com dono: EOS Accountability Chart.
+- Quebra por entidade: CPC 22 / IFRS 8, informação por segmento na abordagem gerencial (o que o dono
+  usa para decidir, não o formato fiscal).
+- Ficha padrão de setor: generaliza a ficha de 4 blocos que já funciona numa frente.
+- Lista de questões: EOS Issues List com IDS (identificar, discutir, solucionar).
+- Depende de / bloqueia: item bloqueado do Kanban e quadro de dependências entre equipes.
+- Semana L10: ordem da reunião Level 10 do EOS.
+- Trimestre: Rocks e V/TO do EOS.
+- Mensal: DRE gerencial por unidade e pagamento do dono do Profit First.
+- Frentes de vida: perspectiva pessoa do Balanced Scorecard.
 
 **A ordem é aritmética, não gosto.**
-- **O ato vem antes da leitura.** Cobrar, concluir e criar card mexem no caixa e no tempo do Igor já.
-  Série, banda e Semana melhoram a leitura de um número que hoje já se lê.
-- **O destino dos vermelhos (103/104) vem antes da Semana (107).** Uma Semana com 15 números
-  vermelhos permanentes repete o defeito que o index tinha em agosto, só que em tamanho menor.
+- **A onda 0 vem primeiro porque mexe em texto que todas as outras reescrevem.** Glossário e estado
+  vazio feitos depois custariam o dobro.
+- **Banco antes da tela (1 antes de 2).** Tela sem unidade e entidade no banco viraria constante no
+  HTML, o mesmo defeito da régua 24.
+- **O gate W1.2 trava as ondas 2 a 4.** Agrupar por unidade com mapa errado espalha o erro em quatro
+  abas.
+- **Estrutura antes de ritual (2 e 3 antes de 4).** A L10 sem unidades nem questões é a Semana de
+  hoje com outro nome.
+
+**Execução.** O `presidente.html` é um arquivo só, e duas sessões nele já custaram 194 linhas. Por
+isso há uma sessão de tela por vez e, em paralelo, uma de banco (views, tabelas e RPC), dentro do teto
+de 4 sessões. O Opus desenha cada onda; a parte mecânica vai a subagente em Sonnet.
+
+| Janela | Sessão de tela | Sessão de banco |
+|---|---|---|
+| 18 a 22/10 | Onda 0 | Onda 1 (W1.1, W1.3) |
+| 23 a 28/10 | testes da onda 0 no ar | W1.4 depois do gate W1.2 |
+| 29/10 a 05/11 | Onda 2 | view da ficha de setor, tabelas das ondas 3 e 4 |
+| 06 a 14/11 | Onda 3 | views do mensal e do trimestre |
+| 15 a 26/11 | Onda 4 | apoio |
+| 27/11 a 03/12 | Onda 5 | |
+
+**Gate.** Um por onda, na Mesa: a onda chega como peça com a prova (versão no ar, fumaça verde,
+placar remedido) e o Igor aprova ou ajusta em um toque. Pela LC-14 a onda só fecha com a versão no ar.
+
+**Fusões a decidir no gate da onda 0.** O W4.1 absorve os planos 144 (revisão semanal) e 147 (15
+números); o W4.3 absorve o plano 5 (Profit First no norte). A fusão fica para o gate do Igor e esta
+página não a executa.
 
 **O que deliberadamente fica fora:**
-- **Biblioteca de gráfico.** Sparkline em SVG puro resolve, e a CSP por hash continua simples.
+- **Biblioteca de gráfico.** SVG puro resolve, e a CSP por hash continua simples.
 - **Ano anterior.** Entra quando houver 12 meses de série.
-- **Redesenho visual.** A régua 15 já está em SIM.
+- **Encerrar o dia de volta.** Já caiu uma vez (p4.53); Hoje é o ritual diário.
+- **Preço de transferência entre unidades.** Só entra se aparecer fluxo real de uma unidade servindo
+  outra.
+- **Fundir o index no presidente.** O presidente engordaria além do piso; o index congela e o que
+  importa migra (W3.3).
 
 ## Como a evolução é acompanhada
 
 Tudo vai para a `evolucao`, com escopo `00-memoria` e prefixo `painel.presidente_`:
-- `canone18_pct` e `canone24_pct`;
+- `canone18_pct`, `canone24_pct` e, desde 17/10, `canone30_pct`;
 - `telas_hoje`;
 - `palavras` e `numeros`.
 
-Desde o plano 106 (08/10), `npm run canone` mede as réguas de tela (telas, palavras, números por aba, a 390 e
-1280 px) e o teste `testes/canone.spec.js` reprova na CI a versão que passar do piso. As réguas de julgamento
-(série, banda, BSC) seguem pontuadas à mão nesta página.
+`npm run canone` mede as réguas de tela (telas, palavras e números por aba, a 390 e 1280 px), e o teste
+`testes/canone.spec.js` reprova na CI a versão que passar do piso. As réguas de julgamento seguem
+pontuadas à mão nesta página, a cada onda.
