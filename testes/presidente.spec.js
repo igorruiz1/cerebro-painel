@@ -63,6 +63,8 @@ const DUBLE = `(()=>{
     aviso:[],
     /* p4.66 (onda 2): chaves novas vazias por padrao (pg vazio = vale o numero do codigo); os testes da onda 2 trocam por window.__dados */
     pg:[], cxe:[], rwe:[], uni:[], ficha:[], quest:[], bloq:[], trava:[],
+    /* p4.69 (onda 4): chaves vazias por padrao; os testes dos pi 184 a 187 trocam por window.__dados */
+    l10:[], prio:[], dre:[], vida:[],
     /* p4.68 (pi 183): prestacao do executor, valores ficticios; o teste do 183 troca por window.__dados ou window.__sem */
     exec:[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:['rotina-exemplo'],ultimos:[{id:9001,frente:'11-renda-alt',titulo:'Conferir extrato do mês',em:'2026-10-16T21:17:56-04:00'},{id:9002,frente:'20-contrato-pj',titulo:'Revisar a lista de pendências',em:'2026-10-15T10:00:00-04:00'}]}],
     /* p4.3: saude em dia por padrao; cada teste de saude troca o que precisa por window.__dados */
@@ -4551,4 +4553,119 @@ test('183 · na tela compartilhada a prestacao do executor nao mostra card de fr
   expect(txt).not.toContain('Conferir extrato do mês');
   expect(txt).not.toContain('Renda Alternativa');
   expect(txt).toContain('Revisar a lista de pendências');
+});
+
+/* ===== p4.69 · onda 4 (s6948): pi 184 L10, 185 prioridades, 186 Folha Mes, 187 vida. Dados fictícios. ===== */
+const L10_FIC = [['abertura',2,null,null,'uma boa noticia pessoal e uma do negocio'],['numeros',5,'6',2,'numeros do placar; alerta = fora da meta'],['prioridades',4,'0',0,'0 no prumo, 0 fora, 2 unidade(s) sem prioridade'],
+  ['manchetes',2,'9',null,'decisoes dos ultimos 7 dias'],['afazeres',3,'7',1,'cards seus e itens do plano com prazo em 7 dias'],['ids',12,'0',null,'sem questao aberta: o vazio e o resultado'],['conclusao',2,null,1,'revisao da semana aberta: fechar grava os minutos']]
+  .map(([segmento,min_alvo,valor,alerta,resumo],i)=>({ordem:i+1,segmento,min_alvo,valor,alerta,resumo}));
+const MES0 = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'; })();
+const MES1 = (()=>{ const d=new Date(new Date().getFullYear(),new Date().getMonth()-1,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'; })();
+const dreFic=(mes,sit)=>[{mes,unidade:'u-neg',unidade_nome:'Unidade Alfa',tipo:'negocio',entidade:'DABLI',receita:5000,custo_direto:1000,margem_dono:4000,horas:20,rs_hora:200,piso_rs_hora:63.03,teto_rs_hora:480,zona_hora:'na faixa',situacao:sit,fechado_em:null},
+  {mes,unidade:'u-min',unidade_nome:'Unidade Beta',tipo:'apoio',entidade:'DABLI',receita:0,custo_direto:0,margem_dono:0,horas:0.3,rs_hora:0,piso_rs_hora:63.03,teto_rs_hora:480,zona_hora:'abaixo do piso',situacao:sit,fechado_em:null}];
+const PRIO_FIC = [{unidade:'u-neg',unidade_nome:'Unidade Alfa',tipo:'negocio',entidade:'DABLI',trimestre:'2026T4',ativas:3,no_prumo:2,fora:1,feitas:0,alerta:null,revisada:false,itens:[{id:1,titulo:'Meta fictícia da Alfa',dono:'igor',marco:'2026-12-15',estado:'no_prumo'}]},
+  {unidade:'u-min',unidade_nome:'Unidade Beta',tipo:'negocio',entidade:'DABLI',trimestre:'2026T4',ativas:0,no_prumo:0,fora:0,feitas:0,alerta:'sem prioridade',revisada:false,itens:[]}];
+const VIDA_FIC = ['Vida Um','Vida Dois'].map((n,i)=>({frente:'0'+i+'-vida-fic',frente_nome:n,rotulo:null,unidade:null,direcao:null,meta:null,valor:null,medido_em:null,valor_anterior:null,estado:'sem numero'}));
+const DRE_FIC = () => dreFic(MES0,'mes corrente').concat(dreFic(MES1,'atrasado: fechar'));
+async function abrirOnda4(page, extra={}){
+  await page.addInitScript(d=>{ window.__dados=Object.assign({l10:d.l10,prio:d.prio,dre:d.dre,vida:d.vida},d.extra||{}); }, {l10:L10_FIC,prio:PRIO_FIC,dre:DRE_FIC(),vida:VIDA_FIC,extra});
+  return abrir(page);
+}
+
+test('184 (p4.69) · a Semana segue os 7 segmentos do L10 em 30 min, destaca o alerta e fecha gravando os minutos', async ({page})=>{
+  const erros = await abrirOnda4(page);
+  await page.evaluate(()=>{ ir('semana'); });
+  const ordem = await page.locator('#p-semana .l10seg').evaluateAll(l=>l.map(e=>e.dataset.seg));
+  expect(ordem).toEqual(['abertura','numeros','prioridades','manchetes','afazeres','ids','conclusao']);
+  await expect(page.locator('#l10Total')).toContainText('30 min');
+  const mins = await page.locator('#p-semana .l10seg .l10min').allInnerTexts();
+  expect(mins.length).toBe(7);
+  expect(mins[1]).toContain('5 min');
+  const destaque = await page.locator('#p-semana .l10seg[data-alerta]').evaluateAll(l=>l.map(e=>e.dataset.seg));
+  expect(destaque, 'so segmento com alerta > 0 fica em destaque').toEqual(['numeros','afazeres','conclusao']);
+  await expect(page.locator('.l10seg[data-seg="numeros"] .l10al')).toContainText('2 fora da meta');
+  const bt = page.locator('.l10seg[data-seg="conclusao"] #semFechar');
+  await expect(bt, 'o botao de fechar mora na conclusao').toBeVisible();
+  await bt.click();
+  const c = await page.evaluate(()=>window.__rpc.filter(r=>r.n==='semana_revisao_fechar'));
+  expect(c.length).toBe(1);
+  expect(c[0].a.p_minutos).toBeGreaterThanOrEqual(1);
+  expect(erros).toEqual([]);
+});
+
+test('185 (p4.69) · prioridades do trimestre por unidade: no prumo e fora', async ({page})=>{
+  await abrirOnda4(page);
+  await page.evaluate(()=>{ ir('semana'); });
+  const a = page.locator('#semPrio .linha-r[data-unidade="u-neg"]');
+  await expect(a).toContainText('Unidade Alfa');
+  await expect(a).toContainText('2 no prumo');
+  await expect(a).toContainText('1 fora');
+  await expect(a).toContainText('Meta fictícia da Alfa');
+  const b = page.locator('#semPrio .linha-r[data-unidade="u-min"]');
+  await expect(b).toContainText('0 no prumo');
+  await expect(b).toContainText('sem prioridade');
+});
+test('185 (p4.69) · sem prioridade em nenhuma unidade o painel diz por que esta zerado', async ({page})=>{
+  await abrirOnda4(page, {prio:PRIO_FIC.map(x=>({...x,ativas:0,no_prumo:0,fora:0,alerta:'sem prioridade',itens:[]}))});
+  await page.evaluate(()=>{ ir('semana'); });
+  await expect(page.locator('#semPrio .vazio')).toContainText('Ninguém definiu prioridade de 2026T4');
+});
+
+test('186 (p4.69) · Folha Mes por unidade; fechar pede confirmacao e so entao chama dre_mes_fechar', async ({page})=>{
+  await abrirOnda4(page);
+  await page.evaluate(()=>{ ir('caixa'); });
+  const mes = page.locator('#dreBox details.dre-mes');
+  await expect(mes).toHaveCount(2);
+  await expect(mes.first()).toContainText('mes corrente');
+  await expect(mes.first().locator('.linha-r[data-unidade="u-neg"]')).toContainText('R$ 4.000');
+  await expect(mes.first().locator('.linha-r[data-unidade="u-neg"]')).toContainText('R$ 200 por hora');
+  await expect(mes.first().locator('.linha-r[data-unidade="u-min"]'), 'menos de 1 h: R$/h e ruido').toContainText('menos de 1 h');
+  await expect(mes.first().locator('.dre-fechar'), 'mes corrente nao tem botao de fechar').toHaveCount(0);
+  await mes.nth(1).locator('summary').click();
+  await expect(mes.nth(1)).toContainText('atrasado: fechar');
+  await mes.nth(1).locator('.dre-fechar').click();
+  await expect(page.locator('#folha')).toContainText('Fechar');
+  expect(await page.evaluate(()=>window.__rpc.filter(r=>r.n==='dre_mes_fechar').length), 'abrir a confirmacao nao grava').toBe(0);
+  await page.locator('#folha [data-acao="fecharFolha"]').click();
+  expect(await page.evaluate(()=>window.__rpc.filter(r=>r.n==='dre_mes_fechar').length), 'cancelar nao grava').toBe(0);
+  await mes.nth(1).locator('.dre-fechar').click();
+  await page.locator('#folha [data-acao="dreFecharOk"]').click();
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(r=>r.n==='dre_mes_fechar').map(r=>r.a.p_mes))).toEqual([MES1]);
+});
+
+test('187 (p4.69) · um numero por frente de vida so na Semana, nunca em Hoje; vazio explicado', async ({page})=>{
+  await abrirOnda4(page);
+  const v = page.locator('#semVida .linha-r');
+  await page.evaluate(()=>{ ir('semana'); });
+  await expect(v).toHaveCount(2);
+  await expect(v.first()).toContainText('sem número');
+  await expect(page.locator('#semVida .vazio')).toContainText('2 frentes de vida estão sem número');
+  for (const aba of ['hoje','fila','caixa','frentes']) {
+    await page.evaluate(a=>{ ir(a); }, aba);
+    expect(await page.locator('#p-'+aba).innerText(), 'vida so na Semana: '+aba).not.toContain('Vida Dois');
+  }
+});
+test('187 (p4.69) · estados medida velha e dentro dizem o numero e a meta', async ({page})=>{
+  await abrirOnda4(page, {vida:[{...VIDA_FIC[0],estado:'dentro',rotulo:'Dias de treino',meta:3,valor:4,unidade:'dias'},{...VIDA_FIC[1],estado:'medida velha',rotulo:'Sono',medido_em:'2026-09-01'}]});
+  await page.evaluate(()=>{ ir('semana'); });
+  await expect(page.locator('#semVida .linha-r').first()).toContainText('Dias de treino: 4 contra meta 3 dias');
+  await expect(page.locator('#semVida .linha-r').nth(1)).toContainText('já passou do prazo');
+});
+
+test('172 (p4.69) · tela compartilhada esconde vida, PF e todo R$, inclusive a Folha Mes', async ({page})=>{
+  await page.addInitScript(d=>{ window.__dados={l10:d.l10,prio:d.prio,dre:d.dre,vida:d.vida}; },
+    {l10:L10_FIC,prio:PRIO_FIC.concat([{...PRIO_FIC[0],unidade:'u-pf',unidade_nome:'Renda PF fictícia',entidade:'PF',itens:[]}]),dre:DRE_FIC(),vida:VIDA_FIC});
+  const erros = await abrirTela(page, [{slug:'20-contrato-pj',entidade:'DABLI'}]);
+  await page.evaluate(()=>{ ir('semana'); });
+  const sem = await page.locator('#p-semana').innerText();
+  expect(sem).not.toContain('Vida Um');
+  expect(sem).not.toContain('Renda PF fictícia');
+  expect(sem).toContain('Unidade Alfa');
+  expect(sem).not.toMatch(/R\$\s?\d/);
+  await expect(page.locator('#semVidaBox')).toBeHidden();
+  const dre = await page.evaluate(()=>({txt:document.getElementById('dreBox').textContent, oculto:document.getElementById('dreBox').hidden}));
+  expect(dre.oculto).toBe(true);
+  expect(dre.txt).toBe('');
+  expect(await page.locator('body').innerText()).not.toMatch(/R\$\s?\d/);
+  expect(erros).toEqual([]);
 });

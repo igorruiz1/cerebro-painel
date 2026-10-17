@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-HRevBLNuONaa2fG+s+OLjLUsifWnmBH43wkpP3Lhwzk=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-62fydst1eEEzLbuSzGVoZQmskK6nldcKs8IjzUYcV44=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -497,6 +497,17 @@ button.linha-r.quest{cursor:pointer}
 .exec-ult summary{cursor:pointer;color:var(--mut)}
 .exec-ult ul{margin:4px 0 0;padding-left:18px}
 .exec-ult li{margin:2px 0}
+/* p4.69 (onda 4, pi 184-187): Semana na ordem EOS L10, prioridades, Folha Mes e vida */
+.l10seg{margin:0 0 6px;padding:2px 0 6px 10px;border-left:3px solid transparent}
+.l10seg[data-alerta]{border-left-color:var(--warn);background:var(--card);border-radius:0 12px 12px 0}
+.l10seg h2{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.l10min{font-size:var(--fs-2);color:var(--mut);font-weight:400}
+.l10res{margin:0 0 8px;font-size:var(--fs-2);color:var(--mut)}
+.dre-mes{border:1px solid var(--line);border-radius:12px;padding:6px 10px;background:var(--card)}
+.dre-mes summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dre-mes .pilha{margin:6px 0 10px}
+.dre-fechar{margin:0 0 8px}
+.l10seg [hidden],#dreBox[hidden],#dreTit[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -612,6 +623,8 @@ button.linha-r.quest{cursor:pointer}
         <div class="pilha" id="cobrarBox"></div>
         <h2>Do pronto ao pago</h2>
         <div class="pilha" id="funil"></div>
+        <h2 id="dreTit">Folha mês, por unidade</h2>
+        <div class="pilha" id="dreBox"></div>
         <h2>O que mais melhora o caixa, pela sua margem</h2>
         <div class="pilha" id="alavancas"></div>
         <div class="rodape">Margem sua, nunca o bruto: cada lançamento entra pela sua participação. O erro da previsão está no bastidor.</div>
@@ -630,16 +643,36 @@ button.linha-r.quest{cursor:pointer}
 
       <section class="pane" id="p-semana" aria-label="Semana">
         <div class="grande" id="semTopo"></div>
-        <div class="bloco" id="semNorte" hidden></div>
-        <h2>Números da semana</h2>
-        <div class="pilha" id="semNumeros"></div>
-        <h2>Questões</h2>
-        <div class="pilha" id="semQuest"></div>
-        <h2>Decisões da semana</h2>
-        <div class="pilha" id="semDecisoes"></div>
-        <h2>Próxima semana</h2>
-        <div class="pilha" id="semPlano"></div>
-        <button class="pri" id="semFechar" data-acao="semFechar">Fechar a revisão da semana</button>
+        <div class="mut" id="l10Total"></div>
+        <section class="l10seg" data-seg="abertura" aria-label="Abertura">
+          <h2>Abertura <span class="l10min"></span></h2><p class="l10res"></p>
+        </section>
+        <section class="l10seg" data-seg="numeros" aria-label="Números">
+          <h2>Números <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
+          <div class="bloco" id="semNorte" hidden></div>
+          <div class="pilha" id="semNumeros"></div>
+          <div class="bloco" id="semVidaBox"><span class="rot">Vida: um número por frente</span><div class="pilha" id="semVida"></div></div>
+        </section>
+        <section class="l10seg" data-seg="prioridades" aria-label="Prioridades">
+          <h2>Prioridades do trimestre <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
+          <div class="pilha" id="semPrio"></div>
+        </section>
+        <section class="l10seg" data-seg="manchetes" aria-label="Manchetes">
+          <h2>Manchetes <span class="l10min"></span></h2><p class="l10res"></p>
+          <div class="pilha" id="semDecisoes"></div>
+        </section>
+        <section class="l10seg" data-seg="afazeres" aria-label="Afazeres">
+          <h2>Afazeres <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
+          <div class="pilha" id="semPlano"></div>
+        </section>
+        <section class="l10seg" data-seg="ids" aria-label="Questões">
+          <h2>Questões <span class="l10min"></span></h2><p class="l10res"></p>
+          <div class="pilha" id="semQuest"></div>
+        </section>
+        <section class="l10seg" data-seg="conclusao" aria-label="Conclusão">
+          <h2>Conclusão <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
+          <button class="pri" id="semFechar" data-acao="semFechar">Fechar a revisão da semana</button>
+        </section>
       </section>
 
       <div class="rodape so-real"><a href="index.html">Diagnóstico técnico</a> · telemetria da máquina (congelado desde 17/10) · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
@@ -661,7 +694,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.68";
+const VERP="p4.69";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -908,7 +941,18 @@ function demoBase(){
   const exec=[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:[],
     ultimos:[{id:9001,frente:"11-consultoria",titulo:"Conferir extrato do mês",em:agoraMenos(5)},{id:9002,frente:"08-startup",titulo:"Revisar a lista de pendências",em:agoraMenos(20)},
       {id:9003,frente:"20-contrato-pj",titulo:"Organizar os comprovantes da semana",em:agoraMenos(30)}]}];
-  Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava,exec});
+  /* p4.69 (onda 4): pauta, prioridades, folha mes e vida de exemplo, numeros inventados */
+  const mesDe=k=>{ const x=new Date(new Date().getFullYear(),new Date().getMonth()-k,1); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-01"; };
+  const l10=[["abertura",2,null,null,"uma boa notícia pessoal e uma do negócio"],["numeros",5,"6",1,"números do placar; alerta = fora da meta"],["prioridades",4,"3",1,"1 no prumo, 1 fora"],
+    ["manchetes",2,"9",null,"decisões dos últimos 7 dias"],["afazeres",3,"7",null,"cards seus e itens do plano com prazo em 7 dias"],["ids",12,"1",null,"questões abertas entre as unidades"],["conclusao",2,null,1,"fechar grava os minutos da revisão"]]
+    .map(([segmento,min_alvo,valor,alerta,resumo],i)=>({ordem:i+1,segmento,min_alvo,valor,alerta,resumo}));
+  const prio=[{unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",trimestre:"2026T4",ativas:3,no_prumo:2,fora:1,feitas:0,alerta:null,revisada:false,itens:[{titulo:"Fechar o contrato piloto"}]},
+    {unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",trimestre:"2026T4",ativas:0,no_prumo:0,fora:0,feitas:0,alerta:"sem prioridade",revisada:false,itens:[]}];
+  const dreL=(mes,sit)=>[{mes,unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",receita:12000,custo_direto:3000,margem_dono:9000,horas:40,rs_hora:225,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"na faixa",situacao:sit,fechado_em:null},
+    {mes,unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",receita:0,custo_direto:0,margem_dono:0,horas:0.4,rs_hora:0,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"abaixo do piso",situacao:sit,fechado_em:null}];
+  const dre=dreL(mesDe(0),"mes corrente").concat(dreL(mesDe(1),"atrasado: fechar"));
+  const vida=[["vida-pessoal","Vida de exemplo"],["bem-estar","Bem-estar de exemplo"]].map(([frente,frente_nome])=>({frente,frente_nome,rotulo:null,unidade:null,direcao:null,meta:null,valor:null,medido_em:null,valor_anterior:null,estado:"sem numero"}));
+  Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava,exec,l10,prio,dre,vida});
   /* p4.46 (plano 108): 8 semanas de margem realizada por frente; na consultoria a janela de 4 semanas caiu (2.500 entrou, 3.000 saiu) */
   const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
   const sem=[sm("11-consultoria",[4000,0,9500,3000,0,12000,2500,0],1,34),sm("20-contrato-pj",[0,12000,0,0,0,12000,0,0],0,9),
@@ -1035,7 +1079,7 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    (caixa e runway por entidade), uni (unidade), ficha (v_frente_ficha), quest (v_questao_aberta), bloq (v_card_bloqueado)
    e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte.
    p4.68 (pi 183, s6946): exec (v_executor_prestacao), a prestacao do executor que morava no bastidor. */
-const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava","exec"];
+const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava","exec","l10","prio","dre","vida"];
 const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso"].concat(CHAVES_ONDA2);
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
@@ -1110,7 +1154,7 @@ let TELA=(()=>{ try{ if(new URL(location.href).searchParams.get("tela")==="compa
   return sessionStorage.getItem(TELA_CHAVE)==="1"; }catch(e){ return /[?&]tela=compartilhada\b/.test(location.search); } })();
 let ENT=null, ENT_FALHOU=false, UNID=null, UNI_TIPO={};
 const SLUG_FRENTE=/^\d{2}-[a-z0-9-]+$/, CAMPOS_FRENTE=["frente","frente_slug","slug","no","de_frente","para_frente"];
-const CHAVES_CAIXA=new Set(["rw","c13","c13i","var7","cxe","rwe"]);
+const CHAVES_CAIXA=new Set(["rw","c13","c13i","var7","cxe","rwe","dre","vida"]); /* p4.69: dre e todo R$, vida e privada: nascem vazias na tela compartilhada */
 /* p4.66 (pi 178): frente de unidade tipo "vida" e privada como a PF; a unidade vem de frente.unidade (UNID) e o tipo de uni (UNI_TIPO) */
 const privada=s=>{ s=String(s==null?"":s); return SLUG_FRENTE.test(s)&&(!ENT||!ENT[s]||ENT[s]==="PF"||(!!UNID&&UNI_TIPO[UNID[s]]==="vida")); };
 const privadaLista=v=>Array.isArray(v)&&v.some(privada);
@@ -1206,7 +1250,7 @@ const ACOES={
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
-  buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
+  buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), dreFechar:el=>dreFechar(el.dataset.a1), dreFecharOk:el=>dreFecharOk(el.dataset.a1), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
   provaEscolher:el=>provaEscolher(el), provaColar:(el,ev)=>provaColar(ev), confirmarProva:el=>confirmarProva(el.dataset.a1), concluirCom:el=>agir(el.dataset.a1,el.dataset.a2,"Concluído"),
   agir:el=>agir(el.dataset.a1,el.dataset.a2,el.dataset.a3), pagoCom:el=>pagoCom(el.dataset.a1,el.dataset.a2,el.dataset.a3), copiarCodigo:()=>copiarCodigo(),
   confirmar:el=>confirmar(el.dataset.a1,+el.dataset.a2,el.dataset.a3), confirmarEsperar:el=>confirmarEsperar(el.dataset.a1),
@@ -1487,7 +1531,8 @@ const BACKUP="backup-cerebro", RUIM_MO=new Set(["atrasada","nunca"]);
    then vazio e a saude seguia "ok". Agora cada uma acende a propria fonte, com hora e motivo, e apaga no proximo sucesso. */
 const FALHAS={}, FONTE_TELA={ping:"Registro de abertura do painel",medir:"Medição do tempo de decisão",
   atendente:"Estado do atendente",pg:"Parâmetros de gestão",cxe:"Caixa por entidade",rwe:"Fôlego por entidade",uni:"Unidades",
-  ficha:"Ficha das frentes",quest:"Questões entre frentes",bloq:"Cards bloqueados",trava:"O que cada frente trava",exec:"Prestação do executor"};
+  ficha:"Ficha das frentes",quest:"Questões entre frentes",bloq:"Cards bloqueados",trava:"O que cada frente trava",exec:"Prestação do executor",
+  l10:"Pauta da semana",prio:"Prioridades do trimestre",dre:"Folha mês",vida:"Números de vida"};
 function fonteFalhou(k,e){
   const m=!e?"sem resposta":ehTeto(e)?"não respondeu a tempo":String(e.message||e.erro||e).slice(0,110);
   FALHAS[k]={em:new Date().toISOString(),motivo:m}; renderSaude(); }
@@ -1550,7 +1595,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderQuest();renderSelos();renderSaude();msRender();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderOnda4();renderQuest();renderSelos();renderSaude();msRender();}
 function renderHoje(){
   const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
   /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.
@@ -2031,6 +2076,90 @@ function renderSemana(){
     +(cd?`<button class="linha-r" data-acao="ir" data-a1="fila"><span class="t"><span class="l2">${esc(plural(Math.round(+cd.valor),"card seu","cards seus"))} com prazo na próxima semana</span><small>${+cd.detalhe>0?"inclui vencido · ":""}abrir a fila</small></span></button>`:"")
     +(!pl.length&&!cd?`<div class="vazio">Nada com prazo nos próximos 7 dias.</div>`:"");
   const bt=document.getElementById("semFechar"); if(bt)bt.textContent=rv?"Revisar de novo e regravar":"Fechar a revisão da semana";
+}
+/* ---------- Onda 4 (p4.69, s6948): L10, prioridades, Folha Mes e vida ----------
+   pi 184: a Semana segue os 7 segmentos do EOS L10 (v_semana_l10, 30 min); segmento com alerta > 0 fica em destaque e o
+   botao de concluir grava os minutos (semana_revisao_fechar). pi 185: por unidade, quantas prioridades do trimestre
+   estao no prumo e quantas fora (v_prioridade_trimestre). pi 186: Folha Mes por unidade (v_dre_mes), fechar so com
+   confirmacao (dre_mes_fechar). pi 187: um numero por frente de vida (v_vida_sinal), so na Semana. Na tela compartilhada
+   dre e vida nascem vazios (veuObj) e os blocos somem; as prioridades passam pelo veu como as demais listas. */
+const L10_SEG=["abertura","numeros","prioridades","manchetes","afazeres","ids","conclusao"];
+const L10_ALERTA={numeros:"fora da meta",prioridades:"fora do prumo",afazeres:"atrasados",conclusao:"revisão em aberto"};
+const L10_SEM_RESUMO_NA_TELA=new Set(["numeros","prioridades","manchetes","afazeres"]);
+function renderL10(){
+  const L=Array.isArray(D.l10)&&D.l10.length?D.l10:null, tot=document.getElementById("l10Total");
+  let soma=0;
+  L10_SEG.forEach(seg=>{
+    const sec=document.querySelector('.l10seg[data-seg="'+seg+'"]'); if(!sec)return;
+    const r=L?L.find(x=>x&&x.segmento===seg):null, al=r&&+r.alerta>0;
+    if(r&&r.min_alvo!=null)soma+=+r.min_alvo;
+    sec.toggleAttribute("data-alerta",!!al);
+    sec.querySelector(".l10min").textContent=r&&r.min_alvo!=null?r.min_alvo+" min":"";
+    const ea=sec.querySelector(".l10al"); if(ea)ea.innerHTML=al?`<span class="chip w">${esc(Math.round(+r.alerta))} ${esc(L10_ALERTA[seg]||"em alerta")}</span>`:"";
+    const er=sec.querySelector(".l10res"); er.textContent=r&&!(TELA&&L10_SEM_RESUMO_NA_TELA.has(seg))?String(r.resumo||""):"";
+    er.hidden=!er.textContent;
+  });
+  tot.textContent=L?"Pauta de "+soma+" min, na ordem do EOS.":"A pauta da semana não chegou nesta carga: os blocos abaixo seguem a ordem, sem os tempos.";
+}
+function renderPrio(){
+  const el=document.getElementById("semPrio"); if(!el)return;
+  if(!Array.isArray(D.prio)){ el.innerHTML=`<div class="vazio">As prioridades do trimestre não chegaram nesta carga.</div>`; return; }
+  const p=D.prio.filter(x=>x&&x.unidade);
+  if(!p.length){ el.innerHTML=`<div class="vazio">Nenhuma unidade para mostrar nas prioridades.</div>`; return; }
+  const sem=p.filter(x=>!(+x.ativas>0)).length;
+  el.innerHTML=(sem===p.length?`<div class="vazio">Ninguém definiu prioridade de ${esc(p[0].trimestre||"este trimestre")} nas ${p.length} unidades: definir é decisão sua.</div>`:"")
+    +p.map(x=>{ const it=(Array.isArray(x.itens)?x.itens:[]).slice(0,3).map(i=>i&&i.titulo?esc(i.titulo):"").filter(Boolean).join(" · ");
+      return `<div class="linha-r" data-unidade="${esc(x.unidade)}"><span class="t"><span class="l2">${esc(x.unidade_nome||x.unidade)}</span><small>${x.alerta?`<span class="w">${esc(x.alerta)}</span>`:"dentro do que se espera"}${it?" · "+it:""}</small></span><span class="r ${+x.fora>0?"w":""}">${esc(Math.round(+x.no_prumo||0))} no prumo · ${esc(Math.round(+x.fora||0))} fora</span></div>`; }).join("");
+}
+const VIDA_EST={"sem numero":"sem número","sem medida":"sem medida","medida velha":"medida velha",dentro:"dentro","fora":"fora"};
+function vidaNum(v){ return v==null||isNaN(+v)?"—":String(Math.round(+v*100)/100).replace(".",","); }
+function vidaTexto(x){
+  const e=x.estado, rot=x.rotulo?esc(x.rotulo):"";
+  if(e==="sem numero")return "Você ainda não escolheu o número desta frente.";
+  if(e==="sem medida")return `${rot}: número definido, nenhuma medida lançada ainda.`;
+  if(e==="medida velha")return `${rot}: última medida em ${esc(ddmm(x.medido_em))}, já passou do prazo.`;
+  return `${rot}: ${esc(vidaNum(x.valor))} contra meta ${esc(vidaNum(x.meta))}${x.unidade?" "+esc(x.unidade):""}`;
+}
+function renderVida(){
+  const box=document.getElementById("semVidaBox"), el=document.getElementById("semVida"); if(!el||!box)return;
+  box.hidden=TELA; if(TELA){ el.innerHTML=""; return; }
+  if(!Array.isArray(D.vida)){ el.innerHTML=`<div class="vazio">Os números de vida não chegaram nesta carga.</div>`; return; }
+  const v=D.vida.filter(x=>x&&x.frente);
+  if(!v.length){ el.innerHTML=`<div class="vazio">Nenhuma frente de vida cadastrada.</div>`; return; }
+  const semNum=v.filter(x=>x.estado==="sem numero").length;
+  el.innerHTML=(semNum===v.length?`<div class="vazio">${esc(plural(v.length,"frente de vida está","frentes de vida estão"))} sem número. Escolher número e meta é decisão sua; até lá nada é cobrado.</div>`:"")
+    +v.map(x=>`<div class="linha-r" data-frente="${esc(x.frente)}" data-estado="${esc(x.estado)}"><span class="t"><span class="l2">${esc(x.frente_nome||x.frente)}</span><small>${vidaTexto(x)}</small></span><span class="r ${x.estado==="fora"||x.estado==="medida velha"?"w":""}">${esc(VIDA_EST[x.estado]||x.estado||"—")}</span></div>`).join("");
+}
+const MESES_ABR=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const mesTxt=m=>{ const t=String(m||""); return MESES_ABR[(+t.slice(5,7))-1]+"/"+t.slice(0,4); };
+const dreAberto=s=>/^(a fechar|atrasado)/.test(String(s||""));
+function renderDre(){
+  const el=document.getElementById("dreBox"), tit=document.getElementById("dreTit"); if(!el)return;
+  if(tit)tit.hidden=TELA; el.hidden=TELA; if(TELA){ el.innerHTML=""; return; }
+  if(!Array.isArray(D.dre)){ el.innerHTML=`<div class="vazio">A folha do mês não chegou nesta carga.</div>`; return; }
+  const l=D.dre.filter(x=>x&&x.mes&&x.unidade);
+  if(!l.length){ el.innerHTML=`<div class="vazio">Sem lançamento de receita, custo ou hora nos últimos meses.</div>`; return; }
+  const meses=[...new Set(l.map(x=>String(x.mes).slice(0,10)))].sort().reverse();
+  el.innerHTML=meses.map((m,i)=>{ const L=l.filter(x=>String(x.mes).slice(0,10)===m), sit=L[0].situacao;
+    return `<details class="dre-mes" data-mes="${esc(m)}"${i===0?" open":""}><summary><b>${esc(mesTxt(m))}</b> <span class="chip ${dreAberto(sit)?"w":"ok"}">${esc(sit||"—")}</span></summary>`
+      +(dreAberto(sit)?`<button class="sec dre-fechar" data-acao="dreFechar" data-a1="${esc(m)}">Fechar ${esc(mesTxt(m))}</button>`:"")
+      +`<div class="pilha">`+L.map(x=>{ const h=+x.horas||0, hr=h<1?"menos de 1 h: o valor por hora é ruído":`${rs(x.rs_hora)} por hora, ${esc(x.zona_hora||"")}`;
+        return `<div class="linha-r" data-unidade="${esc(x.unidade)}"><span class="t"><span class="l2">${esc(x.unidade_nome||x.unidade)}</span><small>receita ${rs(x.receita)} · custo ${rs(x.custo_direto)} · ${esc(String(Math.round(h*10)/10).replace(".",","))} h · ${hr}</small></span><span class="r ${+x.margem_dono<0?"w":""}" title="margem do dono">${rs(x.margem_dono)}</span></div>`; }).join("")+`</div></details>`; }).join("");
+}
+function renderOnda4(){ renderL10(); renderPrio(); renderVida(); renderDre(); }
+function dreFechar(mes){
+  mostrarFolha(`<h3 id="folhaTit">Fechar ${esc(mesTxt(mes))}?</h3>
+    <p>Fechar congela receita, custo e horas de ${esc(mesTxt(mes))} em cada unidade. O painel não desfaz isso.</p>
+    <button class="pri" data-acao="dreFecharOk" data-a1="${esc(mes)}">Sim, fechar ${esc(mesTxt(mes))}</button>
+    <button class="sec" data-acao="fecharFolha">Cancelar</button>`);
+}
+async function dreFecharOk(mes){
+  fecharFolha();
+  if(DEMO){ toast("Na demonstração nada é gravado. No painel real, o mês fica fechado.",null,false,4000); return; }
+  let r; try{ r=await comTeto(sb.rpc("dre_mes_fechar",{p_mes:mes}),LIMITE_ACAO,"dre_mes_fechar"); }catch(e){ r={error:e}; }
+  const t=r.error?String(r.error.message||"falha"):String(r.data||"");
+  if(!r.error&&!/^RECUSADO/i.test(t)){ toast(mesTxt(mes)+" fechado.",null,false,3500); carregar(true); return; }
+  toast("Não fechou: "+t.replace(/^RECUSADO:?\s*/i,"").slice(0,160),"bad",false,6000);
 }
 /* p4.66 (pi 181, EOS Questoes: lista unica entre setores, o IDS): as 3 primeiras questoes abertas (top3 de v_questao_aberta)
    com de, para, dono e idade. So leitura: abrir, priorizar e resolver mora no banco. Vazio diz por que esta vazio. */
