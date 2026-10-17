@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-62fydst1eEEzLbuSzGVoZQmskK6nldcKs8IjzUYcV44=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-kvJ5e0f1c6Kr+Yp+3geBSxiu7+JSL5rCiPJZBvSVdDo=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -405,6 +405,8 @@ details summary{cursor:pointer;color:var(--acc);font-size:var(--fs-2);min-height
 .demo-aviso{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:var(--fs-2);color:var(--ink2);overflow-wrap:anywhere}
 .demo-aviso b{color:var(--ink)}
 .demo-aviso span{flex:1 1 220px;min-width:0}
+.demo-aviso .demo-perfis{flex:none;display:flex;gap:6px}
+.demo-aviso .demo-perfis button[aria-pressed=true]{border-color:var(--acc);color:var(--ink);font-weight:600}
 .demo-aviso .sec{flex:none}
 /* fim estilo:demo */
 /* p4.29 (plano 95): Recomendo, Ratifico e Retifico na folha do card de decisao */
@@ -583,7 +585,7 @@ button.linha-r.quest{cursor:pointer}
     </div>
 
     <main>
-      <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><button type="button" class="sec" data-acao="demoSair">Sair da demonstração</button></div>
+      <div id="demoAviso" class="demo-aviso hidden" role="note"><span><b>Demonstração.</b> Dados fictícios: clique em tudo, nada é gravado nem enviado.</span><span class="demo-perfis" role="group" aria-label="Perfil da demonstração"><button type="button" class="sec" data-acao="demoPerfil" data-p="1" aria-pressed="false">Engenheiro</button><button type="button" class="sec" data-acao="demoPerfil" data-p="2" aria-pressed="false">Empresário</button></span><button type="button" class="sec" data-acao="demoSair" aria-label="Sair da demonstração">Sair</button></div>
       <div id="telaAviso" class="demo-aviso tela-aviso hidden" role="note"><span>Tela compartilhada.</span><button type="button" class="sec" data-acao="telaAlternar">Desligar</button></div>
       <div id="falha" class="aviso hidden" role="alert"></div>
       <button id="novaVersao" class="pri hidden" data-acao="atualizarPainel"></button>
@@ -694,26 +696,38 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.69";
+const VERP="p4.70";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-/* modulo:demo · p4.12 (06/10/2026, s03)
-   Modo demonstracao para venda presencial, no celular do dono: a tela inteira roda com dados inventados e o
+/* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
+   Modo demonstracao para mostrar o cerebro a terceiros no celular: a tela inteira roda com dados inventados e o
    cliente do Supabase nem nasce. Nada sai para o banco, o Storage, o Realtime ou a API de voz; o que se clica
-   muda so a memoria desta pagina. Entra pelo link "demonstração" de dentro do painel (sessao aberta) e sai pelo
-   aviso do topo; a saida pede o codigo do app autenticador antes de mostrar dado real, porque quem segura o
-   celular numa venda e o cliente. Link aberto para terceiros fica para depois (decisao do Igor, 06/10/2026).
+   muda so a memoria desta pagina. Entra de dois jeitos: pelo link "demonstração" de dentro do painel, ou, desde o
+   t3627 (lancamento de 18/10/2026), pelo endereco presidente.html?demo=1 ou ?demo=2, sem sessao, como a conta de
+   exemplo do Notion, do Monday e do Pipefy. Dois perfis: 1, engenheiro de muitas frentes; 2, empresario de
+   servicos; o aviso do topo troca um pelo outro. A saida pede o codigo do app autenticador antes de mostrar dado
+   real, porque quem segura o celular numa demonstracao e o convidado. Entrar pelo endereco grava a marca na aba:
+   tirar o ?demo da barra nao abre o painel real por engano.
    Todo dado aqui e ficticio, escrito a mao: o repositorio e publico, e testes/presidente.spec.js reprova o
    bloco se aparecer nome de pessoa, empresa ou banco real. Estrutura igual a do painel_carga e do mesa_painel. */
-const DEMO_CHAVE="cerebro.demo", DEMO_SAIDA="cerebro.demo.saida";
-const DEMO=(()=>{try{return sessionStorage.getItem(DEMO_CHAVE)==="1";}catch(e){return false;}})();
+const DEMO_CHAVE="cerebro.demo", DEMO_SAIDA="cerebro.demo.saida", DEMO_PERFIL_CHAVE="cerebro.demo.perfil";
+const DEMO_URL=(()=>{ try{ const q=new URLSearchParams(location.search); return q.has("demo")?(q.get("demo")==="2"?2:1):0; }catch(e){ return 0; } })();
+const DEMO=DEMO_URL>0||(()=>{try{return sessionStorage.getItem(DEMO_CHAVE)==="1";}catch(e){return false;}})();
+const DEMO_PERFIL=DEMO_URL||(()=>{try{return sessionStorage.getItem(DEMO_PERFIL_CHAVE)==="2"?2:1;}catch(e){return 1;}})();
+if(DEMO_URL){ try{ sessionStorage.setItem(DEMO_CHAVE,"1"); sessionStorage.setItem(DEMO_PERFIL_CHAVE,String(DEMO_URL)); sessionStorage.removeItem(DEMO_SAIDA); }catch(e){} }
 function demoEntrar(){
   try{ sessionStorage.setItem(DEMO_CHAVE,"1"); }catch(e){ toast("Este navegador não deixou ligar a demonstração.","bad",false,5000); return; }
   location.reload();
 }
+/* com ?demo na barra, trocar de perfil troca o endereco; sem ele, so a marca da aba */
+function demoPerfil(n){
+  if(n===DEMO_PERFIL)return;
+  try{ sessionStorage.setItem(DEMO_PERFIL_CHAVE,String(n)); }catch(e){}
+  if(DEMO_URL)location.replace(location.pathname+"?demo="+n); else location.reload();
+}
 function demoSair(){
-  try{ sessionStorage.removeItem(DEMO_CHAVE); sessionStorage.setItem(DEMO_SAIDA,"1"); }catch(e){}
-  location.reload();
+  try{ sessionStorage.removeItem(DEMO_CHAVE); sessionStorage.removeItem(DEMO_PERFIL_CHAVE); sessionStorage.setItem(DEMO_SAIDA,"1"); }catch(e){}
+  if(DEMO_URL)location.replace(location.pathname); else location.reload();
 }
 function demoVestir(){
   document.title="Demonstração · Cérebro";
@@ -722,18 +736,182 @@ function demoVestir(){
     const pr=m.querySelector(".prod"); if(pr)pr.textContent="Demo"; });
   document.querySelectorAll(".so-real").forEach(e=>e.classList.add("hidden"));
   const av=document.getElementById("demoAviso"); if(av)av.classList.remove("hidden");
+  document.querySelectorAll("#demoAviso [data-acao=demoPerfil]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.p===DEMO_PERFIL)));
 }
-function demoBase(){
-  const dd=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
-  const seg=n=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
-  const agoraMenos=h=>new Date(Date.now()-h*36e5).toISOString();
-  const AC=[{verbo:"feita",label:"feita"},{verbo:"repactuar",label:"nova data",campo:"date"},{verbo:"deliberar",label:"deliberar",campo:"texto"}];
-  const CONTAS=[{rot:"PF · Banco Exemplo 0001",v:"PF_EXEMPLO"},{rot:"Empresa · Conta Exemplo 0002",v:"PJ_EXEMPLO"}];
-  const PAGAR=[{verbo:"pago",label:"paguei",campo:"entidade",opcoes:CONTAS,padrao:"PF_EXEMPLO",codigo:"00190000090000000000000000000000000000000000000",codigo_tipo:"boleto"},AC[1],AC[2]];
-  const RECEBER=[{verbo:"recebido",label:"recebi",campo:"entidade",opcoes:CONTAS,padrao:"PJ_EXEMPLO"},AC[1],AC[2]];
-  const IA=[{verbo:"feita",rotulo:"feita",arg:null},{verbo:"repactuar",rotulo:"novo prazo",arg:"data"},{verbo:"esperar",rotulo:"passei para alguém",arg:"texto"},{verbo:"arquivar",rotulo:"arquivar",arg:"motivo"},{verbo:"deliberar",rotulo:"deliberar",arg:"texto"}];
-  const card=(o,i)=>Object.assign({camada_tela:"hoje",posicao:i+1,teto_tela:5,teto_wip:5,tipo_card:"ato",nivel:1,peso:10-i,acoes:AC,
-    titulo_completo:o.titulo,titulo_truncado:false,contestado:false,correcao_aberta:false,forcar_decisao:false,rec_vencida:false,acima_do_teto:false},o);
+/* Perfil 2 (t3627, 17/10/2026): empresario de servicos, dono de uma empresa de manutencao e limpeza predial com
+   contratos mensais com condominios, 38 pessoas na equipe e uma filial abrindo. Mesmos ids do perfil 1 (cards 301 a
+   318, fluxo 5xx e 6xx, pecas 701 a 708), para o motor e os testes valerem igual; nomes e numeros sao inventados e
+   batem entre as abas: a proposta parada do Hoje e a peca 701 da Mesa e a primeira linha do funil da Semana. */
+function demoServicos(H){
+  const {dd,agoraMenos,PAGAR,RECEBER,IA,card,it,ap,BLOCOS,mesDe}=H;
+  const fila=[
+    card({origem:"fluxo",ref:"501",frente:"14-equipe",titulo:"Pagar a guia do FGTS da equipe",porque_agora:"vence hoje",valor_txt:"R$ 4.960,00",verbo_sugerido:"pago",acoes:PAGAR,data_ref:dd(0),dias_parado:1,
+      recomendacao:"Pague pela conta da empresa: a mensalidade do Condomínio Bela Vista entra amanhã e cobre o adiantamento da equipe."},0),
+    card({origem:"fluxo",ref:"502",frente:"10-contratos",titulo:"Receber a mensalidade do Condomínio Jardim das Acácias",porque_agora:"vence hoje",valor_txt:"R$ 14.800,00",verbo_sugerido:"recebido",acoes:RECEBER,data_ref:dd(0),dias_parado:0},1),
+    card({origem:"tarefa",ref:"301",frente:"12-comercial",titulo:"Ligar para a síndica do Residencial Monte Verde antes de reenviar a proposta",porque_agora:"proposta parada há 6 d",valor_txt:"R$ 216 mil/ano",verbo_sugerido:"feita",data_ref:dd(0),dias_parado:6,
+      recomendacao:"Ligue antes de reenviar: ela pediu a limpeza de fachada no pacote. Com o item, a proposta sobe 8% e ainda fica abaixo da empresa atual."},2),
+    card({origem:"tarefa",ref:"302",frente:"14-equipe",titulo:"Aprovar a escala de dezembro da equipe de limpeza",porque_agora:"vence hoje",verbo_sugerido:"feita",data_ref:dd(0),dias_parado:1},3),
+    card({origem:"tarefa",ref:"303",frente:"16-filial",titulo:"Fazer a reunião semanal com o gerente da filial",porque_agora:"combinado toda semana",verbo_sugerido:"feita",data_ref:dd(1),dias_parado:0},4),
+    card({origem:"tarefa",ref:"304",frente:"18-compras",titulo:"Aprovar a compra das duas lavadoras de piso",porque_agora:"o fornecedor segura o preço até amanhã",valor_txt:"R$ 18,6 mil",verbo_sugerido:"feita",data_ref:dd(1),dias_parado:2},5)];
+  const exp=[card({origem:"tarefa",ref:"305",camada_tela:"depois",frente:"10-contratos",titulo:"Responder à notificação do Condomínio Solar sobre a ronda noturna",porque_agora:"prazo era ontem",verbo_sugerido:"feita",data_ref:dd(-1),dias_parado:3},6)];
+  const inv=[
+    {id:301,frente:"12-comercial",dono:"igor",status:"pendente",prazo:dd(0),parado_dias:6,titulo:"Ligar para a síndica do Residencial Monte Verde antes de reenviar a proposta",criterio_pronto:"Escopo da fachada combinado por telefone e anotado na proposta",acoes:IA},
+    {id:302,frente:"14-equipe",dono:"igor",status:"pendente",prazo:dd(0),parado_dias:1,titulo:"Aprovar a escala de dezembro da equipe de limpeza",criterio_pronto:"Escala enviada aos supervisores",acoes:IA},
+    {id:303,frente:"16-filial",dono:"igor",status:"pendente",prazo:dd(1),parado_dias:0,titulo:"Fazer a reunião semanal com o gerente da filial",acoes:IA},
+    {id:304,frente:"18-compras",dono:"igor",status:"pendente",prazo:dd(1),parado_dias:2,titulo:"Aprovar a compra das duas lavadoras de piso",acoes:IA},
+    {id:305,frente:"10-contratos",dono:"igor",status:"pendente",prazo:dd(-1),parado_dias:3,titulo:"Responder à notificação do Condomínio Solar sobre a ronda noturna",acoes:IA},
+    {id:306,frente:"12-comercial",dono:"igor",status:"pendente",prazo:dd(3),parado_dias:2,titulo:"Mandar a proposta revisada para a Clínica Vida Plena",acoes:IA},
+    {id:307,frente:"10-contratos",dono:"igor",status:"aguardando_terceiro",prazo:dd(-2),parado_dias:12,titulo:"Cobrar do Condomínio Bela Vista o aditivo do reajuste anual",acoes:IA},
+    {id:308,frente:"16-filial",dono:"igor",status:"pendente",prazo:dd(5),parado_dias:1,titulo:"Contratar o segundo supervisor da filial",acoes:IA},
+    {id:309,frente:"10-contratos",dono:"igor",status:"aguardando_terceiro",prazo:dd(4),parado_dias:6,titulo:"Esperar a administradora devolver o contrato do Edifício Aroeira",acoes:IA},
+    {id:310,frente:"07-financas-pf",dono:"igor",status:"pendente",prazo:dd(6),parado_dias:0,titulo:"Revisar o seguro de vida da família",acoes:IA},
+    {id:311,frente:"18-compras",dono:"igor",status:"pendente",prazo:dd(2),parado_dias:1,titulo:"Levar a van 2 para a revisão dos 60 mil km",acoes:IA},
+    {id:312,frente:"12-comercial",dono:"igor",status:"pendente",prazo:null,parado_dias:34,titulo:"Decidir se mantém a proposta para o Shopping Ponte Nova",acoes:IA},
+    {id:313,frente:"00-sistema",dono:"igor",status:"pendente",prazo:null,parado_dias:22,titulo:"Decidir se o relatório de ronda vai aos síndicos por e-mail ou WhatsApp",acoes:IA},
+    {id:314,frente:"16-filial",dono:"igor",status:"pendente",prazo:dd(18),parado_dias:0,titulo:"Preparar a inauguração da filial",acoes:IA},
+    {id:315,frente:"14-equipe",dono:"igor",status:"pendente",prazo:dd(25),parado_dias:0,titulo:"Renovar o programa de saúde ocupacional da equipe",acoes:IA},
+    {id:316,frente:"12-comercial",dono:"igor",status:"pendente",prazo:dd(40),parado_dias:0,titulo:"Atualizar a apresentação comercial com os contratos do ano",acoes:IA},
+    {id:317,frente:"00-sistema",dono:"claude",status:"pendente",prazo:dd(1),parado_dias:0,titulo:"Gerar o fechamento mensal",acoes:[]},
+    {id:318,frente:"10-contratos",dono:"claude",status:"pendente",prazo:dd(2),parado_dias:0,titulo:"Montar o relatório de ronda do mês para os síndicos",acoes:[]}];
+  const arv=[{nivel:0,no:"CAIXA",rotulo:"Caixa"},
+    {nivel:1,no:"10-contratos",rotulo:"Contratos de manutenção",margem_30d:31200,margem_total:94000,itens:5,veredito:"Doze condomínios em dia; o reajuste do Bela Vista está sem resposta."},
+    {nivel:1,no:"12-comercial",rotulo:"Comercial e propostas",margem_30d:0,margem_total:64000,itens:4,veredito:"Duas propostas na rua; a do Monte Verde vale um ano de contrato."},
+    {nivel:1,no:"16-filial",rotulo:"Filial nova (zona sul)",margem_30d:4200,margem_total:40000,itens:3,veredito:"Primeiro contrato assinado; a filial paga as contas a partir do terceiro."},
+    {nivel:1,no:"14-equipe",rotulo:"Equipe e folha",margem_30d:0,margem_total:0,itens:3,veredito:"Folha de 38 pessoas; o FGTS vence hoje."},
+    {nivel:1,no:"18-compras",rotulo:"Compras e frota",margem_30d:0,margem_total:0,itens:2},
+    {nivel:1,no:"07-financas-pf",rotulo:"Finanças pessoais",margem_30d:0,margem_total:0,itens:1},
+    {nivel:1,no:"00-sistema",rotulo:"Sistema (memória e rotinas)",margem_30d:0,margem_total:0,itens:1}];
+  /* a empresa fatura uns R$ 105 mil por mes em contratos e gasta uns R$ 82 mil; a PF vive do pro-labore, que sai da Matriz */
+  const CX=145000, CV=12000;
+  const c13i=[it(601,"receber",-6,8200,"Mensalidade de setembro do Condomínio Solar","10-contratos"),
+    it(602,"receber",-2,3100,"Pintura da garagem do Edifício Aroeira (serviço extra)","10-contratos"),
+    it(502,"receber",0,14800,"Mensalidade do Condomínio Jardim das Acácias","10-contratos","incerto",0.8),
+    it(603,"receber",1,22500,"Mensalidade do Condomínio Bela Vista","10-contratos"),
+    it(604,"receber",8,23000,"Mensalidades de outubro (segundo lote)","10-contratos"),
+    it(605,"receber",9,9600,"Primeira mensalidade do Edifício Cedro (filial)","16-filial"),
+    it(606,"receber",31,58000,"Mensalidades de novembro (primeiro lote)","10-contratos"),
+    it(607,"receber",38,37500,"Mensalidades de novembro (segundo lote)","10-contratos"),
+    it(608,"receber",40,9600,"Mensalidade do Edifício Cedro (filial)","16-filial"),
+    it(609,"receber",45,18000,"Entrada do contrato do Residencial Monte Verde","12-comercial","incerto",0.4),
+    it(610,"receber",61,58000,"Mensalidades de dezembro (primeiro lote)","10-contratos"),
+    it(611,"receber",68,37500,"Mensalidades de dezembro (segundo lote)","10-contratos"),
+    it(612,"receber",70,9600,"Mensalidade do Edifício Cedro (filial)","16-filial"),
+    it(501,"pagar",0,4960,"Guia do FGTS da equipe","14-equipe"),
+    it(620,"pagar",1,18600,"Duas lavadoras de piso","18-compras","incerto"),
+    it(621,"pagar",3,22000,"Adiantamento quinzenal da equipe","14-equipe"),
+    it(622,"pagar",3,7420,"DAS do Simples Nacional","14-equipe"),
+    it(623,"pagar",5,2900,"Combustível e manutenção da frota","18-compras"),
+    it(624,"pagar",8,6300,"Material de limpeza do mês","18-compras"),
+    it(625,"pagar",10,3200,"Parcela do carro da família","07-financas-pf"),
+    it(626,"pagar",13,5400,"Aluguel da sala da filial","16-filial"),
+    it(627,"pagar",19,36000,"Folha de outubro da equipe","14-equipe"),
+    it(628,"pagar",29,4960,"Guia do FGTS da equipe","14-equipe"),
+    it(629,"pagar",33,22000,"Adiantamento quinzenal da equipe","14-equipe"),
+    it(630,"pagar",33,7600,"DAS do Simples Nacional","14-equipe"),
+    it(631,"pagar",36,2900,"Combustível e manutenção da frota","18-compras"),
+    it(632,"pagar",38,6300,"Material de limpeza do mês","18-compras"),
+    it(633,"pagar",41,3200,"Parcela do carro da família","07-financas-pf"),
+    it(634,"pagar",43,5400,"Aluguel da sala da filial","16-filial"),
+    it(635,"pagar",50,36000,"Folha de novembro da equipe","14-equipe"),
+    it(636,"pagar",55,31000,"Primeira parcela do 13º salário","14-equipe"),
+    it(637,"pagar",59,4960,"Guia do FGTS da equipe","14-equipe"),
+    it(638,"pagar",64,22000,"Adiantamento quinzenal da equipe","14-equipe"),
+    it(639,"pagar",64,7600,"DAS do Simples Nacional","14-equipe"),
+    it(640,"pagar",69,6300,"Material de limpeza do mês","18-compras"),
+    it(641,"pagar",71,3200,"Parcela do carro da família","07-financas-pf"),
+    it(642,"pagar",74,5400,"Aluguel da sala da filial","16-filial"),
+    it(643,"pagar",80,36000,"Folha de dezembro da equipe","14-equipe")];
+  const cont=[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}], rit=[{fechados_7d:31,fechados_7d_ant:26}];
+  /* o folego e o menor saldo da Semana vem da conta do caixa (demoBase); aqui ficam as outras linhas */
+  const semana=[{bloco:"norte",ordem:0,titulo:"Fechamentos pelo painel",ref:"painel.fechamentos_pelo_painel_pct",valor:78,ha_7d:70,meta:80,unidade:"pct",direcao:"maior_melhor",detalhe:"fora",dono:"igor"},
+    {bloco:"numero",ordem:1,titulo:"Fôlego do caixa no pior cenário",ref:"caixa.sobrevida_dias",valor:0,ha_7d:0,meta:30,unidade:"dias",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+    {bloco:"numero",ordem:3,titulo:"Propostas paradas",ref:"comercial.proposta_parada_n",valor:2,ha_7d:3,meta:0,unidade:"num",direcao:"menor_melhor",detalhe:"fora",dono:"igor"},
+    {bloco:"numero",ordem:4,titulo:"Menor saldo do trimestre",ref:"caixa.menor_saldo_13s",valor:0,ha_7d:0,meta:0,unidade:"num",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+    {bloco:"numero",ordem:5,titulo:"Rotinas no ponto",ref:"motor.rotinas_no_ponto_pct",valor:100,ha_7d:95,meta:100,unidade:"pct",direcao:"maior_melhor",detalhe:"dentro",dono:"claude"},
+    {bloco:"decisao_total",ordem:1,titulo:"ratificacao",valor:21},{bloco:"decisao_total",ordem:2,titulo:"escolha_em_card",valor:4},
+    {bloco:"decisao",ordem:1,titulo:"Clínica Vida Plena: mandar a proposta revisada com dois turnos de limpeza",detalhe:"escolha_em_card",frente:"12-comercial",quando:dd(-1)},
+    {bloco:"decisao",ordem:2,titulo:"Lavadoras de piso: comprar duas em vez de alugar",detalhe:"escolha_em_card",frente:"18-compras",quando:dd(-3)},
+    {bloco:"plano",ordem:1,titulo:"Rotina sugere, o dono aceita",dono:"automacao",quando:dd(3)},
+    {bloco:"plano",ordem:2,titulo:"Conciliar o caixa de cada contrato no fechamento do mês",dono:"claude",detalhe:"atrasado",quando:dd(-1)},
+    {bloco:"cards",ordem:1,titulo:"cards",valor:7,detalhe:"1",dono:"igor"}];
+  const funil=[{elo:"pronta",ordem:1,origem:"mesa",ref:"701",titulo:"Proposta do Residencial Monte Verde v03 (manutenção e limpeza, 12 meses)",frente_slug:"12-comercial",valor_rs:216000,margem_rs:43000,desde:dd(-6),idade_d:6,detalhe:"enviar"},
+    {elo:"pronta",ordem:1,origem:"mesa",ref:"706",titulo:"Relatório de ronda de setembro do Condomínio Solar",frente_slug:"10-contratos",valor_rs:8200,margem_rs:2400,desde:dd(-3),idade_d:3,detalhe:"entregar"},
+    {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-02",titulo:"Proposta para o Shopping Ponte Nova",frente_slug:"12-comercial",valor_rs:342000,margem_rs:null,desde:dd(-34),idade_d:34,detalhe:"participacao a definir"},
+    {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-01",titulo:"Proposta para a Clínica Vida Plena",frente_slug:"12-comercial",valor_rs:58000,margem_rs:12000,desde:dd(-12),idade_d:12,detalhe:null},
+    {elo:"aceita",ordem:3,origem:"fluxo",ref:"601",titulo:"Mensalidade de setembro do Condomínio Solar",frente_slug:"10-contratos",valor_rs:8200,margem_rs:2400,desde:dd(-36),idade_d:36,detalhe:"confirmado"},
+    {elo:"aceita",ordem:3,origem:"fluxo",ref:"603",titulo:"Mensalidade do Condomínio Bela Vista",frente_slug:"10-contratos",valor_rs:22500,margem_rs:6600,desde:dd(-29),idade_d:29,detalhe:"confirmado"},
+    {elo:"aceita",ordem:3,origem:"fluxo",ref:"502",titulo:"Mensalidade do Condomínio Jardim das Acácias",frente_slug:"10-contratos",valor_rs:14800,margem_rs:4300,desde:dd(-30),idade_d:30,detalhe:"incerto"},
+    {elo:"paga",ordem:4,origem:"fluxo",ref:"590",titulo:"Mensalidade de setembro do Condomínio Jardim das Acácias",frente_slug:"10-contratos",valor_rs:14800,margem_rs:4300,desde:dd(-17),idade_d:17,detalhe:"recebido"},
+    {elo:"paga",ordem:4,origem:"fluxo",ref:"591",titulo:"Mensalidade de setembro do Condomínio Bela Vista",frente_slug:"10-contratos",valor_rs:22500,margem_rs:6600,desde:dd(-20),idade_d:20,detalhe:"recebido"}];
+  const plm=[{id:901,etapa:"E1",etapa_nome:"Fila e aceite",titulo:"Rotina sugere, o dono aceita",dono:"automacao",prazo:dd(3),dias_para_prazo:3,atrasado:false},
+    {id:902,etapa:"E2",etapa_nome:"Painel que age",titulo:"Enviar pelo painel com anexo",dono:"automacao",prazo:dd(12),dias_para_prazo:12,atrasado:false},
+    {id:903,etapa:"avulso",etapa_nome:"Itens avulsos",titulo:"Conciliar o caixa de cada contrato no fechamento do mês",dono:"claude",prazo:dd(-1),dias_para_prazo:-1,atrasado:true}];
+  const aviso=[{origem:"tarefa",ref:"303",dia:dd(-1),n:1,motivo:"card tocado pelo dono nos ultimos 7 dias",campos:"prazo",ultimo_em:dd(-1)}];
+  const vesp=[{origem:"tarefa",ref:"303",frente:"16-filial",titulo:"Fazer a reunião semanal com o gerente da filial",prazo:dd(1),vesp_id:"319"},
+    {origem:"tarefa",ref:"304",frente:"18-compras",titulo:"Aprovar a compra das duas lavadoras de piso",prazo:dd(1),vesp_id:"319"}];
+  const est=[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}];
+  const rasc=(d1,d2)=>"Bom dia! Passando para saber do retorno que combinamos para "+dd(d1).slice(8,10)+"/"+dd(d1).slice(5,7)+". Consegue me dar uma posição até "+dd(d2).slice(8,10)+"/"+dd(d2).slice(5,7)+"? Obrigado.";
+  const cob3=[{origem:"tarefa",ref:"307",frente:"10-contratos",titulo:"Cobrar do Condomínio Bela Vista o aditivo do reajuste anual",terceiro:"Administradora do Bela Vista",retorno_esperado:dd(-2),dias:2,rascunho:rasc(-2,1)},
+    {origem:"tarefa",ref:"309",frente:"10-contratos",titulo:"Esperar a administradora devolver o contrato do Edifício Aroeira",terceiro:"Administradora do Aroeira",retorno_esperado:dd(0),dias:0,rascunho:rasc(0,1)}];
+  const mesa={horas_mes:42,decididas_hoje:3,producao_hoje:{A_AGIR:2,B_FEITO:2,C_SISTEMA:3,D_DEMAIS:0},
+    estoque:[
+      ap(701,{tarefa:301,fecha_tarefa:false,frente:"12-comercial",titulo:"Proposta do Residencial Monte Verde v03 (manutenção e limpeza, 12 meses)",ato:"enviar",dest:"Residencial Monte Verde",canal:"gmail",rs:216000,dias:6,motivo:"Pronta desde sexta; falta a sua ligação para a síndica antes de sair."}),
+      ap(703,{tarefa:305,fecha_tarefa:false,frente:"10-contratos",titulo:"Resposta à notificação do Condomínio Solar",ato:"decidir",dest:"Síndico do Condomínio Solar",canal:"gmail",rs:null,dias:3,motivo:"Escolha entre 10% de desconto no mês ou uma semana de ronda extra sem custo."}),
+      ap(702,{tarefa:302,fecha_tarefa:true,frente:"14-equipe",titulo:"Escala de dezembro da equipe de limpeza",ato:"aprovar",dest:"Supervisores",canal:"whatsapp",rs:null,dias:1,motivo:"Cobre as férias de quatro pessoas sem hora extra."}),
+      ap(706,{frente:"10-contratos",titulo:"Relatório de ronda de setembro do Condomínio Solar",ato:"entregar",dest:"Síndico do Condomínio Solar",canal:"em_maos",rs:8200,dias:3,motivo:"Impresso; a mensalidade de setembro sai depois da entrega."}),
+      ap(704,{tarefa:304,fecha_tarefa:true,frente:"18-compras",titulo:"Pedido de compra das duas lavadoras de piso",ato:"aprovar",dest:"Fornecedor de equipamentos",canal:"whatsapp",rs:18600,dias:0,novo:true,motivo:"Três orçamentos; este é o menor com assistência técnica na cidade."}),
+      ap(707,{frente:"07-financas-pf",titulo:"Simulação do pró-labore de novembro",ato:"decidir",rs:null,dias:0,novo:true,motivo:"Confirme o valor antes de fechar a folha."}),
+      ap(705,{frente:"16-filial",titulo:"Relatório semanal do gerente da filial",ato:"ler",rs:null,dias:2,motivo:"Leitura de 5 minutos; nada a assinar."}),
+      ap(708,{frente:"00-sistema",titulo:"Proposta de ajuste da rotina de backup",ato:"aprovar",rs:null,dias:12,adiado_ate:dd(2),motivo:"Troca o horário do backup para depois do fechamento do dia."})],
+    saiu_hoje:[{id:690,titulo:"Medição dos serviços extras de setembro",dest:"Administradora do Aroeira",prova:"documental"}],
+    valor_hora:{janela:"30 dias",recebido:38400,horas:168,por_hora:228.57,piso:80,teto:400}};
+  const b4=(ordem,ref,item,detalhe,dia,dias_parado,recomendacao)=>({frente_slug:"16-filial",ordem,bloco:BLOCOS[ordem],ref,item,detalhe,prazo:dia==null?null:dd(dia),dias_parado,recomendacao});
+  const socio4=[
+    b4(1,"D41","Fechar a comissão do gerente da filial","O gerente propôs 3% sobre os contratos novos e espera a sua palavra até sexta",null,6,"decisão aberta na frente: ratifique ou retifique"),
+    b4(1,"t308","Contratar o segundo supervisor da filial","ato seu",5,-5,"decida na data"),
+    b4(2,"t320","Receber do contador o alvará da filial","Escritório Contábil Exemplo",-3,3,"quem deve a próxima resposta: o terceiro"),
+    b4(4,"receber","Primeira mensalidade do Edifício Cedro","R$ 9.600,00 · status confirmado",9,-9,"confira no extrato"),
+    b4(4,"pagar","Aluguel da sala da filial","R$ 5.400,00 · status confirmado",13,-13,"confira no extrato")];
+  const fichaExtra=[
+    {frente_slug:"12-comercial",ordem:1,bloco:BLOCOS[1],ref:"t312",item:"Decidir se mantém a proposta para o Shopping Ponte Nova",detalhe:"ato seu",prazo:null,dias_parado:34,recomendacao:"decida na data"},
+    {frente_slug:"10-contratos",ordem:2,bloco:BLOCOS[2],ref:"t307",item:"Cobrar do Condomínio Bela Vista o aditivo do reajuste anual",detalhe:"Administradora do Bela Vista",prazo:dd(-2),dias_parado:12,recomendacao:"quem deve a próxima resposta: o terceiro"}];
+  const ENT_DEMO={"07-financas-pf":"PF","00-sistema":"PF","10-contratos":"Matriz","12-comercial":"Matriz","14-equipe":"Matriz","18-compras":"Matriz","16-filial":"Filial"};
+  const INI={"PF":15000,"Matriz":120000,"Filial":10000};
+  const FIN_TXT={"PF":null,"Matriz":"Gera caixa à PF","Filial":"Ainda depende da Matriz"};
+  const uni=[{slug:"servicos",nome:"Serviços",tipo:"negocio",entidade:"Matriz",dono:"igor",ratificada_em:dd(-9)},
+    {slug:"filial",nome:"Filial",tipo:"negocio",entidade:"Filial",dono:"gerente",ratificada_em:dd(-9)},
+    {slug:"apoio-sistema",nome:"Sistema",tipo:"apoio",entidade:"Matriz",dono:"claude",ratificada_em:dd(-9)},
+    {slug:"vida-pessoal",nome:"Vida",tipo:"vida",entidade:"PF",dono:"igor",ratificada_em:dd(-9)}];
+  const UNI_DEMO={"10-contratos":"servicos","12-comercial":"servicos","14-equipe":"servicos","18-compras":"servicos","16-filial":"filial","00-sistema":"apoio-sistema","07-financas-pf":"vida-pessoal"};
+  const quest=[{id:1,ordem:1,top3:true,titulo:"Quem compra o uniforme da filial?",detalhe:"A filial quer comprar à parte; compras quer centralizar para ter desconto.",estado:"aberta",dono:"igor",prioridade:1,
+    de_frente:"16-filial",de_nome:"Filial",para_frente:"18-compras",para_nome:"Compras",criada_em:agoraMenos(72),idade_dias:3}];
+  const bloq=[{tarefa_id:314,frente_slug:"16-filial",titulo:"Preparar a inauguração da filial",dono:"igor",prazo:dd(18),status:"pendente",n_bloqueios:1,
+    rotulo:"bloqueado por Compras",frentes_bloqueadoras:["18-compras"],entre_frentes:true,bloqueado_por:[{frente_slug:"18-compras",titulo:"Aprovar a compra das duas lavadoras de piso"}]}];
+  const trava=[{frente_slug:"18-compras",nome:"Compras",n_cards_travados:1,n_cards_meus:2,frentes_travadas:["16-filial"],
+    itens:[{tarefa_id:314,titulo:"Preparar a inauguração da filial",frente_slug:"16-filial"}]}];
+  const exec=[{abertos:9,vencidos:0,esperando:1,feitos_7d:27,rotinas:20,rotinas_no_slo:19,estouradas:[],
+    ultimos:[{id:9001,frente:"10-contratos",titulo:"Conferir as mensalidades recebidas",em:agoraMenos(5)},{id:9002,frente:"14-equipe",titulo:"Montar a escala da semana",em:agoraMenos(20)},
+      {id:9003,frente:"18-compras",titulo:"Organizar as notas de compra",em:agoraMenos(30)}]}];
+  const prio=[{unidade:"servicos",unidade_nome:"Serviços",tipo:"negocio",entidade:"Matriz",trimestre:"2026T4",ativas:3,no_prumo:2,fora:1,feitas:0,alerta:null,revisada:false,itens:[{titulo:"Renovar os três contratos que vencem em dezembro"}]},
+    {unidade:"filial",unidade_nome:"Filial",tipo:"negocio",entidade:"Filial",trimestre:"2026T4",ativas:2,no_prumo:1,fora:1,feitas:0,alerta:null,revisada:false,itens:[{titulo:"Fechar o terceiro contrato da filial"}]}];
+  const dreL=(mes,sit)=>[{mes,unidade:"servicos",unidade_nome:"Serviços",tipo:"negocio",entidade:"Matriz",receita:96000,custo_direto:71000,margem_dono:25000,horas:150,rs_hora:166.67,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"na faixa",situacao:sit,fechado_em:null},
+    {mes,unidade:"filial",unidade_nome:"Filial",tipo:"negocio",entidade:"Filial",receita:9600,custo_direto:8900,margem_dono:700,horas:30,rs_hora:23.33,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"abaixo do piso",situacao:sit,fechado_em:null}];
+  const dre=dreL(mesDe(0),"mes corrente").concat(dreL(mesDe(1),"atrasado: fechar"));
+  const vida=[["vida-pessoal","Vida de exemplo"],["bem-estar","Bem-estar de exemplo"]].map(([frente,frente_nome])=>({frente,frente_nome,rotulo:null,unidade:null,direcao:null,meta:null,valor:null,medido_em:null,valor_anterior:null,estado:"sem numero"}));
+  const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
+  const sem=[sm("10-contratos",[9000,14000,6000,12000,8000,15000,7000,11000],1,6),sm("12-comercial",[0,0,0,0,0,0,0,0],1,34),
+    sm("16-filial",[0,0,-5400,0,0,-1200,2400,0],0,9),sm("14-equipe",[-4960,0,-7420,0,-4960,0,-7420,0],0,5),
+    sm("18-compras",[-2900,-6300,0,-2900,0,-6300,-2900,0],0,12),sm("07-financas-pf",[-3200,0,0,0,-3200,0,0,0],0,5),sm("00-sistema",[0,0,0,0,0,0,0,0],0,22)];
+  const checkin=(d,dm)=>"Check-in Filial · seg "+dm(d(1))+"\n1. Fiz: Visitar o Edifício Cedro com o gerente; Conferir o ponto da equipe nova"+
+    "\n2. Vou fazer: Fazer a reunião semanal com o gerente da filial ("+dm(d(1))+"); Contratar o segundo supervisor ("+dm(d(5))+")"+
+    "\n3. Travado / preciso de você: Comissão do gerente — com Gerente de exemplo, retorno era "+dm(d(-2));
+  return {fila,exp,inv,arv,CX,CV,c13i,cont,rit,semana,funil,plm,aviso,vesp,est,cob3,mesa,socio:socio4,fichaExtra,ENT_DEMO,INI,FIN_TXT,uni,UNI_DEMO,
+    quest,bloq,trava,exec,prio,dre,vida,sem,checkin};
+}
+/* Perfil 1 (p4.12 a p4.69): engenheiro de muitas frentes, com consultoria de obras, contrato PJ, obra residencial,
+   startup com socio, cobranca e vida pessoal. Os dados sao os de sempre; so mudaram de lugar no t3627. */
+function demoEngenheiro(H){
+  const {dd,agoraMenos,PAGAR,RECEBER,IA,card,it,ap,BLOCOS,mesDe}=H;
   const fila=[
     card({origem:"fluxo",ref:"501",frente:"07-financas-pf",titulo:"Pagar a parcela 3 de 6 do financiamento do carro",porque_agora:"vence hoje",valor_txt:"R$ 1.850,00",verbo_sugerido:"pago",acoes:PAGAR,data_ref:dd(0),dias_parado:1,
       recomendacao:"Pague pela conta pessoal: a da empresa fica reservada para a folha de sexta."},0),
@@ -771,12 +949,7 @@ function demoBase(){
     {nivel:1,no:"05-cobranca",rotulo:"Cobrança de cliente",margem_30d:0,margem_total:48000,itens:2,veredito:"Acordo proposto; a outra parte pediu 15 dias."},
     {nivel:1,no:"07-financas-pf",rotulo:"Finanças pessoais",margem_30d:0,margem_total:0,itens:1},
     {nivel:1,no:"00-sistema",rotulo:"Sistema (memória e rotinas)",margem_30d:0,margem_total:0,itens:1}];
-  /* p4.27 (plano 89): o caixa da demonstracao nasce dos itens, como no banco (saldo da semana = caixa de hoje +
-     entradas, a incerta pelo peso, - saidas - custo de vida da semana, acumulado), e caixa() refaz semanas e folego
-     a cada carga: pagar a parcela na demonstracao tira a linha da lista e a conta continua fechando. */
-  const CX=38200, CV=9000, CVS=Math.round(CV*7/30*100)/100, DS=(new Date().getDay()+6)%7;
-  const it=(id,natureza,dia,valor_igor,descricao,frente_slug,status,peso)=>({id,natureza,data_venc:dd(dia),vencido:dia<0,semana:Math.max(1,Math.floor((dia+DS)/7)+1),
-    valor_igor,descricao,frente_slug,status:status||"confirmado",peso:peso==null?1:peso});
+  const CX=38200, CV=9000;
   const c13i=[it(601,"receber",-9,6500,"Saldo do laudo estrutural do Edifício Ipê","11-consultoria"),
     it(602,"receber",-3,2300,"Reembolso da ART da obra residencial","04-obra-residencial"),
     it(502,"receber",0,9400,"2ª parcela do laudo da Clínica Horizonte","11-consultoria","incerto",0.7),
@@ -796,6 +969,121 @@ function demoBase(){
     it(619,"pagar",58,4700,"Fornecedor de concreto da obra residencial","04-obra-residencial","incerto"),
     it(620,"pagar",69,3800,"Aluguel do escritório","11-consultoria"),
     it(621,"pagar",79,6400,"Folha da equipe de campo","20-contrato-pj")];
+  const cont=[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}], rit=[{fechados_7d:23,fechados_7d_ant:19}];
+    /* p4.58 (p144): semana da demonstracao, seis numeros, poucas decisoes e o plano */
+  const semana=[{bloco:"norte",ordem:0,titulo:"Fechamentos pelo painel",ref:"painel.fechamentos_pelo_painel_pct",valor:72,ha_7d:65,meta:80,unidade:"pct",direcao:"maior_melhor",detalhe:"fora",dono:"igor"},
+      {bloco:"numero",ordem:1,titulo:"Fôlego do caixa no pior cenário",ref:"caixa.sobrevida_dias",valor:41,ha_7d:37,meta:30,unidade:"dias",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+      {bloco:"numero",ordem:3,titulo:"Propostas paradas",ref:"comercial.proposta_parada_n",valor:2,ha_7d:3,meta:0,unidade:"num",direcao:"menor_melhor",detalhe:"fora",dono:"igor"},
+      {bloco:"numero",ordem:4,titulo:"Menor saldo do trimestre",ref:"caixa.menor_saldo_13s",valor:12400,ha_7d:9800,meta:0,unidade:"num",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
+      {bloco:"numero",ordem:5,titulo:"Rotinas no ponto",ref:"motor.rotinas_no_ponto_pct",valor:100,ha_7d:92,meta:100,unidade:"pct",direcao:"maior_melhor",detalhe:"dentro",dono:"claude"},
+      {bloco:"decisao_total",ordem:1,titulo:"ratificacao",valor:18},{bloco:"decisao_total",ordem:2,titulo:"escolha_em_card",valor:3},
+      {bloco:"decisao",ordem:1,titulo:"Reforma da Padaria Central: mandar o orçamento revisado com prazo maior",detalhe:"escolha_em_card",frente:"11-consultoria",quando:dd(-1)},
+      {bloco:"decisao",ordem:2,titulo:"Acordo da cobrança: parcelado com entrada",detalhe:"escolha_em_card",frente:"05-cobranca",quando:dd(-3)},
+      {bloco:"plano",ordem:1,titulo:"Rotina sugere, o dono aceita",dono:"automacao",quando:dd(3)},
+      {bloco:"plano",ordem:2,titulo:"Conciliar o caixa de obra em cada marco",dono:"claude",detalhe:"atrasado",quando:dd(-1)},
+      {bloco:"cards",ordem:1,titulo:"cards",valor:7,detalhe:"1",dono:"igor"}];
+    /* p4.55 (p109): funil da demonstracao; as pecas prontas sao as da Mesa de exemplo (701, 702, 706) */
+  const funil=[{elo:"pronta",ordem:1,origem:"mesa",ref:"701",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",frente_slug:"11-consultoria",valor_rs:180000,margem_rs:180000,desde:dd(-5),idade_d:5,detalhe:"enviar"},
+      {elo:"pronta",ordem:1,origem:"mesa",ref:"706",titulo:"Laudo de vistoria da Clínica Horizonte v02",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-3),idade_d:3,detalhe:"entregar"},
+      {elo:"pronta",ordem:1,origem:"mesa",ref:"702",titulo:"Boletim de medição 7 com a memória de cálculo",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-1),idade_d:1,detalhe:"assinar"},
+      {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-02",titulo:"Proposta para a Escola Girassol",frente_slug:"11-consultoria",valor_rs:26000,margem_rs:null,desde:dd(-34),idade_d:34,detalhe:"participacao a definir"},
+      {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-01",titulo:"Orçamento da reforma da Padaria Central",frente_slug:"11-consultoria",valor_rs:42000,margem_rs:42000,desde:dd(-12),idade_d:12,detalhe:null},
+      {elo:"aceita",ordem:3,origem:"fluxo",ref:"601",titulo:"Saldo do laudo estrutural do Edifício Ipê",frente_slug:"11-consultoria",valor_rs:6500,margem_rs:6500,desde:dd(-40),idade_d:40,detalhe:"confirmado"},
+      {elo:"aceita",ordem:3,origem:"fluxo",ref:"603",titulo:"Medição 7 do contrato de engenharia",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-20),idade_d:20,detalhe:"confirmado"},
+      {elo:"aceita",ordem:3,origem:"fluxo",ref:"502",titulo:"2ª parcela do laudo da Clínica Horizonte",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-15),idade_d:15,detalhe:"incerto"},
+      {elo:"paga",ordem:4,origem:"fluxo",ref:"590",titulo:"1ª parcela do laudo da Clínica Horizonte",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-6),idade_d:6,detalhe:"recebido"},
+      {elo:"paga",ordem:4,origem:"fluxo",ref:"591",titulo:"Medição 6 do contrato de engenharia",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-20),idade_d:20,detalhe:"recebido"}];
+    /* p4.48 (p167 e5): plano mestre de exemplo; so aparece na folha, fora da medida do canone */
+  const plm=[{id:901,etapa:"E1",etapa_nome:"Fila e aceite",titulo:"Rotina sugere, o dono aceita",dono:"automacao",prazo:dd(3),dias_para_prazo:3,atrasado:false},
+      {id:902,etapa:"E2",etapa_nome:"Painel que age",titulo:"Enviar pelo painel com anexo",dono:"automacao",prazo:dd(12),dias_para_prazo:12,atrasado:false},
+      {id:903,etapa:"avulso",etapa_nome:"Itens avulsos",titulo:"Conciliar o caixa de obra em cada marco",dono:"claude",prazo:dd(-1),dias_para_prazo:-1,atrasado:true}];
+    /* p4.61 (p155): aviso de exemplo: a rotina nao mexeu no card do check-in porque o dono mexeu nele */
+  const aviso=[{origem:"tarefa",ref:"303",dia:dd(-1),n:1,motivo:"card tocado pelo dono nos ultimos 7 dias",campos:"prazo",ultimo_em:dd(-1)}];
+  const vesp=[{origem:"tarefa",ref:"303",frente:"08-startup",titulo:"Fazer o check-in semanal de três linhas com o sócio",prazo:dd(1),vesp_id:"319"},
+      {origem:"tarefa",ref:"304",frente:"04-obra-residencial",titulo:"Aprovar a troca do revestimento da área gourmet",prazo:dd(1),vesp_id:"319"}];
+  const est=[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}];
+  const cob3=[{origem:"tarefa",ref:"307",frente:"20-contrato-pj",titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",terceiro:"Fiscalização de exemplo",retorno_esperado:dd(-2),dias:2,
+      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(-2).slice(8,10)+"/"+dd(-2).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."},
+      {origem:"tarefa",ref:"312",frente:"04-obra-residencial",titulo:"Receber da gráfica o orçamento das placas da obra",terceiro:"Gráfica de exemplo",retorno_esperado:dd(0),dias:0,
+      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(0).slice(8,10)+"/"+dd(0).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."}];
+  const mesa={horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
+    estoque:[
+      ap(701,{tarefa:301,fecha_tarefa:false,frente:"11-consultoria",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",ato:"enviar",dest:"Construtora Aurora",canal:"gmail",rs:180000,dias:5,motivo:"Pronta desde sexta; falta a sua ligação antes de sair."}),
+      ap(703,{tarefa:305,fecha_tarefa:false,frente:"05-cobranca",titulo:"Contraproposta do acordo em 6 parcelas",ato:"decidir",dest:"Advogado da cobrança",canal:"gmail",rs:48000,dias:9,motivo:"Escolha entre 6 parcelas com entrada ou 10 sem entrada."}),
+      ap(702,{tarefa:302,fecha_tarefa:true,frente:"20-contrato-pj",titulo:"Boletim de medição 7 com a memória de cálculo",ato:"assinar",dest:"Fiscalização do contrato",canal:"protocolo",rs:12000,dias:1,motivo:"Falta a sua assinatura para protocolar."}),
+      ap(706,{frente:"11-consultoria",titulo:"Laudo de vistoria da Clínica Horizonte v02",ato:"entregar",dest:"Clínica Horizonte",canal:"em_maos",rs:9400,dias:3,motivo:"Impresso e assinado; falta entregar na visita de quinta."}),
+      ap(704,{tarefa:304,fecha_tarefa:true,frente:"04-obra-residencial",titulo:"Aditivo de troca do revestimento da área gourmet",ato:"aprovar",dest:"Cliente da obra",canal:"whatsapp",rs:3200,dias:0,novo:true,motivo:"O cliente escolheu o porcelanato; o aditivo cobre a diferença."}),
+      ap(707,{frente:"07-financas-pf",titulo:"Planilha do imposto do mês",ato:"decidir",rs:null,dias:0,novo:true,motivo:"Confirme as duas despesas médicas antes de fechar."}),
+      ap(705,{frente:"08-startup",titulo:"Relatório mensal aos sócios",ato:"ler",rs:null,dias:2,motivo:"Leitura de 5 minutos; nada a assinar."}),
+      ap(708,{frente:"00-sistema",titulo:"Proposta de ajuste da rotina de backup",ato:"aprovar",rs:null,dias:12,adiado_ate:dd(2),motivo:"Troca o horário do backup para depois do fechamento do dia."})],
+    saiu_hoje:[{id:690,titulo:"Ofício de pedido de reajuste",dest:"Fiscalização do contrato",prova:"documental"}],
+    valor_hora:{janela:"30 dias",recebido:21800,horas:96.5,por_hora:225.91,piso:80,teto:400}};
+  const b4=(ordem,ref,item,detalhe,dia,dias_parado,recomendacao)=>({frente_slug:"08-startup",ordem,bloco:BLOCOS[ordem],ref,item,detalhe,prazo:dia==null?null:dd(dia),dias_parado,recomendacao});
+  const socio4=[
+    b4(1,"D41","Fechar o preço do plano anual do primeiro cliente","O sócio propôs 15% de desconto para pagamento à vista e espera a sua palavra até sexta",null,6,"decisão aberta na frente: ratifique ou retifique"),
+    b4(1,"t308","Revisar o contrato do primeiro cliente pagante","ato seu",5,-5,"decida na data"),
+    b4(2,"t320","Receber do contador a minuta da alteração contratual","Escritório Contábil Exemplo",-3,3,"quem deve a próxima resposta: o terceiro"),
+    b4(4,"receber","Primeira mensalidade do cliente piloto","R$ 2.400,00 (sua parte) · status previsto",7,-7,"proposta enviada não é contrato: só conta após aceite e pagamento"),
+    b4(4,"pagar","Hospedagem do servidor de testes","R$ 180,00 (sua parte) · status confirmado",2,-2,"confira no extrato")];
+  const fichaExtra=[
+    {frente_slug:"11-consultoria",ordem:1,bloco:BLOCOS[1],ref:"t312",item:"Decidir se mantém a proposta para a Escola Girassol",detalhe:"ato seu",prazo:null,dias_parado:34,recomendacao:"decida na data"},
+    {frente_slug:"20-contrato-pj",ordem:2,bloco:BLOCOS[2],ref:"t307",item:"Cobrar da fiscalização a resposta ao pedido de reajuste",detalhe:"Fiscalização de exemplo",prazo:dd(-2),dias_parado:12,recomendacao:"quem deve a próxima resposta: o terceiro"}];
+  const ENT_DEMO={"07-financas-pf":"PF","00-sistema":"PF","11-consultoria":"Alfa","04-obra-residencial":"Alfa","20-contrato-pj":"Beta","05-cobranca":"Beta","08-startup":"Beta"};
+  const INI={"PF":6200,"Alfa":29000,"Beta":3000};
+  const FIN_TXT={"PF":null,"Alfa":"Gera caixa à PF","Beta":"Consome da PF"};
+  const uni=[{slug:"obras-laudos",nome:"Obras",tipo:"negocio",entidade:"Alfa",dono:"igor",ratificada_em:dd(-9)},
+    {slug:"startup",nome:"Startup",tipo:"negocio",entidade:"Beta",dono:"sócio",ratificada_em:dd(-9)},
+    {slug:"apoio-sistema",nome:"Sistema",tipo:"apoio",entidade:"Alfa",dono:"claude",ratificada_em:dd(-9)},
+    {slug:"vida-pessoal",nome:"Vida",tipo:"vida",entidade:"PF",dono:"igor",ratificada_em:dd(-9)}];
+  const UNI_DEMO={"11-consultoria":"obras-laudos","04-obra-residencial":"obras-laudos","20-contrato-pj":"obras-laudos","05-cobranca":"obras-laudos","08-startup":"startup","00-sistema":"apoio-sistema","07-financas-pf":"vida-pessoal"};
+  const quest=[{id:1,ordem:1,top3:true,titulo:"Quem fecha o preço?",detalhe:"O cliente piloto pediu desconto e a consultoria quer o mesmo critério.",estado:"aberta",dono:"igor",prioridade:1,
+    de_frente:"08-startup",de_nome:"Startup",para_frente:"11-consultoria",para_nome:"Consultoria",criada_em:agoraMenos(72),idade_dias:3}];
+  const bloq=[{tarefa_id:316,frente_slug:"11-consultoria",titulo:"Atualizar o portfólio com as três obras do ano",dono:"igor",prazo:dd(0),status:"pendente",n_bloqueios:1,
+    rotulo:"bloqueado por Startup",frentes_bloqueadoras:["08-startup"],entre_frentes:true,bloqueado_por:[{frente_slug:"08-startup",titulo:"Fechar o preço do plano anual do primeiro cliente"}]}];
+  const trava=[{frente_slug:"08-startup",nome:"Startup",n_cards_travados:1,n_cards_meus:3,frentes_travadas:["11-consultoria"],
+    itens:[{tarefa_id:316,titulo:"Atualizar o portfólio com as três obras do ano",frente_slug:"11-consultoria"}]}];
+  const exec=[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:[],
+    ultimos:[{id:9001,frente:"11-consultoria",titulo:"Conferir extrato do mês",em:agoraMenos(5)},{id:9002,frente:"08-startup",titulo:"Revisar a lista de pendências",em:agoraMenos(20)},
+      {id:9003,frente:"20-contrato-pj",titulo:"Organizar os comprovantes da semana",em:agoraMenos(30)}]}];
+  const prio=[{unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",trimestre:"2026T4",ativas:3,no_prumo:2,fora:1,feitas:0,alerta:null,revisada:false,itens:[{titulo:"Fechar o contrato piloto"}]},
+    {unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",trimestre:"2026T4",ativas:0,no_prumo:0,fora:0,feitas:0,alerta:"sem prioridade",revisada:false,itens:[]}];
+  const dreL=(mes,sit)=>[{mes,unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",receita:12000,custo_direto:3000,margem_dono:9000,horas:40,rs_hora:225,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"na faixa",situacao:sit,fechado_em:null},
+    {mes,unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",receita:0,custo_direto:0,margem_dono:0,horas:0.4,rs_hora:0,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"abaixo do piso",situacao:sit,fechado_em:null}];
+  const dre=dreL(mesDe(0),"mes corrente").concat(dreL(mesDe(1),"atrasado: fechar"));
+  const vida=[["vida-pessoal","Vida de exemplo"],["bem-estar","Bem-estar de exemplo"]].map(([frente,frente_nome])=>({frente,frente_nome,rotulo:null,unidade:null,direcao:null,meta:null,valor:null,medido_em:null,valor_anterior:null,estado:"sem numero"}));
+  const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
+  const sem=[sm("11-consultoria",[4000,0,9500,3000,0,12000,2500,0],1,34),sm("20-contrato-pj",[0,12000,0,0,0,12000,0,0],0,9),
+    sm("04-obra-residencial",[0,-1800,0,2400,0,0,3400,0],0,12),sm("08-startup",[0,0,0,0,-900,0,1200,0],0,18),
+    sm("05-cobranca",[0,0,0,0,0,0,0,0],0,22),sm("07-financas-pf",[-2500,0,-2500,0,-2500,0,-2500,0],0,5),sm("00-sistema",[0,0,0,0,0,0,0,0],0,22)];
+  const checkin=(d,dm)=>"Check-in Startup · seg "+dm(d(1))+"\n1. Fiz: Enviar a ata da reunião de exemplo; Conferir o saldo da conta de exemplo"+
+        "\n2. Vou fazer: Fazer o check-in semanal de três linhas com o sócio ("+dm(d(1))+"); Revisar a proposta de exemplo ("+dm(d(3))+")"+
+        "\n3. Travado / preciso de você: Validar a planilha de exemplo — com Sócio de exemplo, retorno era "+dm(d(-2));
+  return {fila,exp,inv,arv,CX,CV,c13i,cont,rit,semana,funil,plm,aviso,vesp,est,cob3,mesa,socio:socio4,fichaExtra,ENT_DEMO,INI,FIN_TXT,uni,UNI_DEMO,
+    quest,bloq,trava,exec,prio,dre,vida,sem,checkin};
+}
+function demoBase(){
+  const dd=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+  const seg=n=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+  const agoraMenos=h=>new Date(Date.now()-h*36e5).toISOString();
+  const AC=[{verbo:"feita",label:"feita"},{verbo:"repactuar",label:"nova data",campo:"date"},{verbo:"deliberar",label:"deliberar",campo:"texto"}];
+  const CONTAS=[{rot:"PF · Banco Exemplo 0001",v:"PF_EXEMPLO"},{rot:"Empresa · Conta Exemplo 0002",v:"PJ_EXEMPLO"}];
+  const PAGAR=[{verbo:"pago",label:"paguei",campo:"entidade",opcoes:CONTAS,padrao:"PF_EXEMPLO",codigo:"00190000090000000000000000000000000000000000000",codigo_tipo:"boleto"},AC[1],AC[2]];
+  const RECEBER=[{verbo:"recebido",label:"recebi",campo:"entidade",opcoes:CONTAS,padrao:"PJ_EXEMPLO"},AC[1],AC[2]];
+  const IA=[{verbo:"feita",rotulo:"feita",arg:null},{verbo:"repactuar",rotulo:"novo prazo",arg:"data"},{verbo:"esperar",rotulo:"passei para alguém",arg:"texto"},{verbo:"arquivar",rotulo:"arquivar",arg:"motivo"},{verbo:"deliberar",rotulo:"deliberar",arg:"texto"}];
+  const card=(o,i)=>Object.assign({camada_tela:"hoje",posicao:i+1,teto_tela:5,teto_wip:5,tipo_card:"ato",nivel:1,peso:10-i,acoes:AC,
+    titulo_completo:o.titulo,titulo_truncado:false,contestado:false,correcao_aberta:false,forcar_decisao:false,rec_vencida:false,acima_do_teto:false},o);
+  const DS=(new Date().getDay()+6)%7;
+  const it=(id,natureza,dia,valor_igor,descricao,frente_slug,status,peso)=>({id,natureza,data_venc:dd(dia),vencido:dia<0,semana:Math.max(1,Math.floor((dia+DS)/7)+1),
+    valor_igor,descricao,frente_slug,status:status||"confirmado",peso:peso==null?1:peso});
+  const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,tarefa:null,fecha_tarefa:false,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
+  const BLOCOS=["","A · SO O PRESIDENTE DECIDE","B · TERCEIRO ESPERANDO OU ME DEVENDO","C · ENTREGUE, ESPERA SUA PALAVRA","D · DINHEIRO DA FRENTE","E · NUMEROS"];
+  const mesDe=k=>{ const x=new Date(new Date().getFullYear(),new Date().getMonth()-k,1); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-01"; };
+  /* t3627: o perfil escolhido entrega os dados; o resto (caixa, ficha, cliente) e o mesmo motor para os dois */
+  const P=(DEMO_PERFIL===2?demoServicos:demoEngenheiro)({dd,seg,agoraMenos,AC,PAGAR,RECEBER,IA,card,it,ap,BLOCOS,mesDe});
+  const {fila,exp,inv,arv,c13i,CX,CV,ENT_DEMO,INI,FIN_TXT}=P, CVS=Math.round(CV*7/30*100)/100;
+  /* p4.27 (plano 89): o caixa da demonstracao nasce dos itens, como no banco (saldo da semana = caixa de hoje +
+     entradas, a incerta pelo peso, - saidas - custo de vida da semana, acumulado), e caixa() refaz semanas e folego
+     a cada carga: pagar a parcela na demonstracao tira a linha da lista e a conta continua fechando. */
   const caixa=its=>{
     const cent=v=>Math.round(v*100)/100; let acum=CX, acumP=CX;
     const c13=Array.from({length:13},(_,i)=>{ const w=its.filter(x=>x.semana===i+1), soma=f=>cent(w.filter(f).reduce((t,x)=>t+x.valor_igor*pesoCx(x),0));
@@ -811,6 +1099,9 @@ function demoBase(){
   const cx0=caixa(c13i), c13=cx0.c13;
   const var7=[{metrica:"caixa.sobrevida_dias",ha_7d:cx0.rw[0].dias_sobrevida_pior-4,data_base:dd(-7)},
     {metrica:"caixa.menor_saldo_13s",ha_7d:Math.round(Math.min(...c13.map(x=>x.saldo_base))+2600),data_base:dd(-7)}];
+  /* t3627: a Semana repete o folego e o menor saldo que o Hoje e o Caixa calculam; antes eram 41 dias escritos a mao contra 34 na conta */
+  const NUM_CX={"caixa.sobrevida_dias":[cx0.rw[0].dias_sobrevida_pior,var7[0].ha_7d],"caixa.menor_saldo_13s":[Math.round(Math.min(...c13.map(x=>x.saldo_base))),var7[1].ha_7d]};
+  const semana=P.semana.map(s=>NUM_CX[s.ref]?Object.assign({},s,{valor:NUM_CX[s.ref][0],ha_7d:NUM_CX[s.ref][1]}):s);
   const se=[{chave:"fila.aging_p95_dias",serie:[21],direcao:"menor_melhor",situacao_banda:"normal"}];
   const mo=[{nome:"backup-cerebro",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(5)},{nome:"fechamento-do-dia",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)},
     {nome:"triagem-da-mesa",estado:"no ponto",janela_horas:26,ultimo_ponto:agoraMenos(15)}];
@@ -818,63 +1109,16 @@ function demoBase(){
   const min=[{id:"301",minutos_estimados:15},{id:"302",minutos_estimados:30},{id:"303",minutos_estimados:10},{id:"304",minutos_estimados:10},{id:"305",minutos_estimados:20},
     {id:"fluxo:501",minutos_estimados:5},{id:"fluxo:502",minutos_estimados:10}];
   const dados={fila,exp,se,mo,eb,min,c13,c13i,cap:[{minutos_dia:180}],fresc:[{estado:"FRESCO",no_ponto:12,rotinas_total:12,horas_desde:1}],
-    cont:[{hoje:6,depois:8,teto_tela:5,teto_wip:5,consulta:0,leituras:2,correcoes:0,acima_do_teto:1}],
-    rw:cx0.rw, var7, rit:[{fechados_7d:23,fechados_7d_ant:19}],
+    cont:P.cont, rw:cx0.rw, var7, rit:P.rit,
     /* p126: a demonstracao monta o Hoje no navegador (resumo vazio); as chaves existem para a carga nao acusar falta */
     hoje:[], hoje_resumo:[],
     /* p4.42 (p127): bandeja vazia na demonstracao; sem a chave a tela avisaria dado faltando */
     band:[],
     /* p4.47 (p158): sem sugestao na demonstracao; com uma, o Hoje a 390 passava do piso do canone (3,2 telas, teste 106) */
     sug:[],
-    /* p4.58 (p144): semana da demonstracao, seis numeros, poucas decisoes e o plano */
-    semana:[{bloco:"norte",ordem:0,titulo:"Fechamentos pelo painel",ref:"painel.fechamentos_pelo_painel_pct",valor:72,ha_7d:65,meta:80,unidade:"pct",direcao:"maior_melhor",detalhe:"fora",dono:"igor"},
-      {bloco:"numero",ordem:1,titulo:"Fôlego do caixa no pior cenário",ref:"caixa.sobrevida_dias",valor:41,ha_7d:37,meta:30,unidade:"dias",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
-      {bloco:"numero",ordem:3,titulo:"Propostas paradas",ref:"comercial.proposta_parada_n",valor:2,ha_7d:3,meta:0,unidade:"num",direcao:"menor_melhor",detalhe:"fora",dono:"igor"},
-      {bloco:"numero",ordem:4,titulo:"Menor saldo do trimestre",ref:"caixa.menor_saldo_13s",valor:12400,ha_7d:9800,meta:0,unidade:"num",direcao:"maior_melhor",detalhe:"dentro",dono:"igor"},
-      {bloco:"numero",ordem:5,titulo:"Rotinas no ponto",ref:"motor.rotinas_no_ponto_pct",valor:100,ha_7d:92,meta:100,unidade:"pct",direcao:"maior_melhor",detalhe:"dentro",dono:"claude"},
-      {bloco:"decisao_total",ordem:1,titulo:"ratificacao",valor:18},{bloco:"decisao_total",ordem:2,titulo:"escolha_em_card",valor:3},
-      {bloco:"decisao",ordem:1,titulo:"Reforma da Padaria Central: mandar o orçamento revisado com prazo maior",detalhe:"escolha_em_card",frente:"11-consultoria",quando:dd(-1)},
-      {bloco:"decisao",ordem:2,titulo:"Acordo da cobrança: parcelado com entrada",detalhe:"escolha_em_card",frente:"05-cobranca",quando:dd(-3)},
-      {bloco:"plano",ordem:1,titulo:"Rotina sugere, o dono aceita",dono:"automacao",quando:dd(3)},
-      {bloco:"plano",ordem:2,titulo:"Conciliar o caixa de obra em cada marco",dono:"claude",detalhe:"atrasado",quando:dd(-1)},
-      {bloco:"cards",ordem:1,titulo:"cards",valor:7,detalhe:"1",dono:"igor"}],
-    /* p4.55 (p109): funil da demonstracao; as pecas prontas sao as da Mesa de exemplo (701, 702, 706) */
-    funil:[{elo:"pronta",ordem:1,origem:"mesa",ref:"701",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",frente_slug:"11-consultoria",valor_rs:180000,margem_rs:180000,desde:dd(-5),idade_d:5,detalhe:"enviar"},
-      {elo:"pronta",ordem:1,origem:"mesa",ref:"706",titulo:"Laudo de vistoria da Clínica Horizonte v02",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-3),idade_d:3,detalhe:"entregar"},
-      {elo:"pronta",ordem:1,origem:"mesa",ref:"702",titulo:"Boletim de medição 7 com a memória de cálculo",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-1),idade_d:1,detalhe:"assinar"},
-      {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-02",titulo:"Proposta para a Escola Girassol",frente_slug:"11-consultoria",valor_rs:26000,margem_rs:null,desde:dd(-34),idade_d:34,detalhe:"participacao a definir"},
-      {elo:"enviada",ordem:2,origem:"proposta",ref:"PC-01",titulo:"Orçamento da reforma da Padaria Central",frente_slug:"11-consultoria",valor_rs:42000,margem_rs:42000,desde:dd(-12),idade_d:12,detalhe:null},
-      {elo:"aceita",ordem:3,origem:"fluxo",ref:"601",titulo:"Saldo do laudo estrutural do Edifício Ipê",frente_slug:"11-consultoria",valor_rs:6500,margem_rs:6500,desde:dd(-40),idade_d:40,detalhe:"confirmado"},
-      {elo:"aceita",ordem:3,origem:"fluxo",ref:"603",titulo:"Medição 7 do contrato de engenharia",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-20),idade_d:20,detalhe:"confirmado"},
-      {elo:"aceita",ordem:3,origem:"fluxo",ref:"502",titulo:"2ª parcela do laudo da Clínica Horizonte",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-15),idade_d:15,detalhe:"incerto"},
-      {elo:"paga",ordem:4,origem:"fluxo",ref:"590",titulo:"1ª parcela do laudo da Clínica Horizonte",frente_slug:"11-consultoria",valor_rs:9400,margem_rs:9400,desde:dd(-6),idade_d:6,detalhe:"recebido"},
-      {elo:"paga",ordem:4,origem:"fluxo",ref:"591",titulo:"Medição 6 do contrato de engenharia",frente_slug:"20-contrato-pj",valor_rs:12000,margem_rs:12000,desde:dd(-20),idade_d:20,detalhe:"recebido"}],
-    /* p4.48 (p167 e5): plano mestre de exemplo; so aparece na folha, fora da medida do canone */
-    plm:[{id:901,etapa:"E1",etapa_nome:"Fila e aceite",titulo:"Rotina sugere, o dono aceita",dono:"automacao",prazo:dd(3),dias_para_prazo:3,atrasado:false},
-      {id:902,etapa:"E2",etapa_nome:"Painel que age",titulo:"Enviar pelo painel com anexo",dono:"automacao",prazo:dd(12),dias_para_prazo:12,atrasado:false},
-      {id:903,etapa:"avulso",etapa_nome:"Itens avulsos",titulo:"Conciliar o caixa de obra em cada marco",dono:"claude",prazo:dd(-1),dias_para_prazo:-1,atrasado:true}],
-    /* p4.61 (p155): aviso de exemplo: a rotina nao mexeu no card do check-in porque o dono mexeu nele */
-    aviso:[{origem:"tarefa",ref:"303",dia:dd(-1),n:1,motivo:"card tocado pelo dono nos ultimos 7 dias",campos:"prazo",ultimo_em:dd(-1)}],
-    vesp:[{origem:"tarefa",ref:"303",frente:"08-startup",titulo:"Fazer o check-in semanal de três linhas com o sócio",prazo:dd(1),vesp_id:"319"},
-      {origem:"tarefa",ref:"304",frente:"04-obra-residencial",titulo:"Aprovar a troca do revestimento da área gourmet",prazo:dd(1),vesp_id:"319"}], est:[{sessoes_7d:40,mem_7d:22,pct:55,teto:25,acima:true,frente:"00-sistema"}],
-    cob3:[{origem:"tarefa",ref:"307",frente:"20-contrato-pj",titulo:"Cobrar da fiscalização a resposta ao pedido de reajuste",terceiro:"Fiscalização de exemplo",retorno_esperado:dd(-2),dias:2,
-      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(-2).slice(8,10)+"/"+dd(-2).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."},
-      {origem:"tarefa",ref:"312",frente:"04-obra-residencial",titulo:"Receber da gráfica o orçamento das placas da obra",terceiro:"Gráfica de exemplo",retorno_esperado:dd(0),dias:0,
-      rascunho:"Bom dia! Passando para saber do retorno que combinamos para "+dd(0).slice(8,10)+"/"+dd(0).slice(5,7)+". Consegue me dar uma posição até "+dd(1).slice(8,10)+"/"+dd(1).slice(5,7)+"? Obrigado."}]};
-  const ap=(id,o)=>Object.assign({id,copia:null,novo:false,adiado_ate:null,tarefa:null,fecha_tarefa:false,peca:"pecas/"+id+"/peca-ficticia.pdf"},o);
+    semana, funil:P.funil, plm:P.plm, aviso:P.aviso, vesp:P.vesp, est:P.est, cob3:P.cob3};
   const mes=dd(-new Date().getDate()).slice(0,7);
-  const mesa={em_jogo:0,horas_mes:31.5,decididas_hoje:2,producao_hoje:{A_AGIR:2,B_FEITO:1,C_SISTEMA:3,D_DEMAIS:0},
-    estoque:[
-      ap(701,{tarefa:301,fecha_tarefa:false,frente:"11-consultoria",titulo:"Proposta comercial v03 para a Construtora Aurora (reforma da sede)",ato:"enviar",dest:"Construtora Aurora",canal:"gmail",rs:180000,dias:5,motivo:"Pronta desde sexta; falta a sua ligação antes de sair."}),
-      ap(703,{tarefa:305,fecha_tarefa:false,frente:"05-cobranca",titulo:"Contraproposta do acordo em 6 parcelas",ato:"decidir",dest:"Advogado da cobrança",canal:"gmail",rs:48000,dias:9,motivo:"Escolha entre 6 parcelas com entrada ou 10 sem entrada."}),
-      ap(702,{tarefa:302,fecha_tarefa:true,frente:"20-contrato-pj",titulo:"Boletim de medição 7 com a memória de cálculo",ato:"assinar",dest:"Fiscalização do contrato",canal:"protocolo",rs:12000,dias:1,motivo:"Falta a sua assinatura para protocolar."}),
-      ap(706,{frente:"11-consultoria",titulo:"Laudo de vistoria da Clínica Horizonte v02",ato:"entregar",dest:"Clínica Horizonte",canal:"em_maos",rs:9400,dias:3,motivo:"Impresso e assinado; falta entregar na visita de quinta."}),
-      ap(704,{tarefa:304,fecha_tarefa:true,frente:"04-obra-residencial",titulo:"Aditivo de troca do revestimento da área gourmet",ato:"aprovar",dest:"Cliente da obra",canal:"whatsapp",rs:3200,dias:0,novo:true,motivo:"O cliente escolheu o porcelanato; o aditivo cobre a diferença."}),
-      ap(707,{frente:"07-financas-pf",titulo:"Planilha do imposto do mês",ato:"decidir",rs:null,dias:0,novo:true,motivo:"Confirme as duas despesas médicas antes de fechar."}),
-      ap(705,{frente:"08-startup",titulo:"Relatório mensal aos sócios",ato:"ler",rs:null,dias:2,motivo:"Leitura de 5 minutos; nada a assinar."}),
-      ap(708,{frente:"00-sistema",titulo:"Proposta de ajuste da rotina de backup",ato:"aprovar",rs:null,dias:12,adiado_ate:dd(2),motivo:"Troca o horário do backup para depois do fechamento do dia."})],
-    saiu_hoje:[{id:690,titulo:"Ofício de pedido de reajuste",dest:"Fiscalização do contrato",prova:"documental"}],
-    valor_hora:{janela:"30 dias",recebido:21800,horas:96.5,por_hora:225.91,piso:80,teto:400},
+  const mesa=Object.assign({em_jogo:0},P.mesa,{
     relatorios:[
       {tipo:"dia",alvo:dd(-1),versao:"01",titulo:"Fechamento do dia",path:"demo/dia-1.pdf",anteriores:[]},
       {tipo:"dia",alvo:dd(-2),versao:"02",titulo:"Fechamento do dia",path:"demo/dia-2-v02.pdf",anteriores:[{versao:"01",path:"demo/dia-2-v01.pdf"}]},
@@ -882,29 +1126,16 @@ function demoBase(){
       {tipo:"mes",alvo:mes,versao:"01",titulo:"Fechamento do mês",path:"demo/mes.pdf",anteriores:[]},
       {tipo:"estoque",alvo:dd(-4),versao:"01",titulo:"Estoque parado",path:"demo/estoque.pdf",anteriores:[]}],
     fechamentos:[{dia:dd(-2),ciente_em:new Date(Date.now()-2*864e5+3*36e5).toISOString(),pendentes:2,adiadas:1,decididas:7},
-      {dia:dd(-3),ciente_em:new Date(Date.now()-3*864e5+3*36e5).toISOString(),pendentes:0,adiadas:0,decididas:5}]};
+      {dia:dd(-3),ciente_em:new Date(Date.now()-3*864e5+3*36e5).toISOString(),pendentes:0,adiadas:0,decididas:5}]});
   /* p4.66 (pi 179): a ficha de presidente (blocos A a E) existe para TODA frente de exemplo, no formato de v_frente_ficha
      (a visao antiga do socio mais frente_slug). O bloco C fica vazio de proposito: mostra "nada aqui". */
-  const BLOCOS=["","A · SO O PRESIDENTE DECIDE","B · TERCEIRO ESPERANDO OU ME DEVENDO","C · ENTREGUE, ESPERA SUA PALAVRA","D · DINHEIRO DA FRENTE","E · NUMEROS"];
-  const b4=(ordem,ref,item,detalhe,dia,dias_parado,recomendacao)=>({frente_slug:"08-startup",ordem,bloco:BLOCOS[ordem],ref,item,detalhe,prazo:dia==null?null:dd(dia),dias_parado,recomendacao});
-  const socio4=[
-    b4(1,"D41","Fechar o preço do plano anual do primeiro cliente","O sócio propôs 15% de desconto para pagamento à vista e espera a sua palavra até sexta",null,6,"decisão aberta na frente: ratifique ou retifique"),
-    b4(1,"t308","Revisar o contrato do primeiro cliente pagante","ato seu",5,-5,"decida na data"),
-    b4(2,"t320","Receber do contador a minuta da alteração contratual","Escritório Contábil Exemplo",-3,3,"quem deve a próxima resposta: o terceiro"),
-    b4(4,"receber","Primeira mensalidade do cliente piloto","R$ 2.400,00 (sua parte) · status previsto",7,-7,"proposta enviada não é contrato: só conta após aceite e pagamento"),
-    b4(4,"pagar","Hospedagem do servidor de testes","R$ 180,00 (sua parte) · status confirmado",2,-2,"confira no extrato")];
   /* os numeros do bloco E nascem da arvore e do inventario de exemplo; as frentes do contrato e da consultoria ganham duas linhas */
   const fichaE=arv.filter(a=>a.nivel===1).flatMap(a=>{ const ab=inv.filter(t=>t.frente===a.no&&t.status!=="feita"), ve=ab.filter(t=>t.prazo&&t.prazo<dd(0)).length;
     const e=(ref,item,detalhe)=>({frente_slug:a.no,ordem:5,bloco:BLOCOS[5],ref,item,detalhe:String(detalhe),prazo:null,dias_parado:null,recomendacao:null});
     return [e("margem_30d","Margem em 30 dias",a.margem_30d>0?"R$ "+Math.round(a.margem_30d).toLocaleString("pt-BR"):"sem margem"),e("cards_abertos","Cards abertos",ab.length),e("cards_vencidos","Cards vencidos",ve)]; });
-  const ficha=socio4.concat(fichaE,[
-    {frente_slug:"11-consultoria",ordem:1,bloco:BLOCOS[1],ref:"t312",item:"Decidir se mantém a proposta para a Escola Girassol",detalhe:"ato seu",prazo:null,dias_parado:34,recomendacao:"decida na data"},
-    {frente_slug:"20-contrato-pj",ordem:2,bloco:BLOCOS[2],ref:"t307",item:"Cobrar da fiscalização a resposta ao pedido de reajuste",detalhe:"Fiscalização de exemplo",prazo:dd(-2),dias_parado:12,recomendacao:"quem deve a próxima resposta: o terceiro"}]);
+  const ficha=P.socio.concat(fichaE,P.fichaExtra);
   /* p4.66 (pi 177): caixa por entidade de exemplo. Tres entidades inventadas; so a PF paga o custo de vida; a Empresa B
      abre apertada e a PF cobre as semanas negativas do pior caso. Refeito a cada carga, como o consolidado. */
-  const ENT_DEMO={"07-financas-pf":"PF","00-sistema":"PF","11-consultoria":"Alfa","04-obra-residencial":"Alfa","20-contrato-pj":"Beta","05-cobranca":"Beta","08-startup":"Beta"};
-  const INI={"PF":6200,"Alfa":29000,"Beta":3000};
-  const FIN_TXT={"PF":null,"Alfa":"Gera caixa à PF","Beta":"Consome da PF"};
   const caixaEnt=its=>{
     const cent=v=>Math.round(v*100)/100, cxe=[], rwe=[], ate=dd(30);
     Object.keys(INI).forEach(n=>{ let acum=INI[n], acumP=INI[n]; const cv=n==="PF"?CVS:0, mine=its.filter(x=>ENT_DEMO[x.frente_slug]===n);
@@ -920,45 +1151,17 @@ function demoBase(){
         queima_dia_pior:Math.round(saida/30*100)/100,financiamento:FIN_TXT[n],nota:null}); });
     return {cxe,rwe};
   };
-  /* p4.66 (pi 178): unidades de exemplo (o organograma); a frente aponta a unidade pelo slug */
-  const uni=[{slug:"obras-laudos",nome:"Obras",tipo:"negocio",entidade:"Alfa",dono:"igor",ratificada_em:dd(-9)},
-    {slug:"startup",nome:"Startup",tipo:"negocio",entidade:"Beta",dono:"sócio",ratificada_em:dd(-9)},
-    {slug:"apoio-sistema",nome:"Sistema",tipo:"apoio",entidade:"Alfa",dono:"claude",ratificada_em:dd(-9)},
-    {slug:"vida-pessoal",nome:"Vida",tipo:"vida",entidade:"PF",dono:"igor",ratificada_em:dd(-9)}];
-  const UNI_DEMO={"11-consultoria":"obras-laudos","04-obra-residencial":"obras-laudos","20-contrato-pj":"obras-laudos","05-cobranca":"obras-laudos","08-startup":"startup","00-sistema":"apoio-sistema","07-financas-pf":"vida-pessoal"};
   /* p4.66 (pi 180): a regra de gestao de exemplo, no formato de v_parametro_gestao */
   const pgl=(chave,rotulo,valor,unidade)=>({chave,rotulo,valor,fonte:"banco",padrao:valor,unidade,dono:"igor",desde:dd(-9)});
   const pg=[pgl("caixa.meta_dias","Meta de caixa",90,"dias"),pgl("caixa.alerta_dias","Alerta de caixa",30,"dias"),pgl("idade.parado_dias","Card parado",7,"dias"),
     pgl("wip.teto_hoje","Teto de Hoje",5,"cards"),pgl("fila.teto_novos_dia","Teto de cards novos por dia",8,"cards"),pgl("semana.teto_numeros","Teto de números da Semana",14,"números")];
-  /* p4.66 (pi 181 e 182): uma questao, um bloqueio e uma trava de exemplo, o minimo para a tela ter o que mostrar */
-  const quest=[{id:1,ordem:1,top3:true,titulo:"Quem fecha o preço?",detalhe:"O cliente piloto pediu desconto e a consultoria quer o mesmo critério.",estado:"aberta",dono:"igor",prioridade:1,
-    de_frente:"08-startup",de_nome:"Startup",para_frente:"11-consultoria",para_nome:"Consultoria",criada_em:agoraMenos(72),idade_dias:3}];
-  const bloq=[{tarefa_id:316,frente_slug:"11-consultoria",titulo:"Atualizar o portfólio com as três obras do ano",dono:"igor",prazo:dd(0),status:"pendente",n_bloqueios:1,
-    rotulo:"bloqueado por Startup",frentes_bloqueadoras:["08-startup"],entre_frentes:true,bloqueado_por:[{frente_slug:"08-startup",titulo:"Fechar o preço do plano anual do primeiro cliente"}]}];
-  const trava=[{frente_slug:"08-startup",nome:"Startup",n_cards_travados:1,n_cards_meus:3,frentes_travadas:["11-consultoria"],
-    itens:[{tarefa_id:316,titulo:"Atualizar o portfólio com as três obras do ano",frente_slug:"11-consultoria"}]}];
-  /* p4.68 (pi 183): prestacao do executor de exemplo, numeros inventados */
-  const exec=[{abertos:12,vencidos:1,esperando:2,feitos_7d:34,rotinas:20,rotinas_no_slo:18,estouradas:[],
-    ultimos:[{id:9001,frente:"11-consultoria",titulo:"Conferir extrato do mês",em:agoraMenos(5)},{id:9002,frente:"08-startup",titulo:"Revisar a lista de pendências",em:agoraMenos(20)},
-      {id:9003,frente:"20-contrato-pj",titulo:"Organizar os comprovantes da semana",em:agoraMenos(30)}]}];
   /* p4.69 (onda 4): pauta, prioridades, folha mes e vida de exemplo, numeros inventados */
-  const mesDe=k=>{ const x=new Date(new Date().getFullYear(),new Date().getMonth()-k,1); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-01"; };
   const l10=[["abertura",2,null,null,"uma boa notícia pessoal e uma do negócio"],["numeros",5,"6",1,"números do placar; alerta = fora da meta"],["prioridades",4,"3",1,"1 no prumo, 1 fora"],
     ["manchetes",2,"9",null,"decisões dos últimos 7 dias"],["afazeres",3,"7",null,"cards seus e itens do plano com prazo em 7 dias"],["ids",12,"1",null,"questões abertas entre as unidades"],["conclusao",2,null,1,"fechar grava os minutos da revisão"]]
     .map(([segmento,min_alvo,valor,alerta,resumo],i)=>({ordem:i+1,segmento,min_alvo,valor,alerta,resumo}));
-  const prio=[{unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",trimestre:"2026T4",ativas:3,no_prumo:2,fora:1,feitas:0,alerta:null,revisada:false,itens:[{titulo:"Fechar o contrato piloto"}]},
-    {unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",trimestre:"2026T4",ativas:0,no_prumo:0,fora:0,feitas:0,alerta:"sem prioridade",revisada:false,itens:[]}];
-  const dreL=(mes,sit)=>[{mes,unidade:"obras-laudos",unidade_nome:"Obras",tipo:"negocio",entidade:"Alfa",receita:12000,custo_direto:3000,margem_dono:9000,horas:40,rs_hora:225,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"na faixa",situacao:sit,fechado_em:null},
-    {mes,unidade:"startup",unidade_nome:"Startup",tipo:"negocio",entidade:"Beta",receita:0,custo_direto:0,margem_dono:0,horas:0.4,rs_hora:0,piso_rs_hora:60,teto_rs_hora:480,zona_hora:"abaixo do piso",situacao:sit,fechado_em:null}];
-  const dre=dreL(mesDe(0),"mes corrente").concat(dreL(mesDe(1),"atrasado: fechar"));
-  const vida=[["vida-pessoal","Vida de exemplo"],["bem-estar","Bem-estar de exemplo"]].map(([frente,frente_nome])=>({frente,frente_nome,rotulo:null,unidade:null,direcao:null,meta:null,valor:null,medido_em:null,valor_anterior:null,estado:"sem numero"}));
+  const {uni,quest,bloq,trava,exec,prio,dre,vida,sem}=P;
   Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava,exec,l10,prio,dre,vida});
-  /* p4.46 (plano 108): 8 semanas de margem realizada por frente; na consultoria a janela de 4 semanas caiu (2.500 entrou, 3.000 saiu) */
-  const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
-  const sem=[sm("11-consultoria",[4000,0,9500,3000,0,12000,2500,0],1,34),sm("20-contrato-pj",[0,12000,0,0,0,12000,0,0],0,9),
-    sm("04-obra-residencial",[0,-1800,0,2400,0,0,3400,0],0,12),sm("08-startup",[0,0,0,0,-900,0,1200,0],0,18),
-    sm("05-cobranca",[0,0,0,0,0,0,0,0],0,22),sm("07-financas-pf",[-2500,0,-2500,0,-2500,0,-2500,0],0,5),sm("00-sistema",[0,0,0,0,0,0,0,0],0,22)];
-  return {dados,inv,arv,mesa,dd,caixa,caixaEnt,sem,unidadeDe:UNI_DEMO};
+  return {dados,inv,arv,mesa,dd,caixa,caixaEnt,sem,unidadeDe:P.UNI_DEMO,ent:ENT_DEMO,checkin:P.checkin};
 }
 function demoCliente(){
   let db=null; const B=()=>db||(db=demoBase());
@@ -994,10 +1197,7 @@ function demoCliente(){
     painel_atos_recentes:()=>copia(B().atos||[]),
     painel_desfazer:a=>{ const x=(B().atos||[]).find(y=>+y.acao_id===+a.p_acao_id); if(!x||!x.pode)return "RECUSADO: ja desfeito.";
       x.pode=false; x.motivo="ja desfeito"; return "OK: desfeito "+x.verbo+" (demonstração)"; },
-    painel_checkin:()=>{ const d=B().dd, dm=x=>x.slice(8,10)+"/"+x.slice(5,7);
-      return "Check-in Startup · seg "+dm(d(1))+"\n1. Fiz: Enviar a ata da reunião de exemplo; Conferir o saldo da conta de exemplo"+
-        "\n2. Vou fazer: Fazer o check-in semanal de três linhas com o sócio ("+dm(d(1))+"); Revisar a proposta de exemplo ("+dm(d(3))+")"+
-        "\n3. Travado / preciso de você: Validar a planilha de exemplo — com Sócio de exemplo, retorno era "+dm(d(-2)); },
+    painel_checkin:()=>{ const b=B(), dm=x=>x.slice(8,10)+"/"+x.slice(5,7); return b.checkin(b.dd,dm); },
     /* p4.67 (pi 181): questoes de exemplo; criar, resolver (vira card em b.inv) e descartar mexem so na memoria desta pagina */
     questao_criar:a=>{ const b=B(), q=b.dados.quest, nm=s=>{ const n=b.arv.find(x=>x.no===s); return n?n.rotulo:s; };
       const dup=q.find(x=>x.de_frente===a.p_de_frente&&x.para_frente===a.p_para_frente&&x.titulo===a.p_titulo);
@@ -1053,7 +1253,7 @@ function demoCliente(){
     '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
   return {
     rpc:(n,a)=>{ if(!RPC[n])return ok(null); try{ return ok(RPC[n](a||{})); }catch(e){ return Promise.resolve({data:null,error:{message:e.message}}); } },
-    from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:/^0[07]-/.test(n.no)?"PF":"PJ",unidade:B().unidadeDe[n.no]||null})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):[]),
+    from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:B().ent[n.no]==="PF"?"PF":"PJ",unidade:B().unidadeDe[n.no]||null})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):[]),
     channel:()=>{const ch={on:()=>ch,subscribe:cb=>{if(cb)cb("SUBSCRIBED");return ch;},unsubscribe:()=>ok(null)};return ch;},
     removeChannel:()=>ok(null),
     storage:{from:()=>({createSignedUrl:(p,s)=>ok({signedUrl:arquivo(p,s)}),upload:p=>ok({path:p})})},
@@ -1239,7 +1439,7 @@ const semNumero=t=>String(t||"").replace(/^\d+\s+/,"");
    no document e despacha para ACOES, a lista fechada do que a tela faz: nome fora dela nao roda.
    Sem JavaScript dentro de atributo, escAttr deixa de ser preciso aqui e o unsafe-inline pode sair. */
 const ACOES={
-  telaAlternar:()=>telaAlternar(),entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msEnviarWhats:()=>msEnviarWhats(),msCompartilhar:()=>msCompartilhar(),envioNaoSaiu:()=>envioNaoSaiu(),envioCobrei:el=>envioCobrei(el.dataset.a1),
+  telaAlternar:()=>telaAlternar(),entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),demoPerfil:el=>demoPerfil(+el.dataset.p),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msEnviarWhats:()=>msEnviarWhats(),msCompartilhar:()=>msCompartilhar(),envioNaoSaiu:()=>envioNaoSaiu(),envioCobrei:el=>envioCobrei(el.dataset.a1),
   fatorDigitou:el=>{el.value=el.value.replace(/\D/g,"").slice(0,6);if(el.value.length===6)entrarFator();},
   fatorEnter:(el,ev)=>{if(ev.key==="Enter")entrarFator();},
   demoEntrar:()=>demoEntrar(), avisoAtivar:()=>avisoAtivar(), recarregar:()=>carregar(true), buscar:el=>buscar(el.value),
