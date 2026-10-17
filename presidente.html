@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-S7co+XF6cUs8VnHkxLNZMDyzS2yqYgP8Xvq9Qf9CO/8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-bOIUxVoLo+MlEEYI4GbP787FCF7M9bqW2HCIDtnR2Mg=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -465,6 +465,29 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 .d4resto[hidden]{display:none}
 .d4resto>.d4i:first-child{border-top:1px solid var(--line2)}
 .d4l>.d4i:has(+.d4resto[hidden]){border-bottom:0}
+/* p4.66 (onda 2 do canone v02, pi 177-182, s6857): caixa por entidade, frentes por unidade, ficha padrao, questoes e bloqueios */
+.cxe{display:flex;flex-direction:column;gap:6px}
+.cxe-l{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:4px 12px;align-items:center;min-height:56px;padding:8px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.cxe-l .t{min-width:0}
+.cxe-l .t b{font-weight:600}
+.cxe-l .t small{display:block;color:var(--mut);font-size:var(--fs-2);overflow-wrap:anywhere}
+.cxe-l .t small.w,.cxe-l .dias.w{color:var(--warn)}
+.cxe-l svg{display:block;width:132px;height:36px}
+.cxe-l .zero{stroke:var(--mut);stroke-width:1}
+.cxe-l .pior{fill:none;stroke:var(--acc);stroke-width:2}
+.cxe-l .base{fill:none;stroke:var(--mut);stroke-width:1.5;stroke-dasharray:3 2}
+.cxe-l .fin{fill:var(--warn)}
+.un{display:flex;align-items:baseline;gap:8px;margin:10px 0 0;font-size:var(--fs-3);font-weight:600;color:var(--ink2)}
+.un small{color:var(--mut);font-weight:400;font-size:var(--fs-2)}
+.un .r{margin-left:auto;font-family:var(--mono);font-size:var(--fs-2);font-weight:400;color:var(--acc);white-space:nowrap}
+.un.pend{color:var(--warn)}
+.fi-sec{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fi-sec .rot{margin:0;font-size:var(--fs-2);font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);overflow-wrap:anywhere}
+.d4e{display:flex;justify-content:space-between;gap:12px;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line2);font-size:var(--fs-2);min-width:0}
+.d4e:last-child{border-bottom:0}
+.d4e b{font-family:var(--mono);font-weight:600;color:var(--ink2);text-align:right;overflow-wrap:anywhere}
+.fi-cards summary{min-height:44px;display:flex;align-items:center;font-size:var(--fs-2);color:var(--mut)}
+.bloq{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -576,12 +599,13 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
       <section class="pane" id="p-caixa" aria-label="Caixa">
         <div class="grande" id="caixaTopo"></div>
         <div class="bloco"><span class="rot">Saldo no fim de cada semana, próximas 13</span><div class="semanas" id="semanas"></div></div>
+        <div class="bloco"><span class="rot">Por entidade (dias: pior / base)</span><div class="cxe" id="cxEnt"></div></div>
         <div class="pilha" id="cobrarBox"></div>
         <h2>Do pronto ao pago</h2>
         <div class="pilha" id="funil"></div>
         <h2>O que mais melhora o caixa, pela sua margem</h2>
         <div class="pilha" id="alavancas"></div>
-        <div class="rodape">Margem sua, nunca o bruto: cada lançamento entra pela sua participação. As 13 semanas e o erro da previsão estão no bastidor.</div>
+        <div class="rodape">Margem sua, nunca o bruto: cada lançamento entra pela sua participação. O erro da previsão está no bastidor.</div>
       </section>
 
       <section class="pane" id="p-frentes" aria-label="Frentes">
@@ -600,6 +624,8 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
         <div class="bloco" id="semNorte" hidden></div>
         <h2>Números da semana</h2>
         <div class="pilha" id="semNumeros"></div>
+        <h2>Questões</h2>
+        <div class="pilha" id="semQuest"></div>
         <h2>Decisões da semana</h2>
         <div class="pilha" id="semDecisoes"></div>
         <h2>Próxima semana</h2>
@@ -626,7 +652,7 @@ button.arma{outline:3px solid var(--warn);outline-offset:2px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.65";
+const VERP="p4.66";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03)
@@ -815,20 +841,67 @@ function demoBase(){
       {tipo:"estoque",alvo:dd(-4),versao:"01",titulo:"Estoque parado",path:"demo/estoque.pdf",anteriores:[]}],
     fechamentos:[{dia:dd(-2),ciente_em:new Date(Date.now()-2*864e5+3*36e5).toISOString(),pendentes:2,adiadas:1,decididas:7},
       {dia:dd(-3),ciente_em:new Date(Date.now()-3*864e5+3*36e5).toISOString(),pendentes:0,adiadas:0,decididas:5}]};
-  /* p4.38 (card 1562): os quatro blocos da frente do socio, inventados. O bloco C fica vazio de proposito: mostra "nada aqui". */
-  const b4=(ordem,ref,item,detalhe,dia,dias_parado,recomendacao)=>({ordem,bloco:" ABCD"[ordem],ref,item,detalhe,prazo:dia==null?null:dd(dia),dias_parado,recomendacao});
+  /* p4.66 (pi 179): a ficha de presidente (blocos A a E) existe para TODA frente de exemplo, no formato de v_frente_ficha
+     (a visao antiga do socio mais frente_slug). O bloco C fica vazio de proposito: mostra "nada aqui". */
+  const BLOCOS=["","A · SO O PRESIDENTE DECIDE","B · TERCEIRO ESPERANDO OU ME DEVENDO","C · ENTREGUE, ESPERA SUA PALAVRA","D · DINHEIRO DA FRENTE","E · NUMEROS"];
+  const b4=(ordem,ref,item,detalhe,dia,dias_parado,recomendacao)=>({frente_slug:"08-startup",ordem,bloco:BLOCOS[ordem],ref,item,detalhe,prazo:dia==null?null:dd(dia),dias_parado,recomendacao});
   const socio4=[
     b4(1,"D41","Fechar o preço do plano anual do primeiro cliente","O sócio propôs 15% de desconto para pagamento à vista e espera a sua palavra até sexta",null,6,"decisão aberta na frente: ratifique ou retifique"),
     b4(1,"t308","Revisar o contrato do primeiro cliente pagante","ato seu",5,-5,"decida na data"),
     b4(2,"t320","Receber do contador a minuta da alteração contratual","Escritório Contábil Exemplo",-3,3,"quem deve a próxima resposta: o terceiro"),
     b4(4,"receber","Primeira mensalidade do cliente piloto","R$ 2.400,00 (sua parte) · status previsto",7,-7,"proposta enviada não é contrato: só conta após aceite e pagamento"),
     b4(4,"pagar","Hospedagem do servidor de testes","R$ 180,00 (sua parte) · status confirmado",2,-2,"confira no extrato")];
+  /* os numeros do bloco E nascem da arvore e do inventario de exemplo; as frentes do contrato e da consultoria ganham duas linhas */
+  const fichaE=arv.filter(a=>a.nivel===1).flatMap(a=>{ const ab=inv.filter(t=>t.frente===a.no&&t.status!=="feita"), ve=ab.filter(t=>t.prazo&&t.prazo<dd(0)).length;
+    const e=(ref,item,detalhe)=>({frente_slug:a.no,ordem:5,bloco:BLOCOS[5],ref,item,detalhe:String(detalhe),prazo:null,dias_parado:null,recomendacao:null});
+    return [e("margem_30d","Margem em 30 dias",a.margem_30d>0?"R$ "+Math.round(a.margem_30d).toLocaleString("pt-BR"):"sem margem"),e("cards_abertos","Cards abertos",ab.length),e("cards_vencidos","Cards vencidos",ve)]; });
+  const ficha=socio4.concat(fichaE,[
+    {frente_slug:"11-consultoria",ordem:1,bloco:BLOCOS[1],ref:"t312",item:"Decidir se mantém a proposta para a Escola Girassol",detalhe:"ato seu",prazo:null,dias_parado:34,recomendacao:"decida na data"},
+    {frente_slug:"20-contrato-pj",ordem:2,bloco:BLOCOS[2],ref:"t307",item:"Cobrar da fiscalização a resposta ao pedido de reajuste",detalhe:"Fiscalização de exemplo",prazo:dd(-2),dias_parado:12,recomendacao:"quem deve a próxima resposta: o terceiro"}]);
+  /* p4.66 (pi 177): caixa por entidade de exemplo. Tres entidades inventadas; so a PF paga o custo de vida; a Empresa B
+     abre apertada e a PF cobre as semanas negativas do pior caso. Refeito a cada carga, como o consolidado. */
+  const ENT_DEMO={"07-financas-pf":"PF","00-sistema":"PF","11-consultoria":"Alfa","04-obra-residencial":"Alfa","20-contrato-pj":"Beta","05-cobranca":"Beta","08-startup":"Beta"};
+  const INI={"PF":6200,"Alfa":29000,"Beta":3000};
+  const FIN_TXT={"PF":null,"Alfa":"Gera caixa à PF","Beta":"Consome da PF"};
+  const caixaEnt=its=>{
+    const cent=v=>Math.round(v*100)/100, cxe=[], rwe=[], ate=dd(30);
+    Object.keys(INI).forEach(n=>{ let acum=INI[n], acumP=INI[n]; const cv=n==="PF"?CVS:0, mine=its.filter(x=>ENT_DEMO[x.frente_slug]===n);
+      for(let i=0;i<13;i++){ const w=mine.filter(x=>x.semana===i+1), soma=f=>cent(w.filter(f).reduce((t,x)=>t+x.valor_igor*pesoCx(x),0));
+        const ef=soma(x=>x.natureza==="receber"&&x.status!=="incerto"), ei=soma(x=>x.natureza==="receber"&&x.status==="incerto"),
+          sf=soma(x=>x.natureza==="pagar"&&x.status!=="incerto"), si=soma(x=>x.natureza==="pagar"&&x.status==="incerto");
+        acum=cent(acum+ef+ei-sf-si-cv); acumP=cent(acumP+ef-sf-si-cv);
+        cxe.push({entidade:n,semana:i+1,inicio:seg(i),fim:seg(i),entra_firme:ef,entra_incerta:ei,entra_incerta_ponderada:ei,sai_firme:sf,sai_incerta:si,custo_vida:cv,caixa_hoje:INI[n],
+          saldo_base:acum,saldo_pior:acumP,financiada_pela_pf_pior:n!=="PF"&&acumP<0}); }
+      const s30=f=>cent(mine.filter(x=>x.data_venc<=ate&&f(x)).reduce((t,x)=>t+x.valor_igor*(x.natureza==="receber"?pesoCx(x):1),0));
+      const saida=s30(x=>x.natureza==="pagar")+(n==="PF"?CV:0), entra=s30(x=>x.natureza==="receber");
+      rwe.push({entidade:n,caixa_hoje:INI[n],dias_caixa_pior:saida>0?Math.floor(INI[n]/(saida/30)):null,dias_caixa:saida-entra>0?Math.floor(INI[n]/((saida-entra)/30)):null,
+        queima_dia_pior:Math.round(saida/30*100)/100,financiamento:FIN_TXT[n],nota:null}); });
+    return {cxe,rwe};
+  };
+  /* p4.66 (pi 178): unidades de exemplo (o organograma); a frente aponta a unidade pelo slug */
+  const uni=[{slug:"obras-laudos",nome:"Obras",tipo:"negocio",entidade:"Alfa",dono:"igor",ratificada_em:dd(-9)},
+    {slug:"startup",nome:"Startup",tipo:"negocio",entidade:"Beta",dono:"sócio",ratificada_em:dd(-9)},
+    {slug:"apoio-sistema",nome:"Sistema",tipo:"apoio",entidade:"Alfa",dono:"claude",ratificada_em:dd(-9)},
+    {slug:"vida-pessoal",nome:"Vida",tipo:"vida",entidade:"PF",dono:"igor",ratificada_em:dd(-9)}];
+  const UNI_DEMO={"11-consultoria":"obras-laudos","04-obra-residencial":"obras-laudos","20-contrato-pj":"obras-laudos","05-cobranca":"obras-laudos","08-startup":"startup","00-sistema":"apoio-sistema","07-financas-pf":"vida-pessoal"};
+  /* p4.66 (pi 180): a regra de gestao de exemplo, no formato de v_parametro_gestao */
+  const pgl=(chave,rotulo,valor,unidade)=>({chave,rotulo,valor,fonte:"banco",padrao:valor,unidade,dono:"igor",desde:dd(-9)});
+  const pg=[pgl("caixa.meta_dias","Meta de caixa",90,"dias"),pgl("caixa.alerta_dias","Alerta de caixa",30,"dias"),pgl("idade.parado_dias","Card parado",7,"dias"),
+    pgl("wip.teto_hoje","Teto de Hoje",5,"cards"),pgl("fila.teto_novos_dia","Teto de cards novos por dia",8,"cards"),pgl("semana.teto_numeros","Teto de números da Semana",14,"números")];
+  /* p4.66 (pi 181 e 182): uma questao, um bloqueio e uma trava de exemplo, o minimo para a tela ter o que mostrar */
+  const quest=[{id:1,ordem:1,top3:true,titulo:"Quem fecha o preço?",detalhe:"O cliente piloto pediu desconto e a consultoria quer o mesmo critério.",estado:"aberta",dono:"igor",prioridade:1,
+    de_frente:"08-startup",de_nome:"Startup",para_frente:"11-consultoria",para_nome:"Consultoria",criada_em:agoraMenos(72),idade_dias:3}];
+  const bloq=[{tarefa_id:316,frente_slug:"11-consultoria",titulo:"Atualizar o portfólio com as três obras do ano",dono:"igor",prazo:dd(0),status:"pendente",n_bloqueios:1,
+    rotulo:"bloqueado por Startup",frentes_bloqueadoras:["08-startup"],entre_frentes:true,bloqueado_por:[{frente_slug:"08-startup",titulo:"Fechar o preço do plano anual do primeiro cliente"}]}];
+  const trava=[{frente_slug:"08-startup",nome:"Startup",n_cards_travados:1,n_cards_meus:3,frentes_travadas:["11-consultoria"],
+    itens:[{tarefa_id:316,titulo:"Atualizar o portfólio com as três obras do ano",frente_slug:"11-consultoria"}]}];
+  Object.assign(dados,caixaEnt(c13i),{pg,uni,ficha,quest,bloq,trava});
   /* p4.46 (plano 108): 8 semanas de margem realizada por frente; na consultoria a janela de 4 semanas caiu (2.500 entrou, 3.000 saiu) */
   const sm=(slug,semanas,vencidos,idade_d)=>({slug,semanas,vencidos,idade_d,piorou:semanas[6]<semanas[2]});
   const sem=[sm("11-consultoria",[4000,0,9500,3000,0,12000,2500,0],1,34),sm("20-contrato-pj",[0,12000,0,0,0,12000,0,0],0,9),
     sm("04-obra-residencial",[0,-1800,0,2400,0,0,3400,0],0,12),sm("08-startup",[0,0,0,0,-900,0,1200,0],0,18),
     sm("05-cobranca",[0,0,0,0,0,0,0,0],0,22),sm("07-financas-pf",[-2500,0,-2500,0,-2500,0,-2500,0],0,5),sm("00-sistema",[0,0,0,0,0,0,0,0],0,22)];
-  return {dados,inv,arv,mesa,dd,caixa,socio4,sem};
+  return {dados,inv,arv,mesa,dd,caixa,caixaEnt,sem,unidadeDe:UNI_DEMO};
 }
 function demoCliente(){
   let db=null; const B=()=>db||(db=demoBase());
@@ -842,7 +915,7 @@ function demoCliente(){
     return copia(Object.assign({},m,{hoje:h,pendentes_hoje:m.estoque.filter(p=>!p.adiado_ate).length,adiadas_hoje:m.estoque.filter(p=>p.adiado_ate).length,
       em_jogo:m.estoque.reduce((s,p)=>s+(+p.rs||0),0)})); };
   const RPC={
-    painel_carga:()=>{ const b=B(); Object.assign(b.dados,b.caixa(b.dados.c13i)); return {dados:copia(b.dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}; },
+    painel_carga:()=>{ const b=B(); Object.assign(b.dados,b.caixa(b.dados.c13i),b.caixaEnt(b.dados.c13i)); return {dados:copia(b.dados),idade_s:30,gerado_em:new Date(Date.now()-3e4).toISOString()}; },
     agir:a=>{ const o=a.p_origem, r=String(a.p_ref), v=a.p_verbo, b=B();
       if(v==="cobrar"&&o==="tarefa"){ b.dados.cob3=(b.dados.cob3||[]).filter(x=>String(x.ref)!==r); const t=b.inv.find(x=>String(x.id)===r); if(t)t.parado_dias=0; }
       else if(["feita","fechar","pago","recebido","confirmado","arquivar","cobrar"].includes(v))tirar(o,r);
@@ -900,7 +973,7 @@ function demoCliente(){
     '<p style="color:#444">'+String(p).replace(/[<>&"]/g,"")+'</p></body>'],{type:"text/html"}));
   return {
     rpc:(n,a)=>ok(RPC[n]?RPC[n](a||{}):null),
-    from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:/^0[07]-/.test(n.no)?"PF":"PJ"})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):v===VISAO_4B?copia(B().socio4):[]),
+    from:v=>consulta(v==="frente"?B().arv.filter(n=>n.nivel===1).map(n=>({slug:n.no,entidade:/^0[07]-/.test(n.no)?"PF":"PJ",unidade:B().unidadeDe[n.no]||null})):v==="v_inventario_frente"?copia(B().inv):v==="v_arvore_caixa"?copia(B().arv):v==="v_frente_semanas"?copia(B().sem):[]),
     channel:()=>{const ch={on:()=>ch,subscribe:cb=>{if(cb)cb("SUBSCRIBED");return ch;},unsubscribe:()=>ok(null)};return ch;},
     removeChannel:()=>ok(null),
     storage:{from:()=>({createSignedUrl:(p,s)=>ok({signedUrl:arquivo(p,s)}),upload:p=>ok({path:p})})},
@@ -911,10 +984,8 @@ function demoCliente(){
 }
 /* fim modulo:demo */
 const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
-/* p4.38 (card 1562, s1322, 09/10/2026; desenho do Igor de 02/10): a frente do socio abre em quatro blocos de presidente,
-   lidos de v_dabli_presidente, no lugar da lista generica de cards (substitui, nao soma). As outras frentes seguem iguais.
-   Na demonstracao, a frente ficticia do socio faz o papel, com os blocos inventados no modulo:demo. */
-const FRENTE_4B=DEMO?"08-startup":"08-dabli-tech", VISAO_4B="v_dabli_presidente";
+/* p4.66 (pi 179): a ficha de presidente (blocos A a E) vale para toda frente e vem da chave ficha (v_frente_ficha) do
+   painel_carga. Saiu o caso especial da frente do socio (FRENTE_4B e a leitura direta de v_dabli_presidente). */
 /* So as chaves que esta tela desenha. c13 e c13i entram no p2 para as 13 semanas e o "a cobrar".
    exp entra no p4.1: a tarefa vencida ou de hoje que o banco deixou no segundo plano sobe para Hoje,
    pela mesma regra do index.html (bloco comum:hoje abaixo).
@@ -924,7 +995,11 @@ const FRENTE_4B=DEMO?"08-startup":"08-dabli-tech", VISAO_4B="v_dabli_presidente"
    vesp entra no p4.35 (plano 68): v_painel_vespera, os cards de amanha enquanto a pergunta da vespera esta aberta.
    band entra no p4.42 (p127, s1898): v_bandeja_presidente, o tipo da bandeja por card (PRONTO, DECISAO). Era so do
    index.html, que deixa de decidir; os atos da peca pronta e o recusar vem para ca. */
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso"];
+/* p4.66 (onda 2 do canone v02, pi 177-182, s6857): pg (v_parametro_gestao: a regra de gestao vem do banco), cxe e rwe
+   (caixa e runway por entidade), uni (unidade), ficha (v_frente_ficha), quest (v_questao_aberta), bloq (v_card_bloqueado)
+   e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte. */
+const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava"];
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso"].concat(CHAVES_ONDA2);
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -978,6 +1053,15 @@ async function conferirFator(factorId,code){
 const comTetoR=(b,ms,rotulo)=>comTeto(b,ms,rotulo).catch(e=>({data:null,
   error:{message:ehTeto(e)?"sem resposta do banco em "+ms/1000+" s":(e&&e.message)||"falha de rede",teto:ehTeto(e)}}));
 const D={}; let INV=null, ARV=null, SEM=null, ABA="hoje", COL="semana", PEND=null, F=null, IDADE=0;
+/* p4.66 (pi 180, achado 6 do canone v02): a regra de gestao (meta de caixa, alerta, parado, tetos) mora no banco
+   (v_parametro_gestao, chave pg do painel_carga) e a tela le dali. Sem a linha, ou com valor que nao e numero, vale o
+   numero que estava fixo no codigo: a tela nunca fica sem regra. */
+function param(chave,padrao){
+  const r=(Array.isArray(D.pg)?D.pg:[]).find(x=>x&&x.chave===chave);
+  const v=r&&r.valor!=null&&String(r.valor).trim()!==""?Number(r.valor):NaN;
+  return Number.isFinite(v)?v:padrao;
+}
+const paradoDias=()=>param("idade.parado_dias",7);
 /* p4.65 (pi 172, achado 3 do canone v02, LC-01): o painel de tudo veste a marca Dabli e o Igor escolheu mantê-la; a
    salvaguarda do muro vira obrigatória. Modo tela compartilhada (botão no topo ou ?tela=compartilhada): some a frente PF
    (pessoal e vida), some o caixa consolidado (rw, c13, c13i, var7, a aba Caixa e todo número "caixa.") e todo valor em R$
@@ -987,19 +1071,22 @@ const D={}; let INV=null, ARV=null, SEM=null, ABA="hoje", COL="semana", PEND=nul
 const TELA_CHAVE="cerebro.tela";
 let TELA=(()=>{ try{ if(new URL(location.href).searchParams.get("tela")==="compartilhada")sessionStorage.setItem(TELA_CHAVE,"1");
   return sessionStorage.getItem(TELA_CHAVE)==="1"; }catch(e){ return /[?&]tela=compartilhada\b/.test(location.search); } })();
-let ENT=null, ENT_FALHOU=false;
-const SLUG_FRENTE=/^\d{2}-[a-z0-9-]+$/, CAMPOS_FRENTE=["frente","frente_slug","slug","no"];
-const CHAVES_CAIXA=new Set(["rw","c13","c13i","var7"]);
-const privada=s=>{ s=String(s==null?"":s); return SLUG_FRENTE.test(s)&&(!ENT||!ENT[s]||ENT[s]==="PF"); };
+let ENT=null, ENT_FALHOU=false, UNID=null, UNI_TIPO={};
+const SLUG_FRENTE=/^\d{2}-[a-z0-9-]+$/, CAMPOS_FRENTE=["frente","frente_slug","slug","no","de_frente","para_frente"];
+const CHAVES_CAIXA=new Set(["rw","c13","c13i","var7","cxe","rwe"]);
+/* p4.66 (pi 178): frente de unidade tipo "vida" e privada como a PF; a unidade vem de frente.unidade (UNID) e o tipo de uni (UNI_TIPO) */
+const privada=s=>{ s=String(s==null?"":s); return SLUG_FRENTE.test(s)&&(!ENT||!ENT[s]||ENT[s]==="PF"||(!!UNID&&UNI_TIPO[UNID[s]]==="vida")); };
+const privadaLista=v=>Array.isArray(v)&&v.some(privada);
 const doCaixa=x=>["chave","ref","metrica"].some(k=>/^caixa\./.test(String(x[k]||"")))||x.bloco==="caixa";
-const aVista=x=>!x||typeof x!=="object"||!(CAMPOS_FRENTE.some(k=>privada(x[k]))||doCaixa(x));
+const aVista=x=>!x||typeof x!=="object"||!(CAMPOS_FRENTE.some(k=>privada(x[k]))||doCaixa(x)||x.tipo==="vida"||x.entidade==="PF"||privadaLista(x.frentes_bloqueadoras)||privadaLista(x.frentes_travadas));
 const veu=v=>!TELA||!Array.isArray(v)?v:v.filter(aVista).map(x=>x&&typeof x==="object"&&"valor_txt" in x?{...x,valor_txt:null}:x);
 function veuObj(o){ if(!TELA||!o||typeof o!=="object")return o; const r={};
   for(const k of Object.keys(o)) r[k]=CHAVES_CAIXA.has(k)?[]:veu(o[k]); return r; }
 async function carregarEnt(){
-  let r; try{ r=await comTetoR(sb.from("frente").select("slug,entidade"),LIMITE_RECARGA,"frente"); }catch(e){ r={error:e}; }
+  let r; try{ r=await comTetoR(sb.from("frente").select("slug,entidade,unidade"),LIMITE_RECARGA,"frente"); }catch(e){ r={error:e}; }
   ENT_FALHOU=!!r.error||!Array.isArray(r.data);
   ENT=ENT_FALHOU?{}:Object.fromEntries(r.data.map(f=>[f.slug,f.entidade]));
+  UNID=ENT_FALHOU?{}:Object.fromEntries(r.data.map(f=>[f.slug,f.unidade||null]));
 }
 /* R$ some no texto, nao no formatador: rs mora no bloco comum:escapa (igual byte a byte no index.html). O observador roda
    antes da pintura (microtarefa), entao o valor nunca chega a tela; cobre folha, toast e aba que ainda nao existem. */
@@ -1027,7 +1114,7 @@ async function telaAlternar(){
   if(ENT_FALHOU){ ENT=null; ENT_FALHOU=false; }
   fecharFolha(); telaUi();
   for(const k of Object.keys(D)) delete D[k];
-  INV=null; ARV=null; SEM=null; MS.dados=null; SB.dados=null; render();
+  INV=null; ARV=null; SEM=null; UNID=null; MS.dados=null; SB.dados=null; render();
   await carregar();
 }
 
@@ -1079,7 +1166,7 @@ const ACOES={
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
-  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:()=>abrirCheckin(), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
+  cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
   abrirNova:el=>abrirNova(el.dataset.a1||""), novaDigitou:el=>novaDigitou(el.value), novaEnter:(el,ev)=>{if(ev.key==="Enter"){ev.preventDefault();criarNova();}},
   novaFrente:el=>novaEscolher("frente",el.dataset.a1||el.value), novaPrazo:el=>novaEscolher("prazo",el.dataset.a1), criarNova:()=>criarNova(),
   buscaTecla:(el,ev)=>buscaTecla(el,ev), buscaVerbo:el=>buscaVerbo(+el.dataset.a1,el.dataset.a2), abrirFolego:()=>abrirFolego(), semFechar:()=>semFechar(), semTodas:()=>semTodas(), abrirFunil:el=>abrirFunil(el.dataset.a1), abrirPlano:()=>abrirPlano(), abrirPlano:()=>abrirPlano(), abrirPiorSemana:()=>abrirPiorSemana(), escolher:el=>escolher(el.dataset.a1),
@@ -1188,6 +1275,7 @@ async function carregar_(forcar){
   if(semSessao(rc))return sessaoCaiu();
   const {data,error}=rc;
   if(error||!data){CARGA_FALHOU=true;falha("Não consegui ler o banco: "+(error?error.message:"resposta vazia")+". Toque em recarregar."+(avisos.length?" Também: "+avisos.join("; ")+".":""));return;}
+  UNI_TIPO=Object.fromEntries(((data.dados||{}).uni||[]).filter(u=>u&&u.slug).map(u=>[u.slug,u.tipo]));
   Object.assign(D,veuObj(data.dados||{}));
   const falt=CHAVES.filter(k=>!(k in (data.dados||{})));
   const ruins=Object.keys(data.erros||{}).map(k=>k+": "+String(data.erros[k]).slice(0,120));
@@ -1197,6 +1285,9 @@ async function carregar_(forcar){
   if(avisos.length)partes.push("Também: "+avisos.join("; ")+".");
   if(partes.length)falha(partes.join(" ")+" O que aparece está certo, mas pode estar incompleto ou velho.");
   CARGA_FALHOU=partes.length>0; CARGA_EM=Date.now();
+  /* p4.66: as chaves da onda 2 acendem a propria fonte na saude, com o motivo, e apagam na carga seguinte que vier boa */
+  CHAVES_ONDA2.forEach(k=>{ const e=(data.erros||{})[k];
+    if(e)fonteFalhou(k,{message:String(e)}); else if(!(k in (data.dados||{})))fonteFalhou(k,{message:"não veio na carga"}); else fonteVoltou(k); });
   const idade=+data.idade_s||0, quando=data.gerado_em?new Date(data.gerado_em):null;
   IDADE=idade;
   const hh=quando?quando.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"?";
@@ -1240,6 +1331,7 @@ async function garantirLazy_(){
   const ler=(b,rot,poe)=>comTetoR(b,LIMITE_RECARGA,rot).then(r=>{ if(r.error||!r.data)ruins.push(rot+": "+(r.error?r.error.message:"resposta vazia")); poe(r.error?[]:veu(r.data||[])); });
   if(!INV)t.push(ler(sb.from("v_inventario_frente").select("id,frente,dono,status,prazo,parado_dias,titulo,resumo,criterio_pronto,acoes,opcoes,escolha"),"inventário",d=>{INV=d;}));
   if(!ARV)t.push(ler(sb.from("v_arvore_caixa").select("nivel,no,rotulo,margem_30d,margem_total,itens,veredito").lte("nivel",1),"frentes",d=>{ARV=d;}));
+  if(!UNID||!Object.keys(UNID).length)t.push(ler(sb.from("frente").select("slug,entidade,unidade"),"unidade das frentes",d=>{UNID=Object.fromEntries(d.map(f=>[f.slug,f.unidade||null]));}));
   if(!SEM)t.push(ler(sb.from("v_frente_semanas").select("slug,semanas,vencidos,idade_d,piorou"),"semanas das frentes",d=>{SEM=d;}));
   if(t.length){await Promise.all(t);render();}
   if(ruins.length){const ant=document.getElementById("falha").textContent;
@@ -1336,7 +1428,7 @@ function seloEspera(dias,desde,terceiro){
   }
   if(dias==null||dias===""||isNaN(+dias)) return {txt:quem+" (sem data de entrada)",w:false};
   const d=Math.max(0,Math.floor(+dias));
-  return {txt:quem+(d===0?" desde hoje":" há "+d+" d"),w:d>=7};
+  return {txt:quem+(d===0?" desde hoje":" há "+d+" d"),w:d>=paradoDias()};
 }
 function esperaFila(f){
   let d=f.dias_parado;
@@ -1356,8 +1448,9 @@ const BACKUP="backup-cerebro", RUIM_MO=new Set(["atrasada","nunca"]);
    ultima_ok e ultima_falha da v_painel_motor (chave mo). Carga sem as colunas novas: nada muda. */
 /* p4.65 (pi 171, achado 7 do canone v02; Google SRE: falha silenciosa e o pior alerta): quatro chamadas falhavam num
    then vazio e a saude seguia "ok". Agora cada uma acende a propria fonte, com hora e motivo, e apaga no proximo sucesso. */
-const FALHAS={}, FONTE_TELA={ping:"Registro de abertura do painel",medir:"Medição do tempo de decisão",d4:"Quatro blocos da Dabli",
-  atendente:"Estado do atendente"};
+const FALHAS={}, FONTE_TELA={ping:"Registro de abertura do painel",medir:"Medição do tempo de decisão",
+  atendente:"Estado do atendente",pg:"Parâmetros de gestão",cxe:"Caixa por entidade",rwe:"Fôlego por entidade",uni:"Unidades",
+  ficha:"Ficha das frentes",quest:"Questões entre frentes",bloq:"Cards bloqueados",trava:"O que cada frente trava"};
 function fonteFalhou(k,e){
   const m=!e?"sem resposta":ehTeto(e)?"não respondeu a tempo":String(e.message||e.erro||e).slice(0,110);
   FALHAS[k]={em:new Date().toISOString(),motivo:m}; renderSaude(); }
@@ -1420,7 +1513,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderSelos();renderSaude();msRender();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderQuest();renderSelos();renderSaude();msRender();}
 function renderHoje(){
   const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
   /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.
@@ -1430,7 +1523,7 @@ function renderHoje(){
   const dias=rw.dias_sobrevida_pior;
   const fr=[];
   if(dias!=null){const v=var7("caixa.sobrevida_dias",dias,n=>plural(n,"dia","dias"));
-    fr.push(`O caixa aguenta <button type="button" class="numero ${dias<30?"w":""}" data-acao="abrirFolego">${esc(dias)} dias</button> no pior cenário${v?`, <span class="var7 ${v.cls}">${esc(v.txt)}</span>`:""}.`);}
+    fr.push(`O caixa aguenta <button type="button" class="numero ${dias<param("caixa.alerta_dias",30)?"w":""}" data-acao="abrirFolego">${esc(dias)} dias</button> no pior cenário${v?`, <span class="var7 ${v.cls}">${esc(v.txt)}</span>`:""}.`);}
   const hh=m=>(Math.round(m/6)/10).toLocaleString("pt-BR"), passa=soma-cap;
   fr.push(nPassos?`Hoje ${nPassos===1?"é":"são"} <b>${plural(nPassos,"passo","passos")}</b>${nPz?` (${plural(nPz,"peça da Mesa","peças da Mesa")})`:""}, cerca de <b class="${passa>0?"w":""}">${hh(soma)} h</b> das suas ${hh(cap)} h${semMin?` (${semMin} sem estimativa, contados como 30 min)`:""}.${passa>0?` <b class="w">Passa ${hh(passa)} h: escolha o que sai de hoje.</b>`:""}`:"Nada pede você hoje.");
   document.getElementById("situacao").innerHTML=fr.join(" ");
@@ -1444,12 +1537,12 @@ function renderHoje(){
     const pri=acaoPrincipal(acoesFila(f), "hoje");
     foco.innerHTML=`<span class="eyebrow">Próximo passo${m?" · "+m+" min":""}</span>
       <div class="tit l2">${esc(f.titulo_completo||f.titulo)}</div>
-      <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span><span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}${pecasDoCard(f.origem,f.ref).length?`<span class="chip">com peça da Mesa</span>`:""}</div>
+      <div class="chips"><span class="chip espera ${es.w?"w":""}">${esc(es.txt)}</span>${seloBloq(f.origem,f.ref)}<span class="chip">${esc(nomeFrente(f.frente))}</span>${f.porque_agora?`<span class="chip">${esc(f.porque_agora)}</span>`:""}${chipDinheiro(f.valor_txt)}${pecasDoCard(f.origem,f.ref).length?`<span class="chip">com peça da Mesa</span>`:""}</div>
       ${(()=>{const ri=recInfo(f.recomendacao);return ri.texto&&!ri.velha?`<div class="porque l2">${esc(curto(ri.texto,160))}</div>`:"";})()}
       <div class="acoes">${pri?`<button class="pri" data-acao="abrirFila" data-a1="0" data-a2="${esc(pri.verbo)}">${esc(pri.rot)}</button>`:""}<button class="sec" data-acao="abrirFila" data-a1="0">Mais ações</button></div>`;
     document.getElementById("ordemBox").classList.toggle("hidden",nPassos<2);
     document.getElementById("ordem").innerHTML=h.slice(1).map((f,i)=>{const m=minDe(f), es=esperaFila(f);
-      return `<button data-acao="abrirFila" data-a1="${i+1}"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${pecasDoCard(f.origem,f.ref).length?"com peça · ":""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("")
+      return `<button data-acao="abrirFila" data-a1="${i+1}"><span class="o">${i+2}</span><span class="t"><span class="l2">${esc(f.titulo_completo||f.titulo)}</span><small>${pecasDoCard(f.origem,f.ref).length?"com peça · ":""}${bloqDe(f.origem,f.ref)?`<span class="bloq" data-bloq="${esc(f.ref)}">${esc(rotBloq(bloqDe(f.origem,f.ref)))}</span> · `:""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span> · ${esc(nomeFrente(f.frente))}${f.porque_agora?" · "+esc(f.porque_agora):""}${f.valor_txt?" · "+esc(f.valor_txt):""}</small></span><span class="min">${m?m+" min":""}</span></button>`;}).join("")
       +pz.map((p,i)=>linhaPeca(p,h.length+i+1)).join("");
   }
   const c=(D.cont||[])[0]||{}, cob=aCobrar();
@@ -1504,7 +1597,7 @@ function abrirWhats(t){
 }
 /* p4.56 (p134): a cobranca que saiu pelo WhatsApp volta com a pergunta "Cobrou?"; o sim grava o mesmo "Cobrei agora" */
 function whatsCobranca(ref){ const x=(D.cob3||[]).find(y=>String(y.ref)===String(ref)); if(x&&abrirWhats(x.rascunho))ENVIO={tipo:"cob3",ref:String(ref),saiu:false}; }
-async function abrirCheckin(){
+async function abrirCheckin(frente){
   mostrarFolha(`<h3 id="folhaTit">Check-in de segunda</h3>
     <p class="mut">Montado do banco. Revise antes de mandar: nada sai daqui sozinho.</p>
     <div class="campo"><label for="chkTxt" class="mut">Texto do check-in</label><textarea id="chkTxt" class="chk-txt" readonly>carregando…</textarea></div>
@@ -1512,7 +1605,7 @@ async function abrirCheckin(){
     <button class="pri" data-acao="checkinCopiar">Copiar</button>
     <button class="sec" data-acao="checkinWhats">Abrir no WhatsApp</button>
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
-  let r; try{ r=await comTeto(sb.rpc("painel_checkin",{p_frente:FRENTE_4B}),LIMITE_ACAO,"painel_checkin"); }catch(e){ r={error:e}; }
+  let r; try{ r=await comTeto(sb.rpc("painel_checkin",{p_frente:frente}),LIMITE_ACAO,"painel_checkin"); }catch(e){ r={error:e}; }
   const ta=document.getElementById("chkTxt"), er=document.getElementById("chkErro"); if(!ta)return;
   const t=r&&!r.error&&typeof r.data==="string"?r.data:"";
   if(!t||t.startsWith("RECUSADO")){ ta.value="";
@@ -1657,6 +1750,11 @@ function pecasLigadasHtml(c){
   return `<div class="bloco"><span class="rot">Peça da Mesa ligada a este card</span>${ps.map(p=>`<button type="button" class="sec ms-ligada" data-acao="msAbrirId" data-a1="${+p.id}">${esc(p.titulo||"peça sem título")}</button><span class="mut">${esc(msCap(msAto(p.ato)))}${p.fecha_tarefa?". A baixa ou a aprovação desta peça conclui este card.":". Concluir a peça não fecha este card."}</span>`).join("")}</div>`;
 }
 const curto=(s,n)=>{s=String(s||"");return s.length>n?s.slice(0,n).replace(/\s+\S*$/,"")+"…":s;};
+/* p4.66 (pi 182): o card que outra frente segura mostra "bloqueado por <frente>" em Hoje e na Fila (v_card_bloqueado, chave bloq).
+   O casamento e pelo id da tarefa; so a tarefa tem bloqueio entre frentes. */
+const bloqDe=(origem,ref)=>origem==="tarefa"&&Array.isArray(D.bloq)?D.bloq.find(b=>b&&String(b.tarefa_id)===String(ref))||null:null;
+const rotBloq=b=>String((b&&b.rotulo)||"bloqueado por outra frente");
+const seloBloq=(origem,ref)=>{ const b=bloqDe(origem,ref); return b?`<span class="chip w bloq" data-bloq="${esc(b.tarefa_id)}">${esc(rotBloq(b))}</span>`:""; };
 const chipDinheiro=v=>v?`<span class="chip ok">${esc(v)}</span>`:`<span class="chip">sem dinheiro ligado</span>`;
 
 /* ---------- Fila ---------- */
@@ -1666,7 +1764,7 @@ const COLS=[{id:"semana",r:"Semana",h:"Esta semana",a:"Vence nos próximos 7 dia
             {id:"depois",r:"Depois",h:"Mais adiante",a:"Prazo depois de 7 dias."}];
 function renderFila(){
   const seg=document.getElementById("seg"), kb=document.getElementById("kanban");
-  const h=hojeLista(), teto=h.length?(+h[0].teto_tela||5):5;
+  const h=hojeLista(), teto=param("wip.teto_hoje",h.length?(+h[0].teto_tela||5):5);
   const w=document.getElementById("wip"); w.className="wip"+(h.length>=teto?" cheio":"");
   w.innerHTML=`<span>Em curso hoje <b class="num">${h.length}/${teto}</b></span><span class="barra"><i style="width:${Math.min(100,h.length/teto*100)}%"></i></span><span class="mut">${h.length>=teto?"cheio: termine antes de puxar outro":"cabe mais um"}</span>`;
   if(!INV){kb.innerHTML=`<div class="vazio">carregando a fila…</div>`;seg.innerHTML="";return;}
@@ -1683,12 +1781,12 @@ function idadeTxt(t){
   const p=+t.parado_dias||0, hoje=somaDias(0);
   if(t.status==="aguardando_terceiro")return t.prazo?(t.prazo<hoje?"passou "+ddmm(t.prazo):"cobrar "+ddmm(t.prazo)):"sem data para cobrar";
   if(!t.prazo)return "sem prazo";
-  if(p>=7)return "parado "+p+" d";
+  if(p>=paradoDias())return "parado "+p+" d";
   return "até "+diaCurto(t.prazo);
 }
 function itemInv(t){
   const p=+t.parado_dias||0, atras=t.status==="aguardando_terceiro"&&t.prazo&&t.prazo<somaDias(0), es=esperaInv(t);
-  return `<button class="item" data-acao="abrirInv" data-a1="${+t.id}"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d"><span class="espera ${es.w?"w":""}">${esc(es.txt)}</span><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=7||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
+  return `<button class="item" data-acao="abrirInv" data-a1="${+t.id}"><span class="t l2">${esc(t.titulo||t.resumo)}</span><span class="d">${bloqDe("tarefa",t.id)?`<span class="bloq" data-bloq="${+t.id}">${esc(rotBloq(bloqDe("tarefa",t.id)))}</span>`:""}<span class="espera ${es.w?"w":""}">${esc(es.txt)}</span><span>${esc(nomeFrente(t.frente))}</span><span class="idade ${p>=paradoDias()||atras?"w":""}">${esc(idadeTxt(t))}</span></span></button>`;
 }
 
 /* ---------- Caixa ---------- */
@@ -1774,15 +1872,42 @@ function abrirFunil(elo){
     <div class="pilha">${its.length?its.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.titulo||"sem título")}</span><small>${esc(nomeFrente(x.frente_slug))} · desde ${esc(ddmm(x.desde))}, há ${esc(plural(+x.idade_d||0,"dia","dias"))}${x.detalhe?" · "+esc(detFunil(x.detalhe)):""}</small></span><span class="r">${x.margem_rs==null?"sem valor":rs(x.margem_rs)}</span></div>`).join(""):`<div class="vazio">Nada neste elo.</div>`}</div>
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
 }
+/* p4.66 (pi 177, achado 2 do canone v02; Tufte, small multiples): o consolidado soma PF e empresas e esconde quem financia
+   quem. Aqui cada entidade ganha os dias de caixa (pior caso e caso base, v_runway_entidade) e 13 semanas de saldo (pior e base,
+   v_caixa_13_semanas_entidade), todas na MESMA escala vertical (o minimo e o maximo de todas as entidades juntas) e com a
+   linha do zero, para o olho comparar sem ler numero. A marca embaixo e a semana em que a entidade fica negativa no pior caso
+   e a PF cobre. A linha curta diz se a entidade consome ou gera caixa para a PF. Sem numero no desenho: o canone conta. */
+const diasNum=v=>v==null||isNaN(+v)?"—":String(Math.round(+v));
+const diasTxt=(a,b)=>diasNum(a)+" / "+diasNum(b)+" d";
+function renderCaixaEnt(){
+  const el=document.getElementById("cxEnt"); if(!el)return;
+  if(!Array.isArray(D.cxe)||!Array.isArray(D.rwe)){ el.innerHTML=`<div class="vazio">A quebra por entidade não chegou nesta carga.</div>`; return; }
+  const sem=D.cxe.filter(x=>x&&x.entidade&&x.semana!=null);
+  const nomes=[...new Set(D.rwe.map(x=>x&&x.entidade).concat(sem.map(x=>x.entidade)).filter(Boolean))];
+  if(!nomes.length){ el.innerHTML=`<div class="vazio">Nenhuma entidade com caixa nesta carga.</div>`; return; }
+  const vals=sem.flatMap(x=>[+x.saldo_pior,+x.saldo_base]).filter(Number.isFinite);
+  const mx=Math.max(0,...vals), mn=Math.min(0,...vals), W=130, H=36, amp=(mx-mn)||1;
+  const py=v=>Math.round((2+(mx-v)/amp*(H-4))*10)/10, px=i=>Math.round((2+i*(W-4)/12)*10)/10;
+  const alerta=param("caixa.alerta_dias",30);
+  el.innerHTML=nomes.map(n=>{
+    const r=D.rwe.find(x=>x&&x.entidade===n)||{}, s=sem.filter(x=>x.entidade===n).sort((a,b)=>a.semana-b.semana);
+    const tr=k=>s.filter(x=>Number.isFinite(+x[k])).map((x,i)=>(i?"L":"M")+px(+x.semana-1)+" "+py(+x[k])).join(" ");
+    const fin=s.filter(x=>x.financiada_pela_pf_pior===true||x.financiada_pela_pf_pior==="true");
+    const pior=r.dias_caixa_pior!=null&&!isNaN(+r.dias_caixa_pior)&&+r.dias_caixa_pior<alerta;
+    const svg=s.length?`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(n)}: saldo das próximas 13 semanas, pior caso e caso base, na escala comum${fin.length?"; a PF financia "+plural(fin.length,"semana","semanas"):""}" data-entidade="${esc(n)}" data-fin="${fin.length}" data-min="${mn}" data-max="${mx}"><line class="zero" x1="0" x2="${W}" y1="${py(0)}" y2="${py(0)}"/><path class="base" d="${tr("saldo_base")}"/><path class="pior" d="${tr("saldo_pior")}"/>${fin.map(x=>`<rect class="fin" x="${px(+x.semana-1)-3}" y="${H-3}" width="6" height="3"/>`).join("")}</svg>`
+      :`<span class="mut">sem semanas</span>`;
+    return `<div class="cxe-l" data-ent="${esc(n)}"><span class="t"><b>${esc(n)}</b> <span class="dias ${pior?"w":""}" title="dias de caixa: pior caso / caso base${fin.length?"; a PF cobre "+plural(fin.length,"semana","semanas")+" no pior caso":""}">${diasTxt(r.dias_caixa_pior,r.dias_caixa)}</span>${r.financiamento?`<small>${esc(curto(r.financiamento,80))}</small>`:""}</span>${svg}</div>`;
+  }).join("")+`<span class="mut" title="Mesma escala em todas as entidades. A marca embaixo é a semana em que a PF cobre a entidade no pior caso.">cheia: pior, tracejada: base</span>`;
+}
 function renderCaixa(){
-  renderFunil();
+  renderFunil(); renderCaixaEnt();
   const rw=(D.rw||[])[0]||{}, d=rw.dias_sobrevida_pior, s=(D.c13||[]).slice().sort((a,b)=>a.semana-b.semana);
   const base=s.map(x=>+x.saldo_base), iMin=base.length?base.indexOf(Math.min(...base)):-1;
   const s1=s[0], vd=d==null?null:var7("caixa.sobrevida_dias",d,n=>plural(n,"dia","dias")), vs=iMin<0?null:var7("caixa.menor_saldo_13s",base[iMin],rs);
   const sem7=`<span class="var7">sem leitura de 7 dias atrás</span>`, var7Html=v=>v?`<span class="var7 ${v.cls}">${esc(v.txt)}</span>`:sem7;
   document.getElementById("caixaTopo").innerHTML=`<span class="mut">Se nada do que é incerto entrar, o caixa aguenta</span>
-    <span>${d==null?`<span class="v">—</span>`:`<button type="button" class="v numero ${d<30?"w":""}" data-acao="abrirFolego">${esc(plural(d,"dia","dias"))}</button> ${var7Html(vd)}`}</span>
-    <span class="mut">Meta: 90 dias.${iMin>=0?` Pior semana: a de ${ddmm(s[iMin].inicio)}, saldo de <button type="button" class="numero num" data-acao="abrirPiorSemana">${rs(base[iMin])}</button> ${var7Html(vs)}.`:""}${s1&&s1.sai_firme!=null?` Saem <span class="num">${rs(s1.sai_firme)}</span> nesta semana.`:""}</span>`;
+    <span>${d==null?`<span class="v">—</span>`:`<button type="button" class="v numero ${d<param("caixa.alerta_dias",30)?"w":""}" data-acao="abrirFolego">${esc(plural(d,"dia","dias"))}</button> ${var7Html(vd)}`}</span>
+    <span class="mut">Meta: ${param("caixa.meta_dias",90)} dias.${iMin>=0?` Pior semana: a de ${ddmm(s[iMin].inicio)}, saldo de <button type="button" class="numero num" data-acao="abrirPiorSemana">${rs(base[iMin])}</button> ${var7Html(vs)}.`:""}${s1&&s1.sai_firme!=null?` Saem <span class="num">${rs(s1.sai_firme)}</span> nesta semana.`:""}</span>`;
   document.getElementById("semanas").innerHTML=s.length?grafico13(s,base,iMin):`<div class="vazio">A previsão das 13 semanas não chegou nesta carga.</div>`;
   const cob=aCobrar();
   document.getElementById("cobrarBox").innerHTML=`<h2>A receber com data passada</h2>`+(cob.length
@@ -1808,7 +1933,7 @@ function grafico13(s,base,iMin){
   s.forEach((x,i)=>{const v=base[i],x0=pl+i*bw+3,top=v>=0?y(v):y(0),h=Math.max(1,Math.abs(y(v)-y(0)));
     g+=`<rect class="sem" x="${x0}" y="${top}" width="${Math.max(2,bw-6)}" height="${h}" rx="3" style="fill:${v<0?"var(--bad)":i===iMin?"var(--warn)":"var(--acc)"}"><title>semana de ${esc(ddmm(x.inicio))}: ${rs(v)}</title></rect>`;
     if(i%3===0)g+=`<text x="${x0+(bw-6)/2}" y="${H-8}" style="fill:var(--mut)" font-size="14" text-anchor="middle" font-family="ui-monospace,monospace">${esc(ddmm(x.inicio))}</text>`;});
-  return g+`</svg><span class="mut">Caso base. Vermelho: saldo negativo. Laranja: a semana mais apertada.</span>`;
+  return g+`</svg><span class="mut">Caso base. Vermelho: negativo. Laranja: a pior semana.</span>`;
 }
 
 /* ---------- Semana ----------
@@ -1823,7 +1948,7 @@ const SEM_FONTE1={ratificacao:"ratificação",fato_decidido:"fato decidido",esco
 /* p4.59 (p147, s3409, 12/10/2026): 1 norte e ate 14 numeros de avanco, com dono e meta (4DX e o dashboard de uma tela de
    Few). O norte (v_norte_quadro, papel norte) abre a aba como manchete; a lista para em 14 mesmo se o banco mandar mais;
    o resto dos KPIs mora no bastidor. A situacao vem do ultimo valor contra a meta (fora_da_meta). */
-const SEM_TETO=14;
+const semTeto=()=>param("semana.teto_numeros",14);
 const semLinhaNum=x=>`<div class="linha-r" title="na semana passada: ${esc(semValor({...x,valor:x.ha_7d}))}"><span class="t"><span class="l2">${esc(String(x.titulo||"").replace(/^★\s*/,""))}</span><small>meta ${esc(semValor({...x,valor:x.meta}))} · ${esc(semTend(x))} · ${esc(x.dono==="igor"?"seu":"da máquina")}</small></span><span class="r ${x.detalhe==="fora"?"w":""}">${esc(semValor(x))}</span></div>`;
 const semB=b=>(D.semana||[]).filter(x=>x.bloco===b).sort((a,b)=>(+a.ordem)-(+b.ordem));
 function semValor(x){
@@ -1841,7 +1966,7 @@ function semTend(x){ if(x.ha_7d==null||x.valor==null||isNaN(+x.ha_7d)||isNaN(+x.
 function renderSemana(){
   const top=document.getElementById("semTopo"); if(!top)return;
   if(!Array.isArray(D.semana)){ top.innerHTML=`<span class="mut">A semana não chegou nesta carga.</span>`; return; }
-  const rv=semRevisao(), num=semB("numero").slice(0,SEM_TETO), nt=semB("norte")[0], fora=num.concat(nt?[nt]:[]).filter(x=>x.detalhe==="fora").length;
+  const rv=semRevisao(), num=semB("numero").slice(0,semTeto()), nt=semB("norte")[0], fora=num.concat(nt?[nt]:[]).filter(x=>x.detalhe==="fora").length;
   const ne=document.getElementById("semNorte");
   if(ne){ ne.hidden=!nt; ne.innerHTML=nt?`<span class="rot">Norte</span>${semLinhaNum(nt)}`:""; }
   top.innerHTML=rv?`<span class="mut">Revisão desta semana</span><span class="v">feita</span><span class="mut">em ${esc(ddmm(rv.quando))}, ${esc(plural(+rv.valor,"minuto","minutos"))}${+rv.valor>30?" (passou dos 30)":""}.</span>`
@@ -1857,6 +1982,17 @@ function renderSemana(){
     +(cd?`<button class="linha-r" data-acao="ir" data-a1="fila"><span class="t"><span class="l2">${esc(plural(Math.round(+cd.valor),"card seu","cards seus"))} com prazo na próxima semana</span><small>${+cd.detalhe>0?"inclui vencido · ":""}abrir a fila</small></span></button>`:"")
     +(!pl.length&&!cd?`<div class="vazio">Nada com prazo nos próximos 7 dias.</div>`:"");
   const bt=document.getElementById("semFechar"); if(bt)bt.textContent=rv?"Revisar de novo e regravar":"Fechar a revisão da semana";
+}
+/* p4.66 (pi 181, EOS Questoes: lista unica entre setores, o IDS): as 3 primeiras questoes abertas (top3 de v_questao_aberta)
+   com de, para, dono e idade. So leitura: abrir, priorizar e resolver mora no banco. Vazio diz por que esta vazio. */
+function renderQuest(){
+  const el=document.getElementById("semQuest"); if(!el)return;
+  if(!Array.isArray(D.quest)){ el.innerHTML=`<div class="vazio">As questões não chegaram nesta carga.</div>`; return; }
+  const ab=D.quest.filter(q=>q&&q.titulo!=null).sort((a,b)=>(+a.ordem||0)-(+b.ordem||0));
+  const top=ab.filter(q=>q.top3===true||q.top3==="true").slice(0,3);
+  if(!ab.length){ el.innerHTML=`<div class="vazio">Nenhuma questão aberta entre frentes.</div>`; return; }
+  el.innerHTML=top.map(q=>`<div class="linha-r quest"><span class="t"><span class="l2">${esc(q.titulo)}</span><small>${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))}, dono ${esc(donoTxt(q.dono))}, ${esc(+q.idade_dias||0)} d</small></span></div>`).join("")
+    +(ab.length>top.length?`<div class="mut">${esc(plural(ab.length-top.length,"outra aberta","outras abertas"))}, fora do top 3.</div>`:"");
 }
 function semTodas(){
   const dec=semB("decisao");
@@ -1883,7 +2019,7 @@ async function semFechar(){
 const estrutura=()=>{const e=(D.est||[])[0];return e&&e.pct!=null&&e.frente?e:null;};
 function renderFrentes(){
   const el=document.getElementById("frentesLista");
-  if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
+  if(!ARV||!INV||!UNID){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
   const cont={};INV.forEach(t=>{if(t.status!=="feita")cont[t.frente]=(cont[t.frente]||0)+1;});
   const est=estrutura();
   const fr=ARV.filter(a=>a.nivel===1).sort((a,b)=>(+b.margem_30d)-(+a.margem_30d)||(cont[b.no]||0)-(cont[a.no]||0)).filter(a=>+a.margem_30d!==0||cont[a.no]||(est&&a.no===est.frente));
@@ -1894,8 +2030,22 @@ function renderFrentes(){
   const esc8=Math.max(1,...fr.flatMap(a=>((sem[a.no]||{}).semanas||[]).map(v=>Math.abs(+v)||0)));
   const det=a=>{const x=sem[a.no];return [plural(cont[a.no]||0,"card aberto","cards abertos")].concat(
     x&&+x.vencidos>0?[plural(+x.vencidos,"vencido","vencidos")]:[],x&&+x.idade_d>=14?["o mais velho tem "+(+x.idade_d)+" d"]:[]).join(" · ");};
-  el.innerHTML=fr.map(a=>`<button class="frente${(sem[a.no]||{}).piorou?" piorou":""}" data-acao="abrirFrente" data-a1="${esc(a.no)}"><span class="t"><b>${esc(nomeFrente(a.no))}${(sem[a.no]||{}).piorou?` <em class="pio">piorou</em>`:""}</b><small>${esc(det(a))}</small></span>${spark8(sem[a.no],esc8)}${dir(a)}</button>`).join("");
+  const lin=a=>`<button class="frente${(sem[a.no]||{}).piorou?" piorou":""}" data-acao="abrirFrente" data-a1="${esc(a.no)}"><span class="t"><b>${esc(nomeFrente(a.no))}${(sem[a.no]||{}).piorou?` <em class="pio">piorou</em>`:""}</b><small>${esc(det(a))}</small></span>${spark8(sem[a.no],esc8)}${dir(a)}</button>`;
+  /* p4.66 (pi 178, EOS Pessoas: cada setor com dono): as frentes agrupam por unidade, na ordem negocio, apoio, vida; o cabecalho
+     traz nome, dono e a margem somada de 30 dias das frentes da unidade (v_arvore_caixa). Frente sem unidade, ou com unidade
+     que nao esta em uni, vem num grupo de pendencia no topo, com aviso: nunca some calada. Na tela compartilhada o grupo de
+     pendencia e a margem somem (fail-closed) e a unidade de vida ja saiu na entrada do dado. */
+  const un=Object.fromEntries((Array.isArray(D.uni)?D.uni:[]).filter(u=>u&&u.slug).map(u=>[u.slug,u]));
+  const unDe=a=>{ const s=UNID[a.no]; return s&&un[s]?s:null; };
+  const soma={}; ARV.filter(a=>a.nivel===1).forEach(a=>{ const s=unDe(a); if(s)soma[s]=(soma[s]||0)+(+a.margem_30d||0); });
+  const ORD_UN={negocio:0,apoio:1,vida:2};
+  const grupos=Object.keys(un).filter(s=>fr.some(a=>unDe(a)===s)).sort((a,b)=>((ORD_UN[un[a].tipo]??3)-(ORD_UN[un[b].tipo]??3))||((soma[b]||0)-(soma[a]||0))||String(un[a].nome||a).localeCompare(String(un[b].nome||b)));
+  const pend=fr.filter(a=>!unDe(a));
+  el.innerHTML=(pend.length&&!TELA?`<h3 class="un pend" data-unidade="">Sem unidade · pendência</h3><div class="aviso">${esc(plural(pend.length,"frente sem unidade","frentes sem unidade"))}: classifique no cadastro para entrar na soma de um setor.</div>${pend.map(lin).join("")}`:"")
+    +grupos.map(s=>`<h3 class="un" data-unidade="${esc(s)}" data-tipo="${esc(un[s].tipo||"")}"><span>${esc(un[s].nome||s)}</span><small>dono ${esc(donoTxt(un[s].dono))}</small>${TELA?"":`<span class="r">${soma[s]?mil(soma[s]):"—"}</span>`}</h3>`+fr.filter(a=>unDe(a)===s).map(lin).join("")).join("")
+    ||`<div class="vazio">Nenhuma frente com card aberto ou margem.</div>`;
 }
+const donoTxt=d=>d==="igor"?"você":d==="claude"?"Claude":d==="automacao"?"máquina":(d||"sem dono");
 /* p4.46 (plano 108, s2468 11/10/2026): small multiples de Tufte. Cada frente ganha 8 barras de margem REALIZADA por semana
    (v_frente_semanas: recebido - pago, sua parte, pela data de vencimento), todas na MESMA escala (a maior barra da aba),
    para que o olho compare frentes sem ler numero. A ultima barra e a semana corrente, parcial, mais clara. "piorou" marca
@@ -1923,6 +2073,30 @@ function abrirPlano(){
     ${grupos.map(g=>`<div class="bloco plano"><span class="rot">${esc(g.nome)}</span>${g.itens.map(x=>`<div class="fonte${x.atrasado?" w":""}"><span class="t"><b>${esc(x.titulo)}</b><small>${esc(DONO_PLANO[x.dono]||x.dono||"sem dono")} · ${esc(quando(x))}</small></span></div>`).join("")}</div>`).join("")}
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
 }
+/* p4.66 (pi 179, EOS Processo: rito padrao por setor): a ficha de TODA frente tem os blocos A a E lidos de v_frente_ficha (chave
+   ficha do painel_carga), sem caso especial. Bloco vazio diz "nada aqui", nunca some calado. Os cards seus seguem abaixo,
+   recolhidos, para o toque que age neles (a ficha lista, o card abre a folha de ato). Em p4.66 tambem entram as questoes
+   em que a frente e a destinataria (pi 181) e o que ela trava nas outras (pi 182). */
+const linhaQuest=q=>`<div class="d4i"><span class="t l2">${esc(q.titulo||"questão sem título")}</span><small class="d4d">${esc(q.de_nome||nomeFrente(q.de_frente))} → ${esc(q.para_nome||nomeFrente(q.para_frente))} · dono ${esc(donoTxt(q.dono))} · ${esc(+q.idade_dias||0)} d</small>${q.detalhe?`<span class="d4r">${esc(curto(q.detalhe,160))}</span>`:""}</div>`;
+function secFi(tit,n,corpo){ return `<section class="fi-sec" aria-label="${esc(tit)}"><h4 class="rot">${esc(tit)}<span class="d4n">${n}</span></h4>${corpo}</section>`; }
+function questFicha(slug){
+  const tit="Questões para esta frente";
+  if(!Array.isArray(D.quest))return secFi(tit,0,`<div class="vazio d4v">As questões não chegaram nesta carga. Recarregue o painel.</div>`);
+  const l=D.quest.filter(q=>q&&q.para_frente===slug).sort((a,b)=>(+a.ordem||0)-(+b.ordem||0));
+  return secFi(tit,l.length,l.length?`<div class="d4l">${l.map(linhaQuest).join("")}</div>`:`<div class="vazio d4v">nada aqui: nenhuma questão aberta para esta frente</div>`);
+}
+function travaFicha(slug){
+  const tit="O que esta frente trava nas outras";
+  if(!Array.isArray(D.trava))return secFi(tit,0,`<div class="vazio d4v">O que a frente trava não chegou nesta carga. Recarregue o painel.</div>`);
+  const t=D.trava.find(x=>x&&x.frente_slug===slug), n=t?+t.n_cards_travados||0:0;
+  if(!t||!n)return secFi(tit,0,`<div class="vazio d4v">nada aqui: esta frente não segura nenhum card de outra frente</div>`);
+  const its=Array.isArray(t.itens)?t.itens:[], fs=(Array.isArray(t.frentes_travadas)?t.frentes_travadas:[]).map(nomeFrente);
+  return secFi(tit,n,`<div class="d4l"><div class="d4i"><span class="t l2">${esc(plural(n,"card travado","cards travados"))}${fs.length?" em "+esc(fs.join(", ")):""}</span></div>${its.map(x=>`<div class="d4i"><span class="t l2">${esc(x.titulo||x.item||x.resumo||"card sem título")}</span>${(x.frente_slug||x.frente)?`<small class="d4d">${esc(nomeFrente(x.frente_slug||x.frente))}</small>`:""}</div>`).join("")}</div>`);
+}
+function fichaHtml(slug){
+  if(!Array.isArray(D.ficha))return `<div class="vazio">A ficha não chegou nesta carga. Recarregue o painel.</div>`;
+  return blocos4(D.ficha.filter(x=>x&&x.frente_slug===slug));
+}
 function abrirFrente(slug){
   const a=(ARV||[]).find(x=>x.nivel===1&&x.no===slug)||{no:slug};
   const cs=(INV||[]).filter(t=>t.frente===slug&&t.status!=="feita").sort((x,y)=>(x.dono==="igor"?0:1)-(y.dono==="igor"?0:1)||String(x.prazo||"9").localeCompare(String(y.prazo||"9")));
@@ -1930,15 +2104,14 @@ function abrirFrente(slug){
   mostrarFolha(`<h3 id="folhaTit">${esc(nomeFrente(slug))}</h3>
     <div class="chips"><span class="chip ${+a.margem_30d>0?"ok":""}">${+a.margem_30d>0?"margem 30 d "+mil(a.margem_30d):"sem margem em 30 d"}</span>${(()=>{const e=estrutura();return e&&e.frente===slug?`<span class="chip ${e.acima?"w":""}">${esc(e.mem_7d)} de ${esc(e.sessoes_7d)} sessões em 7 d · teto ${esc(e.teto)}%</span>`:"";})()}${+a.margem_total>0?`<span class="chip">margem total ${mil(a.margem_total)}</span>`:""}<span class="chip">${plural(seus.length,"card seu","cards seus")}</span>${exec?`<span class="chip">${exec} do executor</span>`:""}</div>
     ${a.veredito?`<div class="bloco"><span class="rot">Situação</span><p>${esc(a.veredito)}</p></div>`:""}
-    ${slug===FRENTE_4B?`<div id="d4" class="d4p" aria-live="polite"><div class="vazio">carregando os quatro blocos…</div></div>`
-      :`<div class="pilha">${seus.map(itemInv).join("")||`<div class="vazio">Nenhum card seu aberto nesta frente.</div>`}</div>`}
-    ${slug===FRENTE_4B?`<button class="sec" data-acao="abrirCheckin">Check-in de segunda <kbd>C</kbd></button>`:""}
+    <div id="d4" class="d4p">${fichaHtml(slug)}${questFicha(slug)}${travaFicha(slug)}</div>
+    <details class="fi-cards"><summary>${esc(plural(seus.length,"card seu aberto","cards seus abertos"))}</summary><div class="pilha">${seus.map(itemInv).join("")||`<div class="vazio">Nenhum card seu aberto nesta frente.</div>`}</div></details>
+    <button class="sec" data-acao="abrirCheckin" data-a1="${esc(slug)}">Check-in de segunda <kbd>C</kbd></button>
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
-  if(slug===FRENTE_4B)carregar4B();
 }
 /* p4.38: quatro blocos na ordem da view, cada um com titulo curto e contagem; bloco vazio diz "nada aqui" numa linha.
    A view so devolve linha de bloco que tem item (o C usa HAVING), por isso os quatro titulos moram aqui. */
-const D4_TIT={1:"Só o presidente decide",2:"Terceiro esperando ou me devendo",3:"O sócio entregou e espera palavra",4:"Dinheiro da frente"};
+const D4_TIT={1:"Só o presidente decide",2:"Terceiro esperando ou me devendo",3:"Entregue, espera sua palavra",4:"Dinheiro da frente",5:"Números"};
 /* p4.64 (card 1562, s5706, 16/10/2026; pedido do Igor): o bloco A chegou a 43 itens e virou a lista generica de novo.
    Mostra os 7 primeiros (a view ja ordena pelo prazo mais antigo, o mais urgente) e o resto atras de "ver todos". */
 const D4_TETO={1:7};
@@ -1946,27 +2119,21 @@ function ver4Todos(b){
   const el=document.getElementById(b.getAttribute("aria-controls")); if(!el) return;
   const abre=el.hidden; el.hidden=!abre; b.setAttribute("aria-expanded",abre?"true":"false");
   b.textContent=abre?"ver menos":`ver todos (mais ${b.dataset.a1})`;}
-async function carregar4B(){
-  const el=()=>document.getElementById("d4");
-  let r; try{ r=await comTeto(sb.from(VISAO_4B).select("ordem,bloco,ref,item,detalhe,prazo,dias_parado,recomendacao"),LIMITE_RECARGA,VISAO_4B); }catch(e){ r={error:e}; }
-  if(r.error||!Array.isArray(r.data))fonteFalhou("d4",r.error||null); else fonteVoltou("d4");
-  if(!el())return;
-  if(r.error||!Array.isArray(r.data)){el().innerHTML=`<div class="vazio">Os quatro blocos não vieram agora. Feche e abra a frente de novo.</div>`;return;}
-  el().innerHTML=blocos4(r.data);
-}
 function blocos4(ls){
   const extra=[...new Set(ls.map(x=>+x.ordem))].filter(o=>!D4_TIT[o]).sort((a,b)=>a-b);
-  return [1,2,3,4].concat(extra).map(o=>{
+  return [1,2,3,4,5].concat(extra).map(o=>{
     const it=ls.filter(x=>+x.ordem===o), tit=D4_TIT[o]||String((it[0]||{}).bloco||"").replace(/^[A-Z] · /,"");
     const cap=D4_TETO[o], vis=cap&&it.length>cap?it.slice(0,cap):it, resto=it.slice(vis.length);
     return `<section class="d4" aria-label="${esc(tit)}"><h4 class="rot">${esc(tit)}<span class="d4n">${it.length}</span></h4>`+
-      (it.length?`<div class="d4l">${vis.map(linha4).join("")}${resto.length?`<div class="d4resto" id="d4resto${o}" hidden>${resto.map(linha4).join("")}</div>`:""}</div>`:`<div class="vazio d4v">nada aqui</div>`)+
+      (it.length?`<div class="d4l">${vis.map(o===5?linhaE:linha4).join("")}${resto.length?`<div class="d4resto" id="d4resto${o}" hidden>${resto.map(o===5?linhaE:linha4).join("")}</div>`:""}</div>`:`<div class="vazio d4v">nada aqui</div>`)+
       (resto.length?`<button type="button" class="ver-mais d4mais" aria-expanded="false" aria-controls="d4resto${o}" data-acao="ver4Todos" data-a1="${resto.length}">ver todos (mais ${resto.length})</button>`:"")+`</section>`;
   }).join("");
 }
+/* bloco E (numeros): o item e o rotulo e o detalhe e o valor ja formatado pelo banco */
+const linhaE=x=>`<div class="d4e"><span>${esc(x.item||x.ref||"")}</span><b>${esc(x.detalhe==null?"—":x.detalhe)}</b></div>`;
 function linha4(x){
   const h=somaDias(0), p=x.prazo?String(x.prazo).slice(0,10):"", dp=+x.dias_parado||0, venc=!!p&&p<h;
-  const meta=(p?`<span class="${venc?"w":""}">${venc?"venceu":"até"} ${esc(ddmm(p))}</span>`:"")+(dp>0?`<span class="${dp>=7?"w":""}">parado há ${dp} d</span>`:"");
+  const meta=(p?`<span class="${venc?"w":""}">${venc?"venceu":"até"} ${esc(ddmm(p))}</span>`:"")+(dp>0?`<span class="${dp>=paradoDias()?"w":""}">parado há ${dp} d</span>`:"");
   return `<div class="d4i"><span class="t l2">${esc(x.item||"sem título")}</span>`+
     (x.detalhe?`<small class="d4d">${esc(x.detalhe)}</small>`:"")+(meta?`<span class="d4m">${meta}</span>`:"")+
     (x.recomendacao?`<span class="d4r">${esc(x.recomendacao)}</span>`:"")+`</div>`;
@@ -2024,7 +2191,8 @@ document.addEventListener("keydown",e=>{
   if(e.ctrlKey||e.metaKey){ if(k==="k"){e.preventDefault();abrirBusca();} return; }
   if(k==="/"){e.preventDefault();abrirBusca();}
   else if(k==="n"){e.preventDefault();abrirNova("");}
-  else if(k==="c"){e.preventDefault();abrirCheckin();}
+  else if(k==="c"){ e.preventDefault(); const f=(hojeLista()[0]||{}).frente;
+    if(f)abrirCheckin(f); else toast("Sem passo em Hoje: abra a ficha de uma frente e toque em Check-in de segunda.",null,false,4000); }
   /* p4.54 (p157): Z desfaz o ato que espera; sem ato esperando, abre os Ultimos atos (desfazer ate 1 dia) */
   else if(k==="z"){e.preventDefault(); if(PEND)desfazer(); else abrirAtos();}
 });
@@ -2034,7 +2202,8 @@ document.addEventListener("keydown",e=>{
    pelas palavras do titulo contra os cards abertos de cada frente, e o prazo vem sugerido no primeiro dia com vaga no
    teto de 8 cards seus por dia. O Igor confirma os tres e o card nasce pela painel_nova_tarefa(), com os 8 s de
    desfazer. A porta do banco cobra as mesmas regras; recusa volta com a folha aberta e o texto guardado. */
-const VERBO_RE=/^([a-zà-ú]+-)?(ir|pôr|[a-zà-ú]*[a-zà-ú](ar|er|ir|or|ôr))(?![a-zà-ú0-9_])/i, TETO_DIA=8;
+const VERBO_RE=/^([a-zà-ú]+-)?(ir|pôr|[a-zà-ú]*[a-zà-ú](ar|er|ir|or|ôr))(?![a-zà-ú0-9_])/i;
+const tetoDia=()=>param("fila.teto_novos_dia",8);
 let NP={titulo:"",frente:null,prazo:null,frenteMao:false};
 const semAcento=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const cargaDia=d=>INV?INV.filter(t=>t.dono==="igor"&&t.prazo===d&&!["feita","aguardando_terceiro","cancelada"].includes(t.status)).length:0;
@@ -2058,7 +2227,7 @@ function abrirNova(txt,manter){
   if(!manter){ const t=String(txt||"").trim().replace(/\s+/g," ").slice(0,70);
     NP={titulo:t?t.charAt(0).toUpperCase()+t.slice(1):"",frente:null,prazo:null,frenteMao:false}; }
   if(!NP.frente)NP.frente=frentesNova(NP.titulo)[0]||null;
-  if(!NP.prazo){ const p=prazosNova().find(x=>x.r!=="hoje"&&x.n<TETO_DIA); NP.prazo=p?p.d:null; }
+  if(!NP.prazo){ const p=prazosNova().find(x=>x.r!=="hoje"&&x.n<tetoDia()); NP.prazo=p?p.d:null; }
   mostrarFolha(`<h3 id="folhaTit">Nova pendência</h3>
     <div class="campo"><label for="novaTit" class="mut">Uma linha, começando pelo verbo: Ligar, Enviar, Pagar, Decidir…</label>
       <input id="novaTit" maxlength="70" autocomplete="off" value="${esc(NP.titulo)}" data-ao-digitar="novaDigitou" data-ao-tecla="novaEnter">
@@ -2075,8 +2244,8 @@ function renderNovaOpc(){
   const fr=frentesNova(NP.titulo), top=fr.slice(0,4); if(NP.frente&&!top.includes(NP.frente))top[3]=NP.frente;
   el.innerHTML=`<div class="campo"><span class="mut">Frente</span><div class="datas">${top.filter(Boolean).map(f=>`<button data-acao="novaFrente" data-a1="${esc(f)}" class="${f===NP.frente?"sug":""}" aria-pressed="${f===NP.frente}">${esc(nomeFrente(f))}</button>`).join("")}</div>
       ${fr.length>4?`<select aria-label="Outra frente" data-ao-mudar="novaFrente" class="nova-sel"><option value="">outra frente…</option>${fr.slice(4).map(f=>`<option value="${esc(f)}">${esc(nomeFrente(f))}</option>`).join("")}</select>`:""}</div>
-    <div class="campo"><span class="mut">Prazo · teto de ${TETO_DIA} cards seus por dia</span><div class="datas">${prazosNova().map(x=>{const cheio=x.n>=TETO_DIA;
-      return `<button data-acao="novaPrazo" data-a1="${esc(x.d)}" class="${x.d===NP.prazo?"sug":""}" aria-pressed="${x.d===NP.prazo}" ${cheio?"disabled":""}>${x.r} <span class="mut">${esc(diaCurto(x.d))} · ${cheio?"cheio":x.n+"/"+TETO_DIA}</span></button>`;}).join("")}</div></div>`;
+    <div class="campo"><span class="mut">Prazo · teto de ${tetoDia()} cards seus por dia</span><div class="datas">${prazosNova().map(x=>{const cheio=x.n>=tetoDia();
+      return `<button data-acao="novaPrazo" data-a1="${esc(x.d)}" class="${x.d===NP.prazo?"sug":""}" aria-pressed="${x.d===NP.prazo}" ${cheio?"disabled":""}>${x.r} <span class="mut">${esc(diaCurto(x.d))} · ${cheio?"cheio":x.n+"/"+tetoDia()}</span></button>`;}).join("")}</div></div>`;
 }
 function novaContar(){ const c=document.getElementById("novaCont"); if(!c)return; const n=NP.titulo.length; c.textContent=n+"/70"; c.classList.toggle("w",n>0&&n<8); }
 function novaDigitou(v){
@@ -2090,7 +2259,7 @@ function novaProblema(){
   if(!VERBO_RE.test(t))return "Comece pelo verbo no infinitivo: Ligar, Enviar, Pagar, Decidir…";
   if(!NP.frente)return "Escolha a frente.";
   if(!NP.prazo)return "Escolha o prazo.";
-  if(cargaDia(NP.prazo)>=TETO_DIA)return "Esse dia já tem "+TETO_DIA+" cards seus. Escolha outro.";
+  if(cargaDia(NP.prazo)>=tetoDia())return "Esse dia já tem "+tetoDia()+" cards seus. Escolha outro.";
   return null;
 }
 function criarNova(){

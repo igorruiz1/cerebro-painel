@@ -102,8 +102,10 @@ Achado é o que a régua não pega e a leitura do fonte pega. Cada um vira item 
 1. **A empresa não aparece como empresa.** As frentes são uma lista plana. Não há unidade de
    negócio, área de apoio, frente de vida nem entidade (cada CNPJ e a PF). Uma frente não tem como
    abrir assunto para outra; a única ligação entre setores é card↔peça e fluxo↔frente.
+   *p4.66 (pi 178, 181, 182): Frentes agrupa por unidade (negócio, apoio, vida) com dono e margem somada; a Semana lista as 3 primeiras questões entre frentes; Hoje e Fila mostram "bloqueado por <frente>".*
 2. **Caixa consolidado sem quebra.** Um saldo único soma PF e empresas; o custo de vida PF entra nos
    dias de caixa. Não dá para ver quando uma entidade financia a outra.
+   *p4.66 (pi 177): a aba Caixa traz, abaixo do consolidado, uma linha por entidade com os dias de caixa (pior e base) e 13 semanas na mesma escala, com a marca da semana que a PF cobre.*
 3. **Marca e muro.** O painel de tudo veste a marca Dabli Tech. O Igor escolheu manter a marca; por
    isso a salvaguarda do muro (LC-01) vira obrigatória: modo tela compartilhada que esconde o
    privativo. *p4.65 (pi 172): botão no trilho e na busca e `?tela=compartilhada`; some a frente PF, o caixa consolidado e todo R$; frente sem classificação também some.*
@@ -113,6 +115,7 @@ Achado é o que a régua não pega e a leitura do fonte pega. Cada um vira item 
    tela ignora; o pior caso das 13 semanas vem e não é lido. As frentes de vida não dão sinal.
 6. **Regra no código.** Meta de caixa, limiar de alerta, WIP, teto de cards por dia, corte de
    "parado" e a frente com ficha especial estão fixos no HTML (régua 24).
+   *p4.66 (pi 179 e 180): os seis parâmetros de gestão vêm de `pg` (v_parametro_gestao) com o número antigo como fallback, e a ficha de presidente (blocos A a E) vale para toda frente, sem caso especial.*
 7. **Comunicação.** O mesmo ato tem três nomes (Largar, Descartar, Arquivar; Concluí, Ok, Feito).
    Quatro blocos somem calados quando vazios e cinco falhas não acendem a saúde. Os docs dizem 6 s
    para desfazer; o código usa 8 s. Há funções e classes sem uso. *p4.65 (pi 170 e 171): glossário único (Concluir, Descartar, Aprovar), docs em 8 s, 6 funções e 10 classes mortas fora; os quatro blocos dizem quando estão vazios e as quatro falhas acendem a saúde por fonte.*
