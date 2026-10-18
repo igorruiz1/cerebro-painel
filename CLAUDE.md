@@ -38,6 +38,21 @@ A auditoria de 13/10 mediu que 73% do custo foi releitura de contexto. Por isso:
   Opus fica para decisão, na conversa principal.
 - PDF ou imagem grande nunca se lê inteiro; resultado grande vai para arquivo.
 
+## Abertura e fechamento no banco (s7472, 18/10/2026)
+
+O banco do cérebro é a fonte, e a regra de fechamento mora só nele (`runtime.fechamento`). Quem pula a
+abertura nunca lê essa regra: a s7472 (tarefa só de código, sem SIMBIOSE) não abriu o banco, passou de
+150k e fechou com bastão escrito à mão. Por isso, em **toda** sessão, inclusive de código:
+
+- **Primeiro ato:** `select entrar('<frente>')` (frente da pauta ou do assunto). As INSTRUCOES que ele
+  devolve valem: `registrar_ack` antes da 1ª escrita, sessão e token em toda escrita.
+- **Último ato:** `fechar_rodada(...)` e `fechar_sessao(..., p_sessao_id, p_token)`. Ao Igor vai, em
+  bloco de código, o bloco que o banco devolve. **Bastão à mão é defeito**, mesmo com conteúdo certo.
+- `p_proxima` substitui a pauta da frente: leia `handoff->>'proxima'` antes e preserve o que é de
+  outras sessões.
+- Sem banco, a sessão não afirma estado (modo cego). Na nuvem o `guarda-bastao.js` do PC não roda
+  (fato 2071): aqui a regra é manual.
+
 ## Nuvem e local não são o mesmo ambiente
 
 O mesmo servidor MCP tem nomes diferentes nas duas superfícies, e a regra de
