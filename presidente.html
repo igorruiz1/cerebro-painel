@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-orsw2t8poBkRR0+Rro/LgLXjTNofu7vFizlQLvVtKD8=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-OfiZV3wEibMtKSEbCRVpboUeBtHHJ8Z0DUjzOOzyFJM=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -510,6 +510,17 @@ button.linha-r.quest{cursor:pointer}
 .dre-mes .pilha{margin:6px 0 10px}
 .dre-fechar{margin:0 0 8px}
 .l10seg [hidden],#dreBox[hidden],#dreTit[hidden]{display:none}
+/* estilo:fila-unica · p4.72 (t3702, s7950): sub-aba Unica da Fila, lida ao vivo da v_pendencia_convergencia */
+.seg.seg2{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}
+#p-fila.fu-on #wip,#p-fila.fu-on #seg,#p-fila.fu-on #kanban,#p-fila.fu-on #filaRodape{display:none}
+.fu-fs{gap:6px}
+.fu-fs button{min-height:44px;flex:0 1 auto;font-size:var(--fs-2)}
+.fu-fs button[aria-pressed="true"]{border-color:var(--acc);color:var(--ink);font-weight:600}
+.fu-it{cursor:default}
+.fu-tit{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.fu-it .chips{min-width:0}
+@media (min-width:900px){.seg.seg2{display:grid;max-width:420px}}
+/* fim estilo:fila-unica */
 </style>
 </head>
 <body>
@@ -612,6 +623,8 @@ button.linha-r.quest{cursor:pointer}
       </section>
 
       <section class="pane" id="p-fila" aria-label="Fila">
+        <div class="seg seg2" role="tablist" aria-label="Modo da fila" id="filaModo"></div>
+        <div id="fu-raiz" class="pilha fu-raiz" hidden></div>
         <div class="wip" id="wip"></div>
         <div class="seg" role="tablist" aria-label="Colunas da fila" id="seg"></div>
         <div class="kanban" id="kanban"></div>
@@ -696,7 +709,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.71";
+const VERP="p4.72";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1442,9 +1455,11 @@ const ACOES={
   telaAlternar:()=>telaAlternar(),entrarSenha:()=>entrarSenha(),pedirCodigo:()=>pedirCodigo(),entrarCodigo:()=>entrarCodigo(),entrarFator:()=>entrarFator(),portaFator:()=>portaFator(),sair:()=>sair(),abrirVoz:()=>abrirVoz(),alternarBusca:()=>alternarBusca(),demoSair:()=>demoSair(),demoPerfil:el=>demoPerfil(+el.dataset.p),atualizarPainel:()=>atualizarPainel(),desfazer:()=>desfazer(),fecharFolha:()=>fecharFolha(),copiar:()=>copiar(),confirmarResposta:()=>confirmarResposta(),vozAlternar:()=>vozAlternar(),vozEnviar:()=>vozEnviar(),vozLimpar:()=>vozLimpar(),vozSalvarApi:()=>vozSalvarApi(),vozEsquecerApi:()=>vozEsquecerApi(),msAbrirPeca:()=>msAbrirPeca(),msBaixa:()=>msBaixa(),msEnviarWhats:()=>msEnviarWhats(),msCompartilhar:()=>msCompartilhar(),envioNaoSaiu:()=>envioNaoSaiu(),envioCobrei:el=>envioCobrei(el.dataset.a1),
   fatorDigitou:el=>{el.value=el.value.replace(/\D/g,"").slice(0,6);if(el.value.length===6)entrarFator();},
   fatorEnter:(el,ev)=>{if(ev.key==="Enter")entrarFator();},
-  demoEntrar:()=>demoEntrar(), avisoAtivar:()=>avisoAtivar(), recarregar:()=>carregar(true), buscar:el=>buscar(el.value),
+  demoEntrar:()=>demoEntrar(), avisoAtivar:()=>avisoAtivar(), recarregar:()=>{carregar(true);if(FU.modo==="unica")fuCarregar();}, buscar:el=>buscar(el.value),
   veuFora:(el,ev)=>{if(ev.target===el)fecharFolha();}, alternarRecolhe:el=>alternarRecolhe(el),
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
+  filaModo:el=>{FU.modo=el.dataset.a1==="unica"?"unica":"quadro";fuRender();if(FU.modo==="unica")fuCarregar();},
+  fuFiltro:el=>{FU.filtro=el.dataset.a1;FU.teto=FU_TETO;fuRender();}, fuMais:()=>{FU.teto+=100;fuRender();},
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
@@ -1628,6 +1643,7 @@ function ir(aba){
   document.getElementById("tituloAba").textContent=NOMES[aba];
   window.scrollTo(0,0);
   if(aba==="mesa"){ msCarregar(); sbCarregar(); }
+  if(aba==="fila"){ fuRender(); if(FU.modo==="unica")fuCarregar(); }
   if(aba==="semana"&&!SEM_ABERTA)SEM_ABERTA=Date.now();
 }
 function irColuna(c){COL=c;renderFila();ir("fila");}
@@ -2056,6 +2072,7 @@ function renderFila(){
     const itens=INV.filter(t=>colunaDe(t)===c.id).sort((a,b)=>String(a.prazo||"9").localeCompare(String(b.prazo||"9")));
     return `<div class="coluna ${c.id===COL?"on":""}"><h3>${c.h} <span class="mut num">${itens.length}</span></h3><div class="ajuda">${esc(c.a)}</div>
       ${itens.length?itens.map(itemInv).join(""):`<div class="vazio">nada aqui</div>`}</div>`;}).join("");
+  fuRender();
   const exec=INV.filter(t=>t.dono!=="igor"&&t.status!=="feita").length;
   /* p4.68 (pi 183): a prestacao do executor mora aqui (chave exec); o bastidor ficou so de diagnostico tecnico */
   const rod=document.getElementById("filaRodape"), x=Array.isArray(D.exec)?D.exec[0]:null;
@@ -2070,6 +2087,68 @@ function renderFila(){
     rod.removeAttribute("data-exec");
     rod.textContent=plural(exec,"card do executor fica","cards do executor ficam")+" fora deste quadro. Prestação do executor sem medida nesta carga.";
   }
+}
+/* ---------- Fila unica · p4.72 (t3702, CV-02, s7950) ----------
+   RC2 da convergencia: seis filas mostravam a mesma coisa. A v_pendencia_convergencia junta cards, demandas,
+   propostas sem aceite, pecas prontas nao enviadas, envios sem aceite e sugestoes numa fila so. A sub-aba Unica
+   le a view direto do banco toda vez que abre (e no recarregar), sem passar pelo snapshot do painel_carga.
+   Filtro "Pauta do bastao": os codigos citados no handoff.proxima das frentes. So t (card), doc e env: na pauta,
+   f e fato e s e sessao, e na view f e fluxo e s e sugestao; casar esses prefixos daria falso positivo. */
+const FU_TETO=50;
+const FU={modo:"quadro",filtro:"toda",dados:null,pauta:null,erro:"",carga:null,em:null,teto:FU_TETO};
+const FU_ETAPA={card:"card",demanda:"demanda",proposta_sem_aceite:"proposta sem aceite",pronta_nao_enviada:"pronta, não enviada",
+  enviada_sem_aceite:"enviada, sem aceite",sugestao_sem_decisao:"sugestão sem decisão",a_receber_vencido:"a receber vencido",a_pagar_sem_baixa:"a pagar sem baixa"};
+const FU_FILTROS=[{id:"toda",r:"Toda"},{id:"pauta",r:"Pauta do bastão"},{id:"igor",r:"Com você"},{id:"claude",r:"Com o Claude"},{id:"vencido",r:"Vencidos"}];
+function fuPautaCodigos(linhas){
+  const c=new Set();
+  for(const f of linhas||[]) for(const m of String(f&&f.proxima||"").matchAll(/\b(?:t|doc|env)\d+\b/g)) c.add(m[0]);
+  return c;
+}
+function fuCarregar(){ if(!FU.carga)FU.carga=fuCarregar_().finally(()=>{FU.carga=null;}); return FU.carga; }
+async function fuCarregar_(){
+  const [v,p]=await Promise.all([
+    comTetoR(sb.from("v_pendencia_convergencia").select("codigo,frente,dono,etapa,titulo,prazo,em_jogo_rs,status,terceiro,vencido,idade_dias,sinais"),LIMITE_RECARGA,"fila única"),
+    comTetoR(sb.from("frente").select("slug,proxima:handoff->>proxima"),LIMITE_RECARGA,"pauta do bastão")]);
+  if(v.error||!Array.isArray(v.data)) FU.erro="Não consegui ler a fila única: "+(v.error?v.error.message:"resposta vazia")+". Toque em recarregar.";
+  else{ FU.erro=""; FU.dados=veu(v.data); FU.em=new Date(); }
+  FU.pauta=p.error||!Array.isArray(p.data)?null:fuPautaCodigos(veu(p.data));
+  fuRender();
+}
+function fuFiltrar(id){
+  const d=FU.dados||[];
+  if(id==="pauta") return FU.pauta?d.filter(x=>FU.pauta.has(x.codigo)):[];
+  if(id==="igor"||id==="claude") return d.filter(x=>x.dono===id);
+  if(id==="vencido") return d.filter(x=>x.vencido===true);
+  return d;
+}
+const fuOrdem=l=>l.slice().sort((a,b)=>((b.vencido===true)-(a.vencido===true))||String(a.prazo||"9999").localeCompare(String(b.prazo||"9999"))||((+b.idade_dias||0)-(+a.idade_dias||0)));
+function fuItem(x){
+  const sin=Array.isArray(x.sinais)?x.sinais:[], dono=x.dono==="igor"?"com você":x.dono==="claude"?"com o Claude":(x.dono||"sem dono");
+  return `<div class="item fu-it" data-cod="${esc(x.codigo)}"><span class="fu-tit l2">${esc(x.titulo||"sem título")}</span><span class="chips">`
+    +`<span class="chip num">${esc(x.codigo)}</span><span class="chip">${esc(nomeFrente(x.frente))}</span><span class="chip">${esc(dono)}</span>`
+    +`<span class="chip">${esc(FU_ETAPA[x.etapa]||x.etapa||"")}</span>`
+    +(x.prazo?`<span class="chip${x.vencido===true?" w":""}">${x.vencido===true?"venceu ":"prazo "}${esc(ddmm(x.prazo))}</span>`:"")
+    +(!TELA&&x.em_jogo_rs!=null?`<span class="chip">${esc(rs(x.em_jogo_rs))}</span>`:"")
+    +sin.map(z=>`<span class="chip w">${esc(String(z).replace(/_/g," "))}</span>`).join("")+`</span></div>`;
+}
+function fuRender(){
+  const pane=document.getElementById("p-fila"), modo=document.getElementById("filaModo"), raiz=document.getElementById("fu-raiz");
+  if(!pane||!modo||!raiz)return;
+  const n=FU.dados?FU.dados.length:null;
+  modo.innerHTML=[["quadro","Quadro"],["unica","Única"+(n!=null?" "+n:"")]].map(([id,r])=>
+    `<button role="tab" aria-selected="${FU.modo===id}" data-acao="filaModo" data-a1="${id}">${esc(r)}</button>`).join("");
+  pane.classList.toggle("fu-on",FU.modo==="unica"); raiz.hidden=FU.modo!=="unica";
+  if(FU.modo!=="unica")return;
+  if(!FU.dados&&!FU.erro){ raiz.innerHTML=`<div class="vazio">carregando a fila única…</div>`; return; }
+  const l=fuOrdem(fuFiltrar(FU.filtro)), hh=FU.em?String(FU.em.getHours()).padStart(2,"0")+":"+String(FU.em.getMinutes()).padStart(2,"0"):"";
+  const vazio=FU.filtro==="pauta"&&!FU.pauta?"Não consegui ler a pauta do bastão. Toque em recarregar.":"nada aqui";
+  raiz.innerHTML=(FU.erro?`<div class="aviso" role="alert">${esc(FU.erro)}</div>`:"")
+    +`<h2>Fila única <span class="mut num">${l.length}</span></h2>`
+    +`<div class="ajuda">Toda pendência numa lista só: cards, demandas, propostas, peças, envios e sugestões, lida agora do banco${hh?" às "+esc(hh):""}.</div>`
+    +`<div class="chips fu-fs" role="group" aria-label="Filtro da fila única">${FU_FILTROS.map(f=>
+      `<button type="button" class="sec" aria-pressed="${FU.filtro===f.id}" data-acao="fuFiltro" data-a1="${f.id}">${esc(f.r)} <span class="num">${fuFiltrar(f.id).length}</span></button>`).join("")}</div>`
+    +(l.length?l.slice(0,FU.teto).map(fuItem).join(""):`<div class="vazio">${esc(vazio)}</div>`)
+    +(l.length>FU.teto?`<button type="button" class="sec" data-acao="fuMais">Mostrar mais ${Math.min(100,l.length-FU.teto)} de ${l.length-FU.teto}</button>`:"");
 }
 function idadeTxt(t){
   const p=+t.parado_dias||0, hoje=somaDias(0);
