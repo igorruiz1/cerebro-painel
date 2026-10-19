@@ -4785,7 +4785,8 @@ test('172 (p4.69) · tela compartilhada esconde vida, PF e todo R$, inclusive a 
 });
 
 /* p4.72 (t3702, CV-02, s7950): a Fila tem a sub-aba Unica, lida da v_pendencia_convergencia toda vez que abre.
-   O filtro "Pauta do bastao" casa so t, doc e env citados no handoff.proxima: f e s da pauta sao fato e sessao. */
+   O filtro "Pauta do bastao" casa so t, doc e env citados no handoff.proxima: f e s da pauta sao fato e sessao.
+   p4.73: a pauta cita demanda e proposta pelo codigo nu "PC-AAAA-NNN"; a view as chama dPC-... e pPC-... */
 test('fila única: lê a v_pendencia_convergencia ao vivo e filtra pela pauta do bastão', async ({page})=>{
   await page.setViewportSize({width:360, height:820});
   await page.addInitScript(()=>{ window.__tab={
@@ -4793,21 +4794,24 @@ test('fila única: lê a v_pendencia_convergencia ao vivo e filtra pela pauta do
       {codigo:'t9001',frente:'20-contrato-pj',dono:'igor',etapa:'card',titulo:'Card de exemplo na pauta',prazo:'2020-01-02',em_jogo_rs:1000,status:'pendente',vencido:true,idade_dias:9,sinais:['sem_opcao']},
       {codigo:'doc77',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca de exemplo pronta',prazo:null,em_jogo_rs:null,status:'A_AGIR',vencido:null,idade_dias:3,sinais:[]},
       {codigo:'f9002',frente:'11-renda-alt',dono:'igor',etapa:'a_pagar_sem_baixa',titulo:'Lancamento de exemplo',prazo:'2020-01-01',em_jogo_rs:50,status:'confirmado',vencido:true,idade_dias:1,sinais:[]},
-      {codigo:'t9003',frente:'20-contrato-pj',dono:'claude',etapa:'card',titulo:'Card de exemplo do executor',prazo:'2099-01-01',em_jogo_rs:null,status:'pendente',vencido:false,idade_dias:1,sinais:[]}],
-    frente:[{slug:'20-contrato-pj',proxima:'1) 20/10: t9001 e doc77; conferir f9002 (fato) e s9003 (sessao).'},{slug:'11-renda-alt',proxima:null}]}; });
+      {codigo:'t9003',frente:'20-contrato-pj',dono:'claude',etapa:'card',titulo:'Card de exemplo do executor',prazo:'2099-01-01',em_jogo_rs:null,status:'pendente',vencido:false,idade_dias:1,sinais:[]},
+      {codigo:'dPC-2099-901',frente:'20-contrato-pj',dono:'igor',etapa:'demanda',titulo:'Demanda de exemplo',prazo:null,em_jogo_rs:null,status:'aberto',vencido:false,idade_dias:2,sinais:[]},
+      {codigo:'pPC-2099-902',frente:'11-renda-alt',dono:'igor',etapa:'proposta_sem_aceite',titulo:'Proposta de exemplo',prazo:'2099-02-01',em_jogo_rs:900,status:'enviada',vencido:false,idade_dias:2,sinais:[]},
+      {codigo:'pPC-2099-903',frente:'11-renda-alt',dono:'igor',etapa:'proposta_sem_aceite',titulo:'Proposta fora da pauta',prazo:'2099-02-01',em_jogo_rs:900,status:'enviada',vencido:false,idade_dias:2,sinais:[]}],
+    frente:[{slug:'20-contrato-pj',proxima:'1) 20/10: t9001 e doc77; conferir f9002 (fato) e s9003 (sessao). 2) PC-2099-901 e aceite da PC-2099-902; PC-2099-9030 nao e a 903.'},{slug:'11-renda-alt',proxima:null}]}; });
   const erros = await abrir(page);
   await page.evaluate(()=>ir('fila'));
   await expect(page.locator('#filaModo button')).toHaveCount(2);
   await expect(page.locator('#fu-raiz')).toBeHidden();
   await page.locator('#filaModo button[data-a1="unica"]').click();
-  await expect(page.locator('#fu-raiz .fu-it')).toHaveCount(4);
+  await expect(page.locator('#fu-raiz .fu-it')).toHaveCount(7);
   await expect(page.locator('#kanban')).toBeHidden();
-  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText(/Única 4/);
+  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText(/Única 7/);
   const ordem = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod));
   expect(ordem.slice(0,2).sort(), 'vencidos primeiro').toEqual(['f9002','t9001']);
   await page.locator('#fu-raiz button[data-a1="pauta"]').click();
   const pauta = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod).sort());
-  expect(pauta, 'pauta casa t e doc; f e s da pauta nao sao fluxo nem sugestao').toEqual(['doc77','t9001']);
+  expect(pauta, 'pauta casa t, doc e PC (demanda e proposta); f e s da pauta nao sao fluxo nem sugestao; PC-2099-9030 nao e 903').toEqual(['dPC-2099-901','doc77','pPC-2099-902','t9001']);
   await page.locator('#fu-raiz button[data-a1="claude"]').click();
   await expect(page.locator('#fu-raiz .fu-it')).toHaveCount(1);
   /* ao vivo: a view muda no banco, o painel le de novo ao reabrir a sub-aba, sem recarregar a pagina */
