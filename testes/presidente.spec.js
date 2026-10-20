@@ -59,6 +59,8 @@ const DUBLE = `(()=>{
     funil:[],
     /* p4.58 (p144): semana vazia por padrao; o teste do p144 troca por window.__dados */
     semana:[],
+    /* p4.76 (P4, s8322): saude do sistema vazia por padrao; o teste p4.76 troca por window.__dados (amostra real da v_saude_painel) */
+    saude:[],
     /* p4.61 (p155): sem aviso da rotina por padrao; o teste do p155 troca por window.__dados */
     aviso:[],
     /* p4.66 (onda 2): chaves novas vazias por padrao (pg vazio = vale o numero do codigo); os testes da onda 2 trocam por window.__dados */
@@ -5124,4 +5126,52 @@ test('p4.75 f: RECUSADO do banco vira toast Nao gravou', async ({page})=>{
   await expect(page.locator('#tmsg')).toHaveText('Não gravou: envio 7 ja tem baixa');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
   expect(erros).toEqual([]);
+});
+
+/* p4.76 (P4, s8322): Saude do sistema no topo da Semana. A classe que mata: meta de SLO vermelha que so existe no banco,
+   sem o Igor ver na tela. Amostra real da v_saude_painel em testes/saude_amostra.json (7 metas, "Baixas sem prova"
+   vermelha com o card t4021 aberto pelo alarme). Cor nao e o unico sinal: o status vai por extenso. */
+test('p4.76 saude: sete metas no topo da Semana, a vermelha com o card, o selo da aba e nenhuma rolagem a 390 px', async ({page})=>{
+  const amostra = JSON.parse(require('fs').readFileSync(path.resolve(__dirname, 'saude_amostra.json'), 'utf8'));
+  await page.setViewportSize({width:390, height:820});
+  await page.addInitScript(a=>{ window.__dados={saude:a}; }, amostra);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  const linhas = page.locator('#semSaude details.sd');
+  await expect(linhas, 'uma linha por meta, as sete').toHaveCount(7);
+  const baixa = page.locator('#semSaude details.sd[data-chave="baixa_sem_prova"]');
+  await expect(baixa, 'Baixas sem prova esta vermelha (atributo)').toHaveAttribute('data-status','vermelho');
+  await expect(baixa, 'Baixas sem prova esta vermelha (classe)').toHaveClass(/sd-vermelho/);
+  await expect(baixa).toContainText('Baixas sem prova');
+  await expect(baixa, 'o status vai por extenso, nao so em cor').toContainText('vermelho');
+  await expect(baixa, 'o card aberto pelo alarme aparece').toContainText('t4021');
+  await expect(baixa).toContainText('64,6%');
+  await expect(baixa).toContainText('meta ≤ 20%');
+  await expect(page.locator('#semSaude details.sd[data-chave="erro_caixa"]'), 'sem dado e cinza e dito por extenso').toContainText('sem dado');
+  await expect(page.locator('#semSaude details.sd[data-status="vermelho"]'), 'so uma vermelha na amostra').toHaveCount(1);
+  await expect(page.locator('#semSaude details.sd[data-chave="rotina_no_horario"]'), 'meta de maior-melhor diz ≥').toContainText('meta ≥ 95%');
+  /* selo: a vermelha aparece sem abrir a aba (390 px = barra de baixo) */
+  await expect(page.locator('#n-semana')).toContainText('1!');
+  await expect(page.locator('#n-semana')).toHaveAttribute('aria-label', /1 meta de saúde vermelha/);
+  /* o toque abre o como se mede */
+  await expect(baixa.locator('.sd-corpo')).toBeHidden();
+  await baixa.locator('summary').click();
+  await expect(baixa.locator('.sd-corpo')).toContainText('sem prova documental');
+  /* layout se mede: 390 e 360, com a linha aberta e com letra larga; toda linha tocavel tem 44 px ou mais */
+  for (const w of [390, 360]) {
+    await page.setViewportSize({width:w, height:820});
+    const m = await page.evaluate(()=>{
+      document.body.style.letterSpacing='1.5px';
+      const s=[...document.querySelectorAll('#semSaude summary,#semSaude button')].map(e=>e.getBoundingClientRect().height);
+      const r={W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth, minH:Math.min(...s)};
+      document.body.style.letterSpacing=''; return r;
+    });
+    expect(m.SW, `rolagem horizontal a ${w} px`).toBe(m.W);
+    expect(m.minH, `linha de saude tocavel a ${w} px`).toBeGreaterThanOrEqual(44);
+  }
+  /* a 1280 o selo mora no trilho e soma as vermelhas ao que ja mostrava */
+  await page.setViewportSize({width:1280, height:820});
+  await expect(page.locator('#r-semana')).toContainText('1 vermelha');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth), 'rolagem horizontal a 1280 px').toBe(1280);
+  expect(erros, 'sem erro de pagina').toEqual([]);
 });

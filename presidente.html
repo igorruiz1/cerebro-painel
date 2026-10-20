@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-xjR+D5Y1M+TGwYGv/Cqy5ycXQI2evDyCqNC3D3r3a28=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Hr/DKW2+fDMlkIi6FTtdCjLTZll1dp8TkJnTiH/mkp0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -530,6 +530,33 @@ button.linha-r.quest{cursor:pointer}
 .cxr-l{grid-template-columns:minmax(0,1fr)}
 .cxr-l .t small.w{color:var(--warn)}
 .fu-cont{margin:0}
+/* p4.76 (P4, s8322): Saude do sistema na Semana. Compacto: cada meta e uma linha de 60 px; o "como se mede" abre no toque */
+.sd-bloco{display:flex;flex-direction:column;gap:8px}
+.sd-bloco[hidden]{display:none}
+.sd-cab{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px}
+.sd{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.sd[open]{border-color:var(--mut)}
+.sd.sd-vermelho{border-color:var(--bad)}
+.sd summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 14px;cursor:pointer}
+.sd summary::-webkit-details-marker{display:none}
+.sd .t{flex:1;min-width:0}
+.sd .t b{display:block;font-weight:600;overflow-wrap:anywhere}
+.sd .t small{display:block;color:var(--mut);font-size:var(--fs-2);overflow-wrap:anywhere}
+.sd-pt{flex:none;width:12px;height:12px;border-radius:50%;background:var(--mut)}
+.sd-verde .sd-pt{background:var(--ok)} .sd-amarelo .sd-pt{background:var(--warn)} .sd-vermelho .sd-pt{background:var(--bad)}
+.sd-sem_dado .sd-pt{background:transparent;border:2px solid var(--mut)}
+.sd-st{font-weight:700;color:var(--mut)}
+.sd-verde .sd-st{color:var(--ok)} .sd-amarelo .sd-st{color:var(--warn)} .sd-vermelho .sd-st{color:var(--bad)}
+.sd-card{font-family:var(--mono);color:var(--ink2)}
+.sd-tend{flex:none;font-family:var(--mono);font-size:var(--fs-4);color:var(--ink2);min-width:1.2em;text-align:center}
+.sd-sp{flex:none;width:48px;height:20px;color:var(--mut)}
+.sd-sp polyline{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.sd-sp circle{fill:currentColor}
+.sd-verde .sd-sp{color:var(--ok)} .sd-amarelo .sd-sp{color:var(--warn)} .sd-vermelho .sd-sp{color:var(--bad)}
+.sd-corpo{padding:0 14px 12px 36px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.sd-corpo p{margin:0;color:var(--ink2);font-size:var(--fs-2);overflow-wrap:anywhere}
+.sd-abrir{min-height:44px;min-width:44px}
+.nav button .selo.sr-bad,.rail button .selo.sr-bad{color:var(--bad);font-weight:700}
 </style>
 </head>
 <body>
@@ -666,6 +693,7 @@ button.linha-r.quest{cursor:pointer}
       </section>
 
       <section class="pane" id="p-semana" aria-label="Semana">
+        <section class="sd-bloco" id="semSaude" aria-label="Saúde do sistema" hidden></section>
         <div class="grande" id="semTopo"></div>
         <div class="mut" id="l10Total"></div>
         <section class="l10seg" data-seg="abertura" aria-label="Abertura">
@@ -718,7 +746,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.75";
+const VERP="p4.76";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1138,7 +1166,10 @@ function demoBase(){
     band:[],
     /* p4.47 (p158): sem sugestao na demonstracao; com uma, o Hoje a 390 passava do piso do canone (3,2 telas, teste 106) */
     sug:[],
-    semana, funil:P.funil, plm:P.plm, aviso:P.aviso, vesp:P.vesp, est:P.est, cob3:P.cob3};
+    /* p4.76: saude vazia na demonstracao. A amostra (7 metas) soma ~130 palavras e 26 numeros a Semana e a demonstracao ja esta no
+       piso do canone (teste 106: 2133 de 2150 palavras, 347 de 350 numeros); subir o piso e decisao escrita do dono, nao deriva.
+       O teste p4.76 saude cobre a tela com a amostra real (testes/saude_amostra.json). */
+    semana, saude:[], funil:P.funil, plm:P.plm, aviso:P.aviso, vesp:P.vesp, est:P.est, cob3:P.cob3};
   const mes=dd(-new Date().getDate()).slice(0,7);
   const mesa=Object.assign({em_jogo:0},P.mesa,{
     relatorios:[
@@ -1308,7 +1339,7 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte.
    p4.68 (pi 183, s6946): exec (v_executor_prestacao), a prestacao do executor que morava no bastidor. */
 const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava","exec","l10","prio","dre","vida"];
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso"].concat(CHAVES_ONDA2);
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso","saude"].concat(CHAVES_ONDA2);
 const IDADE_MAX=1200, PROVA_MIN=8;
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -2429,7 +2460,45 @@ function semRevisao(){ return semB("revisao")[0]||null; }
 /* a tendencia vai em palavra: o canone conta numero (regua 8, EOS) e o valor da semana passada fica no titulo */
 function semTend(x){ if(x.ha_7d==null||x.valor==null||isNaN(+x.ha_7d)||isNaN(+x.valor))return "sem semana anterior";
   const d=(+x.valor)-(+x.ha_7d); if(!d)return "igual"; return (d>0)===(x.direcao!=="menor_melhor")?"melhorou":"piorou"; }
+/* ---------- Saude do sistema (p4.76, s8322, P4) ----------
+   Sete metas de SLO da view v_saude_painel (chave saude), no topo da Semana: bolinha e status por extenso (cor nunca e o
+   unico sinal), valor contra a meta, tendencia (valor_7d, ou o 1o ponto da serie) e sparkline dos ultimos 14 dias. A meta
+   vermelha com card aberto pelo alarme mostra o card; o toque na linha abre o "como se mede" (details, sem JS). Sem R$,
+   entao aparece tambem na tela compartilhada. O selo da aba Semana soma as vermelhas ao "aberta" que ja existia. */
+const SAU_ROT={verde:"verde",amarelo:"amarelo",vermelho:"vermelho",sem_dado:"sem dado"};
+const sauOk=v=>v!=null&&v!==""&&!isNaN(+v);
+const sauNum=(v,u)=>{ if(!sauOk(v))return "sem dado"; const t=String(Math.round(+v*10)/10).replace(".",","), un=String(u==null?"":u).trim(); return un==="%"?t+"%":t+(un?" "+un:""); };
+const sauLista=()=>(Array.isArray(D.saude)?D.saude:[]).filter(x=>x&&x.chave).slice().sort((a,b)=>(+a.ordem||0)-(+b.ordem||0));
+const sauVermelhas=()=>sauLista().filter(x=>x.status==="vermelho").length;
+function sauTend(x){
+  if(!sauOk(x.valor))return {s:"—",t:"sem tendência"};
+  let ref=sauOk(x.valor_7d)?+x.valor_7d:NaN;
+  if(isNaN(ref)){ const p=(Array.isArray(x.serie)?x.serie:[]).filter(q=>q&&sauOk(q.valor)); if(p.length>1)ref=+p[0].valor; }
+  if(isNaN(ref))return {s:"—",t:"sem tendência"};
+  const d=Math.round((+x.valor-ref)*10)/10; return d>0?{s:"↑",t:"subiu"}:d<0?{s:"↓",t:"caiu"}:{s:"→",t:"estável"};
+}
+function sauSpark(x){
+  const p=(Array.isArray(x.serie)?x.serie:[]).filter(q=>q&&sauOk(q.valor)).map(q=>+q.valor), W=48, H=20, m=3;
+  if(!p.length)return `<span class="sd-sp sd-sp0" aria-hidden="true"></span>`;
+  const lo=Math.min(...p), hi=Math.max(...p), y=v=>hi===lo?H/2:H-m-((v-lo)/(hi-lo))*(H-2*m), xs=i=>p.length<2?W/2:m+i*((W-2*m)/(p.length-1));
+  const pts=p.map((v,i)=>xs(i).toFixed(1)+","+y(v).toFixed(1)).join(" ");
+  return `<svg class="sd-sp" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="últimos ${p.length} dias"><polyline points="${pts}"/><circle cx="${xs(p.length-1).toFixed(1)}" cy="${y(p[p.length-1]).toFixed(1)}" r="2.5"/></svg>`;
+}
+function sauLinha(x){
+  const st=SAU_ROT[x.status]?x.status:"sem_dado", tn=sauTend(x), card=st==="vermelho"&&sauOk(x.card_id)?Math.round(+x.card_id):null;
+  const meta="meta "+(x.direcao===">="?"≥ ":"≤ ")+sauNum(x.meta,x.unidade);
+  const partes=[`<span class="sd-st">${esc(SAU_ROT[st])}</span>`].concat(st==="sem_dado"?[]:[esc(sauNum(x.valor,x.unidade))],[esc(meta)],card?[`<span class="sd-card">card t${card}</span>`]:[]);
+  const abre=card&&typeof invDe==="function"&&invDe(card)?`<button type="button" class="sec sd-abrir" data-acao="abrirInv" data-a1="${card}">Abrir o card t${card}</button>`:"";
+  return `<details class="sd sd-${st}" data-chave="${esc(x.chave)}" data-status="${st}"><summary><span class="sd-pt" aria-hidden="true"></span><span class="t"><b>${esc(x.rotulo||x.chave)}</b><small>${partes.join(" · ")}</small></span><span class="sd-tend" role="img" aria-label="${esc(tn.t)}">${tn.s}</span>${sauSpark(x)}</summary><div class="sd-corpo"><p>${esc(x.como_mede||"")}</p>${abre}</div></details>`;
+}
+function renderSaudeSLO(){
+  const el=document.getElementById("semSaude"); if(!el)return;
+  const L=sauLista(); el.hidden=!L.length; if(!L.length){ el.innerHTML=""; return; }
+  const nv=sauVermelhas();
+  el.innerHTML=`<div class="sd-cab"><span class="rot">Saúde do sistema</span><span class="mut${nv?" w":""}">${nv?esc(plural(nv,"meta vermelha","metas vermelhas"))+" de "+L.length:"nenhuma meta vermelha"}</span></div>`+L.map(sauLinha).join("");
+}
 function renderSemana(){
+  renderSaudeSLO();
   const top=document.getElementById("semTopo"); if(!top)return;
   if(!Array.isArray(D.semana)){ top.innerHTML=`<span class="mut">A semana não chegou nesta carga.</span>`; return; }
   const rv=semRevisao(), num=semB("numero").slice(0,semTeto()), nt=semB("norte")[0], fora=num.concat(nt?[nt]:[]).filter(x=>x.detalhe==="fora").length;
@@ -2777,7 +2846,13 @@ function renderSelos(){
   set("n-fila",nf);set("r-fila",nf);
   const rw=(D.rw||[])[0]||{}; set("r-caixa",rw.dias_sobrevida_pior!=null?rw.dias_sobrevida_pior+" d":"");
   /* p4.58: a Semana marca so a revisao em aberto */
-  if(Array.isArray(D.semana)){ const rv=semRevisao(); set("r-semana",rv?"":"aberta"); set("n-semana",rv?"":"•"); }
+  /* p4.76: metas de saude vermelhas somam ao "aberta" de antes; o texto leva o numero e o aria-label diz por extenso */
+  { const rv=Array.isArray(D.semana)?semRevisao():true, ab=Array.isArray(D.semana)&&!rv, nv=sauVermelhas();
+    if(Array.isArray(D.semana)||Array.isArray(D.saude)){
+      set("r-semana",(ab?"aberta":"")+(nv?(ab?" · ":"")+plural(nv,"vermelha","vermelhas"):""));
+      set("n-semana",(ab?"•":"")+(nv?(ab?" ":"")+nv+"!":""));
+      ["r-semana","n-semana"].forEach(id=>{ const e=document.getElementById(id); if(!e)return; e.classList.toggle("sr-bad",nv>0);
+        if(nv)e.setAttribute("aria-label",plural(nv,"meta de saúde vermelha","metas de saúde vermelhas")); else e.removeAttribute("aria-label"); }); } }
   const nfr=ARV?ARV.filter(a=>a.nivel===1).length:""; set("n-frentes",nfr);set("r-frentes",nfr);
 }
 
