@@ -100,7 +100,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='agir_pendencia'?(window.__pendR||'OK: gravado'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='agir_pendencia'?(window.__pendR||'OK: gravado'):n==='envio_anexar_prova'?(window.__anexarR||'OK envio '+(a&&a.p_envio)+': prova anexada'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -1296,7 +1296,7 @@ test('Mesa: com canal, a baixa chama mesa_baixa_painel com a peca e o canal cert
   await page.click('#ms-raiz .ms-item >> nth=1');
   await page.click('#folha [data-canal="gmail"]');
   await expect(page.locator('#folha [data-canal="gmail"]')).toHaveAttribute('aria-pressed','true');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msAviso')).toContainText('Anexe o print'); await page.waitForTimeout(100); expect(await baixas(), 'o 1o toque sem print nao grava').toEqual([]); await expect(page.locator('#msBt')).toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(baixas).toEqual([{p_doc:102,p_canal:'gmail',p_dest:'Cliente de exemplo',p_prova_path:null}]);
   await expect(page.locator('#veu'), 'baixa gravada fecha a folha').toBeHidden();
   await expect(page.locator('#tmsg')).toContainText('Enviada por E-mail para Cliente de exemplo: aprovada e com baixa');
@@ -1320,7 +1320,7 @@ test('Mesa: com canal, a baixa chama mesa_baixa_painel com a peca e o canal cert
   await page.click('#msBt');
   await expect(page.locator('#msAviso'), 'sem destinatario nao grava').toContainText('para quem');
   await page.fill('#msDest','Cartorio de exemplo');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect(page.locator('#toast')).toHaveClass(/bad/);
   await expect(page.locator('#tmsg')).toContainText('Não gravou: doc 103 nao esta esperando voce');
   await expect(page.locator('#veu')).toBeVisible();
@@ -1825,7 +1825,7 @@ for (const perfil of [1,2]) test(`Demonstracao (perfil ${perfil}): nenhum client
   /* p4.53: com dado ficticio, Ok tira a peca de leitura e "Enviei por" tira a de envio; o estado muda so na memoria */
   const antes = await page.locator('#n-mesa').innerText();
   await page.evaluate(()=>msAbrirId(705)); await page.click('#msBtAprovar'); await page.evaluate(()=>enviar());
-  await page.evaluate(()=>msAbrirId(701)); await page.click('#folha [data-canal="gmail"]'); await page.click('#msBt');
+  await page.evaluate(()=>msAbrirId(701)); await page.click('#folha [data-canal="gmail"]'); await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(()=>page.locator('#n-mesa').innerText()).not.toBe(antes);
   await page.click('#ms-raiz .ms-rel >> nth=0'); await page.click('#msRelPdf');
   await expect(page.locator('#tmsg')).toContainText('Relatório aberto');
@@ -2021,7 +2021,7 @@ test('Hoje p4.14: card e peca ligados aparecem uma vez; a folha do card abre a p
   const montar0 = await page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length);
   await page.evaluate(()=>{ window.__baixa='OK: baixa gravada (envio 7); card 2 concluido junto'; });
   await page.click('#folha [data-canal="whatsapp"]');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect(page.locator('#tmsg')).toContainText('O card ligado foi concluído junto.');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_snapshot_montar').length), 'a fila recarrega do banco').toBeGreaterThan(montar0);
   /* o mesmo trabalho nunca duas vezes: nenhuma peca de Hoje aponta para card que esta em Hoje */
@@ -2186,7 +2186,7 @@ test('Mesa p4.19: recusa do banco depois do prazo devolve a peça com o aviso; a
   await page.click('#ms-raiz .ms-item >> nth=1');
   await page.click('#folha .ms-canal >> nth=0');
   await page.fill('#msDest','Cliente de exemplo');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>/^mesa_(deliberar|baixa_painel)$/.test(c.n)).map(c=>c.n+':'+(c.a.p_doc)))).toEqual(['mesa_deliberar:101','mesa_deliberar:101','mesa_baixa_painel:102']);
   expect(erros).toEqual([]);
 });
@@ -2207,7 +2207,7 @@ test('t2308: peca de envio so sai da Mesa pelo "Enviei por", que aprova e da a b
   await expect(page.locator('#msBt')).toHaveText('Enviei por…');
   await page.click('#folha [data-canal="whatsapp"]');
   await expect(page.locator('#msBt')).toHaveText('Enviei por WhatsApp');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='mesa_baixa_painel').map(c=>c.a.p_doc))).toEqual([102]);
   await expect(page.locator('#veu')).toBeHidden();
   expect(erros).toEqual([]);
@@ -2249,7 +2249,7 @@ test('t2308: na demonstracao a 390 px cada peca da Mesa se resolve numa visita s
     const m = await page.evaluate(()=>({W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}));
     expect(m.SW, 'folha sem rolagem lateral a 390 px').toBe(m.W);
     if (await page.locator('#msBtAprovar').count()) { await page.click('#msBtAprovar'); await page.evaluate(()=>{ if(PEND)enviar(); }); }
-    else { await page.click('#folha .ms-canal >> nth=0'); if(!(await page.inputValue('#msDest')).trim()) await page.fill('#msDest','Cliente ficticio'); await page.click('#msBt'); }
+    else { await page.click('#folha .ms-canal >> nth=0'); if(!(await page.inputValue('#msDest')).trim()) await page.fill('#msDest','Cliente ficticio'); await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt'); }
     await expect.poll(()=>page.evaluate(()=>msPend(MS.dados).length), 'a peca sai da mesa na primeira visita').toBe(antes-1);
   }
   expect(visitas, 'uma visita por peca').toBe(n0);
@@ -3773,7 +3773,7 @@ test('p134 Mesa: WhatsApp com link abre wa.me com link assinado de 7 dias e, na 
   await expect(page.locator('#folhaTit')).toHaveText('Saiu?');
   await expect(page.locator('#folha .ms-canal[data-canal="whatsapp"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('#msBt')).toHaveText('Enviei por WhatsApp');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'whatsapp',p_dest:'Cliente de exemplo',p_prova_path:null}]);
   expect(erros).toEqual([]);
 });
@@ -3823,7 +3823,7 @@ test('p134 Mesa: Compartilhar o arquivo leva o arquivo junto e pergunta o canal;
   await expect(page.locator('#msAviso'), 'sem canal a baixa nao grava').toContainText('Escolha por onde');
   expect(await baixasP134(page)).toEqual([]);
   await page.click('#folha .ms-canal[data-canal="outro"]');
-  await page.click('#msBt');
+  await page.click('#msBt'); await expect(page.locator('#msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#msBt');
   await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'outro',p_dest:'Cliente de exemplo',p_prova_path:null}]);
   expect(erros).toEqual([]);
 });
@@ -4800,7 +4800,7 @@ test('p4.74 a: o card com peca de saida ligada traz Enviar daqui completo e a ba
   /* o handler fixa a peca pelo id do botao, nao pelo estado de quem abriu a folha */
   await page.evaluate(()=>{ MS.peca=null; MS.canal=null; });
   await page.click('#folha #cardEnvio [data-canal="whatsapp"]');
-  await page.click('#folha #msBt');
+  await page.click('#folha #msBt'); await expect(page.locator('#folha #msBt'), 'sem print o 1o toque pede o print').toHaveText('Enviei sem print'); await page.click('#folha #msBt');
   await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'whatsapp',p_dest:'Cliente de exemplo',p_prova_path:null}]);
   await expect(page.locator('#tmsg')).toContainText('selo sem prova');
   expect(erros).toEqual([]);
@@ -5174,4 +5174,75 @@ test('p4.76 saude: sete metas no topo da Semana, a vermelha com o card, o selo d
   await expect(page.locator('#r-semana')).toContainText('1 vermelha');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth), 'rolagem horizontal a 1280 px').toBe(1280);
   expect(erros, 'sem erro de pagina').toEqual([]);
+});
+
+/* p4.77 (P5a, s8325): tickler do GTD. Item com data futura (prazo, adiamento, retorno do terceiro) sai do Agora e volta
+   sozinho na data; o selo da aba Fila e o contador da Unica contam so o Agora. Reprova o painel que soma o adiado. */
+const FU_AG = [
+  {codigo:'t71',frente:'11-renda-alt',dono:'igor',etapa:'card',titulo:'Card vencido de hoje',prazo:'2020-01-02',em_jogo_rs:null,status:'pendente',terceiro:null,vencido:true,idade_dias:3,sinais:[],volta_em:'2020-01-02',agenda:'agora'},
+  {codigo:'t72',frente:'11-renda-alt',dono:'igor',etapa:'card',titulo:'Card adiado para depois',prazo:'2099-01-05',em_jogo_rs:null,status:'pendente',terceiro:null,vencido:false,idade_dias:3,sinais:[],volta_em:'2099-01-05',agenda:'agendado'},
+  {codigo:'doc73',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca sem data',prazo:null,em_jogo_rs:null,status:'A_AGIR',terceiro:null,vencido:null,idade_dias:2,sinais:[],volta_em:null,agenda:'agora'},
+  {codigo:'doc74',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca adiada na Mesa',prazo:'2099-02-01',em_jogo_rs:null,status:'A_AGIR',terceiro:null,vencido:false,idade_dias:2,sinais:[],volta_em:'2099-02-01',agenda:'agendado'},
+  {codigo:'t75',frente:'20-contrato-pj',dono:'claude',etapa:'card',titulo:'Card esperando terceiro',prazo:'2020-01-01',em_jogo_rs:null,status:'aguardando_terceiro',terceiro:'Fulano',vencido:true,idade_dias:4,sinais:[],volta_em:'2099-03-01',agenda:'agendado'}];
+
+test('p4.77 a: item adiado nao conta no Agora; Agendados mostra quando volta; selo da Fila e o Agora dos seus', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  await page.addInitScript(l=>{ window.__tab={ v_pendencia_convergencia:l, frente:[],
+    v_fila_contagem:[{rotulo:'so seus (dono igor)',n:4,para_decidir:0,agora:2,agendados:2},{rotulo:'todos os donos',n:5,para_decidir:0,agora:2,agendados:3}] }; }, FU_AG);
+  const erros = await abrir(page);
+  await expect(page.locator('#n-fila'), 'selo da aba Fila conta so o Agora dos seus').toHaveText('2');
+  await page.evaluate(()=>ir('fila'));
+  await page.locator('#filaModo button[data-a1="unica"]').click();
+  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText('Única 2 · todos');
+  await expect(page.locator('#fu-raiz button[data-acao="fuAgenda"][data-a1="agora"]')).toHaveAttribute('aria-selected','true');
+  const agora = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod).sort());
+  expect(agora, 'adiado (prazo, Mesa ou terceiro) fora do Agora').toEqual(['doc73','t71']);
+  await expect(page.locator('#fuCont')).toHaveText('só seus 2 · todos 2');
+  await expect(page.locator('#fu-raiz button[data-a1="agora"]')).toContainText('2');
+  await expect(page.locator('#fu-raiz button[data-a1="agendado"]')).toContainText('3');
+  await page.locator('#fu-raiz button[data-a1="vencido"]').click();
+  expect(await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod)), 'vencido com retorno futuro do terceiro nao e vencido do Agora').toEqual(['t71']);
+  await page.locator('#fu-raiz button[data-a1="toda"]').click();
+  await page.locator('#fu-raiz button[data-acao="fuAgenda"][data-a1="agendado"]').click();
+  const ag = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod).sort());
+  expect(ag).toEqual(['doc74','t72','t75']);
+  await expect(page.locator('#fuCont')).toHaveText('só seus 2 · todos 3');
+  await expect(page.locator('#fu-raiz .fu-it[data-cod="t72"]')).toContainText('volta 05/01');
+  await expect(page.locator('#fu-raiz .fu-it[data-cod="t75"]')).toContainText('volta 01/03');
+  const m = await page.evaluate(()=>({larga:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    baixos:[...document.querySelectorAll('#fu-raiz button')].filter(b=>b.offsetParent&&b.getBoundingClientRect().height<44).length}));
+  expect(m.larga, 'sem rolagem horizontal a 390').toBe(0);
+  expect(m.baixos, 'alvo de toque >= 44 px').toBe(0);
+  expect(erros).toEqual([]);
+});
+
+/* p4.77 (P5c, t4021, s8334): a baixa declarada ganha o print depois. O print sobe ao mesa-provas e o banco recebe o caminho
+   pela envio_anexar_prova; sem a view v_envio_sem_prova (banco antigo) a secao nao aparece. */
+test('p4.77 b: Mesa lista as baixas sem prova de 30 d e Anexar print sobe o arquivo e grava a prova', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  await page.addInitScript(()=>{ window.__tab={ v_envio_sem_prova:[
+    {id:5,titulo:'Envio de exemplo A',destinatario:'Cliente de exemplo',canal:'whatsapp',enviado_em:'2026-10-12T10:00:00Z'},
+    {id:6,titulo:'Envio de exemplo B',destinatario:null,canal:'gmail',enviado_em:'2026-10-13T10:00:00Z'}] }; });
+  const erros = await abrirMesa(page);
+  const lista = page.locator('#msSemProvaLista');
+  await expect(lista.locator('summary')).toHaveText('Baixas sem prova, 30 d (2)');
+  await lista.locator('summary').click();
+  await expect(lista.locator('[data-envio="5"]')).toContainText('para Cliente de exemplo');
+  const alvo = lista.locator('[data-envio="5"] .ms-anexar');
+  expect((await alvo.boundingBox()).height, 'alvo de toque >= 44 px').toBeGreaterThanOrEqual(44);
+  await page.setInputFiles('#msSemProvaLista input[data-a1="5"]', {name:'print.jpg', mimeType:'image/jpeg', buffer:Buffer.from('jpg')});
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='envio_anexar_prova').map(c=>c.a))).toHaveLength(1);
+  const r = await page.evaluate(()=>({a:window.__rpc.filter(c=>c.n==='envio_anexar_prova')[0].a, up:window.__storage.filter(c=>c.op==='upload')}));
+  expect(r.a.p_envio).toBe(5);
+  expect(r.a.p_prova_path).toMatch(/^\d{4}-\d{2}\/env5_\d+\.jpg$/);
+  expect(r.up).toEqual([{b:'mesa-provas',op:'upload',p:r.a.p_prova_path,tipo:'image/jpeg'}]);
+  await expect(page.locator('#tmsg')).toContainText('Print anexado');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.77 b: sem baixas sem prova (ou banco sem a view) a Mesa nao mostra a secao', async ({page})=>{
+  const erros = await abrirMesa(page);
+  await expect(page.locator('#msSemProvaLista')).toHaveCount(0);
+  expect(erros).toEqual([]);
 });

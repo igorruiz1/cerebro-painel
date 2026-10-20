@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Hr/DKW2+fDMlkIi6FTtdCjLTZll1dp8TkJnTiH/mkp0=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-QRpkyWQ+xCP0j5doC3FqaPrF+vhrJvfwmPw40Elsd2o=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -514,6 +514,11 @@ button.linha-r.quest{cursor:pointer}
 .seg.seg2{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}
 #p-fila.fu-on #wip,#p-fila.fu-on #seg,#p-fila.fu-on #kanban,#p-fila.fu-on #filaRodape{display:none}
 .fu-fs{gap:6px}
+.fu-ag{gap:6px;margin:0 0 8px}
+.ms-anexar{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin-top:6px;cursor:pointer}
+.ms-anexar input{position:absolute;width:1px;height:1px;opacity:0}
+.fu-ag button{min-height:44px;flex:1 1 0;font-size:var(--fs-2)}
+.fu-ag button[aria-selected="true"]{border-color:var(--acc);color:var(--ink);font-weight:600}
 .fu-fs button{min-height:44px;flex:0 1 auto;font-size:var(--fs-2)}
 .fu-fs button[aria-pressed="true"]{border-color:var(--acc);color:var(--ink);font-weight:600}
 .fu-it{cursor:pointer}
@@ -727,7 +732,7 @@ button.linha-r.quest{cursor:pointer}
         </section>
       </section>
 
-      <div class="rodape so-real"><a href="index.html">Diagnóstico técnico</a> · telemetria da máquina (congelado desde 17/10) · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
+      <div class="rodape so-real"><a href="index.html">Diagnóstico técnico</a> · telemetria da máquina, dados ao vivo · <a href="seguranca.html">Segurança da conta</a> · <a href="#" data-acao="demoEntrar">Modo demonstração</a> · <a href="#" data-acao="avisoAtivar" id="avisoLink">Avisos no celular</a></div>
     </main>
   </div>
 
@@ -746,7 +751,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.76";
+const VERP="p4.77";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1505,7 +1510,7 @@ const ACOES={
   veuFora:(el,ev)=>{if(ev.target===el)fecharFolha();}, alternarRecolhe:el=>alternarRecolhe(el),
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   filaModo:el=>{FU.modo=el.dataset.a1==="unica"?"unica":"quadro";fuRender();if(FU.modo==="unica")fuCarregar();},
-  fuFiltro:el=>{FU.filtro=el.dataset.a1;FU.teto=FU_TETO;fuRender();}, fuMais:()=>{FU.teto+=100;fuRender();}, fuAbrir:el=>fuAbrir(el.dataset.a1), fuAto:el=>fuAto(el.dataset.a1,el.dataset.a2), msProvaMudou:el=>msProvaMudou(el),
+  fuFiltro:el=>{FU.filtro=el.dataset.a1;FU.teto=FU_TETO;fuRender();}, fuAgenda:el=>{FU.agenda=el.dataset.a1==="agendado"?"agendado":"agora";FU.teto=FU_TETO;fuRender();}, fuMais:()=>{FU.teto+=100;fuRender();}, msAnexarPrint:el=>msAnexarPrint(el), fuAbrir:el=>fuAbrir(el.dataset.a1), fuAto:el=>fuAto(el.dataset.a1,el.dataset.a2), msProvaMudou:el=>msProvaMudou(el),
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
@@ -1607,7 +1612,7 @@ async function carregar_(forcar){
   /* p4.65 (pi 172): com a tela compartilhada, a classificacao das frentes vem antes de qualquer dado */
   if(TELA&&!ENT){ await carregarEnt(); telaUi(); }
   /* p4.4: a Mesa tem leitura propria (mesa_painel), em paralelo; erro dela fica na aba, nao aqui */
-  msCarregar(); sbCarregar();
+  msCarregar(); sbCarregar(); fuContar();
   const avisos=[];
   if(forcar){ const m=await comTetoR(sb.rpc("painel_snapshot_montar",{p_chaves:CHAVES}),LIMITE_ACAO,"painel_snapshot_montar");
     if(semSessao(m))return sessaoCaiu();
@@ -2145,7 +2150,11 @@ function renderFila(){
    p4.73 (s-pauta-pc): a pauta cita demanda e proposta pelo codigo nu da proposta ("PC-2026-018"), e a view as
    chama dPC-2026-018 e pPC-2026-018. O codigo nu entra pelos dois; o ja prefixado (dPC/pPC) entra como esta. */
 const FU_TETO=50;
-const FU={modo:"quadro",filtro:"toda",dados:null,pauta:null,erro:"",carga:null,em:null,teto:FU_TETO,cont:null};
+/* p4.77 (P5a, s8325): tickler do GTD. A view traz agenda ('agora' | 'agendado') e volta_em; item com data futura (prazo,
+   adiamento ou retorno do terceiro) sai do Agora e volta sozinho na data. A Unica abre no Agora, e o selo da aba Fila conta
+   so o Agora dos seus. Linha sem a coluna (view antiga) conta como agora: nada some por falta de dado. */
+const FU={modo:"quadro",filtro:"toda",agenda:"agora",dados:null,pauta:null,erro:"",carga:null,em:null,teto:FU_TETO,cont:null};
+const fuAgendaDe=x=>x&&x.agenda==="agendado"?"agendado":"agora";
 const FU_ETAPA={card:"card",demanda:"demanda",proposta_sem_aceite:"proposta sem aceite",pronta_nao_enviada:"pronta, não enviada",
   enviada_sem_aceite:"enviada, sem aceite",sugestao_sem_decisao:"sugestão sem decisão",a_receber_vencido:"a receber vencido",a_pagar_sem_baixa:"a pagar sem baixa"};
 /* p4.74 (P3, s8199): o filtro diz de quem e a lista. "Todos os donos" e "Só seus" casam com as duas linhas de v_fila_contagem. */
@@ -2161,23 +2170,30 @@ function fuPautaCodigos(linhas){
 function fuContagem(k){
   if(!k||k.error||!Array.isArray(k.data))return null;
   const l=veu(k.data), f=re=>l.find(x=>x&&re.test(String(x.rotulo||"").toLowerCase())), a=f(/^s[oó] seus/), t=f(/^todos/);
-  const n=x=>x&&x.n!=null&&!isNaN(+x.n)?+x.n:null;
-  return n(a)==null&&n(t)==null?null:{seus:n(a),todos:n(t)};
+  const n=(x,c="n")=>x&&x[c]!=null&&!isNaN(+x[c])?+x[c]:null;
+  /* p4.77: com as colunas agora/agendados, o contador e o do Agora; sem elas, o total de antes */
+  const ag=n(a,"agora")!=null||n(t,"agora")!=null;
+  return n(a)==null&&n(t)==null?null:{seus:ag?n(a,"agora"):n(a),todos:ag?n(t,"agora"):n(t),seusAgendados:n(a,"agendados"),todosAgendados:n(t,"agendados"),agenda:ag};
 }
 function fuCarregar(){ if(!FU.carga)FU.carga=fuCarregar_().finally(()=>{FU.carga=null;}); return FU.carga; }
 async function fuCarregar_(){
   const [v,p,k]=await Promise.all([
-    comTetoR(sb.from("v_pendencia_convergencia").select("codigo,frente,dono,etapa,titulo,prazo,em_jogo_rs,status,terceiro,vencido,idade_dias,sinais"),LIMITE_RECARGA,"fila única"),
+    comTetoR(sb.from("v_pendencia_convergencia").select("codigo,frente,dono,etapa,titulo,prazo,em_jogo_rs,status,terceiro,vencido,idade_dias,sinais,volta_em,agenda"),LIMITE_RECARGA,"fila única"),
     comTetoR(sb.from("frente").select("slug,proxima:handoff->>proxima"),LIMITE_RECARGA,"pauta do bastão"),
-    comTetoR(sb.from("v_fila_contagem").select("rotulo,n,para_decidir"),LIMITE_RECARGA,"contagem da fila")]);
-  FU.cont=fuContagem(k);
+    comTetoR(sb.from("v_fila_contagem").select("rotulo,n,para_decidir,agora,agendados"),LIMITE_RECARGA,"contagem da fila")]);
+  FU.cont=fuContagem(k); renderSelos();
   if(v.error||!Array.isArray(v.data)) FU.erro="Não consegui ler a fila única: "+(v.error?v.error.message:"resposta vazia")+". Toque em recarregar.";
   else{ FU.erro=""; FU.dados=veu(v.data); FU.em=new Date(); }
   FU.pauta=p.error||!Array.isArray(p.data)?null:fuPautaCodigos(veu(p.data));
   fuRender();
 }
-function fuFiltrar(id){
-  const d=FU.dados||[];
+/* p4.77: so a contagem, na carga do painel, para o selo da aba Fila nascer no Agora sem abrir a Unica */
+async function fuContar(){ try{
+  const k=await comTetoR(sb.from("v_fila_contagem").select("rotulo,n,para_decidir,agora,agendados"),LIMITE_RECARGA,"contagem da fila");
+  const c=fuContagem(k); if(c){ FU.cont=c; renderSelos(); }
+  }catch(e){} }
+function fuFiltrar(id,agenda){
+  const d=(FU.dados||[]).filter(x=>fuAgendaDe(x)===(agenda||FU.agenda));
   if(id==="pauta") return FU.pauta?d.filter(x=>FU.pauta.has(x.codigo)):[];
   if(id==="igor"||id==="claude") return d.filter(x=>x.dono===id);
   if(id==="vencido") return d.filter(x=>x.vencido===true);
@@ -2190,7 +2206,7 @@ function fuItem(x){
   return `<button type="button" class="item fu-it" data-acao="fuAbrir" data-a1="${esc(x.codigo)}" data-cod="${esc(x.codigo)}"><span class="fu-tit l2">${esc(x.titulo||"sem título")}</span><span class="chips">`
     +`<span class="chip num">${esc(x.codigo)}</span><span class="chip">${esc(nomeFrente(x.frente))}</span><span class="chip">${esc(dono)}</span>`
     +`<span class="chip">${esc(FU_ETAPA[x.etapa]||x.etapa||"")}</span>`
-    +(x.prazo?`<span class="chip${x.vencido===true?" w":""}">${x.vencido===true?"venceu ":"prazo "}${esc(ddmm(x.prazo))}</span>`:"")
+    +(fuAgendaDe(x)==="agendado"&&x.volta_em?`<span class="chip">volta ${esc(ddmm(x.volta_em))}</span>`:x.prazo?`<span class="chip${x.vencido===true?" w":""}">${x.vencido===true?"venceu ":"prazo "}${esc(ddmm(x.prazo))}</span>`:"")
     +(!TELA&&x.em_jogo_rs!=null?`<span class="chip">${esc(rs(x.em_jogo_rs))}</span>`:"")
     +sin.map(z=>`<span class="chip w">${esc(String(z).replace(/_/g," "))}</span>`).join("")+`</span></button>`;
 }
@@ -2251,19 +2267,24 @@ function fuAbrir(cod){
 function fuRender(){
   const pane=document.getElementById("p-fila"), modo=document.getElementById("filaModo"), raiz=document.getElementById("fu-raiz");
   if(!pane||!modo||!raiz)return;
-  const n=FU.dados?FU.dados.length:null;
+  const n=FU.dados?FU.dados.filter(x=>fuAgendaDe(x)==="agora").length:null;
   modo.innerHTML=[["quadro","Quadro"],["unica","Única"+(n!=null?" "+n+" · todos":"")]].map(([id,r])=>
     `<button role="tab" aria-selected="${FU.modo===id}" data-acao="filaModo" data-a1="${id}">${esc(r)}</button>`).join("");
   pane.classList.toggle("fu-on",FU.modo==="unica"); raiz.hidden=FU.modo!=="unica";
   if(FU.modo!=="unica")return;
   if(!FU.dados&&!FU.erro){ raiz.innerHTML=`<div class="vazio">carregando a fila única…</div>`; return; }
   const l=fuOrdem(fuFiltrar(FU.filtro)), hh=FU.em?String(FU.em.getHours()).padStart(2,"0")+":"+String(FU.em.getMinutes()).padStart(2,"0"):"";
-  const seus=FU.cont&&FU.cont.seus!=null?FU.cont.seus:fuFiltrar("igor").length, todos=FU.cont&&FU.cont.todos!=null?FU.cont.todos:(FU.dados||[]).length;
+  const ag=FU.agenda==="agendado", c=FU.cont||{};
+  const seus=!ag&&c.seus!=null?c.seus:ag&&c.seusAgendados!=null?c.seusAgendados:fuFiltrar("igor").length;
+  const todos=!ag&&c.todos!=null?c.todos:ag&&c.todosAgendados!=null?c.todosAgendados:fuFiltrar("toda").length;
+  const nAg=k=>(FU.dados||[]).filter(x=>fuAgendaDe(x)===k).length;
   const vazio=FU.filtro==="pauta"&&!FU.pauta?"Não consegui ler a pauta do bastão. Toque em recarregar.":"nada aqui";
   raiz.innerHTML=(FU.erro?`<div class="aviso" role="alert">${esc(FU.erro)}</div>`:"")
+    +`<div class="chips fu-ag" role="tablist" aria-label="Agora ou agendados">${[["agora","Agora"],["agendado","Agendados"]].map(([id,r])=>
+      `<button type="button" role="tab" class="sec" aria-selected="${FU.agenda===id}" aria-pressed="${FU.agenda===id}" data-acao="fuAgenda" data-a1="${id}">${r} <span class="num">${nAg(id)}</span></button>`).join("")}</div>`
     +`<h2>Fila única <span class="mut num">${l.length}</span></h2>`
     +`<div class="ajuda fu-cont" id="fuCont">só seus <span class="num">${seus}</span> · todos <span class="num">${todos}</span></div>`
-    +`<div class="ajuda">Toda pendência numa lista só: cards, demandas, propostas, peças, envios e sugestões, lida agora do banco${hh?" às "+esc(hh):""}.</div>`
+    +`<div class="ajuda">Toda pendência numa lista só: cards, demandas, propostas, peças, envios e sugestões, lida agora do banco${hh?" às "+esc(hh):""}. ${ag?"Agendados: têm data futura e voltam sozinhos ao Agora no dia.":"Agora: o que não tem data futura. O que está agendado volta sozinho na data."}</div>`
     +`<div class="chips fu-fs" role="group" aria-label="Filtro da fila única">${FU_FILTROS.map(f=>
       `<button type="button" class="sec" aria-pressed="${FU.filtro===f.id}" data-acao="fuFiltro" data-a1="${f.id}">${esc(f.r)} <span class="num">${fuFiltrar(f.id).length}</span></button>`).join("")}</div>`
     +(l.length?l.slice(0,FU.teto).map(fuItem).join(""):`<div class="vazio">${esc(vazio)}</div>`)
@@ -2840,9 +2861,10 @@ function linha4(x){
 }
 
 function renderSelos(){
-  const nh=numerosHoje(), h=nh?nh.passos:hojeLista().length+pecasHoje().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const h0=somaDias(0), nh=numerosHoje(), h=nh?nh.passos:hojeLista().length+pecasHoje().length, set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("n-hoje",h);set("r-hoje",h);
-  const nf=INV?INV.filter(t=>t.dono==="igor"&&t.status!=="feita").length:"";
+  /* p4.77 (P5a): o selo e o Agora dos seus (v_fila_contagem); sem a contagem, os seus cards sem data futura */
+  const nf=FU.cont&&FU.cont.agenda&&FU.cont.seus!=null?FU.cont.seus:INV?INV.filter(t=>t.dono==="igor"&&t.status!=="feita"&&!(t.prazo&&String(t.prazo).slice(0,10)>h0)).length:"";
   set("n-fila",nf);set("r-fila",nf);
   const rw=(D.rw||[])[0]||{}; set("r-caixa",rw.dias_sobrevida_pior!=null?rw.dias_sobrevida_pior+" d":"");
   /* p4.58: a Semana marca so a revisao em aberto */
@@ -4015,7 +4037,10 @@ const msPedir=(fn,ms,rotulo)=>comTetoR(Promise.resolve().then(fn),ms,rotulo);
 function msCarregar(){ if(!MS.carga)MS.carga=msCarregar_().finally(()=>{MS.carga=null;}); return MS.carga; }
 async function msCarregar_(){
   if(!MS.dados)msRender();
-  const {data,error}=await msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel");
+  const [{data,error},sp]=await Promise.all([msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel"),
+    comTetoR(sb.from("v_envio_sem_prova").select("id,titulo,destinatario,canal,enviado_em"),LIMITE_RECARGA,"baixas sem prova").catch(()=>null)]);
+  /* p4.77 (P5c, t4021): sem a view (banco antigo) a secao nao aparece; erro de leitura tambem nao derruba a Mesa */
+  MS.semProva=sp&&!sp.error&&Array.isArray(sp.data)?veu(sp.data):null;
   if(error||!data||typeof data!=="object")MS.erro="Não consegui ler a mesa: "+(error?error.message:"resposta vazia")+". Toque em recarregar.";
   else{ MS.erro=""; MS.dados=veuObj(data); }
   msRender();
@@ -4068,6 +4093,9 @@ function msRender(){
   const adiH=adiVis.length?`<details class="ms-adiadas"><summary>Adiadas (${esc(adiVis.length)})</summary><div class="pilha">${adiVis.map(msItemHtml).join("")}</div></details>`:"";
   const saiu=Array.isArray(d.saiu_hoje)?d.saiu_hoje:[];
   const saiuH=saiu.length?`<h2>Saiu hoje</h2><div class="pilha">${saiu.map(s=>`<div class="ms-saiu"><span class="ms-tit l2">${esc(s.titulo||"peça sem título")}</span><span class="ms-meta">${s.dest?"para "+esc(s.dest)+" · ":""}${esc(MS_PROVA[s.prova]||"sem prova registrada")}${s.prova==="declaratoria"?` <span class="chip w ms-selo">sem prova</span>`:""}</span></div>`).join("")}</div>`:"";
+  const semP=Array.isArray(MS.semProva)?MS.semProva:[];
+  /* p4.77 (P5c, t4021, s8334): a baixa declarada ganha o print depois; o print sobe ao mesa-provas e o banco vira a prova */
+  const semPH=semP.length?`<details class="ms-sem-prova-lista" id="msSemProvaLista"><summary>Baixas sem prova, 30 d (${esc(semP.length)})</summary><p class="mut">Anexe o print do envio e a baixa passa a ter prova.</p><div class="pilha">${semP.map(e=>`<div class="ms-saiu" data-envio="${+e.id}"><span class="ms-tit l2">${esc(e.titulo||"envio sem título")}</span><span class="ms-meta">${e.destinatario?"para "+esc(e.destinatario)+" · ":""}${esc(msCanal(e.canal)||e.canal||"")}${e.enviado_em?" · "+esc(ddmm(String(e.enviado_em).slice(0,10))):""}</span><label class="sec ms-anexar">Anexar print<input type="file" class="ms-arq" accept="image/*,application/pdf" data-ao-mudar="msAnexarPrint" data-a1="${+e.id}"></label></div>`).join("")}</div></details>`:"";
   const rel=msVigentes(Array.isArray(d.relatorios)?d.relatorios:[]);
   /* p4.53: a lista de relatorios e so a versao vigente de cada um, a mais recente primeiro. Sairam a ciencia, o lote,
      Lidos e Arquivo (p4.18). */
@@ -4076,14 +4104,14 @@ function msRender(){
   const relBt=o=>`<button class="ms-rel" data-acao="msRelatorio" data-a1="${o.i}"><span class="ms-tit ms-um">${esc((MS_REL[o.r.tipo]||"Relatório")+" "+msAlvo(o.r.alvo))}</span><span class="ms-meta">${esc(msRelMeta(o.r))}</span></button>`;
   MS.rel=rel;
   const relH=`<h2>Relatórios</h2><div class="pilha">${relIdx.length?relVis.map(relBt).join(""):`<div class="vazio">Nenhum relatório gerado ainda.</div>`}${relIdx.length>relVis.length?`<button class="sec ms-mais" data-acao="msTodosRel">Mostrar todos (${relIdx.length})</button>`:""}</div>`;
-  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p><h2>Esperando você</h2>${msFiltroHtml(pend,adi)}${filtroN}<div class="pilha">${lista}</div>${adiH}${saiuH}${relH}`;
+  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p><h2>Esperando você</h2>${msFiltroHtml(pend,adi)}${filtroN}<div class="pilha">${lista}</div>${adiH}${saiuH}${semPH}${relH}`;
 }
 /* ---------- folha da peca e baixa de envio ---------- */
 /* p4.14: o banco diz se o card ligado fechou junto ou ficou aberto; a tela traduz */
 const msCardTxt=t=>/concluido junto/.test(t)?" O card ligado foi concluído junto.":/ficou aberto/.test(t)?" O card ligado ficou aberto: conclua pelo card.":"";
 function msAbrirId(id){ const p=msEst(MS.dados).find(x=>+x.id===+id); if(p)msAbrirP(p); }
 function msAbrirP(p){
-  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
+  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   const amanha=somaDias(1), saida=MS_ATO_SAIDA.has(p.ato);
   const outros=`<button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" data-acao="msMotivo" data-a1="ajustar">Ajustar</button>
         <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" data-acao="msMotivo" data-a1="adiar">Adiar</button>
@@ -4122,7 +4150,7 @@ function msAbrirP(p){
 function msFixar(id){
   if(id==null||id==="")return MS.peca;
   const p=msEst(MS.dados).find(x=>String(x.id)===String(id)); if(!p)return MS.peca;
-  if(!MS.peca||String(MS.peca.id)!==String(p.id)){ MS.canal=null; MS.dec=null; MS.gravando=false; }
+  if(!MS.peca||String(MS.peca.id)!==String(p.id)){ MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false; }
   MS.peca=p; return p;
 }
 function msAbrirBtnHtml(p){
@@ -4138,6 +4166,7 @@ function msProvaMudou(el){
   const tem=!!(el&&el.files&&el.files.length), c=document.getElementById("msSemProva"), n=document.getElementById("msProvaNota");
   if(c)c.hidden=tem;
   if(n)n.textContent=tem?"Com o print, a baixa vai com prova.":"Sem print, a baixa vai como declaração com selo «sem prova».";
+  if(tem&&MS.semPrint){ MS.semPrint=false; const bt=document.getElementById("msBt"); if(bt&&!MS.gravando)bt.textContent=msBtBaixa(); }
 }
 function enviarDaquiHtml(p,o){
   o=o||{}; const id=+p.id, aprov=msAprovEm(p);
@@ -4157,16 +4186,31 @@ function enviarDaquiHtml(p,o){
 /* p4.74: o card com peca de saida (com arquivo) ligada traz o bloco completo da primeira; as demais ficam como botao em pecasLigadasHtml */
 function envioDoCardHtml(c){
   const p=pecasDoCard(c.origem,c.ref).find(x=>MS_ATO_SAIDA.has(x.ato)&&x.peca); if(!p)return "";
-  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
+  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   return `<div class="ms-do-card" id="cardEnvio" data-peca="${+p.id}"><p class="mut">Peça de saída deste card: <b>${esc(curto(p.titulo||"peça sem título",80))}</b>. Abra, envie e dê a baixa daqui, sem abrir o Claude.</p>${enviarDaquiHtml(p,{abrir:true})}</div>`;
 }
-const msBtBaixa=()=>MS.canal?"Enviei por "+msCanal(MS.canal):"Enviei por…";
+/* p4.77 (P5c, t4021, s8334): sem print, o 1o toque pede o print e o 2o grava a declaracao ("Enviei sem print") */
+const msBtBaixa=()=>MS.semPrint?"Enviei sem print":MS.canal?"Enviei por "+msCanal(MS.canal):"Enviei por…";
 function msEscolherCanal(c){
   if(!MS_CANAL_NOME[c])return;
   MS.canal=c;
   document.querySelectorAll("#folha .ms-canal").forEach(b=>b.setAttribute("aria-pressed",b.dataset.canal===c?"true":"false"));
   const bt=document.getElementById("msBt"); if(bt&&!MS.gravando)bt.textContent=msBtBaixa();
   const av=document.getElementById("msAviso"); if(av)av.textContent="";
+}
+async function msAnexarPrint(el){
+  const id=+(el&&el.dataset.a1), arq=el&&el.files&&el.files[0]||null; if(!id||!arq||MS.gravando)return;
+  if(DEMO){ toast("Na demonstração nada é gravado. No painel real, o print sobe e a baixa passa a ter prova.",null,false,4000); return; }
+  MS.gravando=true;
+  try{
+    const mes=String((MS.dados&&MS.dados.hoje)||new Date().toISOString()).slice(0,7), caminho=`${mes}/env${id}_${Date.now()}.${msExt(arq)}`;
+    const up=await msPedir(()=>sb.storage.from(MS_BUCKET_PROVA).upload(caminho,arq),MS_TETO_UPLOAD,"upload");
+    if(up.error){ toast("O print não subiu ("+up.error.message+"). Nada foi gravado.","bad",false,6000); return; }
+    const {data,error}=await msPedir(()=>sb.rpc("envio_anexar_prova",{p_envio:id,p_prova_path:(up.data&&up.data.path)||caminho}),LIMITE_ACAO,"envio_anexar_prova");
+    const txt=error?String(error.message||"falha de rede"):String(data==null?"":data);
+    if(!error&&/^OK/.test(txt)){ toast("Print anexado: a baixa agora tem prova.",null,false,4000); MS.gravando=false; msCarregar(); return; }
+    toast(txt.replace(/^RECUSADO:?\s*/i,"Não gravou: ").slice(0,220),"bad",false,6000);
+  } finally { MS.gravando=false; }
 }
 async function msBaixa(id){
   msFixar(id); const p=MS.peca; if(!p||MS.gravando)return;
@@ -4176,6 +4220,8 @@ async function msBaixa(id){
   const destEl=document.getElementById("msDest"), dest=destEl?destEl.value.trim():"";
   if(dest.length<2){ diz("Diga para quem a peça foi."); if(destEl)destEl.focus(); return; }
   const arqEl=document.getElementById("msArq"), arq=arqEl&&arqEl.files&&arqEl.files[0]||null, canal=MS.canal;
+  if(!arq&&!MS.semPrint){ MS.semPrint=true; if(bt)bt.textContent=msBtBaixa();
+    if(av)av.textContent="Sem print a baixa fica sem prova. Anexe o print acima, ou toque em «Enviei sem print» para gravar assim."; return; }
   /* p4.19: a aprovacao que ainda espera os 8 s vai antes da baixa; recusada, a baixa nao vai */
   if(PEND&&PEND.mesa&&await enviar()===false)return;
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
@@ -4262,7 +4308,7 @@ function perguntarEnvio(){
       <button class="sec" id="envioNao" data-acao="envioNaoSaiu">Não mandei</button>`);
     return;
   }
-  const p=e.p; MS.peca=p; MS.canal=e.canal&&MS_CANAL_NOME[e.canal]?e.canal:null; MS.dec=null; MS.gravando=false;
+  const p=e.p; MS.peca=p; MS.canal=e.canal&&MS_CANAL_NOME[e.canal]?e.canal:null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   mostrarFolha(`<h3 id="folhaTit">Saiu?</h3>
     <p>Você abriu o envio de <b>${esc(curto(p.titulo||"peça sem título",90))}</b>${MS.canal?" pelo "+esc(msCanal(MS.canal)):""}. Se saiu, confirme por onde: um toque dá a baixa e tira a peça da sua mesa.</p>
     <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="${c===MS.canal?"true":"false"}" data-acao="msEscolherCanal" data-a1="${esc(c)}">${esc(n)}</button>`).join("")}</div>
