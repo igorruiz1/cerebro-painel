@@ -4261,61 +4261,8 @@ test('p4.65 pi 172: frente sem classificação some (fail-closed) e o botão lig
 /* ---------- p4.66 · onda 2 do canone v02 (pi 177 a 182, s6857, 17/10/2026) ----------
    Cada teste abaixo reprova o origin/main (p4.65): a prova esta no PR. Os dados vem de window.__dados (as chaves novas do
    painel_carga: pg, cxe, rwe, uni, ficha, quest, bloq, trava) e de window.__tab.frente (frente.unidade). */
-const CXE_DADOS = `(()=>{ const sem=(n,pior,base,fin)=>Array.from({length:13},(_,i)=>({entidade:n,semana:i+1,inicio:'2026-10-12',fim:'2026-10-18',
-    saldo_pior:pior(i),saldo_base:base(i),financiada_pela_pf_pior:!!(fin&&fin(i))}));
-  window.__dados={
-    rwe:[{entidade:'EMP-A',dias_caixa:60,dias_caixa_pior:45,financiamento:'Gera caixa para a PF'},
-      {entidade:'EMP-B',dias_caixa:null,dias_caixa_pior:12,financiamento:'Consome caixa da PF'},
-      {entidade:'PF',dias_caixa:20,dias_caixa_pior:20,financiamento:''}],
-    cxe:sem('EMP-A',i=>1000+i*600,i=>2000+i*750).concat(sem('EMP-B',i=>(i>=2&&i<=4)?-3000:500,i=>500+i*100,i=>i>=2&&i<=4),sem('PF',i=>300-i*10,i=>400))};
-  })();`;
-
-test('p4.66 pi 177: Caixa abre no consolidado e traz uma quebra por entidade, minis na mesma escala, com o zero e a marca da PF', async ({page})=>{
-  await page.addInitScript(CXE_DADOS);
-  const erros = await abrir(page);
-  await page.evaluate(()=>ir('caixa'));
-  const L = page.locator('#cxEnt .cxe-l');
-  await expect(L, 'uma linha por entidade').toHaveCount(3);
-  await expect(L.nth(0)).toContainText('EMP-A');
-  await expect(L.nth(0).locator('.dias'), 'dias no pior caso / no base').toHaveText('45 / 60 d');
-  await expect(L.nth(1).locator('.dias'), 'dias do base ausente vira traco, nunca zero').toHaveText('12 / — d');
-  await expect(L.nth(1).locator('.dias'), 'abaixo do alerta de caixa acende').toHaveClass(/\bw\b/);
-  await expect(L.nth(0).locator('.dias')).not.toHaveClass(/\bw\b/);
-  await expect(L.nth(1)).toContainText('Consome caixa da PF');
-  await expect(L.nth(0)).toContainText('Gera caixa para a PF');
-  /* o consolidado fica no topo, a quebra vem depois do grafico de 13 semanas */
-  expect(await page.evaluate(()=>{ const c=document.getElementById('caixaTopo'), g=document.getElementById('semanas'), e=document.getElementById('cxEnt');
-    return {topo:!!(c.compareDocumentPosition(e)&4), graf:!!(g.compareDocumentPosition(e)&4)}; }), 'ordem na aba').toEqual({topo:true, graf:true});
-  /* Tufte: mesma escala vertical para todas (minimo e maximo globais) e a linha do zero no mesmo lugar */
-  const esc = await page.$$eval('#cxEnt svg', s=>s.map(x=>({min:x.dataset.min, max:x.dataset.max, zero:+x.querySelector('.zero').getAttribute('y1'),
-    h:(b=>b.height)(x.querySelector('.pior').getBBox()), fin:x.querySelectorAll('rect.fin').length, nfin:x.dataset.fin})));
-  expect(esc.map(x=>x.min), 'minimo global igual em todas').toEqual(['-3000','-3000','-3000']);
-  expect(esc.map(x=>x.max), 'maximo global igual em todas').toEqual(['11000','11000','11000']);
-  expect(new Set(esc.map(x=>x.zero)).size, 'o zero cai na mesma altura em todas').toBe(1);
-  expect(esc[0].zero).toBeCloseTo(2+(11000/14000)*32, 1);
-  expect(esc[1].h, 'a entidade pequena desenha menos altura que a grande: a escala e comum, nao esticada').toBeLessThan(esc[0].h);
-  expect(esc.map(x=>x.fin), 'marca da semana financiada pela PF so onde o banco marcou').toEqual([0,3,0]);
-  expect(esc[1].nfin).toBe('3');
-  await expect(page.locator('#cxEnt svg').nth(1)).toHaveAttribute('aria-label', /a PF financia 3 semanas/);
-  for (const w of [360, 390, 1280]) {
-    await page.setViewportSize({width:w, height:820});
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth), `rolagem horizontal a ${w}`).toBeLessThanOrEqual(0);
-  }
-  /* sem a chave, a aba diz que a quebra nao veio, em vez de sumir */
-  await page.evaluate(()=>{ delete D.cxe; renderCaixa(); });
-  await expect(page.locator('#cxEnt')).toContainText('A quebra por entidade não chegou nesta carga');
-  expect(erros).toEqual([]);
-});
-
-test('p4.66 pi 177: demonstracao tem a quebra por entidade em tres entidades inventadas, com a marca da PF', async ({page})=>{
-  const {erros, rede} = await abrirDemo(page, 390);
-  await page.evaluate(()=>ir('caixa'));
-  await expect(page.locator('#cxEnt .cxe-l')).toHaveCount(3);
-  expect(await page.locator('#cxEnt svg rect.fin').count(), 'uma entidade da demonstracao e financiada pela PF').toBeGreaterThan(0);
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
-  expect(rede).toEqual([]);
-  expect(erros).toEqual([]);
-});
+/* p4.74 (P3, s8199): os dois testes do pi 177 mediam o minigrafico por entidade (escala comum, zero, marca da PF), que saiu.
+   O bloco agora le a v_caixa_entidade_resumo; o teste novo esta no fim deste arquivo (p4.74 d). */
 
 const UNI_DADOS = `(()=>{ window.__dados={uni:[
     {slug:'u-neg',nome:'Unidade Negocio',tipo:'negocio',entidade:'DABLI',dono:'igor',ratificada_em:'2026-10-10'},
@@ -4740,7 +4687,7 @@ test('186 (p4.69) · Folha Mes por unidade; fechar pede confirmacao e so entao c
   await mes.nth(1).locator('.dre-fechar').click();
   await expect(page.locator('#folha')).toContainText('Fechar');
   expect(await page.evaluate(()=>window.__rpc.filter(r=>r.n==='dre_mes_fechar').length), 'abrir a confirmacao nao grava').toBe(0);
-  await page.locator('#folha [data-acao="fecharFolha"]').click();
+  await page.locator('#folha button.sec[data-acao="fecharFolha"]').click();
   expect(await page.evaluate(()=>window.__rpc.filter(r=>r.n==='dre_mes_fechar').length), 'cancelar nao grava').toBe(0);
   await mes.nth(1).locator('.dre-fechar').click();
   await page.locator('#folha [data-acao="dreFecharOk"]').click();
@@ -4828,3 +4775,243 @@ test('fila única: lê a v_pendencia_convergencia ao vivo e filtra pela pauta do
   expect(erros).toEqual([]);
 });
 
+/* ---------- p4.74 · P3 (s8199, 20/10/2026): o card se resolve sozinho ----------
+   O Igor quer resolver qualquer card sem abrir o Claude. Cinco defeitos, cada um com teste que reprova o origin/main (p4.73):
+   (a) peca de saida ligada ao card nao tinha Enviar daqui nem Enviei por dentro do card; (b) folha sem X fixo;
+   (c) a Fila Unica listava e nao abria nada; (d) o caixa por entidade era minigrafico sem eixo, sem R$ nem data;
+   (e) a legenda do 13 semanas dizia "laranja" para a pior semana que a tela pinta de vermelho. Tudo ficticio: o repo e publico. */
+const LIGA_PECA_AO_CARD = page=>page.evaluate(async()=>{
+  await msCarregar(); const m=JSON.parse(JSON.stringify(MS.dados));
+  m.estoque=m.estoque.map(p=>p.id===102?Object.assign(p,{tarefa:2,fecha_tarefa:true}):p); window.__mesa=m; await msCarregar(); });
+
+test('p4.74 a: o card com peca de saida ligada traz Enviar daqui completo e a baixa sai do proprio card, com selo sem prova', async ({page})=>{
+  const erros = await abrir(page);
+  await LIGA_PECA_AO_CARD(page);
+  await page.evaluate(()=>abrirFila(0));
+  const bloco = page.locator('#folha #cardEnvio');
+  await expect(bloco, 'o card traz o bloco da peca de saida').toBeVisible();
+  for (const id of ['#msPeca','#msBtWhats','#msBtCompart','#msBaixaBloco','#msDest','#msArq'])
+    await expect(bloco.locator(id), id+' dentro do card').toBeVisible();
+  await expect(bloco.locator('.ms-canal'), 'os seis canais').toHaveCount(6);
+  await expect(bloco, 'sem print a baixa e declaracao com selo').toContainText('Sem print, a baixa vai como declaração com selo «sem prova»');
+  await expect(bloco.locator('#msSemProva')).toBeVisible();
+  /* o handler fixa a peca pelo id do botao, nao pelo estado de quem abriu a folha */
+  await page.evaluate(()=>{ MS.peca=null; MS.canal=null; });
+  await page.click('#folha #cardEnvio [data-canal="whatsapp"]');
+  await page.click('#folha #msBt');
+  await expect.poll(()=>baixasP134(page)).toEqual([{p_doc:102,p_canal:'whatsapp',p_dest:'Cliente de exemplo',p_prova_path:null}]);
+  await expect(page.locator('#tmsg')).toContainText('selo sem prova');
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 a: com print escolhido o selo some e o arquivo sobe antes da baixa; a Mesa segue igual', async ({page})=>{
+  const erros = await abrir(page);
+  await LIGA_PECA_AO_CARD(page);
+  await page.evaluate(()=>abrirFila(0));
+  await page.click('#folha #cardEnvio [data-canal="email_corporativo"]');
+  await page.setInputFiles('#folha #msArq', {name:'print.png', mimeType:'image/png', buffer:Buffer.from('x')});
+  await expect(page.locator('#folha #msSemProva'), 'com arquivo escolhido o selo some').toBeHidden();
+  await page.click('#folha #msBt');
+  await expect.poll(()=>baixasP134(page).then(l=>l.length)).toBe(1);
+  const b = (await baixasP134(page))[0];
+  expect(b.p_doc).toBe(102); expect(b.p_canal).toBe('email_corporativo');
+  expect(b.p_prova_path, 'caminho do print no bucket mesa-provas').toMatch(/^\d{4}-\d{2}\/102_\d+\.png$/);
+  expect(await page.evaluate(()=>window.__storage.filter(c=>c.op==='upload').map(c=>c.b))).toEqual(['mesa-provas']);
+  await expect(page.locator('#tmsg')).toContainText('com print');
+  /* a folha da Mesa usa o mesmo componente: mesmos ids, e o selo aparece de novo */
+  await page.evaluate(()=>msAbrirId(102));
+  await expect(page.locator('#folha #msEnviarBloco')).toBeVisible();
+  await expect(page.locator('#folha #msSemProva')).toBeVisible();
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 a: Saiu hoje na Mesa mostra o chip sem prova na baixa declaratoria', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(async()=>{ await msCarregar(); const m=JSON.parse(JSON.stringify(MS.dados));
+    m.saiu_hoje=[{id:90,titulo:'Saida com print',dest:'Fiscal de exemplo',prova:'documental'},{id:91,titulo:'Saida sem print',dest:'Cliente de exemplo',prova:'declaratoria'}];
+    window.__mesa=m; await msCarregar(); });
+  await page.evaluate(()=>ir('mesa'));
+  const l = page.locator('#ms-raiz .ms-saiu');
+  await expect(l).toHaveCount(2);
+  await expect(l.nth(0).locator('.chip')).toHaveCount(0);
+  await expect(l.nth(1).locator('.chip')).toHaveText('sem prova');
+});
+
+test('p4.74 b: toda folha tem X fixo de 44 px que fecha e fica visivel ao rolar', async ({page})=>{
+  await page.setViewportSize({width:360, height:420});
+  const erros = await abrir(page);
+  const abridores = [()=>abrirFila(0), ()=>abrirVoz(), ()=>{ ir('mesa'); return msCarregar().then(()=>msAbrirId(102)); }];
+  for (const abre of abridores) {
+    await page.evaluate(abre);
+    const x = page.locator('#folha .folha-x');
+    await expect(x, 'X na folha').toHaveCount(1);
+    await expect(x).toHaveAttribute('aria-label','Fechar');
+    await expect(x).toHaveAttribute('data-acao','fecharFolha');
+    const m = await page.evaluate(async()=>{
+      const f=document.getElementById('folha'), x=f.querySelector('.folha-x'); const cs=getComputedStyle(x);
+      f.scrollTop=f.scrollHeight; await new Promise(r=>setTimeout(r,50));
+      const rx=x.getBoundingClientRect(), rf=f.getBoundingClientRect(), r0=rx;
+      return {pos:cs.position, top:cs.top, w:rx.width, h:rx.height, rola:f.scrollTop>0, dentro:rx.top>=rf.top-1&&rx.top<=rf.top+24&&rx.bottom<=rf.bottom, r0:r0.top};
+    });
+    expect(m.pos).toBe('sticky'); expect(m.top).toBe('0px');
+    expect(m.w, 'area de toque').toBeGreaterThanOrEqual(44); expect(m.h).toBeGreaterThanOrEqual(44);
+    expect(m.rola, 'a folha rola neste teste').toBe(true);
+    expect(m.dentro, 'o X continua no topo da folha depois de rolar ate o fim').toBe(true);
+    await x.click();
+    await expect(page.locator('#veu')).toBeHidden();
+  }
+  /* Esc segue fechando */
+  await page.evaluate(()=>abrirFila(0));
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#veu')).toBeHidden();
+  expect(erros).toEqual([]);
+});
+
+const FU_P3 = [
+  {codigo:'t2',frente:'11-renda-alt',dono:'igor',etapa:'card',titulo:'Card que o painel conhece',prazo:'2099-01-02',em_jogo_rs:null,status:'pendente',vencido:false,idade_dias:3,sinais:[]},
+  {codigo:'t9999',frente:'20-contrato-pj',dono:'igor',etapa:'card',titulo:'Card que o inventario nao tem',prazo:'2020-01-02',em_jogo_rs:null,status:'pendente',vencido:true,idade_dias:9,sinais:['para_decidir']},
+  {codigo:'doc102',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca que a Mesa conhece',prazo:null,em_jogo_rs:null,status:'A_AGIR',vencido:null,idade_dias:2,sinais:[]},
+  {codigo:'doc8888',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca fora da Mesa',prazo:null,em_jogo_rs:null,status:'A_AGIR',vencido:null,idade_dias:2,sinais:[]},
+  {codigo:'dE1',frente:'20-contrato-pj',dono:'claude',etapa:'demanda',titulo:'Demanda de exemplo E',prazo:'2099-03-01',em_jogo_rs:null,status:'amarelo',vencido:false,idade_dias:5,sinais:[]},
+  {codigo:'dL1',frente:'20-contrato-pj',dono:'igor',etapa:'demanda',titulo:'Demanda de exemplo L',prazo:null,em_jogo_rs:null,status:'amarelo',vencido:null,idade_dias:5,sinais:['frente_em_encerramento']},
+  {codigo:'dPC-2099-901',frente:'20-contrato-pj',dono:'igor',etapa:'demanda',titulo:'Demanda de exemplo PC',prazo:null,em_jogo_rs:null,status:'aberto',vencido:null,idade_dias:2,sinais:[]},
+  {codigo:'pPC-2099-902',frente:'11-renda-alt',dono:'igor',etapa:'proposta_sem_aceite',titulo:'Proposta de exemplo',prazo:'2099-02-01',em_jogo_rs:900,status:'enviada',vencido:false,idade_dias:2,sinais:[]},
+  {codigo:'env7',frente:'11-renda-alt',dono:'igor',etapa:'enviada_sem_aceite',titulo:'Envio de exemplo',prazo:null,em_jogo_rs:null,status:'whatsapp',vencido:null,idade_dias:10,sinais:[]},
+  {codigo:'s9',frente:'20-contrato-pj',dono:'igor',etapa:'sugestao_sem_decisao',titulo:'Sugestao de exemplo',prazo:null,em_jogo_rs:null,status:'nova',vencido:null,idade_dias:0,sinais:[]}];
+
+test('p4.74 c: cada item da Fila Unica abre uma folha com X; rotulos dizem de quem e a lista', async ({page})=>{
+  await page.setViewportSize({width:360, height:820});
+  await page.addInitScript(l=>{ window.__tab={ v_pendencia_convergencia:l, frente:[],
+    v_fila_contagem:[{rotulo:'so seus (dono igor)',n:133,para_decidir:0},{rotulo:'todos os donos',n:186,para_decidir:0}] }; }, FU_P3);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('fila'));
+  await page.locator('#filaModo button[data-a1="unica"]').click();
+  await expect(page.locator('#fu-raiz .fu-it')).toHaveCount(10);
+  /* rotulos */
+  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText('Única 10 · todos');
+  await expect(page.locator('#fuCont')).toHaveText('só seus 133 · todos 186');
+  await expect(page.locator('#fu-raiz button[data-a1="toda"]')).toContainText('Todos os donos');
+  await expect(page.locator('#fu-raiz button[data-a1="igor"]')).toContainText('Só seus');
+  await page.locator('#fu-raiz button[data-a1="decidir"]').click();
+  await expect(page.locator('#fu-raiz .fu-it'), 'filtro Para decidir pelo sinal').toHaveCount(1);
+  await page.locator('#fu-raiz button[data-a1="toda"]').click();
+  /* todo item e um botao com acao */
+  expect(await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.tagName+':'+x.dataset.acao))).toEqual(Array(10).fill('BUTTON:fuAbrir'));
+  const abre = async (cod, titulo)=>{
+    await page.locator(`#fu-raiz .fu-it[data-cod="${cod}"]`).click();
+    await expect(page.locator('#folha .folha-x'), cod+': folha com X').toHaveCount(1);
+    await expect(page.locator('#folhaTit'), cod).toHaveText(titulo);
+    const t = await page.locator('#folha').innerText();
+    await page.locator('#folha .folha-x').click();
+    await expect(page.locator('#veu')).toBeHidden();
+    return t;
+  };
+  expect(await abre('t2','Card de exemplo'), 'card que o painel conhece abre o card completo, com acoes').toContain('Concluir');
+  expect(await abre('t9999','Card que o inventario nao tem'), 'card sem inventario abre a folha minima').toContain('Sinais: para decidir');
+  expect(await abre('doc102','Laudo de exemplo'), 'peca da Mesa abre a folha da peca').toMatch(/enviar daqui/i);
+  await abre('doc8888','Peca fora da Mesa');
+  const dE = await abre('dE1','Demanda de exemplo E');
+  expect(dE).toContain('demanda'); expect(dE).toContain('com o Claude');
+  await abre('dL1','Demanda de exemplo L');
+  await abre('dPC-2099-901','Demanda de exemplo PC');
+  const p = await abre('pPC-2099-902','Proposta de exemplo');
+  expect(p).toContain('proposta sem aceite'); expect(p).toContain('R$ 900');
+  await abre('env7','Envio de exemplo');
+  await abre('s9','Sugestao de exemplo');
+  const m = await page.evaluate(()=>({larga:document.documentElement.scrollWidth-document.documentElement.clientWidth}));
+  expect(m.larga, 'sem rolagem horizontal a 360').toBe(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 c: com dado real (snapshot sem texto) todo item da Unica tem acao e um de cada prefixo abre folha com X', async ({page})=>{
+  const linhas = require('./fila_unica_real.json');
+  /* o repo e publico: o snapshot tem a forma da view e nenhum texto, terceiro ou valor reais */
+  expect(linhas).toHaveLength(186);
+  for (const x of linhas) {
+    expect(x.titulo, 'titulo trocado').toMatch(/^item \d+$/);
+    expect(x.terceiro, 'sem terceiro').toBeNull(); expect(x.em_jogo_rs, 'sem valor').toBeNull();
+    expect(x.frente, 'frente generica').toMatch(/^\d{2}-frente$/);
+    expect(Object.keys(x).sort(), 'so campos da forma').toEqual(['codigo','dono','em_jogo_rs','etapa','frente','idade_dias','prazo','sinais','status','terceiro','titulo','vencido']);
+  }
+  await page.setViewportSize({width:390, height:844});
+  await page.addInitScript(l=>{ window.__tab={ v_pendencia_convergencia:l, frente:[],
+    v_fila_contagem:[{rotulo:'so seus (dono igor)',n:133,para_decidir:0},{rotulo:'todos os donos',n:186,para_decidir:0}] }; }, linhas);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('fila'));
+  await page.locator('#filaModo button[data-a1="unica"]').click();
+  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText('Única 186 · todos');
+  await expect(page.locator('#fuCont')).toHaveText('só seus 133 · todos 186');
+  while (await page.locator('#fu-raiz .fu-it').count() < 186) await page.locator('#fu-raiz button[data-acao="fuMais"]').click();
+  const todos = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>[x.tagName, x.dataset.acao, x.dataset.a1, x.dataset.cod]));
+  expect(todos).toHaveLength(186);
+  expect(todos.filter(x=>x[0]!=='BUTTON'||x[1]!=='fuAbrir'||!x[2]||x[2]!==x[3]), 'item sem acao').toEqual([]);
+  const prefixos = {}; for (const [,, cod] of todos) { const k = cod.match(/^(dPC-|pPC-|doc|env|dE|dL|t|s)/)[1]; (prefixos[k]=prefixos[k]||[]).push(cod); }
+  expect(Object.fromEntries(Object.entries(prefixos).map(([k,v])=>[k,v.length]))).toEqual({t:119, doc:35, s:17, env:8, 'pPC-':3, 'dPC-':2, dE:1, dL:1});
+  for (const cods of Object.values(prefixos)) {
+    const cod = cods[0];
+    await page.locator(`#fu-raiz .fu-it[data-cod="${cod}"]`).click();
+    await expect(page.locator('#folha .folha-x'), cod+': X na folha').toHaveCount(1);
+    await expect(page.locator('#folhaTit'), cod+': titulo').not.toHaveText('');
+    await page.locator('#folha .folha-x').click();
+    await expect(page.locator('#veu')).toBeHidden();
+  }
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBe(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 d: o caixa por entidade le a v_caixa_entidade_resumo e mostra R$ em 30 e 90 dias, sangra ou sustenta e a data que zera, sem minigrafico', async ({page})=>{
+  await page.addInitScript(()=>{ window.__tab={ v_caixa_entidade_resumo:[
+    {entidade:'EMP-A',caixa_hoje:'1000.00',liquido_pior_30d:'2500.40',liquido_pior_90d:'7500.00',liquido_base_30d:'2500.40',liquido_base_90d:'7500.00',zera_pior:null,zera_base:null,aporte_pf_pior_90d:'0.00',papel_pior:'sustenta'},
+    {entidade:'EMP-B',caixa_hoje:'900.00',liquido_pior_30d:'-31234.60',liquido_pior_90d:'-81000.00',liquido_base_30d:'-31234.60',liquido_base_90d:'-81000.00',zera_pior:'2026-10-22',zera_base:'2026-10-25',aporte_pf_pior_90d:'-80000.00',papel_pior:'sangra'},
+    {entidade:'EMP-C',caixa_hoje:'5000.00',liquido_pior_30d:'-4000.00',liquido_pior_90d:'-12000.00',liquido_base_30d:'-1000.00',liquido_base_90d:'-3000.00',zera_pior:'2026-12-10',zera_base:null,aporte_pf_pior_90d:'0.00',papel_pior:'sangra'}]}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('caixa'));
+  const L = page.locator('#cxEnt .cxr-l');
+  await expect(L, 'uma linha por entidade').toHaveCount(3);
+  await expect(page.locator('#cxEnt svg'), 'sem minigrafico sem eixo').toHaveCount(0);
+  expect(await L.evaluateAll(l=>l.map(x=>x.dataset.ent)), 'quem zera primeiro vem primeiro; quem sustenta por ultimo').toEqual(['EMP-B','EMP-C','EMP-A']);
+  const b = L.nth(0), c = L.nth(1), a = L.nth(2);
+  await expect(b).toContainText('sangra'); await expect(b).toContainText('-R$ 31.235'); await expect(b).toContainText('-R$ 81.000');
+  await expect(b).toContainText('zera em 22 out'); await expect(b).toContainText('no caso base, 25 out');
+  await expect(c).toContainText('zera em 10 dez');
+  await expect(a).toContainText('sustenta'); await expect(a).toContainText('R$ 2.500'); await expect(a).toContainText('R$ 7.500');
+  await expect(a).toContainText('não zera em 90 d');
+  await expect(b.locator('.chip')).toHaveClass(/\bw\b/); await expect(a.locator('.chip')).toHaveClass(/\bok\b/);
+  for (const w of [360, 1280]) {
+    await page.setViewportSize({width:w, height:820});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth), `rolagem horizontal a ${w}`).toBeLessThanOrEqual(0);
+  }
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 d: demonstracao tem o caixa por entidade em R$ e sem rede', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('caixa'));
+  await expect(page.locator('#cxEnt .cxr-l')).toHaveCount(3);
+  await expect(page.locator('#cxEnt svg')).toHaveCount(0);
+  expect(await page.locator('#cxEnt .cxr-l .chip').allTextContents()).toEqual(expect.arrayContaining(['sangra']));
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.74 e: a legenda do 13 semanas diz as cores que a tela pinta', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('caixa'));
+  const le = ()=>page.evaluate(()=>({t:document.querySelector('#semanas > span.mut').textContent, fills:[...document.querySelectorAll('#semanas rect.sem')].map(r=>r.style.fill)}));
+  /* pior semana negativa (padrao do duble): o negativo vence e a barra sai vermelha; laranja nao existe */
+  let r = await le();
+  expect(r.fills.length).toBe(13);
+  expect(r.fills.includes('var(--warn)'), 'sem barra laranja').toBe(false);
+  expect(r.fills.includes('var(--bad)')).toBe(true);
+  expect(r.t, 'legenda nao promete laranja que a tela nao tem').not.toMatch(/laranja/i);
+  expect(r.t).toMatch(/vermelho/i);
+  expect(r.t, 'e diz que a pior semana esta entre as vermelhas').toMatch(/pior semana/i);
+  /* pior semana positiva: sai laranja, e so entao a legenda fala em laranja */
+  await page.evaluate(()=>{ D.c13=D.c13.map((x,i)=>({...x,saldo_base:5000+i*1000})); renderCaixa(); });
+  r = await le();
+  expect(r.fills.filter(f=>f==='var(--warn)').length, 'uma barra laranja').toBe(1);
+  expect(r.fills.includes('var(--bad)')).toBe(false);
+  expect(r.t).toMatch(/laranja: a pior semana/i);
+  expect(r.t, 'sem vermelho na legenda quando nao ha negativo').not.toMatch(/vermelho/i);
+  expect(erros).toEqual([]);
+});
