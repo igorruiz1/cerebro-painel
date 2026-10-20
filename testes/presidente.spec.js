@@ -98,7 +98,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='agir_pendencia'?(window.__pendR||'OK: gravado'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -5013,5 +5013,115 @@ test('p4.74 e: a legenda do 13 semanas diz as cores que a tela pinta', async ({p
   expect(r.fills.includes('var(--bad)')).toBe(false);
   expect(r.t).toMatch(/laranja: a pior semana/i);
   expect(r.t, 'sem vermelho na legenda quando nao ha negativo').not.toMatch(/vermelho/i);
+  expect(erros).toEqual([]);
+});
+
+
+/* ---------- p4.75 (P3, s8201): verbos na Fila Unica ----------
+   Antes a folha de env, p, d e s era so informativa (acoes vazias). Agora cada uma tem o verbo do banco, com 8 s para desfazer.
+   Cada teste reprova o main: la nao existe botao nem a RPC agir_pendencia. Dado generico, repo publico. */
+const FU_V = [
+  {codigo:'env7',frente:'20-frente',dono:'igor',etapa:'enviada_sem_aceite',titulo:'Envio de exemplo',prazo:null,em_jogo_rs:null,status:'enviado',vencido:null,idade_dias:3,sinais:[],terceiro:null},
+  {codigo:'pPC-2099-902',frente:'20-frente',dono:'igor',etapa:'proposta_sem_aceite',titulo:'Proposta de exemplo',prazo:null,em_jogo_rs:null,status:'enviada',vencido:null,idade_dias:3,sinais:[],terceiro:null},
+  {codigo:'dE1',frente:'20-frente',dono:'claude',etapa:'demanda_aberta',titulo:'Demanda de exemplo',prazo:null,em_jogo_rs:null,status:'aberta',vencido:null,idade_dias:3,sinais:[],terceiro:null},
+  {codigo:'s9',frente:'20-frente',dono:'igor',etapa:'sugestao_sem_decisao',titulo:'Sugestao de exemplo',prazo:null,em_jogo_rs:null,status:'nova',vencido:null,idade_dias:0,sinais:[],terceiro:'triagem-downloads'}];
+async function abrirUnicaV(page){
+  await page.addInitScript(l=>{ window.__tab={ v_pendencia_convergencia:l, frente:[], v_fila_contagem:[] }; }, FU_V);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('fila'));
+  await page.locator('#filaModo button[data-a1="unica"]').click();
+  await expect(page.locator('#fu-raiz .fu-it')).toHaveCount(4);
+  await page.clock.install();
+  return erros;
+}
+const pendRpc = page=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir_pendencia').map(c=>c.a));
+const abreV = (page,cod)=>page.locator(`#fu-raiz .fu-it[data-cod="${cod}"]`).click();
+
+test('p4.75 a: envio sem aceite na Unica tem Dar baixa; motivo curto mostra erro sem chamar o banco; valido grava depois de 8 s', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await abreV(page,'env7');
+  await expect(page.locator('#folha button[data-acao="fuAto"]')).toHaveText('Dar baixa');
+  await page.fill('#fuTxt','curto');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await expect(page.locator('#fuErro')).toBeVisible();
+  await expect(page.locator('#fuErro')).toHaveAttribute('role','alert');
+  await page.clock.fastForward(9000);
+  expect(await pendRpc(page), 'motivo curto nao chama o banco').toEqual([]);
+  await page.fill('#fuTxt','aceitou em 18/10 por WhatsApp');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await expect(page.locator('#veu')).toBeHidden();
+  await expect(page.locator('#tmsg')).toContainText('Dar baixa · Envio de exemplo');
+  await page.clock.fastForward(7000);
+  expect(await pendRpc(page), 'antes dos 8 s nada vai').toEqual([]);
+  await page.clock.fastForward(1200);
+  await expect.poll(()=>pendRpc(page)).toEqual([{p_codigo:'env7',p_verbo:'baixa',p_valor:'aceitou em 18/10 por WhatsApp'}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.75 b: demanda tem Fechada e Nova data; Nova data envia AAAA-MM-DD|motivo e recusa data passada', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await abreV(page,'dE1');
+  await expect(page.locator('#folha button[data-acao="fuAto"][data-a2="fechar"]')).toHaveText('Fechada');
+  await expect(page.locator('#folha button[data-acao="fuAto"][data-a2="repactuar"]')).toHaveText('Nova data');
+  await page.fill('#fuDt','2020-01-01'); await page.fill('#fuMot','motivo de exemplo');
+  await page.click('#folha button[data-a2="repactuar"]');
+  await expect(page.locator('#fuErro')).toContainText('data');
+  await page.fill('#fuDt','2099-12-31');
+  await page.click('#folha button[data-a2="repactuar"]');
+  await page.clock.fastForward(8200);
+  await expect.poll(()=>pendRpc(page)).toEqual([{p_codigo:'dE1',p_verbo:'repactuar',p_valor:'2099-12-31|motivo de exemplo'}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.75 c: proposta tem Marcar perdida e chama agir_pendencia com o verbo perdida', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await abreV(page,'pPC-2099-902');
+  await expect(page.locator('#folha button[data-acao="fuAto"]')).toHaveText('Marcar perdida');
+  await page.fill('#fuTxt','recusou');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await expect(page.locator('#fuErro'), 'menos de 10 caracteres').toBeVisible();
+  await page.fill('#fuTxt','Cliente A recusou o preco');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await page.clock.fastForward(8200);
+  await expect.poll(()=>pendRpc(page)).toEqual([{p_codigo:'pPC-2099-902',p_verbo:'perdida',p_valor:'Cliente A recusou o preco'}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.75 d: sugestao fora de D.sug: Descartar chama painel_responder SUGESTAO/descartar com o motivo; lote avisa', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await abreV(page,'s9');
+  await expect(page.locator('#folha')).toContainText('É um lote do Downloads: o ato vale para o lote inteiro.');
+  await page.click('#folha button[data-a2="descartar"]');
+  await expect(page.locator('#fuErro'), 'motivo 5+').toBeVisible();
+  await page.fill('#fuTxt','duplicada');
+  await page.click('#folha button[data-a2="descartar"]');
+  await expect(page.locator('#tmsg')).toContainText('Descartar · Sugestao de exemplo');
+  await page.clock.fastForward(8200);
+  await expect.poll(()=>page.evaluate(()=>window.__rpc.filter(c=>c.n==='painel_responder').map(c=>c.a))).toEqual([{p_tipo:'SUGESTAO',p_id:9,p_ato:'descartar',p_nota:'duplicada'}]);
+  expect(erros).toEqual([]);
+});
+
+test('p4.75 e: desfazer dentro dos 8 s nao chama banco nenhum', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await abreV(page,'env7');
+  await page.fill('#fuTxt','encerro porque saiu do escopo');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await page.clock.fastForward(3000);
+  await page.click('#tbtn');
+  await expect(page.locator('#tmsg')).toHaveText('Desfeito. Nada foi gravado.');
+  await page.clock.fastForward(20000);
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>c.n==='agir_pendencia'||c.n==='painel_responder').length)).toBe(0);
+  expect(erros).toEqual([]);
+});
+
+test('p4.75 f: RECUSADO do banco vira toast Nao gravou', async ({page})=>{
+  const erros = await abrirUnicaV(page);
+  await page.evaluate(()=>{ window.__pendR='RECUSADO: envio 7 ja tem baixa'; });
+  await abreV(page,'env7');
+  await page.fill('#fuTxt','recusou por e-mail');
+  await page.click('#folha button[data-acao="fuAto"]');
+  await page.clock.fastForward(8200);
+  await expect(page.locator('#tmsg')).toHaveText('Não gravou: envio 7 ja tem baixa');
+  await expect(page.locator('#toast')).toHaveClass(/bad/);
   expect(erros).toEqual([]);
 });
