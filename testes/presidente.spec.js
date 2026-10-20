@@ -5175,3 +5175,43 @@ test('p4.76 saude: sete metas no topo da Semana, a vermelha com o card, o selo d
   expect(await page.evaluate(()=>document.documentElement.scrollWidth), 'rolagem horizontal a 1280 px').toBe(1280);
   expect(erros, 'sem erro de pagina').toEqual([]);
 });
+
+/* p4.77 (P5a, s8325): tickler do GTD. Item com data futura (prazo, adiamento, retorno do terceiro) sai do Agora e volta
+   sozinho na data; o selo da aba Fila e o contador da Unica contam so o Agora. Reprova o painel que soma o adiado. */
+const FU_AG = [
+  {codigo:'t71',frente:'11-renda-alt',dono:'igor',etapa:'card',titulo:'Card vencido de hoje',prazo:'2020-01-02',em_jogo_rs:null,status:'pendente',terceiro:null,vencido:true,idade_dias:3,sinais:[],volta_em:'2020-01-02',agenda:'agora'},
+  {codigo:'t72',frente:'11-renda-alt',dono:'igor',etapa:'card',titulo:'Card adiado para depois',prazo:'2099-01-05',em_jogo_rs:null,status:'pendente',terceiro:null,vencido:false,idade_dias:3,sinais:[],volta_em:'2099-01-05',agenda:'agendado'},
+  {codigo:'doc73',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca sem data',prazo:null,em_jogo_rs:null,status:'A_AGIR',terceiro:null,vencido:null,idade_dias:2,sinais:[],volta_em:null,agenda:'agora'},
+  {codigo:'doc74',frente:'11-renda-alt',dono:'igor',etapa:'pronta_nao_enviada',titulo:'Peca adiada na Mesa',prazo:'2099-02-01',em_jogo_rs:null,status:'A_AGIR',terceiro:null,vencido:false,idade_dias:2,sinais:[],volta_em:'2099-02-01',agenda:'agendado'},
+  {codigo:'t75',frente:'20-contrato-pj',dono:'claude',etapa:'card',titulo:'Card esperando terceiro',prazo:'2020-01-01',em_jogo_rs:null,status:'aguardando_terceiro',terceiro:'Fulano',vencido:true,idade_dias:4,sinais:[],volta_em:'2099-03-01',agenda:'agendado'}];
+
+test('p4.77 a: item adiado nao conta no Agora; Agendados mostra quando volta; selo da Fila e o Agora dos seus', async ({page})=>{
+  await page.setViewportSize({width:390, height:844});
+  await page.addInitScript(l=>{ window.__tab={ v_pendencia_convergencia:l, frente:[],
+    v_fila_contagem:[{rotulo:'so seus (dono igor)',n:4,para_decidir:0,agora:2,agendados:2},{rotulo:'todos os donos',n:5,para_decidir:0,agora:2,agendados:3}] }; }, FU_AG);
+  const erros = await abrir(page);
+  await expect(page.locator('#n-fila'), 'selo da aba Fila conta so o Agora dos seus').toHaveText('2');
+  await page.evaluate(()=>ir('fila'));
+  await page.locator('#filaModo button[data-a1="unica"]').click();
+  await expect(page.locator('#filaModo button[data-a1="unica"]')).toHaveText('Única 2 · todos');
+  await expect(page.locator('#fu-raiz button[data-acao="fuAgenda"][data-a1="agora"]')).toHaveAttribute('aria-selected','true');
+  const agora = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod).sort());
+  expect(agora, 'adiado (prazo, Mesa ou terceiro) fora do Agora').toEqual(['doc73','t71']);
+  await expect(page.locator('#fuCont')).toHaveText('só seus 2 · todos 2');
+  await expect(page.locator('#fu-raiz button[data-a1="agora"]')).toContainText('2');
+  await expect(page.locator('#fu-raiz button[data-a1="agendado"]')).toContainText('3');
+  await page.locator('#fu-raiz button[data-a1="vencido"]').click();
+  expect(await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod)), 'vencido com retorno futuro do terceiro nao e vencido do Agora').toEqual(['t71']);
+  await page.locator('#fu-raiz button[data-a1="toda"]').click();
+  await page.locator('#fu-raiz button[data-acao="fuAgenda"][data-a1="agendado"]').click();
+  const ag = await page.locator('#fu-raiz .fu-it').evaluateAll(l=>l.map(x=>x.dataset.cod).sort());
+  expect(ag).toEqual(['doc74','t72','t75']);
+  await expect(page.locator('#fuCont')).toHaveText('só seus 2 · todos 3');
+  await expect(page.locator('#fu-raiz .fu-it[data-cod="t72"]')).toContainText('volta 05/01');
+  await expect(page.locator('#fu-raiz .fu-it[data-cod="t75"]')).toContainText('volta 01/03');
+  const m = await page.evaluate(()=>({larga:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    baixos:[...document.querySelectorAll('#fu-raiz button')].filter(b=>b.offsetParent&&b.getBoundingClientRect().height<44).length}));
+  expect(m.larga, 'sem rolagem horizontal a 390').toBe(0);
+  expect(m.baixos, 'alvo de toque >= 44 px').toBe(0);
+  expect(erros).toEqual([]);
+});
