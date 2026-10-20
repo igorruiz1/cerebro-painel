@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-BnQraeKMU1HJRU6Lbyv2u/vCwx8UUDopQ7mtV8h3q9k=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-QRpkyWQ+xCP0j5doC3FqaPrF+vhrJvfwmPw40Elsd2o=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -515,6 +515,8 @@ button.linha-r.quest{cursor:pointer}
 #p-fila.fu-on #wip,#p-fila.fu-on #seg,#p-fila.fu-on #kanban,#p-fila.fu-on #filaRodape{display:none}
 .fu-fs{gap:6px}
 .fu-ag{gap:6px;margin:0 0 8px}
+.ms-anexar{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin-top:6px;cursor:pointer}
+.ms-anexar input{position:absolute;width:1px;height:1px;opacity:0}
 .fu-ag button{min-height:44px;flex:1 1 0;font-size:var(--fs-2)}
 .fu-ag button[aria-selected="true"]{border-color:var(--acc);color:var(--ink);font-weight:600}
 .fu-fs button{min-height:44px;flex:0 1 auto;font-size:var(--fs-2)}
@@ -1508,7 +1510,7 @@ const ACOES={
   veuFora:(el,ev)=>{if(ev.target===el)fecharFolha();}, alternarRecolhe:el=>alternarRecolhe(el),
   ir:el=>ir(el.dataset.a1), irColuna:el=>irColuna(el.dataset.a1), coluna:el=>{COL=el.dataset.a1;renderFila();},
   filaModo:el=>{FU.modo=el.dataset.a1==="unica"?"unica":"quadro";fuRender();if(FU.modo==="unica")fuCarregar();},
-  fuFiltro:el=>{FU.filtro=el.dataset.a1;FU.teto=FU_TETO;fuRender();}, fuAgenda:el=>{FU.agenda=el.dataset.a1==="agendado"?"agendado":"agora";FU.teto=FU_TETO;fuRender();}, fuMais:()=>{FU.teto+=100;fuRender();}, fuAbrir:el=>fuAbrir(el.dataset.a1), fuAto:el=>fuAto(el.dataset.a1,el.dataset.a2), msProvaMudou:el=>msProvaMudou(el),
+  fuFiltro:el=>{FU.filtro=el.dataset.a1;FU.teto=FU_TETO;fuRender();}, fuAgenda:el=>{FU.agenda=el.dataset.a1==="agendado"?"agendado":"agora";FU.teto=FU_TETO;fuRender();}, fuMais:()=>{FU.teto+=100;fuRender();}, msAnexarPrint:el=>msAnexarPrint(el), fuAbrir:el=>fuAbrir(el.dataset.a1), fuAto:el=>fuAto(el.dataset.a1,el.dataset.a2), msProvaMudou:el=>msProvaMudou(el),
   abrirFila:el=>abrirFila(+el.dataset.a1,el.dataset.a2), abrirInv:el=>abrirInv(+el.dataset.a1),
   abrirFrente:el=>abrirFrente(el.dataset.a1), ver4Todos:el=>ver4Todos(el), msAbrirId:el=>msAbrirId(+el.dataset.a1),
   cobrar:el=>cobrar(el.dataset.a1), abrirFontes:()=>abrirFontes(), copiarCobranca:el=>copiarCobranca(el.dataset.a1), cobreiAgora:el=>cobreiAgora(el.dataset.a1), whatsCobranca:el=>whatsCobranca(el.dataset.a1), abrirCheckin:el=>abrirCheckin(el.dataset.a1), abrirQuest:el=>abrirQuest(el.dataset.a1), questClasse:el=>questClasse(el), questMotivoSugerir:el=>questMotivoSugerir(el), questNova:el=>questNova(el.dataset.a1), questNovaConfirmar:el=>questNovaConfirmar(el.dataset.a1), questResolverForm:el=>questResolverForm(el.dataset.a1), questResolverConfirmar:el=>questResolverConfirmar(el.dataset.a1), questDescartarForm:el=>questDescartarForm(el.dataset.a1), questDescartarConfirmar:el=>questDescartarConfirmar(el.dataset.a1), checkinCopiar:()=>checkinCopiar(), checkinWhats:()=>checkinWhats(), vespData:el=>vespData(el.dataset.a1,el.dataset.a2), vespManter:el=>vespManter(el.dataset.a1), abrirVespera:()=>abrirVespera(), sugAceitar:el=>sugData(el.dataset.a1), sugConfirmar:el=>sugConfirmar(el.dataset.a1), sugDescartar:el=>sugAto(el.dataset.a1,"descartar"),
@@ -4035,7 +4037,10 @@ const msPedir=(fn,ms,rotulo)=>comTetoR(Promise.resolve().then(fn),ms,rotulo);
 function msCarregar(){ if(!MS.carga)MS.carga=msCarregar_().finally(()=>{MS.carga=null;}); return MS.carga; }
 async function msCarregar_(){
   if(!MS.dados)msRender();
-  const {data,error}=await msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel");
+  const [{data,error},sp]=await Promise.all([msPedir(()=>sb.rpc("mesa_painel"),LIMITE_RECARGA,"mesa_painel"),
+    comTetoR(sb.from("v_envio_sem_prova").select("id,titulo,destinatario,canal,enviado_em"),LIMITE_RECARGA,"baixas sem prova").catch(()=>null)]);
+  /* p4.77 (P5c, t4021): sem a view (banco antigo) a secao nao aparece; erro de leitura tambem nao derruba a Mesa */
+  MS.semProva=sp&&!sp.error&&Array.isArray(sp.data)?veu(sp.data):null;
   if(error||!data||typeof data!=="object")MS.erro="Não consegui ler a mesa: "+(error?error.message:"resposta vazia")+". Toque em recarregar.";
   else{ MS.erro=""; MS.dados=veuObj(data); }
   msRender();
@@ -4088,6 +4093,9 @@ function msRender(){
   const adiH=adiVis.length?`<details class="ms-adiadas"><summary>Adiadas (${esc(adiVis.length)})</summary><div class="pilha">${adiVis.map(msItemHtml).join("")}</div></details>`:"";
   const saiu=Array.isArray(d.saiu_hoje)?d.saiu_hoje:[];
   const saiuH=saiu.length?`<h2>Saiu hoje</h2><div class="pilha">${saiu.map(s=>`<div class="ms-saiu"><span class="ms-tit l2">${esc(s.titulo||"peça sem título")}</span><span class="ms-meta">${s.dest?"para "+esc(s.dest)+" · ":""}${esc(MS_PROVA[s.prova]||"sem prova registrada")}${s.prova==="declaratoria"?` <span class="chip w ms-selo">sem prova</span>`:""}</span></div>`).join("")}</div>`:"";
+  const semP=Array.isArray(MS.semProva)?MS.semProva:[];
+  /* p4.77 (P5c, t4021, s8334): a baixa declarada ganha o print depois; o print sobe ao mesa-provas e o banco vira a prova */
+  const semPH=semP.length?`<details class="ms-sem-prova-lista" id="msSemProvaLista"><summary>Baixas sem prova, 30 d (${esc(semP.length)})</summary><p class="mut">Anexe o print do envio e a baixa passa a ter prova.</p><div class="pilha">${semP.map(e=>`<div class="ms-saiu" data-envio="${+e.id}"><span class="ms-tit l2">${esc(e.titulo||"envio sem título")}</span><span class="ms-meta">${e.destinatario?"para "+esc(e.destinatario)+" · ":""}${esc(msCanal(e.canal)||e.canal||"")}${e.enviado_em?" · "+esc(ddmm(String(e.enviado_em).slice(0,10))):""}</span><label class="sec ms-anexar">Anexar print<input type="file" class="ms-arq" accept="image/*,application/pdf" data-ao-mudar="msAnexarPrint" data-a1="${+e.id}"></label></div>`).join("")}</div></details>`:"";
   const rel=msVigentes(Array.isArray(d.relatorios)?d.relatorios:[]);
   /* p4.53: a lista de relatorios e so a versao vigente de cada um, a mais recente primeiro. Sairam a ciencia, o lote,
      Lidos e Arquivo (p4.18). */
@@ -4096,14 +4104,14 @@ function msRender(){
   const relBt=o=>`<button class="ms-rel" data-acao="msRelatorio" data-a1="${o.i}"><span class="ms-tit ms-um">${esc((MS_REL[o.r.tipo]||"Relatório")+" "+msAlvo(o.r.alvo))}</span><span class="ms-meta">${esc(msRelMeta(o.r))}</span></button>`;
   MS.rel=rel;
   const relH=`<h2>Relatórios</h2><div class="pilha">${relIdx.length?relVis.map(relBt).join(""):`<div class="vazio">Nenhum relatório gerado ainda.</div>`}${relIdx.length>relVis.length?`<button class="sec ms-mais" data-acao="msTodosRel">Mostrar todos (${relIdx.length})</button>`:""}</div>`;
-  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p><h2>Esperando você</h2>${msFiltroHtml(pend,adi)}${filtroN}<div class="pilha">${lista}</div>${adiH}${saiuH}${relH}`;
+  raiz.innerHTML=`${falha}<p class="ms-dia">${dia}</p><h2>Esperando você</h2>${msFiltroHtml(pend,adi)}${filtroN}<div class="pilha">${lista}</div>${adiH}${saiuH}${semPH}${relH}`;
 }
 /* ---------- folha da peca e baixa de envio ---------- */
 /* p4.14: o banco diz se o card ligado fechou junto ou ficou aberto; a tela traduz */
 const msCardTxt=t=>/concluido junto/.test(t)?" O card ligado foi concluído junto.":/ficou aberto/.test(t)?" O card ligado ficou aberto: conclua pelo card.":"";
 function msAbrirId(id){ const p=msEst(MS.dados).find(x=>+x.id===+id); if(p)msAbrirP(p); }
 function msAbrirP(p){
-  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
+  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   const amanha=somaDias(1), saida=MS_ATO_SAIDA.has(p.ato);
   const outros=`<button type="button" class="sec" id="msAbreAjustar" aria-expanded="false" aria-controls="msNotaAjustar" data-acao="msMotivo" data-a1="ajustar">Ajustar</button>
         <button type="button" class="sec" id="msAbreAdiar" aria-expanded="false" aria-controls="msNotaAdiar" data-acao="msMotivo" data-a1="adiar">Adiar</button>
@@ -4142,7 +4150,7 @@ function msAbrirP(p){
 function msFixar(id){
   if(id==null||id==="")return MS.peca;
   const p=msEst(MS.dados).find(x=>String(x.id)===String(id)); if(!p)return MS.peca;
-  if(!MS.peca||String(MS.peca.id)!==String(p.id)){ MS.canal=null; MS.dec=null; MS.gravando=false; }
+  if(!MS.peca||String(MS.peca.id)!==String(p.id)){ MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false; }
   MS.peca=p; return p;
 }
 function msAbrirBtnHtml(p){
@@ -4158,6 +4166,7 @@ function msProvaMudou(el){
   const tem=!!(el&&el.files&&el.files.length), c=document.getElementById("msSemProva"), n=document.getElementById("msProvaNota");
   if(c)c.hidden=tem;
   if(n)n.textContent=tem?"Com o print, a baixa vai com prova.":"Sem print, a baixa vai como declaração com selo «sem prova».";
+  if(tem&&MS.semPrint){ MS.semPrint=false; const bt=document.getElementById("msBt"); if(bt&&!MS.gravando)bt.textContent=msBtBaixa(); }
 }
 function enviarDaquiHtml(p,o){
   o=o||{}; const id=+p.id, aprov=msAprovEm(p);
@@ -4177,16 +4186,31 @@ function enviarDaquiHtml(p,o){
 /* p4.74: o card com peca de saida (com arquivo) ligada traz o bloco completo da primeira; as demais ficam como botao em pecasLigadasHtml */
 function envioDoCardHtml(c){
   const p=pecasDoCard(c.origem,c.ref).find(x=>MS_ATO_SAIDA.has(x.ato)&&x.peca); if(!p)return "";
-  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false;
+  MS.peca=p; MS.canal=null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   return `<div class="ms-do-card" id="cardEnvio" data-peca="${+p.id}"><p class="mut">Peça de saída deste card: <b>${esc(curto(p.titulo||"peça sem título",80))}</b>. Abra, envie e dê a baixa daqui, sem abrir o Claude.</p>${enviarDaquiHtml(p,{abrir:true})}</div>`;
 }
-const msBtBaixa=()=>MS.canal?"Enviei por "+msCanal(MS.canal):"Enviei por…";
+/* p4.77 (P5c, t4021, s8334): sem print, o 1o toque pede o print e o 2o grava a declaracao ("Enviei sem print") */
+const msBtBaixa=()=>MS.semPrint?"Enviei sem print":MS.canal?"Enviei por "+msCanal(MS.canal):"Enviei por…";
 function msEscolherCanal(c){
   if(!MS_CANAL_NOME[c])return;
   MS.canal=c;
   document.querySelectorAll("#folha .ms-canal").forEach(b=>b.setAttribute("aria-pressed",b.dataset.canal===c?"true":"false"));
   const bt=document.getElementById("msBt"); if(bt&&!MS.gravando)bt.textContent=msBtBaixa();
   const av=document.getElementById("msAviso"); if(av)av.textContent="";
+}
+async function msAnexarPrint(el){
+  const id=+(el&&el.dataset.a1), arq=el&&el.files&&el.files[0]||null; if(!id||!arq||MS.gravando)return;
+  if(DEMO){ toast("Na demonstração nada é gravado. No painel real, o print sobe e a baixa passa a ter prova.",null,false,4000); return; }
+  MS.gravando=true;
+  try{
+    const mes=String((MS.dados&&MS.dados.hoje)||new Date().toISOString()).slice(0,7), caminho=`${mes}/env${id}_${Date.now()}.${msExt(arq)}`;
+    const up=await msPedir(()=>sb.storage.from(MS_BUCKET_PROVA).upload(caminho,arq),MS_TETO_UPLOAD,"upload");
+    if(up.error){ toast("O print não subiu ("+up.error.message+"). Nada foi gravado.","bad",false,6000); return; }
+    const {data,error}=await msPedir(()=>sb.rpc("envio_anexar_prova",{p_envio:id,p_prova_path:(up.data&&up.data.path)||caminho}),LIMITE_ACAO,"envio_anexar_prova");
+    const txt=error?String(error.message||"falha de rede"):String(data==null?"":data);
+    if(!error&&/^OK/.test(txt)){ toast("Print anexado: a baixa agora tem prova.",null,false,4000); MS.gravando=false; msCarregar(); return; }
+    toast(txt.replace(/^RECUSADO:?\s*/i,"Não gravou: ").slice(0,220),"bad",false,6000);
+  } finally { MS.gravando=false; }
 }
 async function msBaixa(id){
   msFixar(id); const p=MS.peca; if(!p||MS.gravando)return;
@@ -4196,6 +4220,8 @@ async function msBaixa(id){
   const destEl=document.getElementById("msDest"), dest=destEl?destEl.value.trim():"";
   if(dest.length<2){ diz("Diga para quem a peça foi."); if(destEl)destEl.focus(); return; }
   const arqEl=document.getElementById("msArq"), arq=arqEl&&arqEl.files&&arqEl.files[0]||null, canal=MS.canal;
+  if(!arq&&!MS.semPrint){ MS.semPrint=true; if(bt)bt.textContent=msBtBaixa();
+    if(av)av.textContent="Sem print a baixa fica sem prova. Anexe o print acima, ou toque em «Enviei sem print» para gravar assim."; return; }
   /* p4.19: a aprovacao que ainda espera os 8 s vai antes da baixa; recusada, a baixa nao vai */
   if(PEND&&PEND.mesa&&await enviar()===false)return;
   MS.gravando=true; if(bt){bt.disabled=true;bt.textContent="gravando…";} if(av)av.textContent="";
@@ -4282,7 +4308,7 @@ function perguntarEnvio(){
       <button class="sec" id="envioNao" data-acao="envioNaoSaiu">Não mandei</button>`);
     return;
   }
-  const p=e.p; MS.peca=p; MS.canal=e.canal&&MS_CANAL_NOME[e.canal]?e.canal:null; MS.dec=null; MS.gravando=false;
+  const p=e.p; MS.peca=p; MS.canal=e.canal&&MS_CANAL_NOME[e.canal]?e.canal:null; MS.dec=null; MS.gravando=false; MS.semPrint=false;
   mostrarFolha(`<h3 id="folhaTit">Saiu?</h3>
     <p>Você abriu o envio de <b>${esc(curto(p.titulo||"peça sem título",90))}</b>${MS.canal?" pelo "+esc(msCanal(MS.canal)):""}. Se saiu, confirme por onde: um toque dá a baixa e tira a peça da sua mesa.</p>
     <div class="ms-canais" role="group" aria-label="Canal do envio">${MS_CANAIS.map(([c,n])=>`<button type="button" class="ms-canal" data-canal="${esc(c)}" aria-pressed="${c===MS.canal?"true":"false"}" data-acao="msEscolherCanal" data-a1="${esc(c)}">${esc(n)}</button>`).join("")}</div>
