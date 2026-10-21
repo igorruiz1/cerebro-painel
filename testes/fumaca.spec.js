@@ -52,6 +52,17 @@ async function revelarCasca(page){
   });
 }
 
+/* v99 / p4.78 (s10524, 21/10/2026, t4545): o painel-snapshot passou de 5 para 15 min. Teto de idade menor que duas
+   voltas + folga faz uma unica volta perdida acender "rotina parada" (alarme falso). A v98 reprova: teto 1200 s. */
+test('teto de idade do snapshot cobre duas voltas do painel-snapshot nas duas telas', async ()=>{
+  const fs=require('fs'); const CADENCIA_S=15*60;
+  for(const arq of ['index.html','presidente.html']){
+    const m=fs.readFileSync(path.resolve(__dirname,'..',arq),'utf8').match(/const IDADE_MAX=(\d+)/);
+    expect(m, arq+' sem IDADE_MAX').not.toBeNull();
+    expect(Number(m[1]), arq).toBeGreaterThanOrEqual(2*CADENCIA_S+300);
+  }
+});
+
 /* v97 / p4.52 (s3056, 12/10/2026, p136): o toque no aviso com o bastidor aberto caia no bastidor. O sw.js (o antigo
    ainda em cache, ou o novo quando o navegador recusa navegar) manda {tipo:"abrir",url}: o bastidor ouve e vai ao
    destino. A v96 reprova: nao ouvia nada. Destino fora do app e ignorado. */
