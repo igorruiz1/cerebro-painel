@@ -5,7 +5,7 @@
      liberados porque o painel inteiro e inline (onclick incluso); o que a CSP corta e script, conexao e
      fonte de qualquer outra origem. frame-ancestors nao vale em <meta>; fica para cabecalho, que o
      GitHub Pages nao deixa configurar. O CSS do Google Fonts fica sem integrity: ele muda por navegador. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KndAS/ti+MZ7H61NO9xMGMw0kVWnzJMUkKZpGBy6JKs=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-hvM/nru+JmBnUw22GOCwEjBbYMRFXLGOEhiICxxmKSc=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <title>Cérebro · Dabli Tech</title>
 <meta name="theme-color" content="#0B1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1071,7 +1071,7 @@ details.hist>summary{cursor:pointer;color:var(--mut);font-size:var(--fs-1);margi
 <script>
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
-const VER="v98";
+const VER="v99";
 /* v22: o selo do cabecalho era TEXTO FIXO no HTML enquanto VER vivia no JS. Dois donos para
    o mesmo dado: o v22 subiu ao ar mostrando "v21" no cabecalho. Agora o selo LE o VER. */
 (()=>{const e=document.getElementById("selo-ver");if(e)e.textContent=VER;})();
@@ -1133,8 +1133,9 @@ const nfmt=(v,u)=>v==null?"—":u==="pct"?dec(v,1)+"%":u==="dias"?dec(v,1)+"d":
 const norm=s=>(s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 const uid=s=>String(s).replace(/[^a-z0-9]/gi,"");
 /* v49: o painel le um snapshot. Snapshot velho e pior que consulta lenta, porque MENTE calado.
-   A rotina painel-snapshot remonta a cada 5 min; 20 min de idade ja e sinal de rotina parada. */
-const IDADE_MAX=1200;
+   A rotina painel-snapshot remonta a cada 15 min (era 5 ate 21/10/2026, s10524 t4545); teto = 2 voltas + 10 min,
+   para uma volta perdida nao gritar "rotina parada". */
+const IDADE_MAX=2400;
 const CHAVES_PAINEL=["fila","cont","cor","fresc","rw","se","ev","ins","fr","m9","mat","au","pls",
                      "dv","par","mo","varr","nat","wip","rotp","op","semi","sentN","frs","band","garg","c13","c13i","min","cap","kdono","fun","c13e","eb","exp","pf","hoje","hoje_resumo"];
 /* v40: promessa que nao volta e pior que erro — o erro a tela mostra, o silencio nao.
