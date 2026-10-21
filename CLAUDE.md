@@ -27,14 +27,15 @@ A auditoria de 13/10 mediu que 73% do custo foi releitura de contexto. Por isso:
 - **1 sessão = 1 tarefa = 1 repo.** Sessão de nuvem com mais de um repo não carrega o gatilho de
   nenhum (doc oficial, cloud-environments). Outro repo entra só quando a tarefa pede (`add_repo`).
   O `cerebro-backup` roda sozinho no Actions e só entra em sessão para mexer no workflow.
-- **Bastão perto de 150k.** `.claude/contexto.mjs` mostra o contexto na linha de status e avisa
-  em 120k e a cada mensagem de 150k em diante. Ele é cópia: a fonte está no `igor-cerebro-plugin`
+- **Contexto só informa, nunca manda parar (Igor, 21/10/2026).** `.claude/contexto.mjs` mostra o contexto
+  na linha de status e avisa uma vez em 120k e depois a cada +100k acima de 150k (no PC do Igor o env
+  `CEREBRO_CTX_AVISO/BASTAO=200000` sobe para 200k). Parar ou seguir é decisão do Igor. Ele é cópia: a fonte está no `igor-cerebro-plugin`
   (`plugins/igor-cerebro/scripts/contexto.mjs`), e a cópia nunca se edita aqui.
 - **Subagente sempre em Sonnet**, Explore e Plan incluídos. Na máquina do Igor vem do `env` do
   `.claude/settings.json` (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`, exige Claude Code v2.1.257+). Na nuvem,
   env, statusLine e hooks do settings são ignorados (fato 2071): o Sonnet vem das Variáveis de ambiente do
   ambiente (medido na s4734), e toda chamada de subagente (Agent/Task) passa `model: "sonnet"` como reforço;
-  o parâmetro na chamada vence tudo (doc oficial sub-agents). Contexto: na nuvem a regra dos 150k é manual.
+  o parâmetro na chamada vence tudo (doc oficial sub-agents). Contexto: na nuvem o aviso vem da cópia que o `scripts/setup-nuvem.sh` do cerebro-painel instala em /etc/claude-code.
   Opus fica para decisão, na conversa principal.
 - PDF ou imagem grande nunca se lê inteiro; resultado grande vai para arquivo.
 

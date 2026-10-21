@@ -1,4 +1,4 @@
-// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: cd17551fb4593c88dcefceab49cc00103d7a15bf8893e23398096e73904141db
+// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 9735fd7fb61a1cc96eb098bcce9b76721b6249aa694057d18caabadf85d5ffe5
 // Guarda de contexto da simbiose (fato 2023, 13/10/2026).
 //
 // Por que existe: a auditoria de 13/10 mediu que 73% do custo foi RELEITURA de
@@ -10,9 +10,9 @@
 //                                       do Claude Code no stdin, mostra o contexto
 //                                       e grava o numero para o modo aviso.
 //   node contexto.mjs aviso [--plugin]  gatilho UserPromptSubmit: em 120k avisa
-//                                       uma vez; de 150k em diante avisa a cada
-//                                       mensagem. Nunca bloqueia (decisao do Igor
-//                                       em 13/10: a mensagem dele nao se perde).
+//                                       uma vez; de 150k em diante a cada +100k.
+//                                       So avisa: nunca bloqueia nem manda parar
+//                                       (decisoes do Igor em 13/10 e 21/10).
 //
 // O aviso le o numero da linha de status quando ela existe; senao, do proprio
 // transcript (campo usage da ultima resposta). Assim funciona tambem onde a linha
@@ -39,6 +39,7 @@ import { join } from 'node:path'
 
 const AVISO = Number(process.env.CEREBRO_CTX_AVISO) || 120000
 const BASTAO = Number(process.env.CEREBRO_CTX_BASTAO) || 150000
+const DEGRAU = Number(process.env.CEREBRO_CTX_DEGRAU) || 100000
 const VALIDADE_MS = 10 * 60 * 1000
 
 function lerStdin() {
@@ -113,7 +114,7 @@ function status() {
   if (!n) n = tokensDoTranscript(e.transcript_path)
   const anterior = lerEstado(e.session_id)
   gravarEstado(e.session_id, { ...anterior, tokens: n, em: Date.now() })
-  const marca = n >= BASTAO ? ' · BASTAO' : n >= AVISO ? ' · prepare o bastao' : ''
+  const marca = n >= BASTAO ? ' · alto' : n >= AVISO ? ' · atencao' : ''
   const modelo = e.model?.display_name ? `${e.model.display_name} · ` : ''
   process.stdout.write(`${modelo}ctx ${k(n)}/${k(BASTAO)}${marca}`)
 }
@@ -151,16 +152,15 @@ function aviso(doPlugin) {
   const fresco = estado.tokens && Date.now() - (estado.em || 0) < VALIDADE_MS
   const n = Math.max(fresco ? estado.tokens : 0, tokensDoTranscript(e.transcript_path))
   let texto = ''
-  if (n >= BASTAO) {
+  // Decisao do Igor (21/10/2026): o gatilho so AVISA. Parar ou seguir e decisao dele.
+  // Avisa uma vez em AVISO e depois a cada degrau de DEGRAU tokens acima de BASTAO.
+  const degrau = n >= BASTAO ? 1 + Math.floor((n - BASTAO) / DEGRAU) : n >= AVISO ? 0 : -1
+  if (degrau >= 0 && degrau > (estado.degrau ?? -1)) {
     texto =
-      `CONTEXTO ${k(n)}, acima de ${k(BASTAO)} (fato 2023, regra de economia do Igor). ` +
-      'Termine so o passo em curso, redija o bastao (resultado + pauta seguinte com datas) ' +
-      'e peca ao Igor uma sessao nova. Nao comece tarefa nova nesta sessao.'
-  } else if (n >= AVISO && !estado.avisou) {
-    texto =
-      `CONTEXTO ${k(n)}: faltam cerca de ${k(BASTAO - n)} para o bastao (fato 2023). ` +
-      'Feche o que esta aberto e prepare o bastao; nao abra frente nova.'
-    gravarEstado(e.session_id, { ...estado, avisou: true })
+      `CONTEXTO ${k(n)} (fato 2023). So AVISE o Igor em 1 linha: contexto atual e que cada resposta ` +
+      'rele tudo isso. Siga a tarefa normalmente. Parar ou continuar e decisao dele: nao feche, ' +
+      'nao redija bastao e nao recuse tarefa nova sem ordem expressa dele.'
+    gravarEstado(e.session_id, { ...estado, degrau })
   }
   if (!texto || !primeiroDestaMensagem(e)) return
   process.stdout.write(
