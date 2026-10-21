@@ -1,4 +1,4 @@
-// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 9735fd7fb61a1cc96eb098bcce9b76721b6249aa694057d18caabadf85d5ffe5
+// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 75b5da8cc4200acec3bd869d6eaad64e48843ae279e55cd8f0f521b568b84825
 // Guarda de contexto da simbiose (fato 2023, 13/10/2026).
 //
 // Por que existe: a auditoria de 13/10 mediu que 73% do custo foi RELEITURA de
@@ -9,8 +9,8 @@
 //   node contexto.mjs status            linha de status (statusLine): le o JSON
 //                                       do Claude Code no stdin, mostra o contexto
 //                                       e grava o numero para o modo aviso.
-//   node contexto.mjs aviso [--plugin]  gatilho UserPromptSubmit: em 120k avisa
-//                                       uma vez; de 150k em diante a cada +100k.
+//   node contexto.mjs aviso [--plugin]  gatilho UserPromptSubmit: avisa em 200k
+//                                       e depois a cada +100k (300k, 400k...).
 //                                       So avisa: nunca bloqueia nem manda parar
 //                                       (decisoes do Igor em 13/10 e 21/10).
 //
@@ -21,8 +21,10 @@
 // --plugin: e o gatilho que o plugin instala. Fica calado se o repo aberto ja
 // tem a copia em .claude/contexto.mjs, para o Igor nao receber o aviso dobrado.
 //
-// Limites trocaveis por ambiente: CEREBRO_CTX_AVISO (120000) e
-// CEREBRO_CTX_BASTAO (150000).
+// Limites trocaveis por ambiente: CEREBRO_CTX_AVISO (200000), CEREBRO_CTX_BASTAO
+// (200000) e CEREBRO_CTX_DEGRAU (100000). Padrao 200k desde 21/10/2026 (Igor, f2938):
+// o boot sozinho gasta ~80k e 120k deixava pouco trabalho antes do aviso. Antes o
+// 200k so existia no env do PC; a nuvem nao le esse env e avisava em 120k.
 //
 // COPIAS: cerebro-painel, cerebro-backup e igor-cerebro-plugin tem esta mesma
 // copia em .claude/contexto.mjs, porque sessao de nuvem nao instala plugin. Mexeu
@@ -37,8 +39,8 @@ import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const AVISO = Number(process.env.CEREBRO_CTX_AVISO) || 120000
-const BASTAO = Number(process.env.CEREBRO_CTX_BASTAO) || 150000
+const AVISO = Number(process.env.CEREBRO_CTX_AVISO) || 200000
+const BASTAO = Number(process.env.CEREBRO_CTX_BASTAO) || 200000
 const DEGRAU = Number(process.env.CEREBRO_CTX_DEGRAU) || 100000
 const VALIDADE_MS = 10 * 60 * 1000
 
