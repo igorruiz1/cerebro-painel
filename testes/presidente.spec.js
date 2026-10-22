@@ -5246,3 +5246,51 @@ test('p4.77 b: sem baixas sem prova (ou banco sem a view) a Mesa nao mostra a se
   await expect(page.locator('#msSemProvaLista')).toHaveCount(0);
   expect(erros).toEqual([]);
 });
+
+/* p4.79 (W2.2, t4695, s11289 22/10/2026): a Matriz 9Q com dado real. A folha le a v_matriz_9q (recalibrada na W2.1, t4694),
+   mostra a semana medida mais recente e a anterior, poe cada frente na celula do banco com a zona na borda e no rotulo, e a
+   seta compara com a semana anterior pelo saldo resultado menos esforco. O % de FUGA e blocos_fuga sobre blocos. Sem semana
+   medida, a folha diz que nao ha; nunca desenha grade vazia como se fosse medida. O origin/main (p4.78) reprova: nao ha
+   #btMatriz e o presidente nunca le a v_matriz_9q. */
+const M9Q = [
+  {semana:'2026-10-12',frente_slug:'11-renda-alt',frente:'Renda alternativa',celula:1,rgt:'RUN',blocos:10,blocos_fuga:10,medida:'margem'},
+  {semana:'2026-10-12',frente_slug:'20-contrato-pj',frente:'Contrato PJ',celula:9,rgt:'GROW',blocos:6,blocos_fuga:0,medida:'margem'},
+  {semana:'2026-10-05',frente_slug:'11-renda-alt',frente:'Renda alternativa',celula:5,rgt:'RUN',blocos:4,blocos_fuga:0,medida:'margem'},
+  {semana:'2026-10-05',frente_slug:'20-contrato-pj',frente:'Contrato PJ',celula:4,rgt:'GROW',blocos:8,blocos_fuga:8,medida:'margem'}];
+test('p4.79 W2.2: Matriz 9Q real na aba Frentes, semana recente e anterior, celula e seta do banco', async ({page})=>{
+  await page.setViewportSize({width:390, height:800});
+  await page.addInitScript(m=>{ window.__tab={v_matriz_9q:m}; }, M9Q);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('frentes'));
+  await page.click('#btMatriz');
+  const g = page.locator('#m9q');
+  await expect(g.locator('.cel')).toHaveCount(9);
+  await expect(page.locator('#folha [role="tab"]')).toHaveText(['semana de 12/10','semana de 05/10']);
+  await expect(page.locator('#folha [role="tab"][aria-selected="true"]')).toHaveText('semana de 12/10');
+  const c1 = g.locator('.cel[data-celula="1"]'), c9 = g.locator('.cel[data-celula="9"]');
+  await expect(c1).toHaveClass(/fuga/); await expect(c1).toContainText('FUGA');
+  await expect(c9).toHaveClass(/alvo/); await expect(c9).toContainText('ALVO');
+  await expect(c1.locator('.pt')).toHaveText(/▼\s*Renda/);
+  await expect(c9.locator('.pt')).toHaveText(/▲\s*Contrato PJ/);
+  await expect(page.locator('#folha')).toContainText('63% dos blocos em FUGA');
+  const alt = await g.locator('.pt').evaluateAll(bs=>bs.map(b=>b.getBoundingClientRect().height));
+  expect(Math.min(...alt), 'ponto da matriz e tocavel: 44 px').toBeGreaterThanOrEqual(44);
+  /* a semana anterior: cada frente na celula daquela semana, sem seta (nao ha semana antes dela aqui) */
+  await page.locator('#folha [role="tab"]', {hasText:'05/10'}).click();
+  await expect(g.locator('.cel[data-celula="5"] .pt')).toHaveText(/^Renda alternativa$/i);
+  await expect(g.locator('.cel[data-celula="4"] .pt')).toHaveText(/Contrato PJ/);
+  await expect(page.locator('#folha')).toContainText('67% dos blocos em FUGA');
+  /* a frente abre a ficha dela, nunca e beco */
+  await g.locator('.pt', {hasText:'Contrato PJ'}).click();
+  await expect(page.locator('#folhaTit')).not.toHaveText('Matriz 9Q');
+  expect(erros).toEqual([]);
+});
+test('p4.79 W2.2: sem semana medida a Matriz 9Q diz que nao ha, sem grade', async ({page})=>{
+  await page.addInitScript(()=>{ window.__tab={v_matriz_9q:[]}; });
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('frentes'));
+  await page.click('#btMatriz');
+  await expect(page.locator('#folha')).toContainText('não tem semana medida');
+  await expect(page.locator('#m9q')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
