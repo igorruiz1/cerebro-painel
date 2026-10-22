@@ -5263,26 +5263,54 @@ test('p4.79 W2.2: Matriz 9Q real na aba Frentes, semana recente e anterior, celu
   const erros = await abrir(page);
   await page.evaluate(()=>ir('frentes'));
   await page.click('#btMatriz');
-  const g = page.locator('#m9q');
+  const g = page.locator('#m9q'), lista = page.locator('#m9lista');
   await expect(g.locator('.cel')).toHaveCount(9);
   await expect(page.locator('#folha [role="tab"]')).toHaveText(['semana de 12/10','semana de 05/10']);
   await expect(page.locator('#folha [role="tab"][aria-selected="true"]')).toHaveText('semana de 12/10');
   const c1 = g.locator('.cel[data-celula="1"]'), c9 = g.locator('.cel[data-celula="9"]');
-  await expect(c1).toHaveClass(/fuga/); await expect(c1).toContainText('FUGA');
-  await expect(c9).toHaveClass(/alvo/); await expect(c9).toContainText('ALVO');
-  await expect(c1.locator('.pt')).toHaveText(/▼\s*Renda/);
-  await expect(c9.locator('.pt')).toHaveText(/▲\s*Contrato PJ/);
+  await expect(c1).toHaveClass(/fuga/); await expect(c1).toContainText('FUGA'); await expect(c1.locator('.n')).toHaveText('1');
+  await expect(c9).toHaveClass(/alvo/); await expect(c9).toContainText('ALVO'); await expect(c9.locator('.n')).toHaveText('1');
+  await expect(lista.locator('.m9g[data-celula="1"] .m9l')).toHaveText(/▼\s*Renda.*antes na 5/i);
+  await expect(lista.locator('.m9g[data-celula="9"] .m9l')).toHaveText(/▲\s*Contrato PJ.*antes na 4/);
   await expect(page.locator('#folha')).toContainText('63% dos blocos em FUGA');
-  const alt = await g.locator('.pt').evaluateAll(bs=>bs.map(b=>b.getBoundingClientRect().height));
-  expect(Math.min(...alt), 'ponto da matriz e tocavel: 44 px').toBeGreaterThanOrEqual(44);
+  const alt = await page.locator('#folha .m9l, #m9q .cel').evaluateAll(bs=>bs.map(b=>b.getBoundingClientRect().height));
+  expect(Math.min(...alt), 'celula e frente da matriz sao tocaveis: 44 px').toBeGreaterThanOrEqual(44);
+  /* toque na celula filtra a lista; de novo, volta a todas */
+  await c9.click();
+  await expect(page.locator('#m9q .cel[data-celula="9"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#m9lista .m9l')).toHaveCount(1);
+  await page.locator('#m9q .cel[data-celula="9"]').click();
+  await expect(page.locator('#m9lista .m9l')).toHaveCount(2);
   /* a semana anterior: cada frente na celula daquela semana, sem seta (nao ha semana antes dela aqui) */
   await page.locator('#folha [role="tab"]', {hasText:'05/10'}).click();
-  await expect(g.locator('.cel[data-celula="5"] .pt')).toHaveText(/^Renda alternativa$/i);
-  await expect(g.locator('.cel[data-celula="4"] .pt')).toHaveText(/Contrato PJ/);
+  await expect(page.locator('#m9lista .m9g[data-celula="5"] .m9l')).toHaveText(/^Renda alternativa$/i);
+  await expect(page.locator('#m9lista .m9g[data-celula="4"] .m9l')).toHaveText(/^Contrato PJ$/);
   await expect(page.locator('#folha')).toContainText('67% dos blocos em FUGA');
   /* a frente abre a ficha dela, nunca e beco */
-  await g.locator('.pt', {hasText:'Contrato PJ'}).click();
+  await page.locator('#m9lista .m9l', {hasText:'Contrato PJ'}).click();
   await expect(page.locator('#folhaTit')).not.toHaveText('Matriz 9Q');
+  expect(erros).toEqual([]);
+});
+/* p4.80 (s11292, prints do Igor 22/10 01:32): com 9 frentes numa celula a grade deformava (a linha 3 virava uma coluna de nomes)
+   e no PC a folha abria num canto de 480 px. Agora a grade so conta e as 9 celulas tem o mesmo tamanho com qualquer carga; no
+   PC a folha abre larga e centrada, grade e lista lado a lado. A p4.79 reprova: celulas de alturas diferentes e folha de 480 px. */
+const M9Q_CHEIA = Array.from({length:9},(_,i)=>({semana:'2026-10-12',frente_slug:'1'+i+'-frente-de-nome-comprido',frente:'Frente de nome bem comprido numero '+i,celula:7,rgt:'RUN',blocos:3,blocos_fuga:0,medida:'margem'}))
+  .concat([{semana:'2026-10-12',frente_slug:'11-renda-alt',frente:'Renda',celula:1,rgt:'RUN',blocos:10,blocos_fuga:10,medida:'margem'}]);
+for (const [w,h] of [[390,800],[1280,800]]) test(`p4.80 W2.2: Matriz 9Q nao deforma com 9 frentes numa celula e no PC abre larga (${w} px)`, async ({page})=>{
+  await page.setViewportSize({width:w, height:h});
+  await page.addInitScript(m=>{ window.__tab={v_matriz_9q:m}; }, M9Q_CHEIA);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('frentes'));
+  await page.click('#btMatriz');
+  await expect(page.locator('#m9q .cel[data-celula="7"] .n')).toHaveText('9');
+  const cel = await page.locator('#m9q .cel').evaluateAll(bs=>bs.map(b=>{const r=b.getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)];}));
+  expect(new Set(cel.map(c=>c[1])).size, 'as 9 celulas com a mesma altura').toBe(1);
+  expect(Math.max(...cel.map(c=>c[0]))-Math.min(...cel.map(c=>c[0])), 'as 9 celulas com a mesma largura').toBeLessThanOrEqual(1);
+  await expect(page.locator('#m9lista .m9g[data-celula="7"] .m9l')).toHaveCount(9);
+  const f = await page.locator('#folha').evaluate(e=>{const r=e.getBoundingClientRect();return {l:r.left,r:innerWidth-r.right,w:r.width};});
+  if (w>=900) { expect(f.w, 'no PC a folha da matriz e larga').toBeGreaterThanOrEqual(900); expect(Math.abs(f.l-f.r), 'e centrada').toBeLessThanOrEqual(2); }
+  const lado = await page.evaluate(()=>document.getElementById('folha').scrollWidth<=document.getElementById('folha').clientWidth);
+  expect(lado, 'sem rolagem horizontal na folha').toBe(true);
   expect(erros).toEqual([]);
 });
 test('p4.79 W2.2: sem semana medida a Matriz 9Q diz que nao ha, sem grade', async ({page})=>{
