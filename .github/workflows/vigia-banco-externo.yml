@@ -1,0 +1,61 @@
+name: vigia-banco-externo
+
+# Onda 1 da simbiose (t5095, s12164, 23/10/2026). Alarme de FORA do banco.
+# Em 22/10 o job 859 esgotou o Disk IO e os vigias do proprio pg_cron cairam calados. O vigia-banco do cerebro-backup
+# passou durante a queda porque qualquer job ok em 30 min bastava (alarme-externo ainda fechava 1-4 por hora).
+# Aqui: a cada 30 min o workflow chama o endpoint SOMENTE LEITURA cron_saude_externa() (so numeros) pela API REST.
+# FALHA se o banco nao responde em 3 tentativas, se a ultima execucao ok do pg_cron tem mais de 30 min,
+# ou se a janela de 30 min tem 6+ execucoes e metade ou mais falhou. A falha do workflow e o alarme (e-mail do GitHub).
+# Chave: segredo CEREBRO_SUPABASE_KEY (chave publishable, nunca em arquivo). Revogar: apagar este arquivo.
+on:
+  schedule:
+    - cron: "7,37 * * * *"   # a cada 30 min, minuto quebrado evita a fila da hora cheia
+  workflow_dispatch:
+    inputs:
+      url_base:
+        description: "URL base do Supabase (ensaio de falha: informe uma errada)"
+        default: "https://kssvzrnjiqfgtvoifboj.supabase.co"
+      limite_min:
+        description: "Limite em minutos sem execucao ok (0 = ensaio de falha)"
+        default: "30"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vigia-banco-externo
+  cancel-in-progress: true
+
+jobs:
+  vigia:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      URL_BASE: ${{ inputs.url_base || 'https://kssvzrnjiqfgtvoifboj.supabase.co' }}
+      LIMITE_MIN: ${{ inputs.limite_min || '30' }}
+      CHAVE: ${{ secrets.CEREBRO_SUPABASE_KEY }}
+    steps:
+      - name: Banco responde e o pg_cron bate
+        run: |
+          test -n "$CHAVE" || { echo "::error::segredo CEREBRO_SUPABASE_KEY ausente"; exit 1; }
+          resp=""
+          for i in 1 2 3; do
+            if resp=$(curl -fsS --max-time 20 -X POST "$URL_BASE/rest/v1/rpc/cron_saude_externa" \
+                 -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" -H "Content-Type: application/json" -d '{}' 2>err.txt); then break; fi
+            echo "tentativa $i sem resposta: $(head -c 200 err.txt)"; resp=""; sleep 20
+          done
+          if [ -z "$resp" ]; then
+            echo "::error::BANCO SEM RESPOSTA em 3 tentativas. As rotinas do cerebro podem estar paradas."; exit 1
+          fi
+          echo "resposta: $resp"
+          RESP="$resp" python3 - <<'PY'
+          import json, os, sys
+          d = json.loads(os.environ["RESP"])
+          limite = int(os.environ["LIMITE_MIN"])
+          idade, ok, falha = d["idade_ultimo_ok_min"], d["ok_30min"], d["falha_30min"]
+          if idade >= limite:
+              print(f"::error::ULTIMA EXECUCAO OK DO PG_CRON HA {idade} MIN (limite {limite}). Banco ou cron parado."); sys.exit(1)
+          if ok + falha >= 6 and falha * 2 >= ok + falha:
+              print(f"::error::FALHA SISTEMICA: {falha} de {ok + falha} execucoes falharam em 30 min."); sys.exit(1)
+          print(f"ok: ultima execucao ok ha {idade} min; 30 min: {ok} ok, {falha} falha")
+          PY
