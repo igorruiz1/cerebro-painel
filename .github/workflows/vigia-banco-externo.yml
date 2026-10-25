@@ -7,6 +7,7 @@ name: vigia-banco-externo
 # FALHA se o banco nao responde em 3 tentativas, se a ultima execucao ok do pg_cron tem mais de 30 min,
 # ou se a janela de 30 min tem 6+ execucoes e metade ou mais falhou. A falha do workflow e o alarme (e-mail do GitHub).
 # Chave: segredo CEREBRO_SUPABASE_KEY (chave publishable, nunca em arquivo). Revogar: apagar este arquivo.
+# Token: segredo CEREBRO_VIGIA_TOKEN (t6544, s14363, 25/10/2026). A funcao so responde com ele; o vault guarda so o sha256.
 on:
   schedule:
     - cron: "7,37 * * * *"   # a cada 30 min, minuto quebrado evita a fila da hora cheia
@@ -34,14 +35,17 @@ jobs:
       URL_BASE: ${{ inputs.url_base || 'https://kssvzrnjiqfgtvoifboj.supabase.co' }}
       LIMITE_MIN: ${{ inputs.limite_min || '30' }}
       CHAVE: ${{ secrets.CEREBRO_SUPABASE_KEY }}
+      VIGIA_TOKEN: ${{ secrets.CEREBRO_VIGIA_TOKEN }}
     steps:
       - name: Banco responde e o pg_cron bate
         run: |
           test -n "$CHAVE" || { echo "::error::segredo CEREBRO_SUPABASE_KEY ausente"; exit 1; }
+          test -n "$VIGIA_TOKEN" || { echo "::error::segredo CEREBRO_VIGIA_TOKEN ausente"; exit 1; }
+          corpo=$(printf '{"p_token":"%s"}' "$VIGIA_TOKEN")
           resp=""
           for i in 1 2 3; do
             if resp=$(curl -fsS --max-time 20 -X POST "$URL_BASE/rest/v1/rpc/cron_saude_externa" \
-                 -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" -H "Content-Type: application/json" -d '{}' 2>err.txt); then break; fi
+                 -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" -H "Content-Type: application/json" -d "$corpo" 2>err.txt); then break; fi
             echo "tentativa $i sem resposta: $(head -c 200 err.txt)"; resp=""; sleep 20
           done
           if [ -z "$resp" ]; then

@@ -18,3 +18,12 @@ test('vigia-banco-externo: a cada 30 min, endpoint de leitura, chave so em segre
   expect(y).toMatch(/exit 1/);                                                    // falha = alarme
   expect(y).toContain('workflow_dispatch');                                       // ensaio de falha com URL errada
 });
+
+// t6544 (s14363, 25/10/2026): a porta anon so responde com token; o vault guarda so o sha256. Reprova o main de 24/10 (corpo '{}').
+test('vigia-banco-externo: manda o token do segredo CEREBRO_VIGIA_TOKEN', () => {
+  const y = fs.readFileSync(f, 'utf8');
+  expect(y).toContain('secrets.CEREBRO_VIGIA_TOKEN');
+  expect(y).toMatch(/"p_token"/);
+  expect(y).not.toMatch(/-d '\{\}'/);                                              // chamada sem token nao passa mais
+  expect(y).not.toMatch(/\b[0-9a-f]{64}\b/);                                       // token nunca em arquivo
+});
