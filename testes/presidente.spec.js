@@ -102,7 +102,7 @@ const DUBLE = `(()=>{
   window.supabase={createClient:()=>({
     from:v=>({select:()=>q(v==='v_inventario_frente'?inv:v==='v_arvore_caixa'?arv:(window.__tab&&window.__tab[v])||[],v)}),
     rpc:(n,a)=>{window.__rpc.push({n,a});if(pendura(n))return new Promise(()=>{});
-      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='agir_pendencia'?(window.__pendR||'OK: gravado'):n==='envio_anexar_prova'?(window.__anexarR||'OK envio '+(a&&a.p_envio)+': prova anexada'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
+      return Promise.resolve({data:n==='painel_carga'?{dados:(()=>{const d={...dados,...(window.__dados||{})};(window.__sem||[]).forEach(k=>delete d[k]);return d;})(),idade_s:10,gerado_em:new Date().toISOString()}:n==='agir'?'OK: feito':n==='inbox'?'ANOTADO. Entra na proxima rodada.':n==='atendente_estado'?(window.__atd||null):n==='mesa_painel'?(window.__mesa||mesa):n==='mesa_baixa_painel'?(window.__baixa||'OK: baixa gravada (envio 7)'):n==='mesa_deliberar'?(window.__deliberar||'OK: aprovado'):n==='mesa_ciencia'?(window.__ciencia||'OK: ciencia do dia gravada'):n==='painel_nova_tarefa'?(window.__nova||'CRIADO: t99 em 11-renda-alt, prazo 10/10'):n==='painel_esconder'?(window.__esconder||'OK: escondido ate 15/10; o prazo 14/10 segue valendo'):n==='painel_desfazer'?(window.__desfazerR||'OK: desfeito feita em tarefa#2 (status)'):n==='painel_atos_recentes'?(window.__atos||[]):n==='painel_card_historico'?(window.__chist||[]):n==='agir_pendencia'?(window.__pendR||'OK: gravado'):n==='envio_anexar_prova'?(window.__anexarR||'OK envio '+(a&&a.p_envio)+': prova anexada'):n==='painel_checkin'?(window.__checkin!==undefined?window.__checkin:'Check-in Exemplo · seg 13/10\\n1. Fiz: Enviar a ata de exemplo\\n2. Vou fazer: Revisar a proposta de exemplo (14/10)\\n3. Travado / preciso de você: —'):null,error:null});},
     channel:()=>{const ch={on:(t,f,cb)=>{(window.__rt=window.__rt||[]).push({f,cb});return ch;},subscribe:cb=>{cb&&cb('SUBSCRIBED');return ch;}};return ch;},
     /* p4.4: storage dublado; window.__storage guarda cada chamada, window.__storageErro faz o link falhar */
     storage:{from:b=>({
@@ -5451,4 +5451,17 @@ test('t3635: todo data-bloco nos quatro estados', async ({page})=>{
 test('t3635: zero "carregando" solto no fonte do presidente', ()=>{
   const fs=require('fs'); const src=fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
   expect(src.match(/[Cc]arregando/g)||[], 'texto de espera vira esqueleto (.sk)').toEqual([]);
+});
+
+/* t3637 (onda F, regua 36 do canone): o ato gravado ecoa "gravado HH:MM" e o historico do card traz o autor */
+test('eco de escrita: "gravado HH:MM" na hora de Cuiaba, e historico do card com autor e hora', async ({page})=>{
+  const erros = await abrir(page);
+  const e = await page.evaluate(()=>({eco:eco('Gravado'), cuiaba:ecoHM(),
+    ref:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Cuiaba',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())}));
+  expect(e.eco).toMatch(/^Gravado · gravado \d{2}:\d{2}$/);
+  expect(e.cuiaba).toBe(e.ref);
+  await page.evaluate(()=>{ window.__chist=[{campo:'status',valor:'concluida',autor:'sessao:16193@00-memoria',em:'2026-10-25T15:05:00Z'}]; abrirFila(0); });
+  await expect(page.locator('#hist')).toContainText('sessão 16193');
+  await expect(page.locator('#hist')).toContainText('status: concluida');
+  expect(erros).toEqual([]);
 });
