@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f8xqpufg778OVYOT3T2o1VtqlZqVuxcRNjmPFwWhstU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-dEa/up3NiuRSmHBbt1oMPlbs26xiiCANTcf5lByGFgY=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -599,6 +599,8 @@ button.linha-r.quest{cursor:pointer}
 .oc-sub{margin:0;color:var(--ink2);font-size:var(--fs-2);overflow-wrap:anywhere}
 .oc-bloco details>summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .nav button .selo.sr-bad,.rail button .selo.sr-bad{color:var(--bad);font-weight:700}
+/* p4.82 (t3634): carimbo de frescor por bloco, em texto (a cor so reforca) */
+.carimbo{margin:0 0 4px;font-size:var(--fs-2);line-height:1.35;color:var(--warn)}
 </style>
 </head>
 <body>
@@ -680,21 +682,21 @@ button.linha-r.quest{cursor:pointer}
       <button id="novaVersao" class="pri hidden" data-acao="atualizarPainel"></button>
 
       <section class="pane on" id="p-hoje" aria-label="Hoje">
-        <p class="situacao" id="situacao">carregando…</p>
+        <p class="situacao" id="situacao" data-bloco="situacao" data-fonte="rw hoje_resumo cap min">carregando…</p>
         <div class="grade">
           <div class="pilha" style="gap:18px">
-            <article class="foco" id="foco"></article>
-            <div class="pilha" id="ordemBox">
+            <article class="foco" id="foco" data-bloco="foco" data-fonte="hoje fila"></article>
+            <div class="pilha" id="ordemBox" data-bloco="ordem" data-fonte="hoje fila">
               <h2>Depois deste, nesta ordem</h2>
               <div class="ordem" id="ordem"></div>
             </div>
           </div>
           <div class="pilha">
             <h2>Também pede você</h2>
-            <div class="atalhos" id="atalhos"></div>
-            <div class="pilha hidden" id="cob3Box"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
-            <div class="pilha hidden" id="vespBox"><div class="cob3l" id="vespLista"></div></div>
-            <div class="pilha hidden" id="sugBox"><h2>Sugestões das rotinas</h2><div class="cob3l" id="sugLista"></div></div>
+            <div class="atalhos" id="atalhos" data-bloco="atalhos" data-fonte="cont cob3 vivo"></div>
+            <div class="pilha hidden" id="cob3Box" data-bloco="cobrar" data-fonte="cob3"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
+            <div class="pilha hidden" id="vespBox" data-bloco="vespera" data-fonte="vesp"><div class="cob3l" id="vespLista"></div></div>
+            <div class="pilha hidden" id="sugBox" data-bloco="sugestoes" data-fonte="sug"><h2>Sugestões das rotinas</h2><div class="cob3l" id="sugLista"></div></div>
             <p class="mut quieto" id="hojeQuieto" hidden></p>
           </div>
         </div>
@@ -702,68 +704,68 @@ button.linha-r.quest{cursor:pointer}
 
       <section class="pane" id="p-fila" aria-label="Fila">
         <div class="seg seg2" role="tablist" aria-label="Modo da fila" id="filaModo"></div>
-        <div id="fu-raiz" class="pilha fu-raiz" hidden></div>
-        <div class="wip" id="wip"></div>
+        <div id="fu-raiz" class="pilha fu-raiz" data-bloco="fila-unica" data-fonte="vivo" hidden></div>
+        <div class="wip" id="wip" data-bloco="wip" data-fonte="fila exec"></div>
         <div class="seg" role="tablist" aria-label="Colunas da fila" id="seg"></div>
-        <div class="kanban" id="kanban"></div>
+        <div class="kanban" id="kanban" data-bloco="kanban" data-fonte="fila exp vivo"></div>
         <div class="rodape" id="filaRodape"></div>
       </section>
 
       <section class="pane" id="p-caixa" aria-label="Caixa">
-        <div class="grande" id="caixaTopo"></div>
-        <div class="bloco"><span class="rot">Saldo no fim de cada semana, próximas 13</span><div class="semanas" id="semanas"></div></div>
-        <div class="bloco"><span class="rot">Por entidade (pior caso, 30 e 90 dias)</span><div class="cxe" id="cxEnt"></div></div>
-        <div class="pilha" id="cobrarBox"></div>
+        <div class="grande" id="caixaTopo" data-bloco="caixa" data-fonte="rw c13"></div>
+        <div class="bloco" data-bloco="semanas" data-fonte="c13 c13i"><span class="rot">Saldo no fim de cada semana, próximas 13</span><div class="semanas" id="semanas"></div></div>
+        <div class="bloco" data-bloco="entidades" data-fonte="cxe vivo"><span class="rot">Por entidade (pior caso, 30 e 90 dias)</span><div class="cxe" id="cxEnt"></div></div>
+        <div class="pilha" id="cobrarBox" data-bloco="receber" data-fonte="c13i"></div>
         <h2>Do pronto ao pago</h2>
-        <div class="pilha" id="funil"></div>
+        <div class="pilha" id="funil" data-bloco="funil" data-fonte="funil"></div>
         <h2 id="dreTit">Folha mês, por unidade</h2>
-        <div class="pilha" id="dreBox"></div>
+        <div class="pilha" id="dreBox" data-bloco="dre" data-fonte="dre"></div>
         <h2>O que mais melhora o caixa, pela sua margem</h2>
-        <div class="pilha" id="alavancas"></div>
+        <div class="pilha" id="alavancas" data-bloco="alavancas" data-fonte="vivo"></div>
         <div class="rodape">Margem sua, nunca o bruto: cada lançamento entra pela sua participação. O erro da previsão está no bastidor.</div>
       </section>
 
       <section class="pane" id="p-frentes" aria-label="Frentes">
         <div class="mut">Ordem: sua margem nos próximos 30 dias. Toque para abrir a frente.</div>
-        <div id="frentesLista" class="pilha"></div>
+        <div id="frentesLista" class="pilha" data-bloco="frentes" data-fonte="uni vivo"></div>
         <button class="sec" id="btMatriz" data-acao="abrirMatriz">Matriz 9Q</button>
         <button class="sec" id="btPlano" data-acao="abrirPlano">Plano mestre</button>
       </section>
 
       <section class="pane" id="p-mesa" aria-label="Mesa">
         <div id="sb-raiz" class="sb-raiz" hidden></div>
-        <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
+        <div id="ms-raiz" class="ms-raiz" data-bloco="mesa" data-fonte="vivo"><p class="ms-dia">carregando…</p></div>
       </section>
 
       <section class="pane" id="p-semana" aria-label="Semana">
-        <section class="sd-bloco" id="semSaude" aria-label="Saúde do sistema" hidden></section>
-        <section class="oc-bloco" id="semOrc" aria-label="Orçamento x gasto das rotinas" hidden></section>
-        <div class="grande" id="semTopo"></div>
+        <section class="sd-bloco" id="semSaude" data-bloco="saude" data-fonte="saude" aria-label="Saúde do sistema" hidden></section>
+        <section class="oc-bloco" id="semOrc" data-bloco="orcamento" data-fonte="orc gov" aria-label="Orçamento x gasto das rotinas" hidden></section>
+        <div class="grande" id="semTopo" data-bloco="semana" data-fonte="semana"></div>
         <div class="mut" id="l10Total"></div>
         <section class="l10seg" data-seg="abertura" aria-label="Abertura">
           <h2>Abertura <span class="l10min"></span></h2><p class="l10res"></p>
         </section>
         <section class="l10seg" data-seg="numeros" aria-label="Números">
           <h2>Números <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="bloco" id="semNorte" hidden></div>
-          <div class="pilha" id="semNumeros"></div>
-          <div class="bloco" id="semVidaBox"><span class="rot">Vida: um número por frente</span><div class="pilha" id="semVida"></div></div>
+          <div class="bloco" id="semNorte" data-bloco="norte" data-fonte="semana" hidden></div>
+          <div class="pilha" id="semNumeros" data-bloco="numeros" data-fonte="semana se"></div>
+          <div class="bloco" id="semVidaBox" data-bloco="vida" data-fonte="vida"><span class="rot">Vida: um número por frente</span><div class="pilha" id="semVida"></div></div>
         </section>
         <section class="l10seg" data-seg="prioridades" aria-label="Prioridades">
           <h2>Prioridades do trimestre <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semPrio"></div>
+          <div class="pilha" id="semPrio" data-bloco="prio" data-fonte="prio"></div>
         </section>
         <section class="l10seg" data-seg="manchetes" aria-label="Manchetes">
           <h2>Manchetes <span class="l10min"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semDecisoes"></div>
+          <div class="pilha" id="semDecisoes" data-bloco="decisoes" data-fonte="semana"></div>
         </section>
         <section class="l10seg" data-seg="afazeres" aria-label="Afazeres">
           <h2>Afazeres <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semPlano"></div>
+          <div class="pilha" id="semPlano" data-bloco="plano" data-fonte="semana plm"></div>
         </section>
         <section class="l10seg" data-seg="ids" aria-label="Questões">
           <h2>Questões <span class="l10min"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semQuest"></div>
+          <div class="pilha" id="semQuest" data-bloco="questoes" data-fonte="quest"></div>
         </section>
         <section class="l10seg" data-seg="conclusao" aria-label="Conclusão">
           <h2>Conclusão <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
@@ -790,7 +792,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.81";
+const VERP="p4.82";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1871,6 +1873,8 @@ function saude(){
   }
   if(ultimo) det.push("último backup "+ddmm(ultimo)+" "+hhmm(ultimo));
   Object.keys(FALHAS).forEach(k=>{ mot.push(FONTE_TELA[k].toLowerCase()+" falhou"); det.push(FONTE_TELA[k]+": "+FALHAS[k].motivo); });
+  const nv=frNaoVivas();
+  if(nv.length){ mot.push(plural(nv.length,"fonte fora do ponto","fontes fora do ponto")); det.push(nv.map(x=>x.k+" "+FR_ROT[x.e]).join(", ")); }
   return {ok:!mot.length, mot, det};
 }
 /* p4.33 (plano 114 = A5 do plano 101; s1274, 08/10/2026): saude por fonte, no molde do Andon do Sistema Toyota de Producao:
@@ -1887,14 +1891,44 @@ function fontes(){
       q:f?"falhou "+ddmm(r.ultima_tentativa)+" "+hhmm(r.ultima_tentativa)+": "+curto(r.ultima_falha||"sem motivo registrado",110)+(r.ultimo_ponto?" · último dado bom "+ddmm(r.ultimo_ponto):"")
         :r.ultimo_ponto?"último dado "+ddmm(r.ultimo_ponto)+" "+hhmm(r.ultimo_ponto):"nunca rodou"}); });
   Object.keys(FALHAS).forEach(k=>l.push({n:FONTE_TELA[k],falha:true,ruim:true,q:"falhou "+ddmm(FALHAS[k].em)+" "+hhmm(FALHAS[k].em)+": "+FALHAS[k].motivo}));
+  frNaoVivas().forEach(x=>l.push({n:"Fonte "+(FONTE_TELA[x.k]||x.k),ruim:true,rot:FR_ROT[x.e],q:carimboTxt(x)}));
   return l.map((x,i)=>({...x,i})).sort((a,b)=>(b.ruim-a.ruim)||(a.i-b.i));
 }
 function abrirFontes(){
   const l=fontes(), ruins=l.filter(x=>x.ruim).length, rt=(D.rit||[])[0];
   mostrarFolha(`<h3 id="folhaTit">Saúde por fonte</h3>
     <div class="chips"><span class="chip ${ruins?"w":"ok"}">${ruins?plural(ruins,"fonte acesa","fontes acesas"):"todas no ponto"}</span>${rt&&rt.fechados_7d!=null?`<span class="chip">${esc(plural(+rt.fechados_7d,"card seu fechado","cards seus fechados"))} em 7 d</span><span class="chip">${esc(+rt.fechados_7d_ant||0)} na semana anterior</span>`:""}</div>
-    <div>${l.map(x=>`<div class="fonte ${x.ruim?"w":""}"><span class="t"><b>${esc(x.n)}</b><small>${esc(x.q)}</small></span><span class="r">${x.falha?"falhou":x.ruim?"acesa":"no ponto"}</span></div>`).join("")}</div>
+    <div>${l.map(x=>`<div class="fonte ${x.ruim?"w":""}"><span class="t"><b>${esc(x.n)}</b><small>${esc(x.q)}</small></span><span class="r">${esc(x.rot||(x.falha?"falhou":x.ruim?"acesa":"no ponto"))}</span></div>`).join("")}</div>
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
+}
+/* p4.82 (t3634, s15864; Statuspage: cada componente com o proprio estado). Todo [data-bloco] diz de que chave do snapshot
+   vem (data-fonte; "vivo" = leitura direta nesta carga, sem carimbo proprio). O estado vem de v_frescor_fonte pela chave
+   fresc (coluna fontes: {chave:[estado, idade_h, motivo se nao vivo]}); a idade soma a do snapshot. Bloco fora do ponto
+   ganha o carimbo em texto antes dele ("atrasado há 30 h"), nao so a cor; bloco vivo fica calado. O carimbo e irmao do
+   bloco: o render reescreve o innerHTML do bloco e o carimbo sobrevive. Rotina pausada diz "pausado", nunca "dormindo". */
+const FR_ORD={vivo:0,atrasado:1,pausado:2,sem_dado:3,parado:4}, FR_ROT={vivo:"no ponto",atrasado:"atrasado",pausado:"pausado",sem_dado:"sem dado",parado:"parado"};
+const frMapa=()=>((D.fresc||[])[0]||{}).fontes||{};
+const frItem=(k,f)=>({k,e:FR_ORD[f[0]]!=null?f[0]:"sem_dado",h:f[1]==null?null:(+f[1])+(+IDADE||0)/3600,m:f[2]||""});
+function frNaoVivas(){ const m=frMapa(); return Object.keys(m).filter(k=>Array.isArray(m[k])).map(k=>frItem(k,m[k])).filter(x=>x.e!=="vivo"); }
+function carimboTxt(x){
+  const h=x.h==null?"":" há "+Math.max(1,Math.round(x.h))+" h";
+  return x.e==="pausado"||x.e==="sem_dado"?FR_ROT[x.e]+(x.m?": "+x.m:""):FR_ROT[x.e]+h;
+}
+function frescorBloco(el){
+  const m=frMapa(); let pior=null;
+  String(el.dataset.fonte||"").split(" ").forEach(k=>{ if(!Array.isArray(m[k]))return; const x=frItem(k,m[k]);
+    if(!pior||FR_ORD[x.e]>FR_ORD[pior.e])pior=x; });
+  return pior;
+}
+function carimbar(){
+  document.querySelectorAll("[data-bloco]").forEach(el=>{
+    const p=frescorBloco(el), id="cb-"+el.dataset.bloco; let c=document.getElementById(id);
+    el.dataset.frescor=p?p.e:"";
+    if(!p||p.e==="vivo"){ if(c)c.remove(); return; }
+    if(!c){ c=document.createElement("p"); c.id=id; c.className="carimbo"; el.before(c); }
+    c.textContent=carimboTxt(p);
+    c.hidden=el.hidden||el.classList.contains("hidden");
+  });
 }
 function renderSaude(){
   const s=saude(), el=document.getElementById("saude"), rail=document.getElementById("saudeRail");
@@ -1906,7 +1940,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderOnda4();renderQuest();renderSelos();renderSaude();msRender();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderOnda4();renderQuest();renderSelos();renderSaude();msRender();carimbar();}
 function renderHoje(){
   const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
   /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.

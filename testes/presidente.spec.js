@@ -5374,3 +5374,42 @@ test('p4.81 orcamento: sem as chaves o bloco fica oculto', async ({page})=>{
   await expect(page.locator('#semOrc')).toBeHidden();
   expect(erros).toEqual([]);
 });
+
+/* p4.82 (t3634, s15864, 25/10/2026): frescor por bloco (Statuspage). Todo [data-bloco] tem data-fonte com chave que o
+   painel pede ao banco (ou "vivo", leitura direta); fonte com 30 h faz o bloco dizer "atrasado há 30 h" em texto, e o
+   carimbo sobrevive ao render; rotina pausada diz "pausado", nunca "dormindo". No main de antes (p4.81) nao havia
+   data-bloco nem carimbo: os tres testes reprovam. */
+test('t3634: todo bloco tem data-fonte com chave conhecida', async ({page})=>{
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{ const bl=[...document.querySelectorAll('[data-bloco]')], ok=new Set(CHAVES.concat(['vivo']));
+    return {n:bl.length, semFonte:bl.filter(e=>!(e.dataset.fonte||'').trim()).map(e=>e.dataset.bloco),
+      desconhecida:bl.flatMap(e=>(e.dataset.fonte||'').split(' ').filter(k=>k&&!ok.has(k)).map(k=>e.dataset.bloco+':'+k)),
+      paneSem:[...document.querySelectorAll('.pane')].filter(p=>!p.querySelector('[data-bloco]')).map(p=>p.id),
+      dup:bl.map(e=>e.dataset.bloco).filter((b,i,a)=>a.indexOf(b)!==i)}; });
+  expect(r.n, 'blocos com data-bloco').toBeGreaterThan(20);
+  expect(r.semFonte, 'bloco sem data-fonte').toEqual([]);
+  expect(r.desconhecida, 'fonte que o painel nao pede').toEqual([]);
+  expect(r.paneSem, 'aba sem bloco').toEqual([]);
+  expect(r.dup, 'data-bloco repetido').toEqual([]);
+  expect(erros).toEqual([]);
+});
+test('t3634: fonte com carimbo de 30 h faz o bloco dizer atrasado', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{ D.fresc=[{...((D.fresc||[])[0]||{}), fontes:{c13:['atrasado',30],c13i:['vivo',0.2],rw:['vivo',0.2]}}]; IDADE=0; render(); ir('caixa'); });
+  await expect(page.locator('#cb-semanas')).toHaveText('atrasado há 30 h');
+  await expect(page.locator('[data-bloco="semanas"]')).toHaveAttribute('data-frescor', 'atrasado');
+  await expect(page.locator('#cb-caixa'), 'o topo do caixa le c13 tambem').toHaveText('atrasado há 30 h');
+  await expect(page.locator('#cb-funil'), 'bloco de outra fonte fica calado').toHaveCount(0);
+  await page.evaluate(()=>render());
+  await expect(page.locator('#cb-semanas'), 'o carimbo sobrevive ao render').toHaveText('atrasado há 30 h');
+  await page.evaluate(()=>{ D.fresc[0].fontes.c13=['vivo',0.1]; render(); });
+  await expect(page.locator('#cb-semanas'), 'fonte de volta ao ponto apaga o carimbo').toHaveCount(0);
+});
+test('t3634: rotina pausada diz pausado no bloco e na saude, nunca dormindo', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{ D.fresc=[{...((D.fresc||[])[0]||{}), fontes:{orc:['pausado',50,'rotina x pausada (ativo=false) desde 20/10 08:00']}}]; render(); abrirFontes(); });
+  await expect(page.locator('#folha')).toContainText('pausado: rotina x pausada');
+  await expect(page.locator('#folha')).not.toContainText('dormindo');
+  await expect(page.locator('#saude')).toContainText('fonte fora do ponto');
+  expect(await page.locator('#cb-orcamento').textContent()).toContain('pausado');
+});
