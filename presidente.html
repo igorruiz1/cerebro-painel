@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f8xqpufg778OVYOT3T2o1VtqlZqVuxcRNjmPFwWhstU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-6MLvV8GCzPJrDbeFD704y2nBnT+H8sCnEhN27oG9i9g=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -599,6 +599,15 @@ button.linha-r.quest{cursor:pointer}
 .oc-sub{margin:0;color:var(--ink2);font-size:var(--fs-2);overflow-wrap:anywhere}
 .oc-bloco details>summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .nav button .selo.sr-bad,.rail button .selo.sr-bad{color:var(--bad);font-weight:700}
+/* p4.82 (t3634): carimbo de frescor por bloco, em texto (a cor so reforca) */
+.carimbo{margin:0 0 4px;font-size:var(--fs-2);line-height:1.35;color:var(--warn)}
+/* p4.82 (t3635): um componente de estado por bloco: lendo (esqueleto), erro (tentar de novo), velho (dados de HH:MM) */
+.est{margin:0 0 6px;font-size:var(--fs-2);line-height:1.35}
+.est.w{color:var(--warn)} .est.bad{color:var(--bad)}
+.est .sec{margin-left:6px}
+.sk{display:block;min-height:1.4em;border-radius:var(--r-s);background:var(--line);animation:sk 1.1s ease-in-out infinite alternate}
+@keyframes sk{from{opacity:.45}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}}
 </style>
 </head>
 <body>
@@ -650,7 +659,7 @@ button.linha-r.quest{cursor:pointer}
 
   <div class="col">
     <header class="topo">
-      <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><button type="button" class="estado" data-acao="abrirFontes" aria-label="Saúde por fonte"><span class="sub saude" id="saude"></span><span class="sub" id="fresco">carregando</span></button><div class="sub" id="atd" aria-live="polite"></div></div>
+      <div class="tt"><div class="marca" title="Presidente · Dabli Tech"><span class="dt"><b>Dabli</b> <span>Tech</span></span><span class="prod">Presidente</span></div><h1 id="tituloAba">Hoje</h1><button type="button" class="estado" data-acao="abrirFontes" aria-label="Saúde por fonte"><span class="sub saude" id="saude"></span><span class="sub" id="fresco">lendo o banco</span></button><div class="sub" id="atd" aria-live="polite"></div></div>
       <button class="ico" id="micTopo" aria-label="Falar uma instrução" data-acao="abrirVoz">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
@@ -680,21 +689,21 @@ button.linha-r.quest{cursor:pointer}
       <button id="novaVersao" class="pri hidden" data-acao="atualizarPainel"></button>
 
       <section class="pane on" id="p-hoje" aria-label="Hoje">
-        <p class="situacao" id="situacao">carregando…</p>
+        <p class="situacao" id="situacao" data-bloco="situacao" data-fonte="rw hoje_resumo cap min"><span class="sk" aria-busy="true" role="status" aria-label="lendo do banco"></span></p>
         <div class="grade">
           <div class="pilha" style="gap:18px">
-            <article class="foco" id="foco"></article>
-            <div class="pilha" id="ordemBox">
+            <article class="foco" id="foco" data-bloco="foco" data-fonte="hoje fila"></article>
+            <div class="pilha" id="ordemBox" data-bloco="ordem" data-fonte="hoje fila">
               <h2>Depois deste, nesta ordem</h2>
               <div class="ordem" id="ordem"></div>
             </div>
           </div>
           <div class="pilha">
             <h2>Também pede você</h2>
-            <div class="atalhos" id="atalhos"></div>
-            <div class="pilha hidden" id="cob3Box"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
-            <div class="pilha hidden" id="vespBox"><div class="cob3l" id="vespLista"></div></div>
-            <div class="pilha hidden" id="sugBox"><h2>Sugestões das rotinas</h2><div class="cob3l" id="sugLista"></div></div>
+            <div class="atalhos" id="atalhos" data-bloco="atalhos" data-fonte="cont cob3 vivo"></div>
+            <div class="pilha hidden" id="cob3Box" data-bloco="cobrar" data-fonte="cob3"><h2>Cobrar</h2><div class="cob3l" id="cob3Lista"></div></div>
+            <div class="pilha hidden" id="vespBox" data-bloco="vespera" data-fonte="vesp"><div class="cob3l" id="vespLista"></div></div>
+            <div class="pilha hidden" id="sugBox" data-bloco="sugestoes" data-fonte="sug"><h2>Sugestões das rotinas</h2><div class="cob3l" id="sugLista"></div></div>
             <p class="mut quieto" id="hojeQuieto" hidden></p>
           </div>
         </div>
@@ -702,68 +711,68 @@ button.linha-r.quest{cursor:pointer}
 
       <section class="pane" id="p-fila" aria-label="Fila">
         <div class="seg seg2" role="tablist" aria-label="Modo da fila" id="filaModo"></div>
-        <div id="fu-raiz" class="pilha fu-raiz" hidden></div>
-        <div class="wip" id="wip"></div>
+        <div id="fu-raiz" class="pilha fu-raiz" data-bloco="fila-unica" data-fonte="vivo" hidden></div>
+        <div class="wip" id="wip" data-bloco="wip" data-fonte="fila exec"></div>
         <div class="seg" role="tablist" aria-label="Colunas da fila" id="seg"></div>
-        <div class="kanban" id="kanban"></div>
+        <div class="kanban" id="kanban" data-bloco="kanban" data-fonte="fila exp vivo"></div>
         <div class="rodape" id="filaRodape"></div>
       </section>
 
       <section class="pane" id="p-caixa" aria-label="Caixa">
-        <div class="grande" id="caixaTopo"></div>
-        <div class="bloco"><span class="rot">Saldo no fim de cada semana, próximas 13</span><div class="semanas" id="semanas"></div></div>
-        <div class="bloco"><span class="rot">Por entidade (pior caso, 30 e 90 dias)</span><div class="cxe" id="cxEnt"></div></div>
-        <div class="pilha" id="cobrarBox"></div>
+        <div class="grande" id="caixaTopo" data-bloco="caixa" data-fonte="rw c13"></div>
+        <div class="bloco" data-bloco="semanas" data-fonte="c13 c13i"><span class="rot">Saldo no fim de cada semana, próximas 13</span><div class="semanas" id="semanas"></div></div>
+        <div class="bloco" data-bloco="entidades" data-fonte="cxe vivo"><span class="rot">Por entidade (pior caso, 30 e 90 dias)</span><div class="cxe" id="cxEnt"></div></div>
+        <div class="pilha" id="cobrarBox" data-bloco="receber" data-fonte="c13i"></div>
         <h2>Do pronto ao pago</h2>
-        <div class="pilha" id="funil"></div>
+        <div class="pilha" id="funil" data-bloco="funil" data-fonte="funil"></div>
         <h2 id="dreTit">Folha mês, por unidade</h2>
-        <div class="pilha" id="dreBox"></div>
+        <div class="pilha" id="dreBox" data-bloco="dre" data-fonte="dre"></div>
         <h2>O que mais melhora o caixa, pela sua margem</h2>
-        <div class="pilha" id="alavancas"></div>
+        <div class="pilha" id="alavancas" data-bloco="alavancas" data-fonte="vivo"></div>
         <div class="rodape">Margem sua, nunca o bruto: cada lançamento entra pela sua participação. O erro da previsão está no bastidor.</div>
       </section>
 
       <section class="pane" id="p-frentes" aria-label="Frentes">
         <div class="mut">Ordem: sua margem nos próximos 30 dias. Toque para abrir a frente.</div>
-        <div id="frentesLista" class="pilha"></div>
+        <div id="frentesLista" class="pilha" data-bloco="frentes" data-fonte="uni vivo"></div>
         <button class="sec" id="btMatriz" data-acao="abrirMatriz">Matriz 9Q</button>
         <button class="sec" id="btPlano" data-acao="abrirPlano">Plano mestre</button>
       </section>
 
       <section class="pane" id="p-mesa" aria-label="Mesa">
         <div id="sb-raiz" class="sb-raiz" hidden></div>
-        <div id="ms-raiz" class="ms-raiz"><p class="ms-dia">carregando…</p></div>
+        <div id="ms-raiz" class="ms-raiz" data-bloco="mesa" data-fonte="vivo"><p class="ms-dia"><span class="sk" aria-busy="true" role="status" aria-label="lendo do banco"></span></p></div>
       </section>
 
       <section class="pane" id="p-semana" aria-label="Semana">
-        <section class="sd-bloco" id="semSaude" aria-label="Saúde do sistema" hidden></section>
-        <section class="oc-bloco" id="semOrc" aria-label="Orçamento x gasto das rotinas" hidden></section>
-        <div class="grande" id="semTopo"></div>
+        <section class="sd-bloco" id="semSaude" data-bloco="saude" data-fonte="saude" aria-label="Saúde do sistema" hidden></section>
+        <section class="oc-bloco" id="semOrc" data-bloco="orcamento" data-fonte="orc gov" aria-label="Orçamento x gasto das rotinas" hidden></section>
+        <div class="grande" id="semTopo" data-bloco="semana" data-fonte="semana"></div>
         <div class="mut" id="l10Total"></div>
         <section class="l10seg" data-seg="abertura" aria-label="Abertura">
           <h2>Abertura <span class="l10min"></span></h2><p class="l10res"></p>
         </section>
         <section class="l10seg" data-seg="numeros" aria-label="Números">
           <h2>Números <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="bloco" id="semNorte" hidden></div>
-          <div class="pilha" id="semNumeros"></div>
-          <div class="bloco" id="semVidaBox"><span class="rot">Vida: um número por frente</span><div class="pilha" id="semVida"></div></div>
+          <div class="bloco" id="semNorte" data-bloco="norte" data-fonte="semana" hidden></div>
+          <div class="pilha" id="semNumeros" data-bloco="numeros" data-fonte="semana se"></div>
+          <div class="bloco" id="semVidaBox" data-bloco="vida" data-fonte="vida"><span class="rot">Vida: um número por frente</span><div class="pilha" id="semVida"></div></div>
         </section>
         <section class="l10seg" data-seg="prioridades" aria-label="Prioridades">
           <h2>Prioridades do trimestre <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semPrio"></div>
+          <div class="pilha" id="semPrio" data-bloco="prio" data-fonte="prio"></div>
         </section>
         <section class="l10seg" data-seg="manchetes" aria-label="Manchetes">
           <h2>Manchetes <span class="l10min"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semDecisoes"></div>
+          <div class="pilha" id="semDecisoes" data-bloco="decisoes" data-fonte="semana"></div>
         </section>
         <section class="l10seg" data-seg="afazeres" aria-label="Afazeres">
           <h2>Afazeres <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semPlano"></div>
+          <div class="pilha" id="semPlano" data-bloco="plano" data-fonte="semana plm"></div>
         </section>
         <section class="l10seg" data-seg="ids" aria-label="Questões">
           <h2>Questões <span class="l10min"></span></h2><p class="l10res"></p>
-          <div class="pilha" id="semQuest"></div>
+          <div class="pilha" id="semQuest" data-bloco="questoes" data-fonte="quest"></div>
         </section>
         <section class="l10seg" data-seg="conclusao" aria-label="Conclusão">
           <h2>Conclusão <span class="l10min"></span><span class="l10al"></span></h2><p class="l10res"></p>
@@ -790,7 +799,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.81";
+const VERP="p4.82";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1653,6 +1662,7 @@ async function carregar(forcar){
 }
 async function carregar_(forcar){
   falha("");
+  if(!CARGA_EM)carimbar();
   /* p4.65 (pi 172): com a tela compartilhada, a classificacao das frentes vem antes de qualquer dado */
   if(TELA&&!ENT){ await carregarEnt(); telaUi(); }
   /* p4.4: a Mesa tem leitura propria (mesa_painel), em paralelo; erro dela fica na aba, nao aqui */
@@ -1665,6 +1675,7 @@ async function carregar_(forcar){
   const rc=await comTetoR(sb.rpc("painel_carga",{p_chaves:CHAVES}),LIMITE_RECARGA,"painel_carga");
   if(semSessao(rc))return sessaoCaiu();
   const {data,error}=rc;
+  if(error||!data){ const mt=error?error.message:"resposta vazia"; CHAVES.forEach(k=>{ERRO_CHAVE[k]=mt;}); carimbar(); }
   if(error||!data){CARGA_FALHOU=true;falha("Não consegui ler o banco: "+(error?error.message:"resposta vazia")+". Toque em recarregar."+(avisos.length?" Também: "+avisos.join("; ")+".":""));return;}
   UNI_TIPO=Object.fromEntries(((data.dados||{}).uni||[]).filter(u=>u&&u.slug).map(u=>[u.slug,u.tipo]));
   Object.assign(D,veuObj(data.dados||{}));
@@ -1676,6 +1687,8 @@ async function carregar_(forcar){
   if(avisos.length)partes.push("Também: "+avisos.join("; ")+".");
   if(partes.length)falha(partes.join(" ")+" O que aparece está certo, mas pode estar incompleto ou velho.");
   CARGA_FALHOU=partes.length>0; CARGA_EM=Date.now();
+  ERRO_CHAVE=ERRO_CHAVE.vivo?{vivo:ERRO_CHAVE.vivo}:{};
+  falt.forEach(k=>{ERRO_CHAVE[k]="não veio na carga";}); Object.keys(data.erros||{}).forEach(k=>{ERRO_CHAVE[k]=String(data.erros[k]);});
   /* p4.66: as chaves da onda 2 acendem a propria fonte na saude, com o motivo, e apagam na carga seguinte que vier boa */
   CHAVES_ONDA2.forEach(k=>{ const e=(data.erros||{})[k];
     if(e)fonteFalhou(k,{message:String(e)}); else if(!(k in (data.dados||{})))fonteFalhou(k,{message:"não veio na carga"}); else fonteVoltou(k); });
@@ -1724,7 +1737,7 @@ async function garantirLazy_(){
   if(!ARV)t.push(ler(sb.from("v_arvore_caixa").select("nivel,no,rotulo,margem_30d,margem_total,itens,veredito").lte("nivel",1),"frentes",d=>{ARV=d;}));
   if(!UNID||!Object.keys(UNID).length)t.push(ler(sb.from("frente").select("slug,entidade,unidade"),"unidade das frentes",d=>{UNID=Object.fromEntries(d.map(f=>[f.slug,f.unidade||null]));}));
   if(!SEM)t.push(ler(sb.from("v_frente_semanas").select("slug,semanas,vencidos,idade_d,piorou"),"semanas das frentes",d=>{SEM=d;}));
-  if(t.length){await Promise.all(t);render();}
+  if(t.length){await Promise.all(t); if(ruins.length)ERRO_CHAVE.vivo=ruins.join("; "); else delete ERRO_CHAVE.vivo; render();}
   if(ruins.length){const ant=document.getElementById("falha").textContent;
     falha((ant?ant+" ":"")+"Não carregou ("+ruins.join("; ")+"). Fila, Caixa e Frentes podem estar incompletas: toque em recarregar.");}
 }
@@ -1871,6 +1884,8 @@ function saude(){
   }
   if(ultimo) det.push("último backup "+ddmm(ultimo)+" "+hhmm(ultimo));
   Object.keys(FALHAS).forEach(k=>{ mot.push(FONTE_TELA[k].toLowerCase()+" falhou"); det.push(FONTE_TELA[k]+": "+FALHAS[k].motivo); });
+  const nv=frNaoVivas();
+  if(nv.length){ mot.push(plural(nv.length,"fonte fora do ponto","fontes fora do ponto")); det.push(nv.map(x=>x.k+" "+FR_ROT[x.e]).join(", ")); }
   return {ok:!mot.length, mot, det};
 }
 /* p4.33 (plano 114 = A5 do plano 101; s1274, 08/10/2026): saude por fonte, no molde do Andon do Sistema Toyota de Producao:
@@ -1887,15 +1902,65 @@ function fontes(){
       q:f?"falhou "+ddmm(r.ultima_tentativa)+" "+hhmm(r.ultima_tentativa)+": "+curto(r.ultima_falha||"sem motivo registrado",110)+(r.ultimo_ponto?" · último dado bom "+ddmm(r.ultimo_ponto):"")
         :r.ultimo_ponto?"último dado "+ddmm(r.ultimo_ponto)+" "+hhmm(r.ultimo_ponto):"nunca rodou"}); });
   Object.keys(FALHAS).forEach(k=>l.push({n:FONTE_TELA[k],falha:true,ruim:true,q:"falhou "+ddmm(FALHAS[k].em)+" "+hhmm(FALHAS[k].em)+": "+FALHAS[k].motivo}));
+  frNaoVivas().forEach(x=>l.push({n:"Fonte "+(FONTE_TELA[x.k]||x.k),ruim:true,rot:FR_ROT[x.e],q:carimboTxt(x)}));
   return l.map((x,i)=>({...x,i})).sort((a,b)=>(b.ruim-a.ruim)||(a.i-b.i));
 }
 function abrirFontes(){
   const l=fontes(), ruins=l.filter(x=>x.ruim).length, rt=(D.rit||[])[0];
   mostrarFolha(`<h3 id="folhaTit">Saúde por fonte</h3>
     <div class="chips"><span class="chip ${ruins?"w":"ok"}">${ruins?plural(ruins,"fonte acesa","fontes acesas"):"todas no ponto"}</span>${rt&&rt.fechados_7d!=null?`<span class="chip">${esc(plural(+rt.fechados_7d,"card seu fechado","cards seus fechados"))} em 7 d</span><span class="chip">${esc(+rt.fechados_7d_ant||0)} na semana anterior</span>`:""}</div>
-    <div>${l.map(x=>`<div class="fonte ${x.ruim?"w":""}"><span class="t"><b>${esc(x.n)}</b><small>${esc(x.q)}</small></span><span class="r">${x.falha?"falhou":x.ruim?"acesa":"no ponto"}</span></div>`).join("")}</div>
+    <div>${l.map(x=>`<div class="fonte ${x.ruim?"w":""}"><span class="t"><b>${esc(x.n)}</b><small>${esc(x.q)}</small></span><span class="r">${esc(x.rot||(x.falha?"falhou":x.ruim?"acesa":"no ponto"))}</span></div>`).join("")}</div>
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
 }
+/* p4.82 (t3634, s15864; Statuspage: cada componente com o proprio estado). Todo [data-bloco] diz de que chave do snapshot
+   vem (data-fonte; "vivo" = leitura direta nesta carga, sem carimbo proprio). O estado vem de v_frescor_fonte pela chave
+   fresc (coluna fontes: {chave:[estado, idade_h, motivo se nao vivo]}); a idade soma a do snapshot. Bloco fora do ponto
+   ganha o carimbo em texto antes dele ("atrasado há 30 h"), nao so a cor; bloco vivo fica calado. O carimbo e irmao do
+   bloco: o render reescreve o innerHTML do bloco e o carimbo sobrevive. Rotina pausada diz "pausado", nunca "dormindo". */
+const FR_ORD={vivo:0,atrasado:1,pausado:2,sem_dado:3,parado:4}, FR_ROT={vivo:"no ponto",atrasado:"atrasado",pausado:"pausado",sem_dado:"sem dado",parado:"parado"};
+const frMapa=()=>((D.fresc||[])[0]||{}).fontes||{};
+const frItem=(k,f)=>({k,e:FR_ORD[f[0]]!=null?f[0]:"sem_dado",h:f[1]==null?null:(+f[1])+(+IDADE||0)/3600,m:f[2]||""});
+function frNaoVivas(){ const m=frMapa(); return Object.keys(m).filter(k=>Array.isArray(m[k])).map(k=>frItem(k,m[k])).filter(x=>x.e!=="vivo"); }
+function carimboTxt(x){
+  const h=x.h==null?"":" há "+Math.max(1,Math.round(x.h))+" h";
+  return x.e==="pausado"||x.e==="sem_dado"?FR_ROT[x.e]+(x.m?": "+x.m:""):FR_ROT[x.e]+h;
+}
+function frescorBloco(el){
+  const m=frMapa(); let pior=null;
+  String(el.dataset.fonte||"").split(" ").forEach(k=>{ if(!Array.isArray(m[k]))return; const x=frItem(k,m[k]);
+    if(!pior||FR_ORD[x.e]>FR_ORD[pior.e])pior=x; });
+  return pior;
+}
+/* p4.82 (t3635, s15864; Grafana: sem dado != zero; Things: vazio util). Um componente de estado para todo [data-bloco],
+   na linha irma antes dele (cb-<bloco>): lendo = esqueleto do tamanho do bloco, sem texto solto; erro = o que
+   falhou e "Tentar de novo", visivel mesmo com o bloco escondido (fetch falho nunca some calado); velho = "dados de
+   HH:MM" (snapshot alem de IDADE_MAX ou aparelho sem conexao); frescor = o carimbo da t3634. Vazio e do render de cada
+   bloco: ou esconde de proposito, ou escreve o proximo passo; o teste cobra que nenhum fica em branco. Prioridade:
+   erro > lendo > velho > frescor. ERRO_CHAVE: chave -> motivo, cheia pela carga ("vivo" pela leitura direta). */
+let ERRO_CHAVE={};
+const SK='<span class="sk" aria-busy="true" role="status" aria-label="lendo do banco"></span>';
+function estadoDoBloco(el){
+  const ks=String(el.dataset.fonte||"").split(" ").filter(Boolean), er=ks.find(k=>ERRO_CHAVE[k]);
+  if(er)return {e:"erro",k:er,m:ERRO_CHAVE[er]};
+  if(!CARGA_EM)return {e:"lendo"};
+  const off=navigator.onLine===false, velho=+IDADE>IDADE_MAX&&ks.some(k=>k!=="vivo");
+  if(off||velho)return {e:"velho",off,hh:new Date(CARGA_EM-(off?0:(+IDADE||0)*1000)).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})};
+  const p=frescorBloco(el); return p&&p.e!=="vivo"?{e:"frescor",x:p}:{e:"ok",x:p};
+}
+function carimbar(){
+  document.querySelectorAll("[data-bloco]").forEach(el=>{
+    const s=estadoDoBloco(el), id="cb-"+el.dataset.bloco, esc_=el.hidden||el.classList.contains("hidden"); let c=document.getElementById(id);
+    el.dataset.estado=s.e; el.dataset.frescor=s.x?s.x.e:"";
+    if(s.e==="ok"){ if(c)c.remove(); return; }
+    if(!c){ c=document.createElement("div"); c.id=id; el.before(c); }
+    c.dataset.estado=s.e; c.className=s.e==="erro"?"est bad":s.e==="lendo"?"est":"est carimbo";
+    if(s.e==="lendo"){ c.innerHTML=SK; c.firstChild.style.minHeight=Math.max(48,Math.round(el.getBoundingClientRect().height))+"px"; c.hidden=esc_; return; }
+    if(s.e==="erro"){ c.innerHTML=`<span>Não consegui ler esta parte (${esc(s.k)}): ${esc(curto(String(s.m),110))}.</span><button type="button" class="sec" data-acao="recarregar">Tentar de novo</button>`; c.hidden=false; return; }
+    c.textContent=s.e==="velho"?"dados de "+s.hh+(s.off?", sem conexão":"")+": podem estar velhos":carimboTxt(s.x);
+    c.hidden=esc_;
+  });
+}
+addEventListener("online",()=>carimbar()); addEventListener("offline",()=>carimbar());
 function renderSaude(){
   const s=saude(), el=document.getElementById("saude"), rail=document.getElementById("saudeRail");
   const txt=s.ok?"sistema ok":"sistema degradado: "+s.mot.join(" · ");
@@ -1906,7 +1971,7 @@ function renderSaude(){
 }
 
 /* ---------- Hoje ---------- */
-function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderOnda4();renderQuest();renderSelos();renderSaude();msRender();}
+function render(){renderHoje();renderFila();renderCaixa();renderFrentes();renderSemana();renderOnda4();renderQuest();renderSelos();renderSaude();msRender();carimbar();}
 function renderHoje(){
   const nh=numerosHoje(), rw=(D.rw||[])[0]||{}, h=hojeLista(), cap=(nh&&nh.cap!=null)?nh.cap:(+(((D.cap||[])[0]||{}).minutos_dia)||120);
   /* p4.14: a peca da Mesa que entra em Hoje soma o tempo dela; a peca ligada a card de Hoje e o mesmo trabalho e nao soma.
@@ -1993,7 +2058,7 @@ function whatsCobranca(ref){ const x=(D.cob3||[]).find(y=>String(y.ref)===String
 async function abrirCheckin(frente){
   mostrarFolha(`<h3 id="folhaTit">Check-in de segunda</h3>
     <p class="mut">Montado do banco. Revise antes de mandar: nada sai daqui sozinho.</p>
-    <div class="campo"><label for="chkTxt" class="mut">Texto do check-in</label><textarea id="chkTxt" class="chk-txt" readonly>carregando…</textarea></div>
+    <div class="campo"><label for="chkTxt" class="mut">Texto do check-in</label><textarea id="chkTxt" class="chk-txt" readonly>lendo o texto do check-in…</textarea></div>
     <p class="nova-erro hidden" id="chkErro" role="alert"></p>
     <button class="pri" data-acao="checkinCopiar">Copiar</button>
     <button class="sec" data-acao="checkinWhats">Abrir no WhatsApp</button>
@@ -2162,7 +2227,7 @@ function renderFila(){
   const h=hojeLista(), teto=param("wip.teto_hoje",h.length?(+h[0].teto_tela||5):5);
   const w=document.getElementById("wip"); w.className="wip"+(h.length>=teto?" cheio":"");
   w.innerHTML=`<span>Em curso hoje <b class="num">${h.length}/${teto}</b></span><span class="barra"><i style="width:${Math.min(100,h.length/teto*100)}%"></i></span><span class="mut">${h.length>=teto?"cheio: termine antes de puxar outro":"cabe mais um"}</span>`;
-  if(!INV){kb.innerHTML=`<div class="vazio">carregando a fila…</div>`;seg.innerHTML="";return;}
+  if(!INV){kb.innerHTML=SK;seg.innerHTML="";return;}
   COLS[2].a="Parados há "+corteDecidir()+" dias ou mais, ou sem prazo. Dê uma data ou largue.";
   seg.innerHTML=COLS.map(c=>`<button role="tab" aria-selected="${c.id===COL}" data-acao="coluna" data-a1="${esc(c.id)}">${c.r} ${contar(c.id)}</button>`).join("");
   kb.innerHTML=COLS.map(c=>{
@@ -2316,7 +2381,7 @@ function fuRender(){
     `<button role="tab" aria-selected="${FU.modo===id}" data-acao="filaModo" data-a1="${id}">${esc(r)}</button>`).join("");
   pane.classList.toggle("fu-on",FU.modo==="unica"); raiz.hidden=FU.modo!=="unica";
   if(FU.modo!=="unica")return;
-  if(!FU.dados&&!FU.erro){ raiz.innerHTML=`<div class="vazio">carregando a fila única…</div>`; return; }
+  if(!FU.dados&&!FU.erro){ raiz.innerHTML=SK; return; }
   const l=fuOrdem(fuFiltrar(FU.filtro)), hh=FU.em?String(FU.em.getHours()).padStart(2,"0")+":"+String(FU.em.getMinutes()).padStart(2,"0"):"";
   const ag=FU.agenda==="agendado", c=FU.cont||{};
   const seus=!ag&&c.seus!=null?c.seus:ag&&c.seusAgendados!=null?c.seusAgendados:fuFiltrar("igor").length;
@@ -2448,7 +2513,7 @@ function renderCaixaEnt(){
   const el=document.getElementById("cxEnt"); if(!el)return;
   if(TELA){ el.innerHTML=`<div class="vazio">O caixa por entidade fica oculto na tela compartilhada.</div>`; return; }
   cxrCarregar();
-  if(!CXR.dados){ el.innerHTML=`<div class="vazio">${CXR.carga?"carregando o caixa por entidade…":esc(CXR.erro||"O caixa por entidade não chegou.")}</div>`; return; }
+  if(!CXR.dados){ el.innerHTML=`<div class="vazio">${CXR.carga?SK:esc(CXR.erro||"O caixa por entidade não chegou.")}</div>`; return; }
   const l=CXR.dados.filter(x=>x&&x.entidade).slice().sort((a,b)=>((b.papel_pior==="sangra")-(a.papel_pior==="sangra"))||String(a.zera_pior||"9999").localeCompare(String(b.zera_pior||"9999"))||String(a.entidade).localeCompare(String(b.entidade)));
   if(!l.length){ el.innerHTML=`<div class="vazio">Nenhuma entidade com caixa nesta leitura.</div>`; return; }
   el.innerHTML=(CXR.erro?`<div class="aviso" role="alert">${esc(CXR.erro)} Mostrando a última leitura.</div>`:"")+l.map(x=>{
@@ -2473,7 +2538,7 @@ function renderCaixa(){
     ?cob.map(x=>`<div class="linha-r"><span class="t"><span class="l2">${esc(x.descricao||"sem descrição")}</span><small>${esc(nomeFrente(x.frente_slug))} · venceu ${esc(ddmm(x.data_venc))}</small></span><span class="r">${rs(x.valor_igor)}</span>${x.id!=null?`<button class="sec cobrar" data-acao="cobrar" data-a1="${esc(x.id)}">Cobrar</button>`:""}</div>`).join("")
     :`<div class="vazio">Ninguém te deve com data passada.</div>`);
   const el=document.getElementById("alavancas");
-  if(!ARV||!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
+  if(!ARV||!INV){el.innerHTML=SK;return;}
   const fr=ARV.filter(a=>a.nivel===1&&+a.margem_30d>0).sort((a,b)=>b.margem_30d-a.margem_30d);
   el.innerHTML=fr.length?fr.map(a=>{
     const prox=INV.filter(t=>t.frente===a.no&&t.dono==="igor"&&t.status==="pendente").sort((x,y)=>String(x.prazo||"9").localeCompare(String(y.prazo||"9")))[0];
@@ -2820,7 +2885,7 @@ async function semFechar(){
 const estrutura=()=>{const e=(D.est||[])[0];return e&&e.pct!=null&&e.frente?e:null;};
 function renderFrentes(){
   const el=document.getElementById("frentesLista");
-  if(!ARV||!INV||!UNID){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
+  if(!ARV||!INV||!UNID){el.innerHTML=SK;return;}
   const cont={};INV.forEach(t=>{if(t.status!=="feita")cont[t.frente]=(cont[t.frente]||0)+1;});
   const est=estrutura();
   const fr=ARV.filter(a=>a.nivel===1).sort((a,b)=>(+b.margem_30d)-(+a.margem_30d)||(cont[b.no]||0)-(cont[a.no]||0)).filter(a=>+a.margem_30d!==0||cont[a.no]||(est&&a.no===est.frente));
@@ -2886,7 +2951,7 @@ const m9Dia=x=>String(x.semana||"").slice(0,10);
 async function abrirMatriz(sem,cel){
   M9Q_SEM=+sem===1?1:0; M9Q_CEL=+cel>=1&&+cel<=9?+cel:0;
   const tit=`<h3 id="folhaTit">Matriz 9Q</h3>`, fim=`<button class="sec" data-acao="fecharFolha">Fechar</button>`;
-  if(!M9Q){ mostrarFolha(tit+`<div class="vazio">carregando…</div>`,"larga");
+  if(!M9Q){ mostrarFolha(tit+SK,"larga");
     const r=await comTetoR(sb.from("v_matriz_9q").select("semana,frente_slug,frente,celula,rgt,blocos,blocos_fuga,medida").order("semana",{ascending:false}).limit(200),LIMITE_RECARGA,"matriz 9Q");
     if(r.error||!Array.isArray(r.data)){ mostrarFolha(tit+`<div class="vazio">A matriz não carregou${r.error?" ("+esc(r.error.message)+")":""}. Toque em recarregar e abra de novo.</div>`+fim,"larga");return; }
     M9Q=veu(r.data).filter(x=>x&&+x.celula>=1&&+x.celula<=9); }
@@ -3010,7 +3075,7 @@ function buscar(v){
   const el=document.getElementById("qres"), bruto=String(v||"").trim(), q=bruto.toLowerCase().replace(/^t(?=\d)/,"");
   BUSCA=[];
   if(!q){el.innerHTML="";return;}
-  if(!INV){el.innerHTML=`<div class="vazio">carregando…</div>`;return;}
+  if(!INV){el.innerHTML=SK;return;}
   const r=INV.filter(t=>t.status!=="feita"&&(String(t.id)===q||(t.titulo||"").toLowerCase().includes(q)||nomeFrente(t.frente).toLowerCase().includes(q)||(t.resumo||"").toLowerCase().includes(q))).slice(0,20);
   BUSCA=r;
   const nova=bruto.length>=3&&!/^t?\d+$/i.test(bruto)
@@ -3072,7 +3137,7 @@ function prazosNova(){
     .filter(([,d])=>!vistos.has(d)&&vistos.add(d)).map(([r,d])=>({r,d,n:cargaDia(d)}));
 }
 function abrirNova(txt,manter){
-  if(!INV){toast("Carregando os cards; tente em instantes.",null,false,2500);return;}
+  if(!INV){toast("Os cards ainda estão chegando; tente em instantes.",null,false,2500);return;}
   if(!manter){ const t=String(txt||"").trim().replace(/\s+/g," ").slice(0,70);
     NP={titulo:t?t.charAt(0).toUpperCase()+t.slice(1):"",frente:null,prazo:null,frenteMao:false}; }
   if(!NP.frente)NP.frente=frentesNova(NP.titulo)[0]||null;
@@ -3208,7 +3273,7 @@ function esconder(n){
 async function abrirAtos(){
   F=null;
   mostrarFolha(`<h3 id="folhaTit">Últimos atos</h3><p class="mut">Os seus atos das últimas 24 horas. Desfazer volta o card como estava; o banco recusa se ele mudou depois.</p>
-    <ul class="historico atos" id="atos"><li class="mut">carregando…</li></ul><button class="sec" data-acao="fecharFolha">Fechar</button>`);
+    <ul class="historico atos" id="atos"><li class="mut">${SK}</li></ul><button class="sec" data-acao="fecharFolha">Fechar</button>`);
   let r; try{ r=await comTetoR(sb.rpc("painel_atos_recentes"),LIMITE_RECARGA,"painel_atos_recentes"); }catch(e){ r={error:e}; }
   const el=document.getElementById("atos"); if(!el)return;
   if(r.error||!Array.isArray(r.data)){ el.innerHTML=`<li class="mut">Não consegui ler os atos agora.</li>`; return; }
@@ -3272,7 +3337,7 @@ function abrirCard(c,verbo){
   mostrarFolha(`<h3 id="folhaTit">${esc(c.titulo)}</h3>
     <div class="chips">${c.espera?`<span class="chip espera ${c.espera.w?"w":""}">${esc(c.espera.txt)}</span>`:""}<span class="chip">${esc(nomeFrente(c.frente))}</span>${c.idade?`<span class="chip">${esc(c.idade)}</span>`:""}${c.min?`<span class="chip">${c.min} min</span>`:""}${chipDinheiro(c.valor)}</div>
     ${avisoHtml(c)}
-    ${DESC_FONTE[c.origem]?`<div class="bloco" id="descBox"><span class="rot">Contexto</span><div id="desc"><p class="mut">carregando…</p></div></div>`:""}
+    ${DESC_FONTE[c.origem]?`<div class="bloco" id="descBox"><span class="rot">Contexto</span><div id="desc"><p class="mut">${SK}</p></div></div>`:""}
     ${c.porque?`<div class="bloco"><span class="rot">Por que agora</span><p>${esc(c.porque)}</p></div>`:""}
     ${c.fu?"":`<div class="bloco"><span class="rot">Pronto quando</span><p>${c.pronto?esc(c.pronto):"Sem critério escrito. Ao concluir, diga o que aconteceu."}</p></div>`}
     ${rec?`<div class="bloco"><span class="rot ${ri.velha?"w":""}">${esc(recRot)}</span><p>${esc(curto(rec,180))}</p>${rec.length>180?`<details><summary>ler tudo</summary><p>${esc(rec)}</p></details>`:""}</div>`:""}
@@ -3285,8 +3350,8 @@ function abrirCard(c,verbo){
     ${c.acoes.length?`<div class="acoes">${pri?botaoAcao(pri,"pri"):""}${resto.filter(a=>!(dec&&a.verbo==="deliberar")).map(a=>botaoAcao(a,"sec")).join("")}${!dec&&c.acoes.some(a=>a.verbo==="deliberar")?`<button class="sec" data-acao="posicao">Dar minha posição</button>`:""}${c.origem==="tarefa"?`<button class="sec" data-acao="adiarEsconder">Adiar</button>`:""}</div>`:c.fuHtml?c.fuHtml:`<div class="vazio">${c.fu?"Esta linha vem da Fila Única e o painel ainda não tem ação para ela. Resolva pela fonte: Mesa, bastidor ou Claude.":"O banco não oferece ação para este card. Recarregue; se continuar, o card precisa de revisão no bastidor."}</div>`}
     ${c.fu?"":`<div class="teclas">Teclado: <kbd>A</kbd> ${esc(pri?pri.rot:"ato principal")} · <kbd>X</kbd> concluir · <kbd>S</kbd> ${c.origem==="tarefa"?"adiar":"nova data"}${dec?` · <kbd>1</kbd>–<kbd>${Math.min(5,dec.op.length)}</kbd> opção`:""} · <kbd>R</kbd> responder · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> fechar</div>`}
     <div id="campo"></div>
-    ${c.fu?`<p class="mut cod-interno">Código na Fila Única: ${esc(c.fuCod||c.ref)}</p>`:`<div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">carregando…</li></ul></div>
-    <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">carregando…</li></ul><p class="mut cod-interno">Código interno: ${esc(codInterno(c))}</p></div>`}
+    ${c.fu?`<p class="mut cod-interno">Código na Fila Única: ${esc(c.fuCod||c.ref)}</p>`:`<div class="bloco"><span class="rot">Conversa com o atendente</span><ul class="historico conv" id="conv"><li class="mut">${SK}</li></ul></div>
+    <div class="bloco"><span class="rot">Histórico</span><ul class="historico" id="hist"><li class="mut">${SK}</li></ul><p class="mut cod-interno">Código interno: ${esc(codInterno(c))}</p></div>`}
     <button class="sec" data-acao="fecharFolha">Fechar</button>`);
   historico(c); conversa(c); descricao(c);
   if(verbo){const a=c.acoes.find(x=>x.verbo===verbo);if(a)escolher(a.verbo);}
@@ -3807,7 +3872,7 @@ function abrirVoz(texto){
       <div class="acoes"><button class="sec" data-acao="vozSalvarApi">Guardar neste aparelho</button>${api?'<button class="sec" data-acao="vozEsquecerApi">Esquecer a API</button>':""}</div>
       <div class="mut">Contrato: POST do áudio para o endereço; resposta {"texto": "…"}. Detalhes em docs/instrucao-por-audio.md.</div>
     </div></details>
-    <div class="bloco"><span class="rot">Suas últimas instruções</span><ul class="historico conv" id="vozResp"><li class="mut">carregando…</li></ul></div>`,"cheia");
+    <div class="bloco"><span class="rot">Suas últimas instruções</span><ul class="historico conv" id="vozResp"><li class="mut">${SK}</li></ul></div>`,"cheia");
   respostasVoz();
 }
 function vozEstado(t,cls){ const e=vozEl("vozEstado"); if(!e)return; e.textContent=t||""; e.className="voz-estado"+(cls?" "+cls:""); }
@@ -4201,7 +4266,7 @@ function msRender(){
   const d=MS.dados, est=msEst(d), pend=msPend(d), adi=msAdiadas(d);
   ["n-mesa","r-mesa"].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=d?String(pend.length):"";});
   const falha=MS.erro?`<div class="aviso" role="alert">${esc(MS.erro)}</div>`:"";
-  if(!d){ raiz.innerHTML=falha||`<p class="ms-dia">carregando…</p>`; return; }
+  if(!d){ raiz.innerHTML=falha||`<p class="ms-dia">${SK}</p>`; return; }
   const novas=pend.filter(p=>p.novo===true).length;
   const dia=pend.length
     ?`<b>${esc(msPl(pend.length,"peça espera","peças esperam"))} você</b>, <b class="num">${esc(rs(d.em_jogo||0))}</b> em jogo${novas?`, ${esc(msPl(novas,"nova","novas"))} hoje`:""}.`
@@ -4573,7 +4638,7 @@ async function msLerPeca(p,x){
   const caixa=document.getElementById("msLeitura"), bt=document.getElementById("msPeca");
   if(!caixa)return;
   if(!caixa.hidden){ caixa.hidden=true; caixa.textContent=""; if(bt)bt.textContent=msRotPeca(p); return; }
-  if(bt)bt.textContent="Carregando a peça…";
+  if(bt)bt.textContent="Abrindo a peça…";
   let txt=null, erro=null;
   if(DEMO) txt=MS_FMT_PAGINA.has(x)?'<h2>Documento fictício</h2><p>Na demonstração, a peça aparece aqui dentro.</p>':"# Documento fictício\n\nNa demonstração, a peça aparece **aqui dentro**.";
   else {

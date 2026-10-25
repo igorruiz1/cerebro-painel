@@ -1,6 +1,6 @@
 # O presidente contra o cânone
 
-Régua de mercado do `presidente.html` e plano para fechar o que falta. v02, 17/10/2026, s6120 (v01: 08/10, s1274).
+Régua de mercado do `presidente.html` e plano para fechar o que falta. v03, 25/10/2026, s15864 (v02: 17/10, s6120; v01: 08/10, s1274).
 
 Este arquivo é público, igual ao resto do repo. Número de caixa, nome de frente e valor de KPI
 ficam no banco: aqui entra só o que se mede na tela.
@@ -25,6 +25,21 @@ Uma régua que não acompanha o crescimento vira enfeite. A regra passa a ser: *
 banco** (`plano_item`); esta página guarda a régua, o placar e a ordem das ondas, nunca o estado dos
 itens.
 
+**Por que a v03.** Entre 17/10 e 25/10 as ondas 0 a 4 do plano de 17/10 entraram na tela (p4.65 a p4.81) e o plano
+referência v01 (s7283, 17/10) abriu as ondas B a G: o dado vivo. O cérebro passou a medir, por fonte, quando cada número
+foi escrito e por quem (`v_frescor_fonte`, t3633), e a tela passou a dizer isso por bloco (p4.82, t3634 e t3635). Régua
+que não cobra o dado vivo deixa a tela dizer "ok" com fonte parada. Por isso seis réguas novas (31 a 36) e o placar
+remedido na p4.82. Medido com `npm run canone` a 1280 px, entre 17/10 e 25/10:
+
+| Medida | 17/10 (p4.64) | 25/10 (p4.82) | Variação |
+|---|---|---|---|
+| Palavras nas abas | 1.814 | 2.135 | +18% |
+| Números nas abas | 296 | 348 | +18% |
+| Telas de Hoje (1280 / 390) | 1,4 / 2,9 | 1,4 / 3,0 | igual |
+
+O crescimento veio das ondas 2 a 4 (caixa por entidade, Folha mês, Semana L10) e está dentro do piso de
+`testes/canone.spec.js` (2.150 palavras, 350 números), subido por decisão escrita na p4.69.
+
 ## De onde vêm as réguas
 
 Nenhuma régua é inventada aqui. As 18 primeiras vêm do doc 409:
@@ -46,47 +61,60 @@ escolheu o EOS como espinha da gestão: ele foi feito para empresa tocada pelo d
 metade dele (scorecard semanal com dono e meta). OKR + BSC e 4DX foram comparados e perderam: o
 primeiro pesa demais para um dono só, o segundo cobre mal várias unidades ao mesmo tempo.
 
-## Placar da p4.64
+As réguas 31 a 36 (v03) vêm do plano referência v01 e cobram o **dado vivo**: Statuspage e GitHub Status
+(componente com estado próprio), Grafana (sem dado não é zero), Things e Sunsama (vazio útil), axe-core e
+WCAG 2.2 (acessibilidade medida, não opinada), offline-first (o aparelho diz quando está sem rede) e Linear
+(eco de escrita: depois do ato, a tela relê a fonte e diz "gravado HH:MM").
 
-SIM = 1, PARCIAL = 0,5, NÃO = 0. Réguas de tela medidas por script; as de julgamento, à mão, com
-leitura do fonte em 17/10.
+## Placar da p4.82
 
-| # | Régua | p4.30 | p4.64 | Evidência na p4.64 |
+SIM = 1, PARCIAL = 0,5, NÃO = 0. Réguas de tela medidas por script; as de julgamento, à mão, com leitura do
+fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Grafana: sem dado não é zero).
+
+| # | Régua | p4.64 | p4.82 | Evidência na p4.82 |
 |---|---|---|---|---|
-| 1 | Essencial numa tela, sem rolagem | PARCIAL | PARCIAL | Hoje ocupa 1,4 tela a 1280 e 2,9 a 390. |
-| 2 | Série temporal | PARCIAL | PARCIAL | Sparkline só nas frentes; caixa e Semana sem série. |
-| 3 | Número com meta, período anterior ou faixa | PARCIAL | PARCIAL | A Semana traz meta e semana anterior; Hoje e Caixa só o fôlego. |
+| 1 | Essencial numa tela, sem rolagem | PARCIAL | PARCIAL | Hoje ocupa 1,4 tela a 1280 e 3,0 a 390. |
+| 2 | Série temporal | PARCIAL | PARCIAL | Sparkline nas frentes e 13 semanas; Semana sem série. |
+| 3 | Número com meta, período anterior ou faixa | PARCIAL | PARCIAL | Semana com meta e semana anterior; Hoje e Caixa só o fôlego. |
 | 4 | Normal x anomalia só olhando | NÃO | NÃO | Sem banda de normalidade. |
 | 5 | Mesmo período do ano anterior | NÃO | NÃO | Menos de 12 meses de série. |
 | 6 | Entrada controlável antes de saída | SIM | SIM | Próximo passo divide a dobra com o fôlego. |
-| 7 | Dono e meta em cada número | PARCIAL | PARCIAL | Semana tem dono e meta; o resto não. |
+| 7 | Dono e meta em cada número | PARCIAL | PARCIAL | Semana e prioridades têm dono; o resto não. |
 | 8 | 5 a 15 números principais | SIM | SIM | Teto de 14 na Semana. |
-| 9 | Teste dos 5 s e leitura em 20 min | SIM | SIM | 1.814 palavras nas 6 abas, contra 8.936 do index v28. |
+| 9 | Teste dos 5 s e leitura em 20 min | SIM | SIM | 2.135 palavras nas 6 abas, dentro do piso de 2.150. |
 | 10 | Panorama, depois detalhe | SIM | SIM | Bloco, lista e folha. |
-| 11 | Todo vermelho com ação definida | SIM | SIM | Cada item vem com verbo. |
-| 12 | Alerta por orçamento ou janela dupla | PARCIAL | PARCIAL | Só o selo de saúde usa orçamento de erro. |
+| 11 | Todo vermelho com ação definida | SIM | SIM | Cada item vem com verbo; bloco com erro traz "Tentar de novo". |
+| 12 | Alerta por orçamento ou janela dupla | PARCIAL | PARCIAL | Saúde e orçamento x gasto das rotinas (p4.81); números de negócio não. |
 | 13 | Métrica sem uso fora da tela | SIM | SIM | Fica no bastidor. |
 | 14 | WIP, teto e idade do aberto | SIM | SIM | WIP na Fila, idade e "manter ou largar?". |
 | 15 | Zero chartjunk | SIM | SIM | SVG puro, sem biblioteca. |
-| 16 | Frentes lado a lado | PARCIAL | **SIM** | Small multiples de 8 semanas na mesma escala (plano 108). |
+| 16 | Frentes lado a lado | SIM | SIM | Small multiples de 8 semanas na mesma escala. |
 | 17 | Celular empilha e prioriza | SIM | SIM | Testes a 360 e 390 px. |
-| 18 | Sobrevive sem cor | PARCIAL | PARCIAL | Gráfico do caixa usa cor como sinal único. |
-| 19 | 13 semanas com previsto x realizado | PARCIAL | PARCIAL | Só o caso base; um saldo único, sem quebra por entidade. |
+| 18 | Sobrevive sem cor | PARCIAL | PARCIAL | Frescor e estado do bloco em texto (p4.82); gráfico do caixa ainda usa cor como sinal único. |
+| 19 | 13 semanas com previsto x realizado | PARCIAL | PARCIAL | Consolidado e por entidade, pior e base (W2.1); previsto x realizado só no bastidor. |
 | 20 | Margem do dono, nunca o bruto | SIM | SIM | Frentes, alavancas e funil por margem. |
-| 21 | Frescor do dado visível | SIM | SIM | Carimbo e saúde por fonte (plano 114). |
-| 22 | Cobertura BSC | PARCIAL | PARCIAL | Funil entrou (plano 109); a perspectiva pessoa, não. |
-| 23 | Ritual semanal (scorecard EOS/WBR) | NÃO | **SIM** | Aba Semana: norte, números com dono e meta, revisão fechada. |
-| 24 | Cresce sem tocar no HTML | PARCIAL | PARCIAL | Meta de caixa, WIP, tetos e a frente com 4 blocos estão no código. |
-| 25 | EOS Visão: norte e prioridades do trimestre | | PARCIAL | Norte existe; prioridade do trimestre, não. |
-| 26 | EOS Pessoas: cada setor com dono no organograma | | NÃO | Frentes são lista plana; não há unidade, apoio nem entidade. |
-| 27 | EOS Dados: scorecard semanal | | SIM | Números da Semana com dono, meta e semana anterior. |
-| 28 | EOS Questões: lista única entre setores (IDS) | | NÃO | Uma frente não tem como abrir questão para outra. |
-| 29 | EOS Processo: rito padrão por setor | | PARCIAL | Só uma frente tem ficha própria (4 blocos e check-in), escrita no código. |
-| 30 | EOS Tração: prioridades + reunião semanal | | PARCIAL | Revisão semanal existe; sem prioridades nem questões. |
+| 21 | Frescor do dado visível | SIM | SIM | Carimbo do topo e saúde por fonte. |
+| 22 | Cobertura BSC | PARCIAL | **SIM** | Funil e sinal das frentes de vida na Semana (W4.4). |
+| 23 | Ritual semanal (scorecard EOS/WBR) | SIM | SIM | Semana L10 (W4.1). |
+| 24 | Cresce sem tocar no HTML | PARCIAL | **SIM** | Parâmetros de gestão vêm do banco (W1.3, W2.4); ficha padrão sem caso especial (W2.3). |
+| 25 | EOS Visão: norte e prioridades do trimestre | PARCIAL | **SIM** | Norte e prioridades do trimestre com dono (W4.2). |
+| 26 | EOS Pessoas: cada setor com dono no organograma | NÃO | **SIM** | Frentes por unidade (negócio, apoio, vida) com dono (W2.2). |
+| 27 | EOS Dados: scorecard semanal | SIM | SIM | Números da Semana com dono, meta e semana anterior. |
+| 28 | EOS Questões: lista única entre setores (IDS) | NÃO | **SIM** | Qualquer frente abre questão para outra (W3.1); bloqueio entre cards (W3.2). |
+| 29 | EOS Processo: rito padrão por setor | PARCIAL | **SIM** | Ficha padrão de setor para toda frente (W2.3). |
+| 30 | EOS Tração: prioridades + reunião semanal | PARCIAL | **SIM** | L10 com prioridades e questões (W4.1, W4.2, W3.1). |
+| 31 | Frescor por bloco, com data-fonte | | **SIM** | Todo bloco diz de que fonte vem; fora do ponto, "atrasado há N h" em texto (t3634). |
+| 32 | Sensor honesto | | **SIM** | `v_frescor_fonte` por fonte; pausado nunca vira "dormindo"; auditor abre card quando um invariante quebra (t3633). |
+| 33 | Quatro estados por bloco | | **SIM** | Lendo com esqueleto, vazio que não fica em branco, erro com "Tentar de novo", velho com "dados de HH:MM" (t3635). |
+| 34 | axe sem violação séria | | NÃO | Ainda sem medida: onda E (t3636). |
+| 35 | Offline declarado | | **SIM** | Sem rede, cada bloco diz "dados de HH:MM, sem conexão" (t3635). |
+| 36 | Eco de escrita | | NÃO | Depois do ato a tela recarrega, mas não diz "gravado HH:MM": onda F (t3637). |
 
-- **18 réguas:** 13 de 18 = **72%** (p4.30: 69%).
-- **24 réguas:** 17,5 de 24 = **73%** (p4.30: 67%).
-- **30 réguas:** 20 de 30 = **67%**. É a linha de base do cânone com EOS.
+- **18 réguas:** 13 de 18 = **72%** (p4.64: 72%).
+- **24 réguas:** 18,5 de 24 = **77%** (p4.64: 73%).
+- **30 réguas:** 24,5 de 30 = **82%** (p4.64: 67%).
+- **36 réguas:** 28,5 de 36 = **79%**. É a linha de base do cânone com dado vivo. As duas réguas que faltam
+  para 85% são as ondas E e F; remedir quando elas entrarem.
 
 ## O que está acima do mercado e não se mexe
 
@@ -188,7 +216,7 @@ página não a executa.
 ## Como a evolução é acompanhada
 
 Tudo vai para a `evolucao`, com escopo `00-memoria` e prefixo `painel.presidente_`:
-- `canone18_pct`, `canone24_pct` e, desde 17/10, `canone30_pct`;
+- `canone18_pct`, `canone24_pct`, desde 17/10 `canone30_pct` e, desde 25/10, `canone36_pct`;
 - `telas_hoje`;
 - `palavras` e `numeros`.
 

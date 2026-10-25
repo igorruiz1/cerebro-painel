@@ -770,7 +770,7 @@ test('no presidente, leitura que nao volta se declara: carga, inventario, histor
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#falha'), 'inventario: estouro aparece').toContainText('inventário: sem resposta do banco');
   await page.evaluate(()=>{ window.__pendura=['acao','dialogo']; abrirFila(0); });
-  await expect(page.locator('#hist')).toContainText('carregando');
+  await expect(page.locator('#hist .sk'), 'p4.82: esqueleto no lugar de "carregando"').toHaveCount(1);
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#hist')).toContainText('Histórico indisponível');
   await expect(page.locator('#conv')).toContainText('Conversa indisponível');
@@ -857,7 +857,7 @@ test('na folha, contexto que nao volta se declara no teto', async ({page})=>{
   await page.clock.install();
   const lim = await page.evaluate(()=>LIMITE_RECARGA);
   await page.evaluate(()=>abrirFila(0));
-  await expect(page.locator('#desc')).toContainText('carregando');
+  await expect(page.locator('#desc .sk'), 'p4.82: esqueleto no lugar de "carregando"').toHaveCount(1);
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#desc')).toContainText('Contexto indisponível');
   expect(erros).toEqual([]);
@@ -1570,7 +1570,7 @@ test('Mesa: leitura que falha se declara na aba, sem tela em branco', async ({pa
   const lim = await page.evaluate(()=>LIMITE_RECARGA);
   /* a carga da partida ja pendurou com o relogio de verdade: solta ela e abre a aba sob o relogio falso */
   await page.evaluate(()=>{ MS.carga=null; ir('mesa'); });
-  await expect(page.locator('#ms-raiz')).toContainText('carregando');
+  await expect(page.locator('#ms-raiz .sk'), 'p4.82: esqueleto no lugar de "carregando"').toHaveCount(1);
   await page.clock.fastForward(lim+100);
   await expect(page.locator('#ms-raiz .aviso')).toContainText('Não consegui ler a mesa: sem resposta do banco');
   expect(erros).toEqual([]);
@@ -5373,4 +5373,82 @@ test('p4.81 orcamento: sem as chaves o bloco fica oculto', async ({page})=>{
   await page.evaluate(()=>ir('semana'));
   await expect(page.locator('#semOrc')).toBeHidden();
   expect(erros).toEqual([]);
+});
+
+/* p4.82 (t3634, s15864, 25/10/2026): frescor por bloco (Statuspage). Todo [data-bloco] tem data-fonte com chave que o
+   painel pede ao banco (ou "vivo", leitura direta); fonte com 30 h faz o bloco dizer "atrasado há 30 h" em texto, e o
+   carimbo sobrevive ao render; rotina pausada diz "pausado", nunca "dormindo". No main de antes (p4.81) nao havia
+   data-bloco nem carimbo: os tres testes reprovam. */
+test('t3634: todo bloco tem data-fonte com chave conhecida', async ({page})=>{
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{ const bl=[...document.querySelectorAll('[data-bloco]')], ok=new Set(CHAVES.concat(['vivo']));
+    return {n:bl.length, semFonte:bl.filter(e=>!(e.dataset.fonte||'').trim()).map(e=>e.dataset.bloco),
+      desconhecida:bl.flatMap(e=>(e.dataset.fonte||'').split(' ').filter(k=>k&&!ok.has(k)).map(k=>e.dataset.bloco+':'+k)),
+      paneSem:[...document.querySelectorAll('.pane')].filter(p=>!p.querySelector('[data-bloco]')).map(p=>p.id),
+      dup:bl.map(e=>e.dataset.bloco).filter((b,i,a)=>a.indexOf(b)!==i)}; });
+  expect(r.n, 'blocos com data-bloco').toBeGreaterThan(20);
+  expect(r.semFonte, 'bloco sem data-fonte').toEqual([]);
+  expect(r.desconhecida, 'fonte que o painel nao pede').toEqual([]);
+  expect(r.paneSem, 'aba sem bloco').toEqual([]);
+  expect(r.dup, 'data-bloco repetido').toEqual([]);
+  expect(erros).toEqual([]);
+});
+test('t3634: fonte com carimbo de 30 h faz o bloco dizer atrasado', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{ D.fresc=[{...((D.fresc||[])[0]||{}), fontes:{c13:['atrasado',30],c13i:['vivo',0.2],rw:['vivo',0.2]}}]; IDADE=0; render(); ir('caixa'); });
+  await expect(page.locator('#cb-semanas')).toHaveText('atrasado há 30 h');
+  await expect(page.locator('[data-bloco="semanas"]')).toHaveAttribute('data-frescor', 'atrasado');
+  await expect(page.locator('#cb-caixa'), 'o topo do caixa le c13 tambem').toHaveText('atrasado há 30 h');
+  await expect(page.locator('#cb-funil'), 'bloco de outra fonte fica calado').toHaveCount(0);
+  await page.evaluate(()=>render());
+  await expect(page.locator('#cb-semanas'), 'o carimbo sobrevive ao render').toHaveText('atrasado há 30 h');
+  await page.evaluate(()=>{ D.fresc[0].fontes.c13=['vivo',0.1]; render(); });
+  await expect(page.locator('#cb-semanas'), 'fonte de volta ao ponto apaga o carimbo').toHaveCount(0);
+});
+test('t3634: rotina pausada diz pausado no bloco e na saude, nunca dormindo', async ({page})=>{
+  await abrir(page);
+  await page.evaluate(()=>{ D.fresc=[{...((D.fresc||[])[0]||{}), fontes:{orc:['pausado',50,'rotina x pausada (ativo=false) desde 20/10 08:00']}}]; render(); abrirFontes(); });
+  await expect(page.locator('#folha')).toContainText('pausado: rotina x pausada');
+  await expect(page.locator('#folha')).not.toContainText('dormindo');
+  await expect(page.locator('#saude')).toContainText('fonte fora do ponto');
+  expect(await page.locator('#cb-orcamento').textContent()).toContain('pausado');
+});
+
+/* p4.82 (t3635, s15864, 25/10/2026): quatro estados por bloco (Grafana: sem dado != zero; Things: vazio util). O teste
+   passa por todo [data-bloco]: lendo (esqueleto, sem texto), erro (motivo e "Tentar de novo", visivel mesmo com o bloco
+   escondido), velho (dados de HH:MM, snapshot velho ou sem conexao) e vazio (nenhum bloco visivel em branco). No main
+   de antes (p4.81) nao havia data-bloco nem estado: reprova. */
+test('t3635: todo data-bloco nos quatro estados', async ({page})=>{
+  const erros = await abrir(page);
+  const r1 = await page.evaluate(()=>{
+    const bl=[...document.querySelectorAll('[data-bloco]')].map(e=>e.dataset.bloco), s=b=>document.getElementById('cb-'+b), out={n:bl.length};
+    const em=CARGA_EM; CARGA_EM=0; carimbar();
+    out.lendo=bl.filter(b=>!(s(b)&&s(b).dataset.estado==='lendo'&&s(b).querySelector('.sk[aria-busy="true"]')&&!s(b).textContent.trim()));
+    CARGA_EM=em; ERRO_CHAVE=Object.fromEntries(CHAVES.concat('vivo').map(k=>[k,'teste de falha'])); carimbar();
+    out.erro=bl.filter(b=>{const x=s(b); return !(x&&x.dataset.estado==='erro'&&!x.hidden&&/teste de falha/.test(x.textContent)&&x.querySelector('button[data-acao="recarregar"]'));});
+    ERRO_CHAVE={}; carimbar();
+    out.limpo=bl.filter(b=>s(b));
+    return out; });
+  expect(r1.n).toBeGreaterThan(20);
+  expect(r1.lendo, 'sem esqueleto ao ler').toEqual([]);
+  expect(r1.erro, 'falha calada').toEqual([]);
+  expect(r1.limpo, 'estado que nao apaga').toEqual([]);
+  await page.context().setOffline(true);
+  const r2 = await page.evaluate(()=>{ const bl=[...document.querySelectorAll('[data-bloco]')].map(e=>e.dataset.bloco); carimbar();
+    return bl.filter(b=>{const x=document.getElementById('cb-'+b); return !(x&&x.dataset.estado==='velho'&&/^dados de \d\d:\d\d, sem conexão/.test(x.textContent));}); });
+  expect(r2, 'sem conexao nao diz a hora do dado').toEqual([]);
+  await page.context().setOffline(false);
+  const r3 = await page.evaluate(()=>{ IDADE=IDADE_MAX+600; carimbar();
+    const v=[...document.querySelectorAll('[data-bloco]')].filter(e=>e.dataset.fonte.split(' ').some(k=>k!=='vivo'));
+    const r=v.filter(e=>!/^dados de \d\d:\d\d: podem estar velhos/.test((document.getElementById('cb-'+e.dataset.bloco)||{}).textContent||'')).map(e=>e.dataset.bloco);
+    IDADE=0; carimbar(); return r; });
+  expect(r3, 'snapshot velho sem a hora do dado').toEqual([]);
+  const r4 = await page.evaluate(()=>{ CHAVES.forEach(k=>{D[k]=[];}); render();
+    return [...document.querySelectorAll('[data-bloco]')].filter(e=>!e.closest('[hidden],.hidden')&&!e.textContent.trim()&&!e.querySelector('.sk')).map(e=>e.dataset.bloco); });
+  expect(r4, 'bloco visivel em branco com a fonte vazia').toEqual([]);
+  expect(erros).toEqual([]);
+});
+test('t3635: zero "carregando" solto no fonte do presidente', ()=>{
+  const fs=require('fs'); const src=fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  expect(src.match(/[Cc]arregando/g)||[], 'texto de espera vira esqueleto (.sk)').toEqual([]);
 });

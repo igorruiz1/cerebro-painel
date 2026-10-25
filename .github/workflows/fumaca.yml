@@ -12,7 +12,8 @@ on:
 
 jobs:
   fumaca:
-    runs-on: ubuntu-latest
+    # s15864 25/10/2026: ubuntu-latest virou 26.04 e o Playwright 1.56.1 recusa o chromium nele; fixo como no vigia-banco-externo
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
