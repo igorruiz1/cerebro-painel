@@ -7,7 +7,7 @@
      qualquer https (e localhost) porque a API de transcricao de voz e um endereco que o Igor digita neste
      aparelho (vozSalvarApi so aceita https ou localhost). Script continua preso a propria origem e a CDN
      do supabase-js com integrity. frame-ancestors nao vale em <meta>. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-uKsyJCpaztSqfUTBmyuJqVEM5BiDIAywC9QfPBV33rE=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f8xqpufg778OVYOT3T2o1VtqlZqVuxcRNjmPFwWhstU=' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https: wss://*.supabase.co http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#0B1020">
 <title>Presidente · Dabli Tech</title>
 <link rel="manifest" href="manifest.json">
@@ -584,6 +584,20 @@ button.linha-r.quest{cursor:pointer}
 .sd-corpo{padding:0 14px 12px 36px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .sd-corpo p{margin:0;color:var(--ink2);font-size:var(--fs-2);overflow-wrap:anywhere}
 .sd-abrir{min-height:44px;min-width:44px}
+
+/* p4.81 (t5105): Orcamento x gasto das rotinas na Semana. Estado vai por extenso, a cor so reforca. */
+.oc-bloco{display:flex;flex-direction:column;gap:8px}
+.oc-bloco[hidden]{display:none}
+.oc-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.oc-lin{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-height:44px}
+.oc-lin b{display:block;font-weight:600;overflow-wrap:anywhere}
+.oc-lin small{display:block;color:var(--mut);font-size:var(--fs-2);overflow-wrap:anywhere}
+.oc-est{font-weight:700;color:var(--mut)}
+.oc-dentro .oc-est{color:var(--ok)} .oc-fora_slo .oc-est{color:var(--warn)} .oc-estourado .oc-est{color:var(--bad)}
+.oc-estourado{border-color:var(--bad)}
+.oc-sem_orcamento .oc-est{color:var(--warn)}
+.oc-sub{margin:0;color:var(--ink2);font-size:var(--fs-2);overflow-wrap:anywhere}
+.oc-bloco details>summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .nav button .selo.sr-bad,.rail button .selo.sr-bad{color:var(--bad);font-weight:700}
 </style>
 </head>
@@ -723,6 +737,7 @@ button.linha-r.quest{cursor:pointer}
 
       <section class="pane" id="p-semana" aria-label="Semana">
         <section class="sd-bloco" id="semSaude" aria-label="Saúde do sistema" hidden></section>
+        <section class="oc-bloco" id="semOrc" aria-label="Orçamento x gasto das rotinas" hidden></section>
         <div class="grande" id="semTopo"></div>
         <div class="mut" id="l10Total"></div>
         <section class="l10seg" data-seg="abertura" aria-label="Abertura">
@@ -775,7 +790,7 @@ button.linha-r.quest{cursor:pointer}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script>
-const VERP="p4.80";
+const VERP="p4.81";
 const URL_="https://kssvzrnjiqfgtvoifboj.supabase.co";
 const KEY_="sb_publishable_6z7d0j-YzMugoZS_NYUEUw_-LVLWxE5";
 /* modulo:demo · p4.12 (06/10/2026, s03) e t3627 (17/10/2026)
@@ -1198,7 +1213,7 @@ function demoBase(){
     /* p4.76: saude vazia na demonstracao. A amostra (7 metas) soma ~130 palavras e 26 numeros a Semana e a demonstracao ja esta no
        piso do canone (teste 106: 2133 de 2150 palavras, 347 de 350 numeros); subir o piso e decisao escrita do dono, nao deriva.
        O teste p4.76 saude cobre a tela com a amostra real (testes/saude_amostra.json). */
-    semana, saude:[], funil:P.funil, plm:P.plm, aviso:P.aviso, vesp:P.vesp, est:P.est, cob3:P.cob3};
+    semana, saude:[], orc:[], gov:[], funil:P.funil, plm:P.plm, aviso:P.aviso, vesp:P.vesp, est:P.est, cob3:P.cob3};
   const mes=dd(-new Date().getDate()).slice(0,7);
   const mesa=Object.assign({em_jogo:0},P.mesa,{
     relatorios:[
@@ -1373,7 +1388,7 @@ const sb=DEMO?demoCliente():supabase.createClient(URL_,KEY_);
    e trava (v_frente_trava). Erro ou falta de qualquer uma acende a saude por fonte.
    p4.68 (pi 183, s6946): exec (v_executor_prestacao), a prestacao do executor que morava no bastidor. */
 const CHAVES_ONDA2=["pg","cxe","rwe","uni","ficha","quest","bloq","trava","exec","l10","prio","dre","vida"];
-const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso","saude"].concat(CHAVES_ONDA2);
+const CHAVES=["fila","cont","rw","se","cap","min","c13","c13i","exp","fresc","mo","eb","var7","cob3","est","rit","vesp","hoje","hoje_resumo","band","sug","plm","funil","semana","aviso","saude","orc","gov"].concat(CHAVES_ONDA2);
 const IDADE_MAX=2400, PROVA_MIN=8;  /* s10524 t4545: snapshot a cada 15 min; teto = 2 voltas + 10 min (igual ao index) */
 /* p4.1: ate aqui nenhuma ida ao banco tinha teto. RPC que nao volta deixava o toast em "gravando…"
    para sempre e a tela sem erro nenhum. O teto e o mesmo do index.html (v40), no bloco comum. */
@@ -2541,6 +2556,42 @@ function sauLinha(x){
   const abre=card&&typeof invDe==="function"&&invDe(card)?`<button type="button" class="sec sd-abrir" data-acao="abrirInv" data-a1="${card}">Abrir o card t${card}</button>`:"";
   return `<details class="sd sd-${st}" data-chave="${esc(x.chave)}" data-status="${st}"><summary><span class="sd-pt" aria-hidden="true"></span><span class="t"><b>${esc(x.rotulo||x.chave)}</b><small>${partes.join(" · ")}</small></span><span class="sd-tend" role="img" aria-label="${esc(tn.t)}">${tn.s}</span>${sauSpark(x)}</summary><div class="sd-corpo"><p>${esc(x.como_mede||"")}</p>${abre}</div></details>`;
 }
+/* p4.81 (t5105): Orcamento x gasto das rotinas. Chaves orc (uma linha por job do pg_cron) e gov (pecas x teto, o gate de 15%).
+   Sem R$, entao aparece tambem na tela compartilhada. Estado por extenso; chave que nao veio fica fora (o aviso de parte
+   faltando ja a nomeia). armado=false marca o gate como desarmado: o numero aparece, mas nao e dito como regra em vigor. */
+const OC_ROT={dentro:"dentro",fora_slo:"fora do SLO",estourado:"estourado",sem_orcamento:"sem orçamento",inativo:"inativo"};
+const OC_ORD={estourado:0,fora_slo:1,sem_orcamento:2,dentro:3,inativo:4};
+const ocLista=()=>(Array.isArray(D.orc)?D.orc:[]).filter(x=>x&&x.jobname);
+const ocGov=()=>(Array.isArray(D.gov)?D.gov:[]).filter(x=>x&&x.tipo);
+const ocN=v=>(v==null||v===""||isNaN(+v))?"—":String(Math.round(+v*10)/10).replace(".",",");
+const ocBytes=v=>{ if(v==null||v===""||isNaN(+v))return "—"; const b=+v; return b>=1048576?ocN(b/1048576)+" MB":b>=1024?ocN(b/1024)+" KB":ocN(b)+" B"; };
+const ocPar=(g,t)=>ocN(g)+" de "+ocN(t);
+function ocLinha(x){
+  const st=OC_ROT[x.estado]?x.estado:"sem_orcamento";
+  const ativo=x.ativo===false||x.ativo==="f"?"pausado":"ativo";
+  const p=["execuções/dia "+ocPar(x.ex_dia,x.ex_dia_teto),"24 h: "+ocN(x.ex_24h),"duração média "+ocN(x.dur_ms_media)+" ms (teto "+ocN(x.dur_ms_teto)+")","WAL "+ocBytes(x.wal_dia)+" (teto "+ocBytes(x.wal_dia_teto_bytes)+")","SLO "+ocN(x.slo_pct)+"%, cumprimento "+ocN(x.cumprimento_pct)+"%"];
+  return `<li class="oc-lin oc-${st}" data-job="${esc(x.jobname)}" data-estado="${st}"><b>${esc(x.rotina||x.jobname)} <span class="oc-est">${esc(OC_ROT[st])}</span></b><small>${esc(x.jobname)} · ${ativo}</small><small>${esc(p.join(" · "))}</small></li>`;
+}
+function ocGovLinha(g){
+  const gate=g.tipo==="fatia_00memoria_7d_pct", des=g.armado===false||g.armado==="f";
+  const est=gate?(des?"gate desarmado":"gate armado"):(g.armado===false?"desarmado":"");
+  return `<li class="oc-lin oc-gov${des?" oc-desarmado":""}" data-tipo="${esc(g.tipo)}" data-armado="${des?"nao":"sim"}"><b>${esc(String(g.tipo).replace(/_/g," "))} <span class="oc-est">${esc(ocPar(g.atual,g.teto))}${est?" · "+esc(est):""}</span></b><small>folga ${esc(ocN(g.folga))}${g.regra?" · "+esc(g.regra):""}</small></li>`;
+}
+function renderOrcamento(){
+  const el=document.getElementById("semOrc"); if(!el)return;
+  const L=ocLista(), G=ocGov(); el.hidden=!(L.length||G.length); if(el.hidden){ el.innerHTML=""; return; }
+  const gd=G.find(g=>g.tipo==="cron_exec_dia"), teto=gd&&gd.teto!=null?+gd.teto:300;
+  const orc=L.filter(x=>x.ativo!==false&&x.ativo!=="f").reduce((a,x)=>a+(+x.ex_dia_teto||0),0), gasto=L.reduce((a,x)=>a+(+x.ex_dia||0),0);
+  const cont={}; L.forEach(x=>{ const s=OC_ROT[x.estado]?x.estado:"sem_orcamento"; cont[s]=(cont[s]||0)+1; });
+  const ct=Object.keys(OC_ROT).filter(s=>cont[s]).map(s=>cont[s]+" "+OC_ROT[s]).join(" · ");
+  const ruim=(cont.estourado||0)+(cont.fora_slo||0);
+  const ord=L.slice().sort((a,b)=>(OC_ORD[a.estado]??2)-(OC_ORD[b.estado]??2)||String(a.jobname).localeCompare(String(b.jobname)));
+  el.innerHTML=`<div class="sd-cab"><span class="rot">Orçamento x gasto das rotinas</span><span class="mut${ruim?" w":""}">${esc(plural(L.length,"rotina","rotinas"))}</span></div>`
+    +`<p class="oc-sub" id="ocTotal">Orçado ${esc(ocN(orc))} execuções/dia · gasto ${esc(ocN(gasto))} · teto geral ${esc(ocN(teto))}/dia</p>`
+    +`<p class="oc-sub" id="ocEstados">${esc(ct||"sem rotinas")}</p>`
+    +(L.length?`<details class="oc-det" id="ocJobs"><summary>Por rotina (${L.length})</summary><ul class="oc-lista">${ord.map(ocLinha).join("")}</ul></details>`:"")
+    +(G.length?`<details class="oc-det" id="ocGov"><summary>Peças x teto: entra uma, sai uma</summary><ul class="oc-lista">${G.map(ocGovLinha).join("")}</ul></details>`:"");
+}
 function renderSaudeSLO(){
   const el=document.getElementById("semSaude"); if(!el)return;
   const L=sauLista(); el.hidden=!L.length; if(!L.length){ el.innerHTML=""; return; }
@@ -2548,7 +2599,7 @@ function renderSaudeSLO(){
   el.innerHTML=`<div class="sd-cab"><span class="rot">Saúde do sistema</span><span class="mut${nv?" w":""}">${nv?esc(plural(nv,"meta vermelha","metas vermelhas"))+" de "+L.length:"nenhuma meta vermelha"}</span></div>`+L.map(sauLinha).join("");
 }
 function renderSemana(){
-  renderSaudeSLO();
+  renderSaudeSLO(); renderOrcamento();
   const top=document.getElementById("semTopo"); if(!top)return;
   if(!Array.isArray(D.semana)){ top.innerHTML=`<span class="mut">A semana não chegou nesta carga.</span>`; return; }
   const rv=semRevisao(), num=semB("numero").slice(0,semTeto()), nt=semB("norte")[0], fora=num.concat(nt?[nt]:[]).filter(x=>x.detalhe==="fora").length;
