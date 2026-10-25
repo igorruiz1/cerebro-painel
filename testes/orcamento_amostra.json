@@ -1,0 +1,13 @@
+{"orc":[
+{"jobname":"rotina-ficticia-a","rotina":"Rotina fictícia A","ativo":true,"ex_dia_teto":48,"ex_24h":47,"ex_dia":47,"dur_ms_teto":500,"dur_ms_media":120,"wal_dia_teto_bytes":2097152,"wal_dia":512000,"slo_pct":99,"cumprimento_pct":100,"estado":"dentro"},
+{"jobname":"rotina-ficticia-b","rotina":"Rotina fictícia B","ativo":true,"ex_dia_teto":96,"ex_24h":140,"ex_dia":140,"dur_ms_teto":300,"dur_ms_media":90,"wal_dia_teto_bytes":1048576,"wal_dia":900000,"slo_pct":95,"cumprimento_pct":97,"estado":"estourado"},
+{"jobname":"rotina-ficticia-c","rotina":"Rotina fictícia C","ativo":true,"ex_dia_teto":24,"ex_24h":20,"ex_dia":20,"dur_ms_teto":1000,"dur_ms_media":400,"wal_dia_teto_bytes":null,"wal_dia":1000,"slo_pct":95,"cumprimento_pct":80.5,"estado":"fora_slo"},
+{"jobname":"rotina-ficticia-d","rotina":"Rotina fictícia D","ativo":true,"ex_dia_teto":null,"ex_24h":5,"ex_dia":5,"dur_ms_teto":null,"dur_ms_media":10,"wal_dia_teto_bytes":null,"wal_dia":0,"slo_pct":null,"cumprimento_pct":null,"estado":"sem_orcamento"},
+{"jobname":"rotina-ficticia-e","rotina":"Rotina fictícia E","ativo":false,"ex_dia_teto":10,"ex_24h":0,"ex_dia":0,"dur_ms_teto":100,"dur_ms_media":null,"wal_dia_teto_bytes":1024,"wal_dia":0,"slo_pct":90,"cumprimento_pct":null,"estado":"inativo"}
+],
+"gov":[
+{"tipo":"rotina","atual":8,"teto":10,"armado":true,"folga":2,"regra":"Entra uma, sai uma."},
+{"tipo":"skill","atual":20,"teto":20,"armado":true,"folga":0,"regra":"Teto cheio: para entrar, uma sai."},
+{"tipo":"cron_exec_dia","atual":212,"teto":300,"armado":true,"folga":88,"regra":"Execuções por dia somadas."},
+{"tipo":"fatia_00memoria_7d_pct","atual":9,"teto":15,"armado":false,"folga":6,"regra":"Gate de 15% da semana."}
+]}

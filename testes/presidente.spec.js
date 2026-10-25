@@ -61,6 +61,8 @@ const DUBLE = `(()=>{
     semana:[],
     /* p4.76 (P4, s8322): saude do sistema vazia por padrao; o teste p4.76 troca por window.__dados (amostra real da v_saude_painel) */
     saude:[],
+    /* p4.81 (t5105): orcamento das rotinas e pecas x teto vazios por padrao; o teste p4.81 troca por window.__dados */
+    orc:[], gov:[],
     /* p4.61 (p155): sem aviso da rotina por padrao; o teste do p155 troca por window.__dados */
     aviso:[],
     /* p4.66 (onda 2): chaves novas vazias por padrao (pg vazio = vale o numero do codigo); os testes da onda 2 trocam por window.__dados */
@@ -5320,5 +5322,55 @@ test('p4.79 W2.2: sem semana medida a Matriz 9Q diz que nao ha, sem grade', asyn
   await page.click('#btMatriz');
   await expect(page.locator('#folha')).toContainText('não tem semana medida');
   await expect(page.locator('#m9q')).toHaveCount(0);
+  expect(erros).toEqual([]);
+});
+
+/* p4.81 (t5105): Orcamento x gasto das rotinas na Semana. A classe que mata: rotina que estoura o teto de execucoes/WAL so
+   existe no banco, sem o Igor ver na tela, e gate desarmado lido como regra em vigor. Amostra FICTICIA em
+   testes/orcamento_amostra.json (repo publico: nenhum job real). Estado por extenso, nao so em cor. */
+test('p4.81 orcamento: total contra 300, contagem por estado, tabela por rotina, gate de 15% desarmado, sem rolagem', async ({page})=>{
+  const amostra = JSON.parse(require('fs').readFileSync(path.resolve(__dirname, 'orcamento_amostra.json'), 'utf8'));
+  await page.setViewportSize({width:390, height:820});
+  await page.addInitScript(a=>{ window.__dados=a; }, amostra);
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semOrc')).toBeVisible();
+  await expect(page.locator('#ocTotal'), 'orcado 168, gasto 212, teto 300').toContainText('Orçado 168');
+  await expect(page.locator('#ocTotal')).toContainText('gasto 212');
+  await expect(page.locator('#ocTotal')).toContainText('300');
+  await expect(page.locator('#ocEstados')).toContainText('1 estourado');
+  await expect(page.locator('#ocEstados')).toContainText('1 fora do SLO');
+  await expect(page.locator('#ocEstados')).toContainText('1 sem orçamento');
+  await page.locator('#ocJobs summary').click();
+  await expect(page.locator('#ocJobs li.oc-lin'), 'uma linha por job').toHaveCount(5);
+  const b = page.locator('#ocJobs li[data-job="rotina-ficticia-b"]');
+  await expect(b).toHaveAttribute('data-estado','estourado');
+  await expect(b, 'estado por extenso').toContainText('estourado');
+  await expect(b).toContainText('execuções/dia 140 de 96');
+  await expect(b).toContainText('WAL 878,9 KB');
+  await expect(b).toContainText('SLO 95%, cumprimento 97%');
+  await expect(page.locator('#ocJobs li[data-job="rotina-ficticia-d"]'), 'null vira traco, nunca NaN').not.toContainText('NaN');
+  await expect(page.locator('#ocJobs li').first(), 'o estourado vem primeiro').toHaveAttribute('data-job','rotina-ficticia-b');
+  await page.locator('#ocGov summary').click();
+  const gate = page.locator('#ocGov li[data-tipo="fatia_00memoria_7d_pct"]');
+  await expect(gate).toHaveAttribute('data-armado','nao');
+  await expect(gate, 'gate armado=false e dito por extenso').toContainText('gate desarmado');
+  await expect(gate).toContainText('9 de 15');
+  await expect(page.locator('#ocGov li[data-tipo="rotina"]')).toContainText('8 de 10');
+  for (const w of [390, 360]) {
+    await page.setViewportSize({width:w, height:820});
+    const m = await page.evaluate(()=>{ document.body.style.letterSpacing='1.5px';
+      const r={W:document.documentElement.clientWidth, SW:document.documentElement.scrollWidth}; document.body.style.letterSpacing=''; return r; });
+    expect(m.SW, `rolagem horizontal a ${w} px`).toBe(m.W);
+  }
+  await page.setViewportSize({width:1280, height:820});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth), 'rolagem horizontal a 1280 px').toBe(1280);
+  expect(erros, 'sem erro de JS').toEqual([]);
+});
+
+test('p4.81 orcamento: sem as chaves o bloco fica oculto', async ({page})=>{
+  const erros = await abrir(page);
+  await page.evaluate(()=>ir('semana'));
+  await expect(page.locator('#semOrc')).toBeHidden();
   expect(erros).toEqual([]);
 });
