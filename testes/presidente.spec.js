@@ -809,7 +809,8 @@ test('titulo de 1.300 caracteres ocupa no maximo 2 linhas na lista a 390 px, sem
     return out;
   }, [LONGO, linhas.toString()]);
   for (const [aba, m] of Object.entries(r)) expect(m.SW, `rolagem horizontal em ${aba}`).toBe(m.W);
-  const todos = [...r.hoje.foco, ...r.hoje.porque, ...r.hoje.ordem, ...r.fila.itens, ...r.caixa.linhas];
+  /* p4.84 (t3636): a 390 px a lista "Depois deste" de Hoje desce para a Fila (display:none); so se mede o que tem caixa. */
+  const todos = [...r.hoje.foco, ...r.hoje.porque, ...r.hoje.ordem, ...r.fila.itens, ...r.caixa.linhas].filter(x=>x.n>0);
   for (const x of todos) { expect(x.n, 'no maximo 2 linhas em '+x.sel).toBeLessThanOrEqual(2.05); expect(x.cortado, 'o texto foi cortado, nao era curto: '+x.sel).toBe(true); }
   expect(todos.length, 'mediu foco, ordem, fila e caixa').toBeGreaterThanOrEqual(5);
   for (const x of r.hoje.meta) expect(x.n, 'a meta e uma linha so').toBeLessThanOrEqual(1.05);

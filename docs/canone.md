@@ -73,7 +73,7 @@ fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Gr
 
 | # | Régua | p4.64 | p4.82 | Evidência na p4.82 |
 |---|---|---|---|---|
-| 1 | Essencial numa tela, sem rolagem | PARCIAL | PARCIAL | Hoje ocupa 1,4 tela a 1280 e 3,0 a 390. |
+| 1 | Essencial numa tela, sem rolagem | PARCIAL | **SIM** | Hoje ocupa 1,4 tela a 1280 e 1,5 a 390 (era 3,0): o resto das listas desce para a Fila, nada some (p4.84, t3636). |
 | 2 | Série temporal | PARCIAL | PARCIAL | Sparkline nas frentes e 13 semanas; Semana sem série. |
 | 3 | Número com meta, período anterior ou faixa | PARCIAL | PARCIAL | Semana com meta e semana anterior; Hoje e Caixa só o fôlego. |
 | 4 | Normal x anomalia só olhando | NÃO | NÃO | Sem banda de normalidade. |
@@ -106,15 +106,15 @@ fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Gr
 | 31 | Frescor por bloco, com data-fonte | | **SIM** | Todo bloco diz de que fonte vem; fora do ponto, "atrasado há N h" em texto (t3634). |
 | 32 | Sensor honesto | | **SIM** | `v_frescor_fonte` por fonte; pausado nunca vira "dormindo"; auditor abre card quando um invariante quebra (t3633). |
 | 33 | Quatro estados por bloco | | **SIM** | Lendo com esqueleto, vazio que não fica em branco, erro com "Tentar de novo", velho com "dados de HH:MM" (t3635). |
-| 34 | axe sem violação séria | | NÃO | Ainda sem medida: onda E (t3636). |
+| 34 | axe sem violação séria | | **SIM** | axe-core 4.x, WCAG 2.2 AA: 0 violação séria ou crítica nas seis abas a 390 e a 1280; o teste `34: axe-core` reprova o p4.83 (`label-content-name-mismatch` em `.estado`) e passa no p4.84 (t3636). |
 | 35 | Offline declarado | | **SIM** | Sem rede, cada bloco diz "dados de HH:MM, sem conexão" (t3635). |
 | 36 | Eco de escrita | | NÃO | Depois do ato a tela recarrega, mas não diz "gravado HH:MM": onda F (t3637). |
 
-- **18 réguas:** 13 de 18 = **72%** (p4.64: 72%).
-- **24 réguas:** 18,5 de 24 = **77%** (p4.64: 73%).
-- **30 réguas:** 24,5 de 30 = **82%** (p4.64: 67%).
-- **36 réguas:** 28,5 de 36 = **79%**. É a linha de base do cânone com dado vivo. As duas réguas que faltam
-  para 85% são as ondas E e F; remedir quando elas entrarem.
+- **18 réguas:** 13,5 de 18 = **75%** na p4.84 (p4.64: 72%).
+- **24 réguas:** 19 de 24 = **79%** (p4.64: 73%).
+- **30 réguas:** 25 de 30 = **83%** (p4.64: 67%).
+- **36 réguas:** 28,5 de 36 = **79%** na p4.82; com as réguas 1 e 34 (p4.84, t3636), 30 de 36 = **83%**.
+  Falta a régua 36 (onda F, t3637) para 31 de 36 = **86%**; remedir quando ela entrar.
 
 ## O que está acima do mercado e não se mexe
 
