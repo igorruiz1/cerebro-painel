@@ -108,13 +108,13 @@ fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Gr
 | 33 | Quatro estados por bloco | | **SIM** | Lendo com esqueleto, vazio que não fica em branco, erro com "Tentar de novo", velho com "dados de HH:MM" (t3635). |
 | 34 | axe sem violação séria | | NÃO | Ainda sem medida: onda E (t3636). |
 | 35 | Offline declarado | | **SIM** | Sem rede, cada bloco diz "dados de HH:MM, sem conexão" (t3635). |
-| 36 | Eco de escrita | | NÃO | Depois do ato a tela recarrega, mas não diz "gravado HH:MM": onda F (t3637). |
+| 36 | Eco de escrita | | **SIM** | Todo ato gravado diz "gravado HH:MM" (America/Cuiaba) e o histórico da folha traz autor e hora; teste `eco de escrita` reprova o p4.82 e passa no p4.83 (t3637). |
 
 - **18 réguas:** 13 de 18 = **72%** (p4.64: 72%).
 - **24 réguas:** 18,5 de 24 = **77%** (p4.64: 73%).
 - **30 réguas:** 24,5 de 30 = **82%** (p4.64: 67%).
-- **36 réguas:** 28,5 de 36 = **79%**. É a linha de base do cânone com dado vivo. As duas réguas que faltam
-  para 85% são as ondas E e F; remedir quando elas entrarem.
+- **36 réguas:** 28,5 de 36 = **79%** na p4.82; com a régua 36 em SIM (p4.83, 25/10, t3637), 29,5 de 36 = **82%**.
+  Falta a régua 34 (onda E) para 30,5 de 36 = **85%**.
 
 ## O que está acima do mercado e não se mexe
 
