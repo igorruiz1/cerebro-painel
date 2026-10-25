@@ -90,7 +90,7 @@ fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Gr
 | 15 | Zero chartjunk | SIM | SIM | SVG puro, sem biblioteca. |
 | 16 | Frentes lado a lado | SIM | SIM | Small multiples de 8 semanas na mesma escala. |
 | 17 | Celular empilha e prioriza | SIM | SIM | Testes a 360 e 390 px. |
-| 18 | Sobrevive sem cor | PARCIAL | PARCIAL | Frescor e estado do bloco em texto (p4.82); gráfico do caixa ainda usa cor como sinal único. |
+| 18 | Sobrevive sem cor | PARCIAL | **SIM** | Frescor e estado do bloco em texto (p4.82); no gráfico do caixa o negativo é listrado e a pior semana tem contorno e o rótulo "pior" (p4.85, t3636). |
 | 19 | 13 semanas com previsto x realizado | PARCIAL | PARCIAL | Consolidado e por entidade, pior e base (W2.1); previsto x realizado só no bastidor. |
 | 20 | Margem do dono, nunca o bruto | SIM | SIM | Frentes, alavancas e funil por margem. |
 | 21 | Frescor do dado visível | SIM | SIM | Carimbo do topo e saúde por fonte. |
@@ -110,11 +110,11 @@ fonte e do `plano_item` (ondas 0 a 4) em 25/10. Régua sem medida conta NÃO (Gr
 | 35 | Offline declarado | | **SIM** | Sem rede, cada bloco diz "dados de HH:MM, sem conexão" (t3635). |
 | 36 | Eco de escrita | | **SIM** | Todo ato gravado diz "gravado HH:MM" (America/Cuiaba) e o histórico da folha traz autor e hora; teste `eco de escrita` reprova o p4.82 e passa no p4.83 (t3637). |
 
-- **18 réguas:** 13,5 de 18 = **75%** na p4.84 (p4.64: 72%).
-- **24 réguas:** 19 de 24 = **79%** (p4.64: 73%).
-- **30 réguas:** 25 de 30 = **83%** (p4.64: 67%).
+- **18 réguas:** 14 de 18 = **78%** na p4.85 (p4.64: 72%).
+- **24 réguas:** 19,5 de 24 = **81%** (p4.64: 73%).
+- **30 réguas:** 25,5 de 30 = **85%** (p4.64: 67%).
 - **36 réguas:** 28,5 de 36 = **79%** na p4.82; com a régua 36 (p4.83, t3637) e as réguas 1 e 34 (p4.84, t3636),
-  31 de 36 = **86%**.
+  31 de 36 = **86%**; com a régua 18 (p4.85, t3636), 31,5 de 36 = **87,5%**.
 
 ## O que está acima do mercado e não se mexe
 

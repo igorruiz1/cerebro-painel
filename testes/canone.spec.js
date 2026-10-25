@@ -46,3 +46,25 @@ test('34: axe-core, zero violacao seria ou critica nas seis abas a 390 e a 1280'
   expect(abasVistas, 'mediu as seis abas nas duas larguras (teste sem alvo passa vazio)').toBe(12);
   expect(achados).toEqual([]);
 });
+
+/* t3636 (regua 18 do canone, "sobrevive sem cor"): no grafico das 13 semanas, o saldo negativo e a pior semana
+   se distinguem sem cor: negativo com listras (pattern), pior semana com contorno e o rotulo "pior". */
+test('18: grafico do caixa distingue negativo e pior semana sem depender de cor', async ({browser})=>{
+  const page = await browser.newPage(); await abrirDemo(page);
+  const r = await page.evaluate(() => {
+    const s = [1,2,3,4].map(i => ({inicio: '2026-11-0' + i})), base = [5000, -2000, 3000, -6000];
+    const d = document.createElement('div'); d.innerHTML = grafico13(s, base, 3);
+    const rects = [...d.querySelectorAll('rect.sem')];
+    return {neg: rects.filter((x, i) => base[i] < 0).map(x => x.getAttribute('style')),
+            pos: rects.filter((x, i) => base[i] >= 0).map(x => x.getAttribute('style')),
+            pior: d.querySelectorAll('rect[data-pior]').length, rotulo: d.querySelector('text.pior13')?.textContent,
+            padrao: !!d.querySelector('pattern#neg13'), leg: d.querySelector('#legenda13').textContent};
+  });
+  expect(r.padrao, 'o padrao listrado existe').toBe(true);
+  for (const st of r.neg) expect(st, 'negativo usa o listrado, nao so a cor').toContain('url(#neg13)');
+  for (const st of r.pos) expect(st, 'positivo nao usa o listrado').not.toContain('url(#neg13)');
+  expect(r.pior, 'uma barra marcada como pior').toBe(1);
+  expect(r.rotulo, 'a pior semana tem rotulo em texto').toBe('pior');
+  expect(r.leg, 'a legenda descreve o listrado').toContain('Listrado');
+  await page.close();
+});
