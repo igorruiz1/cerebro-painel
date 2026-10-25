@@ -5007,7 +5007,7 @@ test('p4.74 e: a legenda do 13 semanas diz as cores que a tela pinta', async ({p
   let r = await le();
   expect(r.fills.length).toBe(13);
   expect(r.fills.includes('var(--warn)'), 'sem barra laranja').toBe(false);
-  expect(r.fills.includes('var(--bad)')).toBe(true);
+  expect(r.fills.some(f=>f.includes('neg13')), 'p4.85: o negativo sai listrado (pattern neg13), nao so vermelho').toBe(true);
   expect(r.t, 'legenda nao promete laranja que a tela nao tem').not.toMatch(/laranja/i);
   expect(r.t).toMatch(/vermelho/i);
   expect(r.t, 'e diz que a pior semana esta entre as vermelhas').toMatch(/pior semana/i);
@@ -5015,7 +5015,7 @@ test('p4.74 e: a legenda do 13 semanas diz as cores que a tela pinta', async ({p
   await page.evaluate(()=>{ D.c13=D.c13.map((x,i)=>({...x,saldo_base:5000+i*1000})); renderCaixa(); });
   r = await le();
   expect(r.fills.filter(f=>f==='var(--warn)').length, 'uma barra laranja').toBe(1);
-  expect(r.fills.includes('var(--bad)')).toBe(false);
+  expect(r.fills.some(f=>f.includes('neg13'))).toBe(false);
   expect(r.t).toMatch(/laranja: a pior semana/i);
   expect(r.t, 'sem vermelho na legenda quando nao ha negativo').not.toMatch(/vermelho/i);
   expect(erros).toEqual([]);
