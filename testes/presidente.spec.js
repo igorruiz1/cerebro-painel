@@ -5466,3 +5466,58 @@ test('eco de escrita: "gravado HH:MM" na hora de Cuiaba, e historico do card com
   await expect(page.locator('#hist')).toContainText('status: concluida');
   expect(erros).toEqual([]);
 });
+
+/* p4.86 (t2616, s17491, 26/10/2026, p135 e p160): o botao Autorizar Gmail. O link do rodape le o estado na edge function
+   gmail-oauth-callback e o toque vai ao Google com a URL que a funcao deu; a volta (?gmail=...) vira aviso e sai da barra.
+   A funcao e o Google sao dublados por page.route: o que se cobra e o caminho da tela ate a funcao, nunca o OAuth real. */
+const GMAIL_FN = '**/functions/v1/gmail-oauth-callback';
+async function abrirGmail(page, respostas, url){
+  const pedidos=[];
+  const erros=[]; page.on('pageerror',e=>erros.push(String(e)));
+  await page.addInitScript(DUBLE);
+  await page.route('**cdn.jsdelivr.net**', r=>r.abort());
+  await page.route(GMAIL_FN, async r=>{
+    const b=JSON.parse(r.request().postData()||'{}'); pedidos.push({op:b.op,auth:r.request().headers()['authorization']||''});
+    const [status,body]=respostas[b.op]||[400,{erro:'op fora da lista'}];
+    await r.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  await page.route('https://accounts.google.com/**', r=>r.fulfill({status:200,contentType:'text/html',body:'<p>google</p>'}));
+  await page.goto(url||PAGINA);
+  await page.waitForFunction(()=>!!document.querySelector('#foco .tit'));
+  await page.evaluate(()=>{ sb.auth.getSession=()=>Promise.resolve({data:{session:{access_token:'tok.do.dono',user:{id:'x'}}}}); });
+  await page.evaluate(()=>gmailEstado());
+  return {pedidos,erros};
+}
+test('p4.86 gmail: o link le o estado na funcao e o toque leva ao Google com a URL que ela deu', async ({page})=>{
+  const {pedidos,erros}=await abrirGmail(page,{estado:[200,{autorizado:false,credencial:true}],
+    iniciar:[200,{url:'https://accounts.google.com/o/oauth2/v2/auth?state='+'a'.repeat(64)}]});
+  await expect(page.locator('#gmailLink')).toHaveText('Autorizar Gmail');
+  await page.locator('#gmailLink').click();
+  await page.waitForURL(/accounts\.google\.com/);
+  expect(pedidos.map(p=>p.op), 'estado e depois iniciar').toEqual(['estado','iniciar']);
+  expect(pedidos.every(p=>p.auth==='Bearer tok.do.dono'), 'vai com o JWT do dono').toBe(true);
+  expect(erros).toEqual([]);
+});
+test('p4.86 gmail: sem a credencial do Google o link diz e o toque explica, sem sair do painel', async ({page})=>{
+  const {erros}=await abrirGmail(page,{estado:[200,{autorizado:false,credencial:false}],iniciar:[409,{erro:'credencial_ausente'}]});
+  await expect(page.locator('#gmailLink')).toHaveText('Gmail: falta a credencial');
+  await page.locator('#gmailLink').click();
+  await expect(page.locator('#tmsg')).toContainText('passos 1 a 5');
+  expect(page.url()).not.toMatch(/accounts\.google/);
+  expect(erros).toEqual([]);
+});
+test('p4.86 gmail: autorizado, o toque testa e mostra o perfil que a funcao leu', async ({page})=>{
+  const {pedidos,erros}=await abrirGmail(page,{estado:[200,{autorizado:true,credencial:true,email:'igorruiz.civil@gmail.com'}],
+    testar:[200,{ok:true,email:'igorruiz.civil@gmail.com',mensagens:12345}]});
+  await expect(page.locator('#gmailLink')).toHaveText('Gmail autorizado');
+  await page.locator('#gmailLink').click();
+  await expect(page.locator('#tmsg')).toContainText('Gmail responde: igorruiz.civil@gmail.com, 12.345 mensagens');
+  expect(pedidos.map(p=>p.op)).toEqual(['estado','testar']);
+  expect(erros).toEqual([]);
+});
+test('p4.86 gmail: a volta do Google vira aviso e o ?gmail sai da barra', async ({page})=>{
+  const {erros}=await abrirGmail(page,{estado:[200,{autorizado:false,credencial:true}]},PAGINA+'?gmail=erro&motivo=escopo');
+  await expect(page.locator('#tmsg')).toContainText('faltou marcar as duas permissões');
+  expect(page.url()).not.toMatch(/gmail=/);
+  expect(erros).toEqual([]);
+});
