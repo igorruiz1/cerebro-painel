@@ -3506,6 +3506,29 @@ test('p4.87: farol por frente com a cor certa e o nome da cor no aria-label', as
   expect(erros).toEqual([]);
 });
 
+/* p4.88 (s18271, f4267 Parte B): selo "N re-datas" do prototipo canvas. A carga pede redatas a v_inventario_frente; o card da
+   Fila com 2 ou mais diz "N re-datas" em texto; com 0 ou 1 nao diz nada. O p4.87 reprova: nem pede a coluna nem desenha o selo. */
+test('p4.88: card da Fila diz "N re-datas" quando o prazo foi empurrado 2 vezes ou mais', async ({page})=>{
+  const fs = require('fs');
+  const fonte = fs.readFileSync(path.resolve(__dirname,'..','presidente.html'),'utf8');
+  expect(fonte, 'a carga pede redatas a v_inventario_frente').toMatch(/from\("v_inventario_frente"\)\.select\("[^"]*\bredatas\b/);
+  const {erros, rede} = await abrirDemo(page, 390);
+  const r = await page.evaluate(()=>({tres:itemInv({id:9,frente:'11-consultoria',dono:'igor',status:'pendente',prazo:null,parado_dias:0,titulo:'a',redatas:3}),
+    um:itemInv({id:8,frente:'11-consultoria',dono:'igor',status:'pendente',prazo:null,parado_dias:0,titulo:'b',redatas:1}),
+    sem:itemInv({id:7,frente:'11-consultoria',dono:'igor',status:'pendente',prazo:null,parado_dias:0,titulo:'c'})}));
+  expect(r.tres).toContain('3 re-datas');
+  expect(r.um).not.toContain('re-datas');
+  expect(r.sem).not.toContain('re-datas');
+  await page.evaluate(()=>ir('fila'));
+  await expect(page.locator('.item .redata', {hasText:/^\d+ re-datas$/}).first()).toBeAttached();
+  for (const w of [360, 1280]) {
+    await page.setViewportSize({width:w, height:800});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem a '+w).toBe(true);
+  }
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
 /* p4.47 (p158, E1.6 do WL, s2655 11/10/2026): rotina sugere, o Igor aceita. O sensor de arquivo grava sugestao e o card so
    nasce no aceite. O grupo aparece no Hoje com Virar card e Descartar; nada grava antes dos 8 s de desfazer; o ato vai pela
    painel_responder com tipo SUGESTAO; desfazer devolve a linha; sem a chave sug o grupo some e a falta e avisada.
