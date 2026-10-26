@@ -3483,6 +3483,29 @@ test('p108: aba Frentes em small multiples, 8 barras por frente na mesma escala 
   expect(erros).toEqual([]);
 });
 
+/* p4.87 (s18271, f4267 Parte B): farol por frente, do prototipo p2. Vermelho = card vencido, amarelo = piorou ou card mais
+   velho >= 14 d, verde = o resto; o nome da cor vai no aria-label. Na demonstracao a consultoria (1 vencido) acende vermelho,
+   startup, cobranca e sistema (idade 18 e 22 d) amarelo, e o contrato PJ, a obra e as financas verde. O p4.86 reprova: nao ha farol. */
+test('p4.87: farol por frente com a cor certa e o nome da cor no aria-label', async ({page})=>{
+  const {erros, rede} = await abrirDemo(page, 390);
+  await page.evaluate(()=>ir('frentes'));
+  const f = await page.$$eval('#frentesLista button.frente', bs=>bs.map(b=>{ const s=b.querySelector('.farol');
+    return {txt:b.querySelector('b').textContent.replace(/\s*piorou$/,''), cls:s?[...s.classList].filter(c=>c!=='farol').join(''):null, rot:s&&s.getAttribute('aria-label')}; }));
+  expect(f.length, 'ha frentes listadas').toBeGreaterThan(0);
+  expect(f.every(x=>x.cls), 'toda frente com semanas tem farol').toBe(true);
+  const de = n => (f.find(x=>x.txt===n)||{}).cls;
+  expect(de('Consultoria de obras')).toBe('b');
+  expect(f.filter(x=>x.cls==='b').length, 'so a frente com vencido fica vermelha').toBe(1);
+  expect(f.filter(x=>x.cls==='ok').length, 'ha frente verde').toBeGreaterThan(0);
+  expect(f.every(x=>/^farol (vermelho|amarelo|verde)$/.test(x.rot)), 'nome da cor no aria-label').toBe(true);
+  for (const w of [360, 1280]) {
+    await page.setViewportSize({width:w, height:800});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem a '+w).toBe(true);
+  }
+  expect(rede).toEqual([]);
+  expect(erros).toEqual([]);
+});
+
 /* p4.47 (p158, E1.6 do WL, s2655 11/10/2026): rotina sugere, o Igor aceita. O sensor de arquivo grava sugestao e o card so
    nasce no aceite. O grupo aparece no Hoje com Virar card e Descartar; nada grava antes dos 8 s de desfazer; o ato vai pela
    painel_responder com tipo SUGESTAO; desfazer devolve a linha; sem a chave sug o grupo some e a falta e avisada.
