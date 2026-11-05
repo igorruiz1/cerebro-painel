@@ -5567,3 +5567,44 @@ test('p4.86 gmail: a volta do Google vira aviso e o ?gmail sai da barra', async 
   expect(page.url()).not.toMatch(/gmail=/);
   expect(erros).toEqual([]);
 });
+
+/* p4.89 (plano 160, s23120): caixa de e-mail de obra, sem IA e somente leitura. 10 e-mails ficticios: o filtro de
+   trabalho (orgao, supervisora, assinatura eletronica, equipe), as etiquetas de assunto (medicao, notificacao,
+   pagamento, RH) e o "Vira card", que abre a folha de nova pendencia. Nada chama o Gmail. */
+test('p160: caixa de obra filtra e etiqueta 10 e-mails ficticios, vira card e nao toca o Gmail', async ({page})=>{
+  await page.setViewportSize({width:390, height:820});
+  const erros = await abrir(page);
+  const r = await page.evaluate(()=>{
+    const m={}; CAIXA.EXEMPLOS.forEach(e=>{m[e.id]=CAIXA.classificar(e);});
+    return {n:CAIXA.EXEMPLOS.length, m};
+  });
+  expect(r.n).toBe(10);
+  const f=(id)=>r.m[id].filtros.join(','), a=(id)=>r.m[id].assuntos.join(',');
+  expect(f('x1')).toBe('orgao'); expect(a('x1')).toBe('notificacao');
+  expect(f('x2')).toBe('supervisora'); expect(a('x2')).toBe('medicao');
+  expect(f('x3')).toBe('assinatura');
+  expect(f('x4')).toBe('equipe'); expect(a('x4')).toBe('rh');
+  expect(a('x5')).toBe('pagamento'); expect(r.m.x5.trabalho, 'fornecedor sem filtro de trabalho').toBe(false);
+  expect(f('x6')).toBe('orgao'); expect(a('x6')).toBe('pagamento');
+  expect(r.m.x7.trabalho, 'newsletter fora do trabalho').toBe(false);
+  expect(r.m.x8.trabalho, 'e-mail pessoal fora do trabalho').toBe(false);
+  expect(f('x9')).toBe('equipe'); expect(a('x9')).toBe('medicao,pagamento');
+  expect(f('x10')).toBe('supervisora'); expect(a('x10')).toBe('notificacao');
+  /* a folha: abre pelo rodape, filtra, e cada item tem Vira card */
+  await page.evaluate(()=>CAIXA.abrir());
+  await expect(page.locator('#folha .caixa-item')).toHaveCount(10);
+  await page.click('#folha [data-acao="caixaFiltro"][data-a1="supervisora"]');
+  await expect(page.locator('#folha .caixa-item')).toHaveCount(2);
+  await page.click('#folha [data-acao="caixaAssunto"][data-a1="medicao"]');
+  await expect(page.locator('#folha .caixa-item')).toHaveCount(1);
+  await page.click('#folha [data-acao="caixaFiltro"][data-a1="fora"]');
+  await expect(page.locator('#folha .caixa-item'), 'fora do trabalho + medicao: nenhum').toHaveCount(0);
+  await page.click('#folha [data-acao="caixaAssunto"][data-a1="todos"]');
+  await expect(page.locator('#folha .caixa-item')).toHaveCount(3);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth), 'sem rolagem horizontal a 390 px').toBe(true);
+  await page.click('#folha [data-acao="caixaFiltro"][data-a1="todos"]');
+  await page.click('#folha [data-acao="caixaVira"][data-a1="x2"]');
+  await expect(page.locator('#novaTit')).toHaveValue('Responder: Boletim de medição 07 para conferência');
+  expect(await page.evaluate(()=>window.__rpc.filter(c=>/gmail|inbox|agir/.test(c.n)).length), 'abrir e filtrar nao gravam nem chamam o Gmail').toBe(0);
+  expect(erros).toEqual([]);
+});
