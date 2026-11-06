@@ -3,14 +3,14 @@ name: vigia-banco-externo
 # Onda 1 da simbiose (t5095, s12164, 23/10/2026). Alarme de FORA do banco.
 # Em 22/10 o job 859 esgotou o Disk IO e os vigias do proprio pg_cron cairam calados. O vigia-banco do cerebro-backup
 # passou durante a queda porque qualquer job ok em 30 min bastava (alarme-externo ainda fechava 1-4 por hora).
-# Aqui: a cada 30 min o workflow chama o endpoint SOMENTE LEITURA cron_saude_externa() (so numeros) pela API REST.
+# Aqui: a cada 6 h (ordem do Igor, 06/11/2026, s25642; antes 30 min) o workflow chama o endpoint SOMENTE LEITURA cron_saude_externa() (so numeros) pela API REST.
 # FALHA se o banco nao responde em 3 tentativas, se a ultima execucao ok do pg_cron tem mais de 30 min,
 # ou se a janela de 30 min tem 6+ execucoes e metade ou mais falhou. A falha do workflow e o alarme (e-mail do GitHub).
 # Chave: segredo CEREBRO_SUPABASE_KEY (chave publishable, nunca em arquivo). Revogar: apagar este arquivo.
 # Token: segredo CEREBRO_VIGIA_TOKEN (t6544, s14363, 25/10/2026). A funcao so responde com ele; o vault guarda so o sha256.
 on:
   schedule:
-    - cron: "7,37 * * * *"   # a cada 30 min, minuto quebrado evita a fila da hora cheia
+    - cron: "7 */6 * * *"   # a cada 6 h (00h07, 06h07, 12h07, 18h07 UTC); minuto quebrado evita a fila da hora cheia
   workflow_dispatch:
     inputs:
       url_base:

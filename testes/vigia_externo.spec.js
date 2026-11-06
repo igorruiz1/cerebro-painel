@@ -6,12 +6,13 @@ const path = require('path');
 
 const f = path.join(__dirname, '..', '.github', 'workflows', 'vigia-banco-externo.yml');
 
-test('vigia-banco-externo: a cada 30 min, endpoint de leitura, chave so em segredo', () => {
+test('vigia-banco-externo: a cada 6 h, endpoint de leitura, chave so em segredo', () => {
   expect(fs.existsSync(f), 'falta .github/workflows/vigia-banco-externo.yml').toBe(true);
   const y = fs.readFileSync(f, 'utf8');
-  expect(y).toMatch(/cron:\s*"\d+(,\d+)?\s+\*\s+\*\s+\*\s+\*"/);                 // minuto fixo(s), toda hora
-  const min = y.match(/cron:\s*"([\d,]+) \* \* \* \*"/)[1].split(',').map(Number);
-  expect(min.length === 2 && Math.abs(min[1] - min[0]) === 30, 'intervalo de 30 min').toBe(true);
+  // ordem do Igor 06/11/2026 (s25642): a cada 6 h, um minuto fixo so; reprova o main de 30 min ("7,37 * * * *")
+  const crons = [...y.matchAll(/cron:\s*"([^"]+)"/g)].map(m => m[1]);
+  expect(crons.length, 'um cron so').toBe(1);
+  expect(crons[0], 'intervalo de 6 h').toMatch(/^\d{1,2} \*\/6 \* \* \*$/);
   expect(y).toContain('/rest/v1/rpc/cron_saude_externa');
   expect(y).toContain('secrets.CEREBRO_SUPABASE_KEY');
   expect(y).not.toMatch(/eyJ[A-Za-z0-9_-]{20,}|sb_publishable_[A-Za-z0-9_-]{10,}|sb_secret_/);   // chave nunca em arquivo
