@@ -1,4 +1,4 @@
-// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 75b5da8cc4200acec3bd869d6eaad64e48843ae279e55cd8f0f521b568b84825
+// contexto.mjs · fonte: igor-cerebro-plugin/plugins/igor-cerebro/scripts/contexto.mjs · sha256-corpo: 8c8ab43a16f6c9a2439a807c3d1a4813b2732b90db609a727e87883770de5fba
 // Guarda de contexto da simbiose (fato 2023, 13/10/2026).
 //
 // Por que existe: a auditoria de 13/10 mediu que 73% do custo foi RELEITURA de
@@ -9,10 +9,10 @@
 //   node contexto.mjs status            linha de status (statusLine): le o JSON
 //                                       do Claude Code no stdin, mostra o contexto
 //                                       e grava o numero para o modo aviso.
-//   node contexto.mjs aviso [--plugin]  gatilho UserPromptSubmit: avisa em 200k
-//                                       e depois a cada +100k (300k, 400k...).
-//                                       So avisa: nunca bloqueia nem manda parar
-//                                       (decisoes do Igor em 13/10 e 21/10).
+//   node contexto.mjs aviso [--plugin]  gatilho UserPromptSubmit: a partir de 250k
+//                                       (CEREBRO_CTX_AVISO) da o RITO de compactacao a
+//                                       cada turno. So avisa: nunca bloqueia (regimento
+//                                       de compactacao, Igor 09/11/2026; antes: 200k e +100k).
 //
 // O aviso le o numero da linha de status quando ela existe; senao, do proprio
 // transcript (campo usage da ultima resposta). Assim funciona tambem onde a linha
@@ -21,8 +21,8 @@
 // --plugin: e o gatilho que o plugin instala. Fica calado se o repo aberto ja
 // tem a copia em .claude/contexto.mjs, para o Igor nao receber o aviso dobrado.
 //
-// Limites trocaveis por ambiente: CEREBRO_CTX_AVISO (200000), CEREBRO_CTX_BASTAO
-// (200000) e CEREBRO_CTX_DEGRAU (100000). Padrao 200k desde 21/10/2026 (Igor, f2938):
+// Limites trocaveis por ambiente: CEREBRO_CTX_AVISO (250000) e CEREBRO_CTX_BASTAO
+// (= AVISO). Padrao 250k desde 09/11/2026 (regimento de compactacao; antes 200k, 21/10/2026, Igor, f2938):
 // o boot sozinho gasta ~80k e 120k deixava pouco trabalho antes do aviso. Antes o
 // 200k so existia no env do PC; a nuvem nao le esse env e avisava em 120k.
 //
@@ -39,9 +39,8 @@ import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const AVISO = Number(process.env.CEREBRO_CTX_AVISO) || 200000
-const BASTAO = Number(process.env.CEREBRO_CTX_BASTAO) || 200000
-const DEGRAU = Number(process.env.CEREBRO_CTX_DEGRAU) || 100000
+const AVISO = Number(process.env.CEREBRO_CTX_AVISO) || 250000
+const BASTAO = Number(process.env.CEREBRO_CTX_BASTAO) || AVISO
 const VALIDADE_MS = 10 * 60 * 1000
 
 function lerStdin() {
@@ -154,15 +153,17 @@ function aviso(doPlugin) {
   const fresco = estado.tokens && Date.now() - (estado.em || 0) < VALIDADE_MS
   const n = Math.max(fresco ? estado.tokens : 0, tokensDoTranscript(e.transcript_path))
   let texto = ''
-  // Decisao do Igor (21/10/2026): o gatilho so AVISA. Parar ou seguir e decisao dele.
-  // Avisa uma vez em AVISO e depois a cada degrau de DEGRAU tokens acima de BASTAO.
-  const degrau = n >= BASTAO ? 1 + Math.floor((n - BASTAO) / DEGRAU) : n >= AVISO ? 0 : -1
-  if (degrau >= 0 && degrau > (estado.degrau ?? -1)) {
+  // Regimento de compactacao (Igor, 09/11/2026; ler(array['regimento_compactacao'])): em AVISO (250k) comeca o RITO
+  // e o aviso repete a cada turno acima disso. Compactar nao e automatico; o /compact so sai com o Sim do Igor.
+  if (n >= AVISO) {
     texto =
-      `CONTEXTO ${k(n)} (fato 2023). So AVISE o Igor em 1 linha: contexto atual e que cada resposta ` +
-      'rele tudo isso. Siga a tarefa normalmente. Parar ou continuar e decisao dele: nao feche, ' +
-      'nao redija bastao e nao recuse tarefa nova sem ordem expressa dele.'
-    gravarEstado(e.session_id, { ...estado, degrau })
+      `CONTEXTO ${k(n)} (acima de ${k(AVISO)}): RITO DE COMPACTACAO (regimento 09/11/2026). ` +
+      '1) Termine a tarefa em andamento e nao comece outra. ' +
+      '2) Grave o arquivo de estado no modelo (papel e sessao; ordens do Igor em aberto, literais; feito, com prova; arquivos vigentes; pendencias e proximo passo). ' +
+      'O token nunca vai para o arquivo. Grave tambem o fato estado_pre_compactacao_s<N> apontando para o arquivo, com o md5. ' +
+      '3) Mande a Torre "pronto para compactar", com o caminho e o md5. Se voce for a Torre, pergunte direto ao Igor, com botao. ' +
+      'A Torre pede o Sim ao Igor e entrega o /compact pronto para ele colar na sessao. Nao compacte por conta propria.'
+    gravarEstado(e.session_id, { ...estado, degrau: 0 })
   }
   if (!texto || !primeiroDestaMensagem(e)) return
   process.stdout.write(
