@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- o528 (21/11/2026, s53930): lista diaria de vendas da Dabli com os 3 botoes (feito, sem resposta, fora).
+     Pagina propria porque presidente.html e index.html estao congelados desde 05/11/2026 (so espelho).
+     Nenhum script inline: a CSP so aceita a propria origem e o supabase-js da CDN com integrity. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://kssvzrnjiqfgtvoifboj.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0B1020">
+<title>Vendas de hoje · Dabli</title>
+<link rel="icon" href="icone-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="tokens.css?v=6a2c7588">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs-3)}
+main{max-width:640px;margin:0 auto;padding:16px 14px 48px}
+h1{font-size:var(--fs-4);margin:4px 0 2px}
+.sub{color:var(--mut);font-size:var(--fs-2);margin:0 0 16px}
+#estado{min-height:1.4em;font-size:var(--fs-2);color:var(--ink2);margin:0 0 12px}
+#estado.erro{color:var(--bad)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
+.item.marcado{opacity:.75;border-style:dashed}
+.cab{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.conta{font-weight:700;font-size:var(--fs-3);overflow-wrap:anywhere}
+.motivo{color:var(--lil);font-size:var(--fs-2)}
+.texto{color:var(--ink2);font-size:var(--fs-2);margin:8px 0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.zap{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;background:var(--acc-bg);color:var(--ink);text-decoration:none;font-weight:600;margin:0 0 10px}
+.botoes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{font:inherit;font-size:var(--fs-2);min-height:44px;min-width:44px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--ink);padding:8px 6px;cursor:pointer}
+button:disabled{cursor:default;opacity:.5}
+button.confirmar{background:var(--raise);border-color:var(--warn);color:var(--warn);font-weight:700}
+.marca{font-size:var(--fs-2);color:var(--ok);margin-top:8px}
+.vazio{color:var(--mut);font-size:var(--fs-2)}
+.fora{margin-top:24px;border-top:1px solid var(--line2);padding-top:16px}
+.fora label{display:block;font-size:var(--fs-2);color:var(--ink2);margin:0 0 6px}
+.fora .linha{display:flex;gap:8px}
+.fora input{flex:1;min-width:0;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-2);padding:0 10px}
+.rodape{margin-top:24px;font-size:var(--fs-2)}
+.rodape a{color:var(--acc);display:inline-flex;align-items:center;min-height:44px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Vendas de hoje</h1>
+  <p class="sub" id="dia">&nbsp;</p>
+  <p id="estado" role="status" aria-live="polite">Carregando a lista…</p>
+  <div id="lista"></div>
+  <section class="fora" id="sec-fora" hidden>
+    <label for="motivo-fora">Hoje não vou vender (feriado, obra, viagem…)</label>
+    <div class="linha">
+      <input id="motivo-fora" type="text" maxlength="120" autocomplete="off" placeholder="motivo">
+      <button type="button" id="btn-fora">Dia fora</button>
+    </div>
+  </section>
+  <p class="rodape"><a href="presidente.html">Voltar ao painel</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script src="vendas.js"></script>
+</body>
+</html>
